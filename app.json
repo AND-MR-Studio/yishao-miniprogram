@@ -7,7 +7,7 @@
   "window": {
     "navigationBarTitleText": "一勺海龟汤",
     "navigationBarBackgroundColor": "#061429",
-    "enablePullDownRefresh": true,
+    "enablePullDownRefresh": false,
     "backgroundColor": "#061429",
     "backgroundTextStyle": "dark"
   },
