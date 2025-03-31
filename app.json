@@ -1,13 +1,41 @@
 {
   "pages": [
-    "pages/index/index"
+    "pages/index/index",
+    "pages/dialog/dialog",
+    "pages/mine/mine"
   ],
   "window": {
     "navigationBarTitleText": "一勺海龟汤",
-    "navigationBarBackgroundColor": "#000000",
-    "enablePullDownRefresh": true,  
-    "backgroundColor": "#000000",
-    "backgroundTextStyle":"dark"  
+    "navigationBarBackgroundColor": "#061429",
+    "enablePullDownRefresh": true,
+    "backgroundColor": "#061429",
+    "backgroundTextStyle": "dark"
+  },
+  "tabBar": {
+    "backgroundColor": "#061429",
+    "color": "#DBFFEC",
+    "selectedColor": "#5CE821",
+    "position": "bottom",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页",
+        "iconPath": "/static/icon/community.png",
+        "selectedIconPath": "/static/icon/community_selected.png"
+      },
+      {
+        "pagePath": "pages/dialog/dialog",
+        "text": "喝汤",
+        "iconPath": "/static/icon/soup.png",
+        "selectedIconPath": "/static/icon/soup_selected.png"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的",
+        "iconPath": "/static/icon/mine.png",
+        "selectedIconPath": "/static/icon/mine_selected.png"
+      }
+    ]
   },
   "style": "v2"
 }
