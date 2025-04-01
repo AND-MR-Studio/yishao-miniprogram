@@ -1,12 +1,5 @@
 @import"/static/css/iconfont.wxss";
 
-/* 定义变量 */
-:root {
-  --color-tabbar-icon-shadow: rgba(94, 232, 33, 0.8);
-  --gradient-start: #5CE821;
-  --gradient-end: #82FA4E;
-}
-
 .tab-bar {
   position: fixed;
   bottom: 0;
@@ -16,21 +9,10 @@
   background: #061429;
   display: flex;
   padding-bottom: env(safe-area-inset-bottom);
-  box-shadow: 0 -4rpx 15rpx rgba(94, 232, 33, 0.15);
+  box-shadow: 0 -4rpx 85rpx rgba(94, 232, 33, 0.15);
   overflow: visible;
 }
 
-/* TabBar上边缘渐变发光效果 */
-.tab-bar::before {
-  content: "";
-  position: absolute;
-  top: -2rpx;
-  left: 0;
-  right: 0;
-  height: 2rpx;
-  background: linear-gradient(270deg, #5CE821 0%, #82FA4E 100%);
-  box-shadow: 0 0 10rpx rgba(94, 232, 33, 0.8);
-}
 
 .tab-bar-item {
   flex: 1;
@@ -43,27 +25,27 @@
 }
 
 .icon-container {
-  width: 54rpx;
-  height: 54rpx;
+  width: 56rpx;
+  height: 56rpx;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .tab-bar-item-text {
-  font-size: 24rpx;
+  font-size: 22rpx;
   margin-top: 5rpx;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 /* 选中状态的图标容器效果 */
 .tab-bar-item.active .icon-container {
-  transform: translateY(-8rpx) scale(1.2);
-  filter: drop-shadow(0px 0px 12rpx var(--color-tabbar-icon-shadow));
+  transform: translateY(-8rpx) scale(1.1);
+  filter: drop-shadow(0px 0px 5rpx rgba(94, 232, 33, 0.8));
 }
 
 
 .icon-container .icon-class {
-  font-size: 42rpx;
+  font-size: 48rpx;
 } 
