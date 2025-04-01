@@ -12,28 +12,19 @@
     "backgroundTextStyle": "dark"
   },
   "tabBar": {
-    "backgroundColor": "#061429",
-    "color": "#DBFFEC",
-    "selectedColor": "#5CE821",
-    "position": "bottom",
+    "custom": true,
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页",
-        "iconPath": "/static/icon/community.png",
-        "selectedIconPath": "/static/icon/community_selected.png"
+        "text": "首页"
       },
       {
         "pagePath": "pages/dialog/dialog",
-        "text": "喝汤",
-        "iconPath": "/static/icon/soup.png",
-        "selectedIconPath": "/static/icon/soup_selected.png"
+        "text": "喝汤"
       },
       {
         "pagePath": "pages/mine/mine",
-        "text": "我的",
-        "iconPath": "/static/icon/mine.png",
-        "selectedIconPath": "/static/icon/mine_selected.png"
+        "text": "我的"
       }
     ]
   },
