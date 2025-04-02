@@ -1,0 +1,107 @@
+/**
+ * theme.wxss
+ * 主题变量的集中管理
+ */
+
+/* 颜色系统 */
+page {
+  /* 主题颜色 */
+  --color-primary: #5CE821;
+  --color-primary-dark: #5CE821;
+  --color-primary-light: #7BFFAB;
+  
+  /* 强调色 */
+  --color-accent: #FA5151;
+  --color-accent-dark: #FA5151;
+  --color-accent-light: #FF8585;
+  
+  /* 背景色 */
+  --color-background: #061429;
+  --color-background-light: #061429;
+  --color-background-dark: #03091A;
+  
+  /* 文本颜色 */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-hint: rgba(255, 255, 255, 0.5);
+  --color-text-disabled: rgba(255, 255, 255, 0.3);
+  
+  /* 状态颜色 */
+  --color-success: #34C759;
+  --color-warning: #FFCC00;
+  --color-error: #FF3B30;
+  --color-info: #5AC8FA;
+  
+  /* 光标颜色（供打字机效果使用） */
+  --cursor-color: #FA5151;
+}
+
+/* 排版 */
+page {
+  /* 字号 */
+  --font-size-xs: 24rpx;
+  --font-size-sm: 28rpx;
+  --font-size-md: 32rpx;
+  --font-size-lg: 36rpx;
+  --font-size-xl: 44rpx;
+  --font-size-xxl: 56rpx;
+  
+  /* 行高 */
+  --line-height-xs: 1.2;
+  --line-height-sm: 1.4;
+  --line-height-md: 1.6;
+  --line-height-lg: 1.8;
+  
+  /* 字重 */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+}
+
+/* 间距 */
+page {
+  /* 内外边距 */
+  --spacing-xxs: 4rpx;
+  --spacing-xs: 10rpx;
+  --spacing-sm: 15rpx;
+  --spacing-md: 20rpx;
+  --spacing-lg: 30rpx;
+  --spacing-xl: 40rpx;
+  --spacing-xxl: 60rpx;
+  
+  /* 布局间距 */
+  --layout-gutter: 30rpx;
+  --layout-spacing: 40rpx;
+  --layout-margin: 30rpx;
+}
+
+/* 边框 */
+page {
+  /* 圆角 */
+  --radius-xs: 4rpx;
+  --radius-sm: 8rpx;
+  --radius-md: 12rpx;
+  --radius-lg: 16rpx;
+  --radius-xl: 24rpx;
+  --radius-circle: 50%;
+  
+  /* 边框 */
+  --border-width-thin: 1px;
+  --border-width-normal: 2px;
+  --border-width-thick: 4px;
+  --border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* 阴影 */
+page {
+  --shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  --shadow-md: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 6rpx 16rpx rgba(0, 0, 0, 0.25);
+  --shadow-xl: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
+  
+  /* 发光效果 */
+  --glow-primary: 0 0 15rpx rgba(23, 255, 93, 0.6);
+  --glow-accent: 0 0 15rpx rgba(250, 81, 81, 0.6);
+} 

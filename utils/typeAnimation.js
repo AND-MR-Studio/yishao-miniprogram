@@ -1,6 +1,6 @@
 /**
- * 打字机动画工具类
- * 提供标题和内容的打字机动画效果
+ * 打字机动画工具类 - 精简版
+ * 提供文本打字机效果
  */
 const typeAnimation = {
   /**
@@ -18,252 +18,212 @@ const typeAnimation = {
     // 定时器
     const timers = {
       titleTimer: null,
-      contentTimer: null
+      contentTimer: null,
+      stateTimer: null
     };
 
     // 默认配置
-    const defaultOptions = {
-      titleTypeSpeed: 80,  // 标题打字速度（毫秒/字）
-      contentTypeSpeed: 50, // 内容打字速度（毫秒/字）
-      lineDelay: 400,       // 行间延迟（毫秒）
-      // 标点符号停顿时间配置
-      punctuationDelays: {
-        sentenceEnd: {
-          base: 200,    // 句末标点基础停顿时间
-          variance: 100  // 随机波动范围 ±100ms
-        },
-        pause: {
-          base: 100,    // 句内停顿基础时间
-          variance: 50   // 随机波动范围 ±50ms
-        },
-        lead: {
-          base: 60,     // 引导性标点基础时间
-          variance: 30   // 随机波动范围 ±30ms
-        },
-        ellipsis: {
-          base: 100,    // 省略号基础时间
-          variance: 50   // 随机波动范围 ±50ms
-        }
-      },
-      onAnimationStart: null,
-      onTitleComplete: null,
-      onLineComplete: null,
-      onAnimationComplete: null
+    const config = {
+      // 速度配置
+      titleTypeSpeed: options.titleTypeSpeed || 80,
+      contentTypeSpeed: options.contentTypeSpeed || 60,
+      lineDelay: options.lineDelay || 500,
+      // 标点符号延迟倍数
+      punctuationDelay: options.punctuationDelay || 2.5,
+      // 字符状态持续时间
+      charActiveDuration: options.charActiveDuration || 180,
+      charPrevDuration: options.charPrevDuration || 320,
+      // 回调函数
+      onAnimationStart: options.onAnimationStart || null,
+      onAnimationComplete: options.onAnimationComplete || null
     };
 
-    // 标点符号分类
-    const punctuationTypes = {
-      // 句末标点：停顿较长
-      sentenceEnd: ['.', '。', '!', '！', '?', '？'],
-      // 句内停顿：停顿中等
-      pause: [',', '，', ';', '；', '、'],
-      // 引导性标点：停顿稍短
-      lead: [':', '：', '-', '—', '·'],
-      // 省略号和特殊标点
-      ellipsis: ['…', '.', '。']
-    };
-
-    // 合并配置
-    const config = { ...defaultOptions, ...options };
+    // 标点符号列表（不区分类型）
+    const punctuations = [
+      '.', '。', '!', '！', '?', '？', 
+      ',', '，', ';', '；', '、', 
+      ':', '：', '-', '—', '·', '…'
+    ];
 
     /**
      * 清除所有定时器
-     * @private
      */
-    const clearAllTimers = function() {
-      if (timers.titleTimer) {
-        clearTimeout(timers.titleTimer);
-        timers.titleTimer = null;
-      }
-
-      if (timers.contentTimer) {
-        clearTimeout(timers.contentTimer);
-        timers.contentTimer = null;
-      }
-    };
-
-    /**
-     * 拆分标题为字符数组
-     * @param {String} title 标题文本
-     * @returns {Array} 字符数组
-     */
-    const splitTitleChars = function(title) {
-      return title.split('').map(char => {
-        return { char, show: false };
+    const clearTimers = function() {
+      Object.values(timers).forEach(timer => {
+        if (timer) clearTimeout(timer);
       });
+      Object.keys(timers).forEach(key => timers[key] = null);
     };
 
     /**
-     * 获取随机停顿时间
-     * @param {Object} delayConfig 停顿时间配置对象
-     * @returns {Number} 实际停顿时间
+     * 检查字符是否为标点符号并获取延迟时间
+     * @param {String} char 要检查的字符
+     * @param {Number} baseSpeed 基础打字速度
+     * @returns {Number} 实际延迟时间
      */
-    const getRandomDelay = function(delayConfig) {
-      const { base, variance } = delayConfig;
-      const randomVariance = Math.floor(Math.random() * variance * 2) - variance;
-      return Math.max(0, base + randomVariance);
-    };
-
-    /**
-     * 获取字符的停顿时间
-     * @param {String} char 当前字符
-     * @param {String} nextChar 下一个字符
-     * @returns {Number} 停顿时间（毫秒）
-     */
-    const getPunctuationDelay = function(char, nextChar) {
-      // 处理省略号特殊情况
-      if (char === '.' && nextChar === '.') {
-        return getRandomDelay(config.punctuationDelays.ellipsis);
+    const getCharDelay = function(char, baseSpeed) {
+      // 如果是标点符号，使用延长的停顿时间
+      if (punctuations.includes(char)) {
+        return baseSpeed * config.punctuationDelay;
       }
       
-      // 检查字符属于哪种标点类型
-      for (const [type, chars] of Object.entries(punctuationTypes)) {
-        if (chars.includes(char)) {
-          return getRandomDelay(config.punctuationDelays[type]);
-        }
-      }
-      
-      // 为普通字符添加微小的随机波动
-      const normalCharVariance = Math.floor(Math.random() * 20) - 10; // ±10ms的随机波动
-      return Math.max(0, config.contentTypeSpeed + normalCharVariance);
+      // 为普通字符添加微小的随机波动，使打字更自然
+      const variance = Math.floor(Math.random() * 20) - 10; // ±10ms的随机波动
+      return Math.max(baseSpeed / 2, baseSpeed + variance);
     };
 
     /**
-     * 动画标题
-     * @param {Object} options 动画选项
+     * 显示标题动画 - 增强版带过渡效果
+     * @param {Array} titleChars 标题字符数组
+     * @param {Function} onComplete 完成回调
      */
-    const animateTitle = function(options) {
-      const { titleChars, onComplete } = options;
-      let currentIndex = 0;
-
-      const animateNextChar = () => {
-        if (currentIndex >= titleChars.length) {
-          // 标题动画完成
-          component.setData({
-            titleAnimationComplete: true
-          });
-
-          if (typeof onComplete === 'function') {
-            setTimeout(onComplete, config.lineDelay);
+    const animateTitle = function(titleChars, onComplete) {
+      let index = 0;
+      let currentActive = -1;
+      let prevActive = -1;
+      
+      const showNextChar = () => {
+        if (index >= titleChars.length) {
+          // 最后字符状态整理
+          if (currentActive >= 0) {
+            const chars = [...titleChars];
+            chars[currentActive].active = false;
+            component.setData({ titleChars: chars });
           }
           
-          if (typeof config.onTitleComplete === 'function') {
-            config.onTitleComplete();
-          }
-          
+          component.setData({ titleAnimationComplete: true });
+          if (onComplete) setTimeout(onComplete, 200);
           return;
         }
 
-        // 显示下一个字符
-        const updatedChars = [...titleChars];
-        updatedChars[currentIndex].show = true;
-
-        component.setData({ titleChars: updatedChars });
-
-        currentIndex++;
-
-        // 设置下一个字符的定时器
-        timers.titleTimer = setTimeout(animateNextChar, config.titleTypeSpeed);
+        // 更新前一个激活字符状态为prev
+        if (prevActive >= 0) {
+          const chars = [...titleChars];
+          chars[prevActive].prev = false;
+          component.setData({ titleChars: chars });
+        }
+        
+        // 更新当前激活字符状态为普通显示
+        if (currentActive >= 0) {
+          prevActive = currentActive;
+          const chars = [...titleChars];
+          chars[currentActive].active = false;
+          chars[currentActive].prev = true;
+          component.setData({ titleChars: chars });
+        }
+        
+        // 显示并激活下一个字符
+        const chars = [...titleChars];
+        chars[index].show = true;
+        chars[index].active = true;
+        component.setData({ titleChars: chars });
+        
+        currentActive = index;
+        
+        // 获取当前字符的延迟时间
+        const currentChar = titleChars[index].char;
+        const delay = getCharDelay(currentChar, config.titleTypeSpeed);
+        
+        index++;
+        timers.titleTimer = setTimeout(showNextChar, delay);
       };
-
-      // 开始第一个字符的动画
-      animateNextChar();
+      
+      showNextChar();
     };
 
     /**
-     * 动画内容
-     * @param {Object} options 动画选项
+     * 显示内容动画
+     * @param {Array} contentLines 内容行数组
      */
-    const animateContent = function(options) {
-      const { contentLines, displayLines, currentLineIndex } = options;
-      let updatedDisplayLines = [...displayLines];
-      let updatedLineIndex = currentLineIndex;
-
-      if (updatedLineIndex >= contentLines.length) {
-        component.setData({
-          animationComplete: true,
-          isAnimating: false
-        });
-
-        if (typeof config.onAnimationComplete === 'function') {
-          config.onAnimationComplete();
-        }
-        
-        return;
-      }
-
-      if (updatedDisplayLines.length <= updatedLineIndex) {
-        updatedDisplayLines.push('');
-      }
-
-      const targetLine = contentLines[updatedLineIndex];
-      let currentCharIndex = updatedDisplayLines[updatedLineIndex].length;
-
+    const animateContent = function(contentLines) {
+      let lineIndex = 0;
+      let displayLines = [];
+      
       const typeLine = () => {
-        if (currentCharIndex >= targetLine.length) {
+        // 所有行显示完成
+        if (lineIndex >= contentLines.length) {
           component.setData({
-            lineAnimationComplete: true
+            animationComplete: true,
+            isAnimating: false
           });
-
-          if (typeof config.onLineComplete === 'function') {
-            config.onLineComplete(updatedLineIndex);
+          
+          if (config.onAnimationComplete) {
+            config.onAnimationComplete();
           }
-
-          setTimeout(() => {
-            updatedLineIndex++;
-            component.setData({
-              currentLineIndex: updatedLineIndex,
-              lineAnimationComplete: false
-            });
-            
-            animateContent({
-              contentLines,
-              displayLines: updatedDisplayLines,
-              currentLineIndex: updatedLineIndex
-            });
-          }, config.lineDelay);
-
           return;
         }
-
-        const currentChar = targetLine[currentCharIndex];
-        const nextChar = targetLine[currentCharIndex + 1];
         
-        // 添加下一个字符
-        updatedDisplayLines[updatedLineIndex] = targetLine.substring(0, currentCharIndex + 1);
-
-        component.setData({
-          displayLines: updatedDisplayLines,
-          lineAnimationComplete: false
-        });
-
-        currentCharIndex++;
-
-        // 计算下一个字符的延迟时间
-        const punctuationDelay = getPunctuationDelay(currentChar, nextChar);
-        const nextDelay = punctuationDelay > 0 ? punctuationDelay : config.contentTypeSpeed;
-
-        // 设置下一个字符的定时器
-        timers.contentTimer = setTimeout(typeLine, nextDelay);
+        const currentLine = contentLines[lineIndex];
+        let charIndex = 0;
+        
+        // 填充到当前行
+        if (displayLines.length <= lineIndex) {
+          displayLines.push('');
+        }
+        
+        const typeChar = () => {
+          if (charIndex >= currentLine.length) {
+            // 该行打字完成
+            setTimeout(() => {
+              lineIndex++;
+              component.setData({ 
+                currentLineIndex: lineIndex,
+                lineAnimationComplete: true
+              });
+              typeLine(); // 继续下一行
+            }, config.lineDelay);
+            return;
+          }
+          
+          // 添加下一个字符
+          const currentChar = currentLine[charIndex];
+          displayLines[lineIndex] = currentLine.substring(0, charIndex + 1);
+          
+          component.setData({
+            displayLines: displayLines,
+            currentLineIndex: lineIndex,
+            lineAnimationComplete: false
+          });
+          
+          charIndex++;
+          
+          // 使用基于字符的延迟时间
+          const delay = getCharDelay(currentChar, config.contentTypeSpeed);
+          timers.contentTimer = setTimeout(typeChar, delay);
+        };
+        
+        typeChar();
       };
-
-      // 开始打字
-      typeLine();
+      
+        typeLine();
     };
 
     // 返回打字机动画实例API
     return {
       /**
+       * 获取当前配置
+       */
+      getConfig: function() {
+        return { ...config };
+      },
+      
+      /**
        * 开始打字机动画
        * @param {Object} data 动画数据
        */
       start: function(data) {
-        // 清除之前的动画
-        clearAllTimers();
+        clearTimers();
         
-        // 初始化数据
-        const titleChars = splitTitleChars(data.title || '');
+        const title = data.title || '';
         const contentLines = data.contentLines || [];
+        
+        // 初始化标题字符，增加active和prev状态
+        const titleChars = title.split('').map(char => ({ 
+          char, 
+          show: false,
+          active: false,
+          prev: false
+        }));
         
         // 更新组件数据
         component.setData({
@@ -276,22 +236,14 @@ const typeAnimation = {
           isAnimating: true
         });
         
-        // 触发动画开始回调
-        if (typeof config.onAnimationStart === 'function') {
+        if (config.onAnimationStart) {
           config.onAnimationStart();
         }
         
         // 开始标题动画
-        animateTitle({
-          titleChars,
-          onComplete: () => {
-            // 标题动画完成后开始内容动画
-            animateContent({
-              contentLines,
-              displayLines: [],
-              currentLineIndex: 0
-            });
-          }
+        animateTitle(titleChars, () => {
+          // 标题动画完成后开始内容动画
+          animateContent(contentLines);
         });
       },
       
@@ -299,7 +251,7 @@ const typeAnimation = {
        * 暂停动画
        */
       pause: function() {
-        clearAllTimers();
+        clearTimers();
         component.setData({ isAnimating: false });
       },
       
@@ -307,11 +259,15 @@ const typeAnimation = {
        * 重置动画
        */
       reset: function() {
-        clearAllTimers();
+        clearTimers();
         
-        // 重置字符显示状态
-        const titleChars = component.data.titleChars.map(char => {
-          return { ...char, show: false };
+        const titleChars = (component.data.titleChars || []).map(char => {
+          return { 
+            ...char, 
+            show: false,
+            active: false,
+            prev: false
+          };
         });
         
         component.setData({
@@ -323,6 +279,37 @@ const typeAnimation = {
           animationComplete: false,
           isAnimating: false
         });
+      },
+      
+      /**
+       * 立即显示完整内容
+       * @param {Object} data 动画数据
+       */
+      showComplete: function(data) {
+        clearTimers();
+        
+        const title = data.title || '';
+        const contentLines = data.contentLines || [];
+        const titleChars = title.split('').map(char => ({ 
+          char, 
+          show: true,
+          active: false,
+          prev: false
+        }));
+        
+        component.setData({
+          titleChars,
+          titleAnimationComplete: true,
+          displayLines: contentLines,
+          currentLineIndex: contentLines.length,
+          lineAnimationComplete: true,
+          animationComplete: true,
+          isAnimating: false
+        });
+        
+        if (config.onAnimationComplete) {
+          config.onAnimationComplete();
+        }
       },
       
       /**
@@ -337,7 +324,7 @@ const typeAnimation = {
        * 清理资源
        */
       destroy: function() {
-        clearAllTimers();
+        clearTimers();
       }
     };
   }
