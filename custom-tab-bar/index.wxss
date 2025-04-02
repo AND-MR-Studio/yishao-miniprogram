@@ -34,7 +34,7 @@
 }
 
 .tab-bar-item-text {
-  font-size: 22rpx;
+  font-size: 24rpx;
   margin-top: 5rpx;
   transition: all 0.25s ease;
 }
@@ -47,5 +47,5 @@
 
 
 .icon-container .icon-class {
-  font-size: 48rpx;
+  font-size: 52rpx;
 } 

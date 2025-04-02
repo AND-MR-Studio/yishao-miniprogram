@@ -1,0 +1,378 @@
+/* components/setting-card/setting.wxss */
+
+/* 蒙层背景 */
+.setting-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+}
+
+.setting-mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.setting-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 18px;
+  gap: 15px;
+  position: fixed;
+  width: 100%;
+  /* 使用100vh确保从底部完整画出，遮盖tabbar */
+  height: 90vh;
+  left: 0;
+  bottom: 0;
+  background: #959DAE;
+  border-radius: 40rpx 40rpx 0 0;
+  transform: translateY(100%);
+  transition: all 0.3s ease-out;
+  z-index: 1000;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+  box-sizing: border-box;
+}
+
+.setting-panel.show {
+  transform: translateY(0);
+}
+
+.setting-panel.hide {
+  transform: translateY(100%);
+}
+
+/* 添加关闭指示器 */
+.close-bar {
+  width: 100%;
+  height: 40rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.close-indicator {
+  width: 80rpx;
+  height: 8rpx;
+  background: #FFFFFF;
+  opacity: 0.7;
+  border-radius: 4rpx;
+  transition: all 0.2s ease;
+}
+
+.close-bar:active .close-indicator {
+  width: 100rpx;
+  opacity: 1;
+}
+
+/* 拖拽过程中的样式 */
+@keyframes pulse {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; }
+  100% { opacity: 0.7; }
+}
+
+.dragging .close-indicator {
+  animation: pulse 1.5s infinite;
+}
+
+.setting-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0;
+  gap: 38rpx;
+  width: 90%;
+  max-width: 678rpx;
+  max-height: calc(100% - 60rpx);
+  overflow-y: auto;
+}
+
+/* 设置区块 */
+.setting-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 0;
+  gap: 36rpx;
+  width: 100%;
+}
+
+.section-title {
+  width: 136rpx;
+  height: 80rpx;
+  font-family: 'Source Han Sans CN';
+  font-style: normal;
+  font-weight: 700;
+  font-size: 34rpx;
+  line-height: 80rpx;
+  display: flex;
+  align-items: center;
+  color: #061429;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  gap: 20rpx;
+  width: 100%;
+  height: 62rpx;
+}
+
+.item-label {
+  flex: 1;
+  font-family: 'Source Han Sans CN';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 30rpx;
+  line-height: 44rpx;
+  display: flex;
+  align-items: center;
+  color: #2A2D32;
+  opacity: 0.8;
+}
+
+/* 确定按钮样式 */
+.confirm-button {
+  width: 102rpx;
+  height: 62rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #FFFFFF;
+  border-radius: 30rpx;
+  color: #FFFFFF;
+  font-family: 'Source Han Sans CN';
+  font-style: light;
+  font-size: 28rpx;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.confirm-button:active {
+  transform: scale(0.95);
+  background: #1a2436;
+}
+
+/* 开关样式 */
+.switch {
+  width: 102rpx;
+  height: 62rpx;
+  border: 1px solid #FFFFFF;
+  border-radius: 100rpx;
+  position: relative;
+  background: #E5E5E5;
+  transition: background-color 0.3s;
+  flex-shrink: 0;
+}
+
+.switch.active {
+  background: #5CE821;
+}
+
+.switch-knob {
+  position: absolute;
+  width: 54rpx;
+  height: 54rpx;
+  top: 4rpx;
+  left: 4rpx;
+  background: #FFFFFF;
+  border: 0.5px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.switch.active .switch-knob {
+  transform: translateX(40rpx);
+}
+
+.switch-text {
+  position: absolute;
+  width: 56rpx;
+  height: 40rpx;
+  left: 24rpx;
+  top: 12rpx;
+  font-family: 'Source Han Sans CN';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  display: flex;
+  align-items: center;
+  color: #FFFFFF;
+}
+
+/* 字体大小设置 */
+.font-size-setting {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20rpx;
+  height: 134rpx;
+}
+
+.font-size-label {
+  width: 100%;
+  font-family: 'Source Han Sans CN';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 30rpx;
+  line-height: 44rpx;
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.6rpx;
+  color: #2A2D32;
+  opacity: 0.8;
+}
+
+.font-size-options {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  width: 100%;
+  height: 48rpx;
+}
+
+.font-size-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  gap: 20rpx;
+  width: auto;
+  height: 48rpx;
+}
+
+/* 其他样式保持不变 */
+.radio {
+  box-sizing: border-box;
+  width: 48rpx;
+  height: 48rpx;
+  background: #F4F4F4;
+  mix-blend-mode: normal;
+  border: 3rpx solid #CACACA;
+  border-radius: 100rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.radio.active {
+  background: #5CE821;
+  border: none;
+}
+
+.radio-inner {
+  width: 24rpx;
+  height: 24rpx;
+  background: #FFFFFF;
+  border-radius: 50%;
+}
+
+.option-label {
+  width: 28rpx;
+  height: 40rpx;
+  font-family: 'Source Han Sans CN';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.6rpx;
+  color: #2A2D32;
+  opacity: 0.6;
+}
+
+/* 分隔线 */
+.divider {
+  width: 100%;
+  height: 2rpx;
+  background: #000000;
+  opacity: 0.1;
+}
+
+/* 联系我们 */
+.contact-section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  gap: 36rpx;
+  width: 100%;
+  height: 88rpx;
+}
+
+.contact-buttons {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  gap: 16rpx;
+  flex: 1;
+  height: 88rpx;
+}
+
+.contact-button {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 6rpx 40rpx;
+  gap: 12rpx;
+  flex: 1;
+  height: 88rpx;
+  background: #29374F;
+  border-radius: 30rpx;
+  font-family: 'Microsoft YaHei';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 44rpx;
+  text-align: center;
+  color: #FFFFFF;
+}
+
+/* 关于我们 */
+.about-section {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  gap: 42rpx;
+  width: 100%;
+  height: 90rpx;
+}
+
+.studio-logo {
+  width: 256rpx;
+  height: 90rpx;
+  /* 实际开发时需替换为实际logo */
+  background-color: #29374F;
+  border-radius: 10rpx;
+}
+
+.copyright {
+  flex: 1;
+  font-family: 'Source Han Sans CN';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 24rpx;
+  line-height: 34rpx;
+  color: #000000;
+  opacity: 0.6;
+}

@@ -1,10 +1,11 @@
 {
   "pages": [
-    "pages/index/index",
+    "pages/community/community",
     "pages/dialog/dialog",
     "pages/mine/mine"
   ],
   "window": {
+    "navigationStyle": "custom",
     "navigationBarTitleText": "一勺海龟汤",
     "navigationBarBackgroundColor": "#061429",
     "enablePullDownRefresh": false,
@@ -15,7 +16,7 @@
     "custom": true,
     "list": [
       {
-        "pagePath": "pages/index/index",
+        "pagePath": "pages/community/community",
         "text": "首页"
       },
       {
@@ -28,5 +29,8 @@
       }
     ]
   },
-  "style": "v2"
+  "style": "v2",
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
+  }
 }

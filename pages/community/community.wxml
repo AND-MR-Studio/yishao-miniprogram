@@ -1,0 +1,10 @@
+<!--index.wxml-->
+<view class="page">
+  <!-- 导航栏 -->
+  <nav-bar 
+  />
+  
+  <view class="container">
+    首页
+  </view>
+</view>

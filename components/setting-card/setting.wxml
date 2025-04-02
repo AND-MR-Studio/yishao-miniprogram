@@ -1,0 +1,96 @@
+<!--components/setting-card/setting.wxml-->
+<view class="setting-mask {{show ? 'show' : 'hide'}}" bindtap="closePanel" catchtouchmove="preventTouchMove"></view>
+<view class="setting-panel {{show ? 'show' : 'hide'}}" 
+      style="padding-top: {{statusBarHeight}}rpx; {{panelStyle}}"
+      bindtouchstart="handleTouchStart"
+      bindtouchmove="handleTouchMove"
+      bindtouchend="handleTouchEnd"
+      catchtap="stopPropagation">
+  <view class="setting-container">
+    <!-- 添加关闭按钮，增加手势提示效果 -->
+    <view class="close-bar" bindtap="handleDragIndicator">
+      <view class="close-indicator"></view>
+    </view>
+    
+    <!-- 问答设置区块 -->
+    <view class="setting-section">
+      <view class="section-title">问答设置</view>
+      
+      <view class="setting-item">
+        <view class="item-label">放弃当前海龟汤</view>
+        <view class="confirm-button" bindtap="abandonSoup">确定</view>
+      </view>
+      
+      <view class="setting-item">
+        <view class="item-label">清理缓存</view>
+        <view class="confirm-button" bindtap="clearCache">确定</view>
+      </view>
+      
+      <view class="setting-item font-size-setting">
+        <view class="font-size-label">字体大小</view>
+        <view class="font-size-options">
+          <view class="font-size-option" bindtap="selectFontSize" data-size="small">
+            <view class="radio {{fontSize === 'small' ? 'active' : ''}}">
+              <view wx:if="{{fontSize === 'small'}}" class="radio-inner"></view>
+            </view>
+            <view class="option-label">小</view>
+          </view>
+          
+          <view class="font-size-option" bindtap="selectFontSize" data-size="medium">
+            <view class="radio {{fontSize === 'medium' ? 'active' : ''}}">
+              <view wx:if="{{fontSize === 'medium'}}" class="radio-inner"></view>
+            </view>
+            <view class="option-label">中</view>
+          </view>
+          
+          <view class="font-size-option" bindtap="selectFontSize" data-size="large">
+            <view class="radio {{fontSize === 'large' ? 'active' : ''}}">
+              <view wx:if="{{fontSize === 'large'}}" class="radio-inner"></view>
+            </view>
+            <view class="option-label">大</view>
+          </view>
+        </view>
+      </view>
+    </view>
+    
+    <view class="divider"></view>
+    
+    <!-- 通用设置区块 -->
+    <view class="setting-section">
+      <view class="section-title">通用设置</view>
+      
+      <view class="setting-item">
+        <view class="item-label">音效</view>
+        <view class="switch {{soundOn ? 'active' : ''}}" bindtap="toggleSwitch" data-type="soundOn">
+          <view class="switch-knob"></view>
+        </view>
+      </view>
+      
+      <view class="setting-item">
+        <view class="item-label">震动</view>
+        <view class="switch {{vibrationOn ? 'active' : ''}}" bindtap="toggleSwitch" data-type="vibrationOn">
+          <view class="switch-knob"></view>
+        </view>
+      </view>
+    </view>
+    
+    <view class="divider"></view>
+    
+    <!-- 联系我们区块 -->
+    <view class="contact-section">
+      <view class="section-title">联系我们</view>
+      <view class="contact-buttons">
+        <view class="contact-button" bindtap="contactUs">用户反馈</view>
+        <view class="contact-button" bindtap="onAbout">关于我们</view>
+      </view>
+    </view>
+    
+    <view class="divider"></view>
+    
+    <!-- 关于信息 -->
+    <view class="about-section">
+      <view class="studio-logo"></view>
+      <view class="copyright">Copyright © 2025 AND Studio.Designed by Yavin, Coded by Alex.</view>
+    </view>
+  </view>
+</view>

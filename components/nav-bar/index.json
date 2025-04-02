@@ -1,0 +1,6 @@
+{
+  "component": true,
+  "usingComponents": {
+    "setting-card": "/components/setting-card/setting"
+  }
+}

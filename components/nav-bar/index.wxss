@@ -1,0 +1,53 @@
+/* components/nav-bar/index.wxss */
+@import "/static/css/iconfont.wxss";
+
+.nav-bar {
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 999;
+  padding-bottom: 10rpx; 
+}
+
+.nav-bar-content {
+  display: flex;
+  align-items: center;
+  padding: 0 16rpx;
+  position: relative;
+}
+
+.nav-bar-left {
+  display: flex;
+  align-items: center;
+  margin-left: 10rpx;
+  z-index: 1;
+}
+
+.nav-bar-title {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 500;
+}
+
+.nav-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 72rpx;
+  height: 72rpx;
+}
+
+.left-icon {
+  margin-right: 5rpx;
+}
+
+.font_family {
+  font-size: 36rpx;
+}

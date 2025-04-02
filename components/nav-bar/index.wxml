@@ -1,0 +1,27 @@
+<!--components/nav-bar/index.wxml-->
+<view class="nav-bar" style="padding-top: {{statusBarHeight}}px; background-color: {{backgroundColor}};">
+  <view class="nav-bar-content">
+    <view class="nav-bar-left">
+      <view wx:if="{{showLeft}}" class="nav-icon-wrapper left-icon" bindtap="onClickLeft">
+        <text class="font_family icon-home"></text>
+      </view>
+      <view wx:if="{{showRight}}" class="nav-icon-wrapper right-icon" bindtap="onClickRight">
+        <text class="font_family icon-more"></text>
+      </view>
+    </view>
+    <view class="nav-bar-title">
+      <text style="{{titleStyle}}">{{title}}</text>
+    </view>
+  </view>
+</view>
+
+<setting-card 
+  show="{{showSettingPanel}}" 
+  bind:close="onSettingClose"
+  bind:switchchange="onSwitchChange"
+  bind:fontsizechange="onFontSizeChange"
+  bind:clickleft="onClickLeft"
+  bind:clickright="onClickRight"
+  bind:contact="onContact"
+  bind:about="onAbout"
+/>

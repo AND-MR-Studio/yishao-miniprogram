@@ -15,7 +15,7 @@ Component({
     selectedColor: "#5CE821",
     list: [
       {
-        pagePath: "/pages/index/index",
+        pagePath: "/pages/community/community",
         text: "论坛",
         icon: "icon-community_UnSelected",
         selectedIcon: "icon-community_Selected"
