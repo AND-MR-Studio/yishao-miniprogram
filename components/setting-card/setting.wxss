@@ -362,8 +362,11 @@
   width: 256rpx;
   height: 90rpx;
   /* 实际开发时需替换为实际logo */
-  background-color: #29374F;
-  border-radius: 10rpx;
+  background-image: url('https://img.picui.cn/free/2025/04/02/67ecce36c9b6c.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+
 }
 
 .copyright {

@@ -5,6 +5,6 @@
   />
   
   <view class="container">
-    喝汤
+    <soup-display></soup-display>
   </view>
 </view>

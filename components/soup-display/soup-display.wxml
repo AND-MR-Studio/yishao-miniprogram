@@ -1,0 +1,16 @@
+<!--components/soup-display/soup-display.wxml-->
+<view class="soup-container">
+  <!-- 汤面标题 -->
+  <view class="soup-title">
+    <view class="soup-title-frame">
+      <text class="soup-title-text">{{title}}</text>
+    </view>
+  </view>
+  
+  <!-- 汤面正文 -->
+  <view class="soup-content">
+    <block wx:for="{{contentLines}}" wx:key="index">
+      <text class="soup-content-line">{{item}}</text>
+    </block>
+  </view>
+</view>
