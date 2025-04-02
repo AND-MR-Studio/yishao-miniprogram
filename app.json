@@ -1,7 +1,7 @@
 {
   "pages": [
-    "pages/community/community",
     "pages/dialog/dialog",
+    "pages/community/community",
     "pages/mine/mine"
   ],
   "window": {

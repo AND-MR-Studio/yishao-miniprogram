@@ -1,2 +1,10 @@
 <!--pages/mine/mine.wxml-->
-<text>个人中心</text>
+<view class="page">
+  <!-- 导航栏 -->
+  <nav-bar 
+  />
+  
+  <view class="container">
+    我的
+  </view>
+</view>
