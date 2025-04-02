@@ -1,5 +1,20 @@
 /* components/soup-display/soup-display.wxss */
 
+/* 定义动画相关变量 */
+page {
+  --animation-fast: 120ms;
+  --animation-normal: 600ms;
+  --spacing-xs: 10rpx;
+  --spacing-md: 20rpx;
+  --spacing-xl: 60rpx;
+  --radius-sm: 8rpx;
+  --color-text-primary: #FFFFFF;
+  --font-weight-bold: 700;
+  --title-height: 80rpx;
+  --title-frame-width: 90%;
+  --content-width: 90%;
+}
+
 /* 汤面容器 */
 .soup-container {
   display: flex;
@@ -13,81 +28,221 @@
   box-sizing: border-box;
 }
 
-/* 汤面标题 */
-.soup-title {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0 10rpx;
-  width: 100%;
-  height: 80rpx;
-  flex: none;
-  order: 0;
-  flex-grow: 0;
-  z-index: 0;
-  margin-bottom: 50rpx; /* 增加与内容的间距 */
-}
-
-/* 标题框架 */
-.soup-title-frame {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0;
-  width: 100%;
-  height: 80rpx;
-  flex: none;
-  order: 0;
-  align-self: stretch;
-  flex-grow: 1;
-}
-
-/* 标题文字 */
-.soup-title-text {
-  width: 100%;
-  height: 80rpx;
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 44rpx; /* 调整为适合的大小 */
-  line-height: 80rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: #FFFFFF;
-  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58), 0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
-  flex: none;
-  order: 0;
-  align-self: center;
-  flex-grow: 1;
-}
-
-/* 汤面正文 */
-.soup-content {
+/* 加载中样式 */
+.loading-container {
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* 左对齐 */
-  padding: 0;
-  gap: 20rpx; /* 调整行间距 */
-  width: 70%;
-  max-width: 600rpx;
-  flex: none;
-  order: 1;
-  flex-grow: 0;
-  z-index: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 400rpx;
+  width: 100%;
 }
 
-/* 正文行 */
-.soup-content-line {
+.loading-text {
+  font-size: 32rpx;
+  color: #FFFFFF;
+  text-align: center;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 汤面标题区样式 */
+.soup-title-section {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 var(--spacing-xs);
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+.soup-title-frame {
+  width: var(--title-frame-width);
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  height: var(--title-height);
+  position: relative;
+}
+
+.soup-title {
+  width: auto;
+  height: var(--title-height);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  position: relative;
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  font-family: 'Huiwen-mincho';
+  font-size: 44rpx;
+  color: #FFFFFF;
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58), 0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+}
+
+/* 动画状态样式 */
+.soup-title.animation-active {
+  width: auto;
+}
+
+/* 逐字打字效果 */
+.char-typing {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity var(--animation-fast) ease, transform var(--animation-fast) ease;
+}
+
+.char-typing.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 标题光标样式 - 移除 */
+.soup-title::after {
+  display: none;
+}
+
+.soup-title.animation-complete::after {
+  display: none;
+}
+
+@keyframes cursor-blink {
+  from, to {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 汤面内容区样式 */
+.soup-content-section {
+  width: var(--content-width);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+  gap: var(--spacing-xs);
+  isolation: isolate;
+  margin-bottom: 20rpx;
+  min-height: 200px;
+  max-height: 335px;
+  border-radius: var(--radius-sm);
+  position: relative;
+}
+
+.soup-content {
+  padding: 0;
+  border-radius: var(--radius-sm);
+  width: var(--content-width);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  position: relative;
+  overflow: visible;
+}
+
+/* 汤面内容行样式 */
+.soup-line-container {
+  width: fit-content;
+  margin-bottom: var(--spacing-md);
+  position: relative;
+  display: flex;
+}
+
+.soup-text-line {
+  width: auto;
+  display: inline-block;
+  position: relative;
+  white-space: nowrap;
   font-family: 'Huiwen-mincho';
   font-style: normal;
   font-weight: 400;
   font-size: 34rpx;
   line-height: 48rpx;
   color: #FFFFFF;
-  flex: none;
-  flex-grow: 0;
+}
+
+/* 移除旧的打字机光标效果 */
+.typing-cursor-horror::after {
+  display: none;
+}
+
+/* 打字机光标样式 */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: #FA5151;
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: cursor-blink 0.5s infinite;
+}
+
+/* 静态模式下隐藏光标 */
+.static-mode .typing-cursor {
+  display: none;
+}
+
+.soup-display {
+  padding: 20rpx;
+}
+
+.title-container {
+  margin-bottom: 30rpx;
+  position: relative;
+  display: inline-block;
+}
+
+.title-char {
+  font-size: 36rpx;
+  font-weight: normal;
+  opacity: 0.2;
+  transition: opacity 0.6s ease;
+}
+
+.title-char.show {
+  opacity: 1;
+}
+
+.content-container {
+  font-size: 32rpx;
+  line-height: 1.6;
+}
+
+.content-line {
+  position: relative;
+  margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+}
+
+.soup-text-line {
+  display: inline-block;
+}
+
+/* 加载状态样式 */
+.loading-container {
+  text-align: center;
+  padding: 40rpx;
+}
+
+.loading-text {
+  color: #999;
+  font-size: 28rpx;
 }

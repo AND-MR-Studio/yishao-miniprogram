@@ -1,16 +1,31 @@
 <!--components/soup-display/soup-display.wxml-->
 <view class="soup-container">
-  <!-- 汤面标题 -->
-  <view class="soup-title">
-    <view class="soup-title-frame">
-      <text class="soup-title-text">{{title}}</text>
-    </view>
+  <!-- 加载中状态 -->
+  <view class="loading-container" wx:if="{{loading}}">
+    <text class="loading-text">汤面加载中...</text>
   </view>
   
-  <!-- 汤面正文 -->
-  <view class="soup-content">
-    <block wx:for="{{contentLines}}" wx:key="index">
-      <text class="soup-content-line">{{item}}</text>
-    </block>
-  </view>
+  <!-- 汤面内容区域 -->
+  <block wx:else>
+    <!-- 汤面标题 -->
+    <view class="soup-title-section">
+      <view class="soup-title-frame">
+        <text class="soup-title {{titleAnimationComplete ? 'animation-complete' : 'animation-active'}}">
+          <text wx:for="{{titleChars}}" wx:key="index" class="char-typing {{item.show ? 'show' : ''}}">{{item.char}}</text>
+        </text>
+      </view>
+    </view>
+    
+    <!-- 汤面正文 -->
+    <view class="soup-content-section">
+      <view class="soup-content">
+        <block wx:for="{{displayLines}}" wx:key="index">
+          <view class="soup-line-container">
+            <text class="soup-text-line">{{item}}</text>
+            <view class="typing-cursor" wx:if="{{currentLineIndex === index && !lineAnimationComplete && isAnimating}}"></view>
+          </view>
+        </block>
+      </view>
+    </view>
+  </block>
 </view>

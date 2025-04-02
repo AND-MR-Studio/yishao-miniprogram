@@ -5,6 +5,12 @@
   />
   
   <view class="container">
-    <soup-display></soup-display>
+    <!-- 汤面显示区域 -->
+    <soup-display 
+      id="soupDisplay"
+      useDefaultOnly="{{soupConfig.useDefaultOnly}}"
+      autoPlay="{{soupConfig.autoPlay}}"
+      bind:animationComplete="onSoupAnimationComplete"
+    ></soup-display>
   </view>
 </view>
