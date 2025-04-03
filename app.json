@@ -1,9 +1,9 @@
 {
   "pages": [
+    "pages/index/index",
     "pages/dialog/dialog",
     "pages/community/community",
     "pages/mine/mine",
-    "pages/index/index",
     "components/soup-display/soup-display"
   ],
   "window": {

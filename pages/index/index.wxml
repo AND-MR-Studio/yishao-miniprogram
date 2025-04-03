@@ -1,2 +1,34 @@
-<!--pages/index/index.wxml-->
-<text>pages/index/index.wxml</text>
+<!--pages/index.wxml-->
+<view class="page">
+  <!-- 导航栏 -->
+  <nav-bar 
+  />
+  
+  <view class="container">
+    <!-- 汤面显示区域 -->
+    <soup-display 
+      id="soupDisplay"
+      useDefaultOnly="{{soupConfig.useDefaultOnly}}"
+      autoPlay="{{soupConfig.autoPlay}}"
+      bind:animationComplete="onSoupAnimationComplete"
+    ></soup-display>
+    
+    <!-- 按钮区域 -->
+    <view class="button-container">
+      <custom-button 
+        type="light" 
+        text="开始喝汤" 
+        bind:tap="onStartSoup" 
+        show="{{showButtons}}" 
+        delay="0.3">
+      </custom-button>
+      <custom-button 
+        type="unlight" 
+        text="下一个" 
+        bind:tap="onNextSoup" 
+        show="{{showButtons}}" 
+        delay="0.8">
+      </custom-button>
+    </view>
+  </view>
+</view>

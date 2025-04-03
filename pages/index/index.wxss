@@ -1,1 +1,21 @@
-/* pages/index/index.wxss */
+/* pages/index.wxss */
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #061429;
+}
+
+/* 按钮容器样式 */
+.button-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32rpx 0rpx;
+  gap: 27rpx;
+  width: 100%;
+  height: 219rpx;
+  align-self: stretch;
+  order: 2;
+  flex-grow: 0;
+  margin-top: 40rpx;
+}
