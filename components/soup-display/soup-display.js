@@ -37,11 +37,6 @@ Component({
       type: Number,
       value: 2.5  
     },
-    // 自动加载数据
-    autoLoad: {
-      type: Boolean,
-      value: true
-    },
     // 静态模式(不显示动画，直接显示完整内容)
     staticMode: {
       type: Boolean,
@@ -131,18 +126,18 @@ Component({
       
       this._initTypeAnimator();
       
-      if (this.data.autoLoad && !this.data.useDefaultOnly) {
-        this.loadSoupData();
-      } else {
-        // 使用默认汤面
-        this._updateDisplayContent();
-        
-        // 如果是静态模式，直接显示完整内容
-        if (this.data.staticMode) {
-          this._showCompleteContent();
-        } else if (this.data.autoPlay) {
-          this.startAnimation();
-        }
+      // 如果没有数据且不是静态模式，则加载默认数据
+      if (!this.data.currentSoup && !this.data.staticMode) {
+        this.setData({
+          currentSoup: soupService.getDefaultSoup()
+        });
+      }
+      
+      // 如果是静态模式，直接显示完整内容
+      if (this.data.staticMode) {
+        this._showCompleteContent();
+      } else if (this.data.autoPlay) {
+        this.startAnimation();
       }
     },
 
@@ -228,8 +223,9 @@ Component({
     _updateDisplayContent: function() {
       const currentSoup = this.data.currentSoup;
 
-      // 处理null情况
+      // 如果没有当前汤面数据，使用默认汤面
       if (!currentSoup) {
+        // 使用默认汤面
         this.setData({
           currentSoup: soupService.getDefaultSoup()
         });
@@ -269,7 +265,11 @@ Component({
      * @param {Object} soup 汤面数据对象
      */
     setCurrentSoup: function(soup) {
-      this.setData({ currentSoup: soup });
+      // 设置数据前先停止加载状态
+      this.setData({ 
+        loading: false,
+        currentSoup: soup 
+      });
       
       if (this.data.staticMode) {
         this._showCompleteContent();

@@ -12,7 +12,9 @@ Page({
       autoPlay: true
     },
     // 控制按钮显示
-    showButtons: false
+    showButtons: false,
+    // 当前汤面是否已查看
+    currentSoupViewed: false
   },
 
   /**
@@ -36,6 +38,13 @@ Page({
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({
         selected: 1
+      });
+    }
+
+    // 如果当前汤面已查看，直接显示按钮，不播放动画
+    if (this.data.currentSoupViewed) {
+      this.setData({
+        showButtons: true
       });
     }
   },
@@ -77,25 +86,40 @@ Page({
    * 开始喝汤按钮点击事件
    */
   onStartSoup() {
-    console.log('开始喝汤按钮点击');
-    // 获取汤面组件实例
+    // 获取当前汤面组件实例
     const soupDisplay = this.selectComponent('#soupDisplay');
-    if (soupDisplay) {
-      // 调用汤面组件的方法
-      soupDisplay.startAnimation && soupDisplay.startAnimation();
-    }
+    const currentSoupData = soupDisplay.getSoupData();
+    
+    // 标记当前汤面已查看
+    this.setData({
+      currentSoupViewed: true
+    });
+    
+    // 使用更简洁的方式传递数据
+    wx.navigateTo({
+      url: `/pages/dialog/dialog?soupId=${currentSoupData.id}`,
+      success: function(res) {
+        // 通过eventChannel向dialog页面传送完整数据
+        res.eventChannel.emit('acceptDataFromOpenerPage', currentSoupData);
+      }
+    });
   },
 
   /**
    * 下一个按钮点击事件
    */
   onNextSoup() {
-    console.log('下一个按钮点击');
-    // 获取汤面组件实例
+    // 重置查看状态
+    this.setData({
+      currentSoupViewed: false,
+      showButtons: false
+    });
+    
+    // 获取soup-display组件实例并重置动画
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (soupDisplay) {
-      // 调用汤面组件的方法
-      soupDisplay.loadSoupData && soupDisplay.loadSoupData();
+      soupDisplay.resetAnimation();
+      soupDisplay.loadSoupData();
     }
   }
 })

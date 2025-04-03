@@ -10,7 +10,9 @@ Page({
       // 是否只使用默认汤面
       useDefaultOnly: false,
       // 自动播放动画
-      autoPlay: true
+      autoPlay: true,
+      // 静态模式
+      staticMode: true
     }
   },
 
@@ -18,7 +20,20 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
-    // 页面加载完成，组件会自动处理汤面加载
+    // 获取页面参数中的soupId
+    const { soupId } = options;
+    
+    // 获取数据通道
+    const eventChannel = this.getOpenerEventChannel();
+    // 监听数据传递事件
+    eventChannel.on('acceptDataFromOpenerPage', (soupData) => {
+      console.log('接收到的汤面数据：', soupData);
+      // 获取soup-display组件实例并设置数据
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      if (soupDisplay) {
+        soupDisplay.setCurrentSoup(soupData);
+      }
+    });
   },
 
   /**
@@ -54,65 +69,9 @@ Page({
   },
 
   /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
-
-  },
-
-  /**
    * 用户点击右上角分享
    */
   onShareAppMessage() {
 
-  },
-
-  /**
-   * 汤面加载开始回调
-   */
-  onSoupLoadStart() {
-    console.log('汤面数据开始加载');
-  },
-
-  /**
-   * 汤面加载成功回调
-   */
-  onSoupLoadSuccess(e) {
-    console.log('汤面数据加载成功:', e.detail.soupData);
-  },
-
-  /**
-   * 汤面加载失败回调
-   */
-  onSoupLoadFail(e) {
-    console.log('汤面数据加载失败:', e.detail.error);
-  },
-
-  /**
-   * 汤面加载完成回调
-   */
-  onSoupLoadComplete() {
-    console.log('汤面数据加载完成');
-  },
-
-  /**
-   * 汤面内容变化回调
-   */
-  onSoupContentChange(e) {
-    console.log('汤面内容已更新:', e.detail);
-  },
-
-  /**
-   * 汤面动画开始回调
-   */
-  onSoupAnimationStart() {
-    console.log('汤面动画开始播放');
-  },
-
-  /**
-   * 汤面动画完成回调
-   */
-  onSoupAnimationComplete() {
-    console.log('汤面动画播放完成');
   }
 })

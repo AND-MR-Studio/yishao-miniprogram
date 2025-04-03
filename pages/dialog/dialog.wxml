@@ -10,7 +10,10 @@
       id="soupDisplay"
       useDefaultOnly="{{soupConfig.useDefaultOnly}}"
       autoPlay="{{soupConfig.autoPlay}}"
+      staticMode="{{soupConfig.staticMode}}"
       bind:animationComplete="onSoupAnimationComplete"
     ></soup-display>
+    <!-- 毛玻璃效果遮罩层 -->
+    <view class="frosted-glass"></view>
   </view>
 </view>

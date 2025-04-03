@@ -10,6 +10,7 @@
       id="soupDisplay"
       useDefaultOnly="{{soupConfig.useDefaultOnly}}"
       autoPlay="{{soupConfig.autoPlay}}"
+      staticMode="{{currentSoupViewed}}"
       bind:animationComplete="onSoupAnimationComplete"
     ></soup-display>
     
