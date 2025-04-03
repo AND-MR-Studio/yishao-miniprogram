@@ -1,6 +1,6 @@
 <!--components/button/index.wxml-->
 <view class="btn-container" bindtap="handleTap" wx:if="{{show}}">
-  <view class="{{type === 'light' ? 'btn-light' : 'btn-unlight'}} btn-slide-up animate-slide-up" style="{{animationStyle}}">
+  <view class="{{type === 'light' ? 'btn-light' : 'btn-unlight'}} {{animationClass}}" style="{{animationStyle}}">
     <text class="{{type === 'light' ? 'btn-text-light' : 'btn-text-normal'}}">{{text}}</text>
   </view>
 </view>

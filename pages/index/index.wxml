@@ -18,6 +18,7 @@
       <custom-button 
         type="light" 
         text="开始喝汤" 
+        animation="slide-up"
         bind:tap="onStartSoup" 
         show="{{showButtons}}" 
         delay="0.3">
@@ -25,6 +26,7 @@
       <custom-button 
         type="unlight" 
         text="下一个" 
+        animation="slide-up"
         bind:tap="onNextSoup" 
         show="{{showButtons}}" 
         delay="0.8">

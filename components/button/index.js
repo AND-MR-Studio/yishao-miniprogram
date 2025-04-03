@@ -8,12 +8,17 @@ Component({
     // 按钮类型，light: 点亮，unlight: 未点亮
     type: {
       type: String,
-      value: 'unlight' // 默认未点亮
+      value: 'unlight'
     },
     // 按钮文本
     text: {
       type: String,
       value: '按钮'
+    },
+    // 动画类型
+    animation: {
+      type: String,
+      value: 'none' // none, fade-in, slide-up, slide-down, slide-left, slide-right, scale-in, rotate-in, slide-up
     },
     // 动画延迟时间(秒)
     delay: {
@@ -31,6 +36,7 @@ Component({
    * 组件的初始数据
    */
   data: {
+    animationClass: '',
     animationStyle: ''
   },
 
@@ -41,6 +47,22 @@ Component({
     // 按钮点击事件
     handleTap() {
       this.triggerEvent('tap');
+    },
+    
+    // 更新动画相关设置
+    updateAnimation() {
+      const { show, animation, delay } = this.properties;
+      
+      if (show) {
+        let animationClass = '';
+        if (animation !== 'none') {
+          animationClass = `animate-${animation}`;
+        }
+        this.setData({
+          animationClass,
+          animationStyle: delay ? `animation-delay: ${delay}s;` : ''
+        });
+      }
     }
   },
 
@@ -50,11 +72,7 @@ Component({
   lifetimes: {
     attached() {
       // 设置动画延迟
-      if (this.properties.show) {
-        this.setData({
-          animationStyle: `animation-delay: ${this.properties.delay}s;`
-        });
-      }
+      this.updateAnimation();
     }
   },
 
@@ -62,12 +80,8 @@ Component({
    * 监听属性变化
    */
   observers: {
-    'show, delay': function(show, delay) {
-      if (show) {
-        this.setData({
-          animationStyle: `animation-delay: ${delay}s;`
-        });
-      }
+    'show, animation, delay': function(show, animation, delay) {
+      this.updateAnimation();
     }
   }
 })

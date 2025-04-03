@@ -65,8 +65,3 @@
   text-align: center;
   color: #959DAE;
 }
-
-/* 自定义动画持续时间 */
-.btn-slide-up {
-  animation-duration: 0.5s;
-}
