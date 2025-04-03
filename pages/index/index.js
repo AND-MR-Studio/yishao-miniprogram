@@ -76,9 +76,11 @@ Page({
    */
   onSoupAnimationComplete() {
     console.log('汤面动画播放完成');
-    // 显示按钮
-    this.setData({
-      showButtons: true
+    // 使用 nextTick 避免递归更新
+    wx.nextTick(() => {
+      this.setData({
+        showButtons: true
+      });
     });
   },
 
@@ -90,9 +92,11 @@ Page({
     const soupDisplay = this.selectComponent('#soupDisplay');
     const currentSoupData = soupDisplay.getSoupData();
     
-    // 标记当前汤面已查看
-    this.setData({
-      currentSoupViewed: true
+    // 使用 nextTick 避免递归更新
+    wx.nextTick(() => {
+      this.setData({
+        currentSoupViewed: true
+      });
     });
     
     // 使用更简洁的方式传递数据

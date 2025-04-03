@@ -253,9 +253,12 @@ Component({
       if (!this.data.currentSoup) return;
       
       if (this.typeAnimator) {
-        this.typeAnimator.showComplete({
-          title: this.data.title,
-          contentLines: this.data.contentLines
+        // 使用 nextTick 避免递归更新
+        wx.nextTick(() => {
+          this.typeAnimator.showComplete({
+            title: this.data.title,
+            contentLines: this.data.contentLines
+          });
         });
       }
     },
@@ -269,14 +272,15 @@ Component({
       this.setData({ 
         loading: false,
         currentSoup: soup 
+      }, () => {
+        // 在数据更新完成后执行动画相关操作
+        if (this.data.staticMode) {
+          this._showCompleteContent();
+        } else if (this.data.autoPlay) {
+          this.resetAnimation();
+          this.startAnimation();
+        }
       });
-      
-      if (this.data.staticMode) {
-        this._showCompleteContent();
-      } else if (this.data.autoPlay) {
-        this.resetAnimation();
-        this.startAnimation();
-      }
       
       return true;
     },

@@ -37,6 +37,13 @@ Page({
   },
 
   /**
+   * 汤面动画播放完成事件处理
+   */
+  onSoupAnimationComplete() {
+    console.log('dialog页面汤面动画播放完成');
+  },
+
+  /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady() {
