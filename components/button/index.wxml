@@ -27,14 +27,14 @@
 </block>
 <block wx:elif="{{type === 'unlight'}}">
   <view class="btn-container" bindtap="handleTap" wx:if="{{show}}">
-    <view class="btn-unlight {{animationClass}}" style="{{animationStyle}}; width: {{width}}; height: {{height}};" bindanimationend="handleAnimationEnd">
+    <view class="btn-unlight {{animationClass}} {{jellyAnimating ? 'jelly-animate' : ''}}" style="{{animationStyle}}; width: {{width}}; height: {{height}};" bindanimationend="handleAnimationEnd">
       <text class="btn-text-normal">{{text}}</text>
     </view>
   </view>
 </block>
 <block wx:elif="{{type === 'light'}}">
   <view class="btn-container" bindtap="handleTap" wx:if="{{show}}">
-    <view class="btn-light {{animationClass}}" style="{{animationStyle}}; width: {{width}}; height: {{height}};" bindanimationend="handleAnimationEnd">
+    <view class="btn-light {{animationClass}} {{jellyAnimating ? 'jelly-animate' : ''}}" style="{{animationStyle}}; width: {{width}}; height: {{height}};" bindanimationend="handleAnimationEnd">
       <text class="btn-text-light">{{text}}</text>
     </view>
   </view>

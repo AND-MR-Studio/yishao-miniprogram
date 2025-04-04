@@ -31,7 +31,7 @@
         height="80rpx"
         bind:tap="onStartSoup" 
         bind:animationend="onStartButtonAnimationEnd"
-        show="{{buttonPhase >= 1}}" 
+        show="{{showStartButton}}" 
         delay="0.3">
       </custom-button>
       <custom-button 
@@ -41,7 +41,7 @@
         width="auto"
         height="80rpx"
         bind:tap="onNextSoup" 
-        show="{{buttonPhase >= 2}}" 
+        show="{{showNextButton}}" 
         delay="0.3">
       </custom-button>
     </view>

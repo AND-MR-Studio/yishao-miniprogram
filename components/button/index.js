@@ -84,6 +84,18 @@ Component({
   methods: {
     // 按钮点击事件
     handleTap() {
+      // 开始果冻动画
+      this.setData({
+        jellyAnimating: true
+      });
+      
+      // 监听动画结束并重置状态
+      setTimeout(() => {
+        this.setData({
+          jellyAnimating: false
+        });
+      }, 600); // 与动画持续时间一致
+      
       if (this.properties.type === 'switch') {
         const newValue = !this.data.checked;
         this.setData({
