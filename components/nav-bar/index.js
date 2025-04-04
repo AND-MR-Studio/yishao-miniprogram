@@ -60,9 +60,10 @@ Component({
   methods: {
     // 处理点击左侧图标
     onClickLeft() {
+      // 跳转到首页
       wx.switchTab({
-        url: '/pages/dialog/dialog'
-      })
+        url: '/pages/index/index'
+      });
     },
     
     // 处理点击右侧图标
