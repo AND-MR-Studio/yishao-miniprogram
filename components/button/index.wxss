@@ -29,10 +29,6 @@
   transform: scale(0.95);
 }
 
-.btn-light.jelly-animate {
-  animation: jelly-effect 0.6s ease;
-}
-
 /* 点亮按钮文本 */
 .btn-text-light {
   font-family: 'Huiwen-mincho';
@@ -56,17 +52,13 @@
   gap: 10rpx;
   width: 100rpx;
   height: 56rpx;
-  border: 1rpx solid #959DAE;
+  border: 1rpx solid#4a4e57;
   border-radius: 100rpx;
   transition: transform 0.2s ease;
 }
 
 .btn-unlight:active {
   transform: scale(0.95);
-}
-
-.btn-unlight.jelly-animate {
-  animation: jelly-effect 0.6s ease;
 }
 
 /* 未点亮按钮文本 */
@@ -79,7 +71,20 @@
   display: flex;
   align-items: center;
   text-align: center;
-  color: #959DAE;
+  color:#4a4e57;
+}
+
+/* 保留原有的未点亮文本类，以避免兼容问题 */
+.btn-text-unlight {
+  font-family: 'Huiwen-mincho';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 24rpx;
+  line-height: 24rpx;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color:rgb(77, 77, 77);
 }
 
 /* 确定类型按钮 - 完全独立样式 */
@@ -95,11 +100,6 @@
   border-radius: 30rpx;
   transition: all 0.2s ease;
   box-sizing: border-box;
-}
-
-/* 确定按钮的果冻动画 */
-.btn-confirm.jelly-animate {
-  animation: jelly-effect 0.6s ease;
 }
 
 .btn-confirm:active {
@@ -200,11 +200,6 @@
   background: #5CE821;
 }
 
-/* 添加果冻动画效果 */
-.switch.jelly-animate {
-  animation: jelly-effect 0.6s ease;
-}
-
 /* 开关圆形按钮 */
 .switch-knob {
   position: absolute;
@@ -221,11 +216,6 @@
 
 .switch.active .switch-knob {
   left: calc(50% - 27px/2 + 10px);
-}
-
-/* 按钮的果冻动画 */
-.switch.jelly-animate .switch-knob {
-  animation: jelly-knob 0.6s ease;
 }
 
 /* Radio 单选按钮样式 */
@@ -258,17 +248,11 @@
   border: none;
 }
 
-/* Radio的果冻动画 */
-.radio.jelly-animate {
-  animation: jelly-effect 0.6s ease;
-}
-
 .radio-inner {
   width: 24rpx;
   height: 24rpx;
   background: #FFFFFF;
   border-radius: 50%;
-  animation: jelly-knob 0.6s ease;
 }
 
 .option-label {
@@ -319,45 +303,12 @@
   height: 48rpx;
 }
 
-/* 果冻Q弹动画效果（共用） */
-@keyframes jelly-effect {
-  0%, 100% {
-    transform: scale(1, 1);
-  }
-  30% {
-    transform: scale(1.1, 0.9);
-  }
-  40% {
-    transform: scale(0.9, 1.1);
-  }
-  50% {
-    transform: scale(1.05, 0.95);
-  }
-  60% {
-    transform: scale(0.95, 1.05);
-  }
-  70% {
-    transform: scale(1.03, 0.97);
-  }
-  80% {
-    transform: scale(0.97, 1.03);
-  }
-  90% {
-    transform: scale(1.01, 0.99);
-  }
-}
-
-@keyframes jelly-knob {
-  0% { transform: scale(1); }
-  30% { transform: scale(1.2, 0.85); }
-  40% { transform: scale(0.9, 1.15); }
-  50% { transform: scale(1.1, 0.9); }
-  65% { transform: scale(0.95, 1.05); }
-  80% { transform: scale(1.05, 0.98); }
-  100% { transform: scale(1); }
-}
-
-/* 开关按钮样式 */
-.btn-dark.jelly-animate {
-  animation: jelly-effect 0.6s ease;
+/* 使用公共果冻动画类 */
+.btn-light.jelly-animate,
+.btn-unlight.jelly-animate,
+.btn-confirm.jelly-animate,
+.btn-dark.jelly-animate,
+.switch.jelly-animate,
+.radio.jelly-animate {
+  animation: jelly-animation 0.6s var(--transition-ease);
 }

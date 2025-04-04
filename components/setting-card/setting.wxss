@@ -73,12 +73,6 @@
 }
 
 /* 拖拽过程中的样式 */
-@keyframes pulse {
-  0% { opacity: 0.7; }
-  50% { opacity: 1; }
-  100% { opacity: 0.7; }
-}
-
 .dragging .close-indicator {
   animation: pulse 1.5s infinite;
 }
@@ -182,6 +176,64 @@
   height: 48rpx;
 }
 
+/* 字体大小选项样式 */
+.font-size-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  gap: 10rpx;
+  width: auto;
+  height: 48rpx;
+  cursor: pointer;
+}
+
+.font-size-option .radio {
+  box-sizing: border-box;
+  width: 48rpx;
+  height: 48rpx;
+  background: #F4F4F4;
+  mix-blend-mode: normal;
+  border: 3rpx solid #CACACA;
+  border-radius: 100rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.font-size-option .radio.active {
+  background: #5CE821;
+  border: none;
+}
+
+.font-size-option .radio-inner {
+  width: 24rpx;
+  height: 24rpx;
+  background: #FFFFFF;
+  border-radius: 50%;
+}
+
+.font-size-option .option-label {
+  width: auto;
+  min-width: 28rpx;
+  height: 40rpx;
+  font-family: 'Source Han Sans CN';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 40rpx;
+  display: flex;
+  align-items: center;
+  letter-spacing: -0.6rpx;
+  color: #2A2D32;
+  opacity: 0.6;
+}
+
+.font-size-option.active .option-label {
+  opacity: 1;
+  font-weight: 500;
+}
 
 /* 联系我们区域调整 */
 .contact-section {

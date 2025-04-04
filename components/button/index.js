@@ -40,6 +40,11 @@ Component({
       type: Boolean,
       value: false
     },
+    // 开关的数据类型（仅在type为switch时有效）
+    dataType: {
+      type: String,
+      value: ''
+    },
     // radio选中状态（仅在type为radio时有效）
     active: {
       type: Boolean,
@@ -102,8 +107,22 @@ Component({
           checked: newValue
         });
         this.triggerEvent('change', {
-          type: this.properties.type,
+          type: this.properties.dataType || 'switch',
           checked: newValue
+        });
+      } else if (this.properties.type === 'radio') {
+        // 对于radio类型，如果已经是active状态，不触发事件
+        if (this.properties.active) return;
+        
+        // 触发radiochange事件，传递对应的值
+        this.triggerEvent('radiochange', {
+          value: this.properties.value,
+          groupName: this.properties.groupName
+        });
+        
+        // 更新当前radio的状态为选中
+        this.setData({
+          active: true
         });
       } else {
         this.triggerEvent('tap');

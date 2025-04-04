@@ -35,29 +35,17 @@
       <view class="setting-item font-size-setting">
         <view class="font-size-label">字体大小</view>
         <view class="font-size-options">
-          <custom-button 
-            type="radio" 
-            text="小" 
-            value="small"
-            groupName="fontSize"
-            active="{{fontSize === 'small'}}"
-            bind:radiochange="handleRadioChange" />
-          
-          <custom-button 
-            type="radio" 
-            text="中" 
-            value="medium"
-            groupName="fontSize"
-            active="{{fontSize === 'medium'}}"
-            bind:radiochange="handleRadioChange" />
-          
-          <custom-button 
-            type="radio" 
-            text="大" 
-            value="large"
-            groupName="fontSize"
-            active="{{fontSize === 'large'}}"
-            bind:radiochange="handleRadioChange" />
+          <block wx:for="{{fontSizeOptions}}" wx:key="value">
+            <custom-button 
+              type="radio"
+              text="{{item.label}}"
+              value="{{item.value}}"
+              active="{{fontSize === item.value}}"
+              groupName="fontSize"
+              bind:radiochange="setFontSize"
+              data-index="{{index}}"
+            />
+          </block>
         </view>
       </view>
     </view>
@@ -73,8 +61,8 @@
         type="switch"
         label="音效"
         checked="{{soundOn}}"
+        dataType="soundOn"
         bind:change="toggleSwitch"
-        data-type="soundOn"
         class="custom-button-class"
       />
       
@@ -82,8 +70,8 @@
         type="switch"
         label="震动"
         checked="{{vibrationOn}}"
+        dataType="vibrationOn"
         bind:change="toggleSwitch"
-        data-type="vibrationOn"
         class="custom-button-class"
       />
 
@@ -91,8 +79,8 @@
         type="switch"
         label="跳过动画"
         checked="{{skipAnimation}}"
+        dataType="skipAnimation"
         bind:change="toggleSwitch"
-        data-type="skipAnimation"
         class="custom-button-class"
       />
     </view>

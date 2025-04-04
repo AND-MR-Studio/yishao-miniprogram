@@ -19,3 +19,10 @@
   flex-grow: 0;
   margin-top: 40rpx;
 }
+
+/* 强制主页按钮宽度 */
+.button-container .btn-light,
+.button-container .btn-unlight {
+  width: 50% !important;
+  min-width: 300rpx !important;
+}

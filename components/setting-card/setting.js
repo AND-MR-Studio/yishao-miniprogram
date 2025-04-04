@@ -18,7 +18,13 @@ Component({
     soundOn: true,
     vibrationOn: false,
     skipAnimation: false, // 跳过动画开关
-    fontSize: 'medium', // 'small', 'medium', 'large'
+    fontSize: 'medium', // 当前选中的字体大小
+    // 字体大小选项
+    fontSizeOptions: [
+      { label: '小', value: 'small', scaleFactor: 0.85 },
+      { label: '中', value: 'medium', scaleFactor: 1.0 },
+      { label: '大', value: 'large', scaleFactor: 1.2 }
+    ],
     statusBarHeight: 0,
     // 拖拽相关变量
     startY: 0,
@@ -42,23 +48,97 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    // 设置字体大小
+    setFontSize(e) {
+      // 检查是否是自定义按钮的radiochange事件
+      if (e.detail && e.detail.value) {
+        const option = this.data.fontSizeOptions.find(option => option.value === e.detail.value);
+        if (!option) return;
+        
+        // 触发震动
+        this.triggerVibration();
+        
+        // 只有选择不同的值时才更新
+        if (this.data.fontSize !== option.value) {
+          this.setData({ fontSize: option.value });
+          
+          // 触发事件，传递字体大小相关信息
+          this.triggerEvent('fontsizechange', {
+            size: option.value,
+            scaleFactor: option.scaleFactor
+          });
+        }
+      } else {
+        // 兼容原有的点击事件处理方式
+        const index = e.currentTarget.dataset.index;
+        if (index == null || index < 0 || index >= this.data.fontSizeOptions.length) return;
+        
+        const option = this.data.fontSizeOptions[index];
+        
+        // 触发震动
+        this.triggerVibration();
+        
+        // 只有选择不同的值时才更新
+        if (this.data.fontSize !== option.value) {
+          this.setData({ fontSize: option.value });
+          
+          // 触发事件，传递字体大小相关信息
+          this.triggerEvent('fontsizechange', {
+            size: option.value,
+            scaleFactor: option.scaleFactor
+          });
+        }
+      }
+    },
+    
+    // 获取当前字体大小的缩放因子
+    getCurrentFontScale() {
+      const currentOption = this.data.fontSizeOptions.find(
+        option => option.value === this.data.fontSize
+      );
+      return currentOption ? currentOption.scaleFactor : 1.0;
+    },
+    
+    // 触发震动反馈
+    triggerVibration() {
+      if (!this.data.vibrationOn) return;
+      
+      wx.vibrateShort({
+        fail: () => {}
+      });
+    },
+    
     // 切换开关
     toggleSwitch(e) {
       const { type, checked } = e.detail;
-      this.setData({
-        [type]: checked
-      });
+      
+      // 确保type存在
+      if (!type) return;
+      
+      // 更新对应的状态
+      this.setData({ [type]: checked });
+      
+      // 当振动开关打开时，立即触发震动反馈
+      if (type === 'vibrationOn' && checked) {
+        wx.vibrateShort();
+      } else if (this.data.vibrationOn) {
+        // 其他开关切换时，如果震动已开启，提供反馈
+        this.triggerVibration();
+      }
       
       this.triggerEvent('switchchange', { type, value: checked });
     },
     
     // 放弃当前海龟汤
     abandonSoup() {
+      this.triggerVibration();
+      
       wx.showModal({
         title: '提示',
         content: '确定要放弃当前海龟汤吗？这不会重置提问次数哦',
         success: (res) => {
           if (res.confirm) {
+            this.triggerVibration();
             this.triggerEvent('abandon');
             wx.showToast({
               title: '已放弃当前海龟汤',
@@ -72,11 +152,14 @@ Component({
     
     // 清理缓存
     clearCache() {
+      this.triggerVibration();
+      
       wx.showModal({
         title: '提示',
         content: '确定要清理缓存吗？',
         success: (res) => {
           if (res.confirm) {
+            this.triggerVibration();
             this.triggerEvent('clearcache');
             wx.showToast({
               title: '缓存已清理',
@@ -86,16 +169,6 @@ Component({
           }
         }
       });
-    },
-    
-    // 处理自定义radio按钮的变化
-    handleRadioChange(e) {
-      const { value } = e.detail;
-      this.setData({
-        fontSize: value
-      });
-      
-      this.triggerEvent('fontsizechange', { size: value });
     },
     
     // 下拉开始
@@ -144,9 +217,10 @@ Component({
       
       // 如果下拉距离超过阈值，关闭面板
       if (this.data.moveDistance > this.data.closeThreshold) {
+        this.triggerVibration();
         this.closeWithAnimation();
       } else {
-        // 否则恢复原位
+        // 否则恢复原位 - 不触发震动
         this.setData({
           panelStyle: 'transform: translateY(0); transition: transform 0.3s ease-out;'
         });
@@ -162,6 +236,7 @@ Component({
     
     // 点击指示器关闭
     handleDragIndicator() {
+      this.triggerVibration();
       this.closeWithAnimation();
     },
     
@@ -201,11 +276,13 @@ Component({
     
     // 联系我们
     contactUs() {
+      this.triggerVibration();
       this.triggerEvent('contact');
     },
     
     // 点击关于
     onAbout() {
+      this.triggerVibration();
       this.triggerEvent('about');
     },
     

@@ -9,7 +9,7 @@
 </block>
 <block wx:elif="{{type === 'radio'}}">
   <view class="font-size-option" bindtap="handleTap">
-    <view class="radio {{active ? 'active' : ''}} {{active && jellyAnimating ? 'jelly-animate' : ''}}">
+    <view class="radio {{active ? 'active' : ''}} {{jellyAnimating ? 'jelly-animate' : ''}}">
       <view class="radio-inner" wx:if="{{active}}"></view>
     </view>
     <view class="option-label">{{text}}</view>
