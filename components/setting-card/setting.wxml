@@ -21,8 +21,7 @@
         <custom-button 
           type="confirm" 
           text="确定" 
-          bind:tap="abandonSoup" 
-          show="true" />
+          bind:tap="abandonSoup" />
       </view>
       
       <view class="setting-item">
@@ -30,8 +29,7 @@
         <custom-button 
           type="confirm" 
           text="确定" 
-          bind:tap="clearCache" 
-          show="true" />
+          bind:tap="clearCache" />
       </view>
       
       <view class="setting-item font-size-setting">

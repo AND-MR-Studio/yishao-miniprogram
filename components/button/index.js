@@ -73,7 +73,9 @@ Component({
   data: {
     animationClass: '',
     animationStyle: '',
-    jellyAnimating: false // 是否正在执行果冻动画
+    jellyAnimating: false, // 是否正在执行果冻动画
+    initialized: false, // 初始化标志
+    animationEnd: false
   },
 
   /**
@@ -84,65 +86,27 @@ Component({
     handleTap() {
       if (this.properties.type === 'switch') {
         const newValue = !this.data.checked;
-        
-        // 设置新的checked状态
         this.setData({
-          checked: newValue,
-          jellyAnimating: newValue // 仅在切换到true时应用动画
+          checked: newValue
         });
-        
-        // 果冻动画结束后重置状态
-        if (newValue) {
-          setTimeout(() => {
-            this.setData({
-              jellyAnimating: false
-            });
-          }, 600); // 动画持续时间
-        }
-        
         this.triggerEvent('change', {
           type: this.properties.type,
           checked: newValue
         });
-      } else if (this.properties.type === 'radio') {
-        // 如果已经是激活状态，则不做任何操作
-        if (this.properties.active) return;
-        
-        // 设置为激活状态并触发动画
-        this.setData({
-          active: true,
-          jellyAnimating: true
-        });
-        
-        // 果冻动画结束后重置动画状态
-        setTimeout(() => {
-          this.setData({
-            jellyAnimating: false
-          });
-        }, 600); // 动画持续时间
-        
-        // 触发选中事件
-        this.triggerEvent('radiochange', {
-          type: this.properties.type,
-          value: this.properties.value,
-          groupName: this.properties.groupName
-        });
-      } else if (this.properties.type === 'confirm' || this.properties.type === 'dark') {
-        // 为确定按钮和深色按钮添加果冻效果
-        this.setData({
-          jellyAnimating: true
-        });
-        
-        // 果冻动画结束后重置动画状态
-        setTimeout(() => {
-          this.setData({
-            jellyAnimating: false
-          });
-        }, 600); // 动画持续时间
-        
-        this.triggerEvent('tap');
       } else {
         this.triggerEvent('tap');
+      }
+    },
+    
+    // 监听动画结束事件
+    handleAnimationEnd() {
+      // 只触发一次动画完成事件
+      if (!this.data.animationEnd && this.properties.show) {
+        this.setData({
+          animationEnd: true
+        });
+        
+        this.triggerEvent('animationend');
       }
     },
     
@@ -157,7 +121,15 @@ Component({
         }
         this.setData({
           animationClass,
-          animationStyle: delay ? `animation-delay: ${delay}s;` : ''
+          animationStyle: delay ? `animation-delay: ${delay}s;` : '',
+          animationEnd: false // 重置动画完成状态
+        });
+      } else {
+        // 当按钮隐藏时，清除动画类
+        this.setData({
+          animationClass: '',
+          animationStyle: '',
+          animationEnd: false
         });
       }
     }
@@ -170,6 +142,11 @@ Component({
     attached() {
       // 设置动画延迟
       this.updateAnimation();
+      
+      // 确保初始化设置了状态
+      this.setData({
+        initialized: true
+      });
     }
   },
 

@@ -56,6 +56,7 @@ page {
 
 /* 从下至上滑入动画 */
 .animate-slide-up {
+  opacity: 0;
   animation: slide-up var(--animation-normal) var(--transition-decelerated);
   animation-fill-mode: forwards;
 } 

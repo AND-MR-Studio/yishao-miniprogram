@@ -17,8 +17,8 @@
   align-items: center;
   padding: 13rpx 132rpx;
   gap: 10rpx;
-  width: 364rpx; /* 默认宽度，可通过属性覆盖 */
-  height: 56rpx; /* 默认高度，可通过属性覆盖 */
+  width: 100rpx;
+  height: 56rpx;
   background: #5CE821;
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
@@ -45,15 +45,10 @@
   align-items: center;
   padding: 13rpx 132rpx;
   gap: 10rpx;
-  width: 364rpx; /* 默认宽度，可通过属性覆盖 */
-  height: 56rpx; /* 默认高度，可通过属性覆盖 */
+  width: 100rpx;
+  height: 56rpx;
   border: 1rpx solid #959DAE;
   border-radius: 100rpx;
-  transition: all 0.2s ease;
-}
-
-.btn-unlight:active {
-  transform: scale(0.95);
 }
 
 /* 未点亮按钮文本 */
@@ -69,7 +64,7 @@
   color: #959DAE;
 }
 
-/* 确定类型未点亮按钮 */
+/* 确定类型按钮 - 完全独立样式 */
 .btn-confirm {
   display: flex;
   flex-direction: column;
@@ -81,6 +76,7 @@
   border: 1px solid #FFFFFF;
   border-radius: 30rpx;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 /* 确定按钮的果冻动画 */

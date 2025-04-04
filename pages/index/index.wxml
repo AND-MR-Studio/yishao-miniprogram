@@ -27,21 +27,22 @@
         type="light" 
         text="开始喝汤" 
         animation="slide-up"
-        width="100rpx"
-        height="56rpx"
+        width="auto"
+        height="80rpx"
         bind:tap="onStartSoup" 
-        show="{{showButtons}}" 
+        bind:animationend="onStartButtonAnimationEnd"
+        show="{{buttonPhase >= 1}}" 
         delay="0.3">
       </custom-button>
       <custom-button 
         type="unlight" 
         text="下一个" 
         animation="slide-up"
-        width="100rpx"
-        height="56rpx"
+        width="auto"
+        height="80rpx"
         bind:tap="onNextSoup" 
-        show="{{showButtons}}" 
-        delay="0.8">
+        show="{{buttonPhase >= 2}}" 
+        delay="0.3">
       </custom-button>
     </view>
   </view>
