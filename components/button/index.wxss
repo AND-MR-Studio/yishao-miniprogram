@@ -22,11 +22,13 @@
   background: #5CE821;
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 .btn-light:active {
   transform: scale(0.95);
+  background-color: rgba(70, 196, 0, 0.8);
+  box-shadow: 0rpx 5rpx 15rpx rgba(4, 244, 77, 0.15);
 }
 
 /* 点亮按钮文本 */
@@ -54,11 +56,13 @@
   height: 56rpx;
   border: 1rpx solid#4a4e57;
   border-radius: 100rpx;
-  transition: transform 0.2s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .btn-unlight:active {
   transform: scale(0.95);
+  background-color: rgba(50, 50, 50, 0.3);
+  border-color: rgba(74, 78, 87, 0.6);
 }
 
 /* 未点亮按钮文本 */

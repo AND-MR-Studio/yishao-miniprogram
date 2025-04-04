@@ -126,11 +126,15 @@ Component({
       
       this._initTypeAnimator();
       
-      // 如果没有数据且不是静态模式，则加载默认数据
-      if (!this.data.currentSoup && !this.data.staticMode) {
-        this.setData({
-          currentSoup: soupService.getDefaultSoup()
-        });
+      // 如果没有数据且不是静态模式，则加载汤面数据
+      if (!this.data.currentSoup) {
+        if (this.data.useDefaultOnly) {
+          this.setData({
+            currentSoup: soupService.getDefaultSoup()
+          });
+        } else {
+          this.loadSoupData();
+        }
       }
       
       // 如果是静态模式，直接显示完整内容
@@ -198,6 +202,7 @@ Component({
           if (this.data.staticMode) {
             this._showCompleteContent();
           } else if (this.data.autoPlay) {
+            this.resetAnimation();
             this.startAnimation();
           }
         },
@@ -296,15 +301,43 @@ Component({
     },
 
     /**
-     * 更新默认汤面
-     * @param {Object} soup 默认汤面数据
+     * 标记当前汤面为已查看
      */
-    updateDefaultSoup: function(soup) {
-      const updated = soupService.updateDefaultSoup(soup);
-      if (updated && !this.data.currentSoup) {
-        this.clearCurrentSoup();
+    markCurrentSoupAsViewed: function() {
+      if (this.data.soupId) {
+        soupService.markSoupAsViewed(this.data.soupId);
+        return true;
       }
-      return updated;
+      return false;
+    },
+
+    /**
+     * 标记当前汤面为已回答
+     */
+    markCurrentSoupAsAnswered: function() {
+      if (this.data.soupId) {
+        soupService.markSoupAsAnswered(this.data.soupId);
+        return true;
+      }
+      return false;
+    },
+
+    /**
+     * 检查当前汤面是否已查看
+     * @returns {Boolean} 是否已查看
+     */
+    isCurrentSoupViewed: function() {
+      return this.data.soupId ? 
+        soupService.viewedSoupIds.includes(this.data.soupId) : false;
+    },
+    
+    /**
+     * 检查当前汤面是否已回答
+     * @returns {Boolean} 是否已回答
+     */
+    isCurrentSoupAnswered: function() {
+      return this.data.soupId ? 
+        soupService.isSoupAnswered(this.data.soupId) : false;
     },
 
     /**

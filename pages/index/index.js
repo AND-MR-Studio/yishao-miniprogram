@@ -16,8 +16,8 @@ Page({
     // 控制按钮显示
     showStartButton: false,
     showNextButton: false,
-    // 当前汤面是否已查看
-    currentSoupViewed: false
+    // 防止多次点击
+    isNavigating: false
   },
 
   /**
@@ -44,12 +44,24 @@ Page({
       });
     }
 
-    // 如果当前汤面已查看，直接显示按钮，不播放动画
-    if (this.data.currentSoupViewed) {
-      this.setData({
-        showStartButton: true,
-        showNextButton: true
-      });
+    // 恢复导航状态
+    this.setData({
+      isNavigating: false
+    });
+
+    // 获取当前汤面组件实例
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (soupDisplay) {
+      // 检查当前汤面是否已查看过
+      const isCurrentSoupViewed = soupDisplay.isCurrentSoupViewed();
+      
+      // 如果当前汤面已查看过，直接显示按钮，不触发动画
+      if (isCurrentSoupViewed) {
+        this.setData({
+          showStartButton: true,
+          showNextButton: true
+        });
+      }
     }
   },
 
@@ -103,25 +115,35 @@ Page({
    * 开始喝汤按钮点击事件
    */
   onStartSoup() {
+    // 防止重复点击
+    if (this.data.isNavigating) return;
+    
+    // 设置导航状态
+    this.setData({
+      isNavigating: true
+    });
+
     // 获取当前汤面组件实例
     const soupDisplay = this.selectComponent('#soupDisplay');
     const currentSoupData = soupDisplay.getSoupData();
     
-    // 使用 nextTick 避免递归更新
-    wx.nextTick(() => {
-      this.setData({
-        currentSoupViewed: true
-      });
-    });
+    // 将当前汤面标记为已查看
+    soupDisplay.markCurrentSoupAsViewed();
     
     // 延迟跳转，确保果冻动画效果显示完成
     setTimeout(() => {
       // 使用更简洁的方式传递数据
       wx.navigateTo({
-        url: `/pages/dialog/dialog?soupId=${currentSoupData.id}`,
-        success: function(res) {
+        url: `/pages/dialog/dialog?soupId=${currentSoupData.soupId}`,
+        success: (res) => {
           // 通过eventChannel向dialog页面传送完整数据
           res.eventChannel.emit('acceptDataFromOpenerPage', currentSoupData);
+        },
+        fail: () => {
+          // 导航失败时重置状态
+          this.setData({
+            isNavigating: false
+          });
         }
       });
     }, 300); // 延迟300ms等待动画
@@ -131,22 +153,51 @@ Page({
    * 下一个按钮点击事件
    */
   onNextSoup() {
-    // 延迟执行，确保果冻动画效果显示完成
-    setTimeout(() => {
-      // 重置查看状态
+    // 防止重复点击
+    if (this.data.isNavigating) return;
+    
+    // 获取soup-display组件实例
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (soupDisplay) {
+      // 标记当前汤面已回答（在dialog页面回到主页后调用）
+      if (!soupDisplay.isCurrentSoupAnswered()) {
+        soupDisplay.markCurrentSoupAsAnswered();
+      }
+      
+      // 设置按钮为可见状态，不立即隐藏
+      // 添加一个标志防止重复操作
       this.setData({
-        currentSoupViewed: false,
-        showStartButton: false,
-        showNextButton: false
+        isNavigating: true
       });
       
-      // 获取soup-display组件实例并重置动画
-      const soupDisplay = this.selectComponent('#soupDisplay');
-      if (soupDisplay) {
-        soupDisplay.resetAnimation();
-        soupDisplay.loadSoupData();
-      }
-    }, 300); // 延迟300ms等待动画
+      // 延迟隐藏按钮，等待按钮动画完成
+      setTimeout(() => {
+        // 隐藏按钮
+        this.setData({
+          showStartButton: false,
+          showNextButton: false
+        });
+        
+        // 加载下一个汤面并重置动画
+        // 延迟加载，确保当前汤面的按钮消失动画完成
+        setTimeout(() => {
+          soupDisplay.resetAnimation();
+          soupDisplay.loadSoupData();
+          
+          // 重置导航状态，允许下一次操作
+          this.setData({
+            isNavigating: false
+          });
+        }, 300);
+      }, 300); // 延迟300ms等待按钮动画
+    }
+  },
+
+  /**
+   * 阻止事件冒泡的空函数
+   */
+  catchEvent() {
+    // 空函数，用于阻止事件冒泡
   },
 
   /**

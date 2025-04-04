@@ -1,4 +1,6 @@
 // pages/dialog.js
+const soupService = require('../../utils/soupService');
+
 Page({
 
   /**
@@ -13,7 +15,9 @@ Page({
       autoPlay: true,
       // 静态模式
       staticMode: true
-    }
+    },
+    // 当前汤面ID
+    currentSoupId: ''
   },
 
   /**
@@ -22,6 +26,11 @@ Page({
   onLoad(options) {
     // 获取页面参数中的soupId
     const { soupId } = options;
+    
+    // 保存当前汤面ID
+    this.setData({
+      currentSoupId: soupId || ''
+    });
     
     // 获取数据通道
     const eventChannel = this.getOpenerEventChannel();
@@ -72,7 +81,10 @@ Page({
    * 生命周期函数--监听页面卸载
    */
   onUnload() {
-
+    // 页面卸载时标记当前汤面为已回答
+    if (this.data.currentSoupId) {
+      soupService.markSoupAsAnswered(this.data.currentSoupId);
+    }
   },
 
   /**

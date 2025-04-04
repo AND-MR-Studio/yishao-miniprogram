@@ -5,17 +5,12 @@
   background-color: #061429;
 }
 
-.container {
-  position: relative;
-  width: 100%;
-  height: 100vh;
-}
 
 /* 毛玻璃效果遮罩层 */
 .frosted-glass {
   position: fixed;
   /* 顶部位置留出导航栏高度 */
-  top: 128rpx; /* 导航栏基础高度 + 状态栏高度 */
+  top: 170rpx; /* 导航栏基础高度 + 状态栏高度 */
   left: 0;
   right: 0;
   /* 底部位置留出 tabbar 高度 */

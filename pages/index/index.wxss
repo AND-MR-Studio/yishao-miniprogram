@@ -1,4 +1,6 @@
 /* pages/index.wxss */
+@import "../../styles/animation.wxss";
+
 .page {
   width: 100%;
   min-height: 100vh;
@@ -25,4 +27,20 @@
 .button-container .btn-unlight {
   width: 50% !important;
   min-width: 300rpx !important;
+  /* 增加过渡时间以使效果更明显 */
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* 主页按钮点击效果增强 - 开始喝汤按钮 */
+.button-container .btn-light:active {
+  transform: scale(0.95);
+  background-color: rgba(70, 196, 0, 0.8);
+  box-shadow: 0rpx 5rpx 10rpx rgba(4, 244, 77, 0.15);
+}
+
+/* 主页按钮点击效果增强 - 下一个按钮 */
+.button-container .btn-unlight:active {
+  transform: scale(0.95);
+  background-color: rgba(74, 78, 87, 0.3);
+  border-color: rgba(74, 78, 87, 0.6);
 }
