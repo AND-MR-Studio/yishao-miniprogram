@@ -1,6 +1,39 @@
 <!--components/button/index.wxml-->
-<view class="btn-container" bindtap="handleTap" wx:if="{{show}}">
-  <view class="{{type === 'light' ? 'btn-light' : 'btn-unlight'}} {{animationClass}}" style="{{animationStyle}}">
-    <text class="{{type === 'light' ? 'btn-text-light' : 'btn-text-normal'}}">{{text}}</text>
+<block wx:if="{{type === 'switch'}}">
+  <view class="switch-item">
+    <view class="item-label">{{label}}</view>
+    <view class="switch {{checked ? 'active' : ''}} {{checked && jellyAnimating ? 'jelly-animate' : ''}}" bindtap="handleTap">
+      <view class="switch-knob"></view>
+    </view>
   </view>
-</view>
+</block>
+<block wx:elif="{{type === 'radio'}}">
+  <view class="font-size-option" bindtap="handleTap">
+    <view class="radio {{active ? 'active' : ''}} {{active && jellyAnimating ? 'jelly-animate' : ''}}">
+      <view class="radio-inner" wx:if="{{active}}"></view>
+    </view>
+    <view class="option-label">{{text}}</view>
+  </view>
+</block>
+<block wx:elif="{{type === 'dark'}}">
+  <view class="btn-dark {{jellyAnimating ? 'jelly-animate' : ''}}" style="width: {{width}}; height: {{height}};" bindtap="handleTap">
+    <text class="btn-text-dark">{{text}}</text>
+  </view>
+</block>
+<block wx:elif="{{type === 'confirm'}}">
+  <view class="btn-confirm {{jellyAnimating ? 'jelly-animate' : ''}}" bindtap="handleTap" wx:if="{{show}}">
+    <text class="btn-text-confirm">{{text}}</text>
+  </view>
+</block>
+<block wx:elif="{{type === 'unlight'}}">
+  <view class="btn-unlight" style="width: {{width}}; height: {{height}};" bindtap="handleTap" wx:if="{{show}}">
+    <text class="btn-text-normal">{{text}}</text>
+  </view>
+</block>
+<block wx:elif="{{type === 'light'}}">
+  <view class="btn-container" bindtap="handleTap" wx:if="{{show}}">
+    <view class="btn-light {{animationClass}}" style="{{animationStyle}}; width: {{width}}; height: {{height}};">
+      <text class="btn-text-light">{{text}}</text>
+    </view>
+  </view>
+</block>

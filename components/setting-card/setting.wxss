@@ -23,8 +23,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 18px;
-  gap: 15px;
+  padding: 32px 15px;
   position: fixed;
   width: 100%;
   /* 使用100vh确保从底部完整画出，遮盖tabbar */
@@ -38,6 +37,7 @@
   z-index: 1000;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
   box-sizing: border-box;
+  overflow-x: hidden; /* 确保横向不可滚动 */
 }
 
 .setting-panel.show {
@@ -83,16 +83,19 @@
   animation: pulse 1.5s infinite;
 }
 
+/* 设置容器宽度控制 */
 .setting-container {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 0;
-  gap: 38rpx;
-  width: 90%;
-  max-width: 678rpx;
+  gap: 10rpx;
+  width: 92%;
+  max-width: 650rpx; /* 控制最大宽度，避免在大屏设备上过宽 */
   max-height: calc(100% - 60rpx);
   overflow-y: auto;
+  overflow-x: hidden; /* 确保横向不可滚动 */
+  box-sizing: border-box; /* 确保padding不会导致宽度溢出 */
 }
 
 /* 设置区块 */
@@ -129,6 +132,11 @@
   height: 62rpx;
 }
 
+/* 确保开关组件右对齐 */
+.setting-section .custom-button-class {
+  width: 100%;
+}
+
 .item-label {
   flex: 1;
   font-family: 'Source Han Sans CN';
@@ -142,78 +150,7 @@
   opacity: 0.8;
 }
 
-/* 确定按钮样式 */
-.confirm-button {
-  width: 102rpx;
-  height: 62rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid #FFFFFF;
-  border-radius: 30rpx;
-  color: #FFFFFF;
-  font-family: 'Source Han Sans CN';
-  font-style: light;
-  font-size: 28rpx;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.confirm-button:active {
-  transform: scale(0.95);
-  background: #1a2436;
-}
-
-/* 开关样式 */
-.switch {
-  width: 102rpx;
-  height: 62rpx;
-  border: 1px solid #FFFFFF;
-  border-radius: 100rpx;
-  position: relative;
-  background: #E5E5E5;
-  transition: background-color 0.3s;
-  flex-shrink: 0;
-}
-
-.switch.active {
-  background: #5CE821;
-}
-
-.switch-knob {
-  position: absolute;
-  width: 54rpx;
-  height: 54rpx;
-  top: 4rpx;
-  left: 4rpx;
-  background: #FFFFFF;
-  border: 0.5px solid rgba(0, 0, 0, 0.04);
-  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.15);
-  border-radius: 50%;
-  transition: transform 0.3s;
-}
-
-.switch.active .switch-knob {
-  transform: translateX(40rpx);
-}
-
-.switch-text {
-  position: absolute;
-  width: 56rpx;
-  height: 40rpx;
-  left: 24rpx;
-  top: 12rpx;
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 28rpx;
-  line-height: 40rpx;
-  display: flex;
-  align-items: center;
-  color: #FFFFFF;
-}
-
-/* 字体大小设置 */
+/* 字体大小设置 - 布局保留，但样式已移至按钮组件 */
 .font-size-setting {
   flex-direction: column;
   align-items: flex-start;
@@ -245,74 +182,16 @@
   height: 48rpx;
 }
 
-.font-size-option {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0;
-  gap: 20rpx;
-  width: auto;
-  height: 48rpx;
-}
 
-/* 其他样式保持不变 */
-.radio {
-  box-sizing: border-box;
-  width: 48rpx;
-  height: 48rpx;
-  background: #F4F4F4;
-  mix-blend-mode: normal;
-  border: 3rpx solid #CACACA;
-  border-radius: 100rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.radio.active {
-  background: #5CE821;
-  border: none;
-}
-
-.radio-inner {
-  width: 24rpx;
-  height: 24rpx;
-  background: #FFFFFF;
-  border-radius: 50%;
-}
-
-.option-label {
-  width: 28rpx;
-  height: 40rpx;
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 40rpx;
-  display: flex;
-  align-items: center;
-  letter-spacing: -0.6rpx;
-  color: #2A2D32;
-  opacity: 0.6;
-}
-
-/* 分隔线 */
-.divider {
-  width: 100%;
-  height: 2rpx;
-  background: #000000;
-  opacity: 0.1;
-}
-
-/* 联系我们 */
+/* 联系我们区域调整 */
 .contact-section {
   display: flex;
-  flex-direction: row;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   padding: 0;
-  gap: 36rpx;
+  gap: 20rpx;
   width: 100%;
-  height: 88rpx;
+  height: auto;
 }
 
 .contact-buttons {
@@ -321,29 +200,20 @@
   justify-content: space-between;
   align-items: center;
   padding: 0;
-  gap: 16rpx;
-  flex: 1;
+  gap: 20rpx;
+  width: 100%;
   height: 88rpx;
 }
 
-.contact-button {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 6rpx 40rpx;
-  gap: 12rpx;
+/* 调整按钮样式，确保不重叠 */
+.contact-button-class {
+  margin: 0;
   flex: 1;
-  height: 88rpx;
-  background: #29374F;
-  border-radius: 30rpx;
-  font-family: 'Microsoft YaHei';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 44rpx;
-  text-align: center;
-  color: #FFFFFF;
+  max-width: calc(50% - 10rpx); /* 50%减去间距的一半 */
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 /* 关于我们 */
@@ -353,24 +223,24 @@
   justify-content: space-between;
   align-items: center;
   padding: 0;
-  gap: 42rpx;
+  gap: 20rpx;
   width: 100%;
-  height: 90rpx;
+  height: auto;
+  flex-wrap: wrap; /* 允许在必要时换行 */
 }
 
 .studio-logo {
-  width: 256rpx;
+  width: 200rpx; /* 稍微减小logo宽度 */
   height: 90rpx;
-  /* 实际开发时需替换为实际logo */
   background-image: url('https://img.picui.cn/free/2025/04/02/67ecce36c9b6c.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-
 }
 
 .copyright {
   flex: 1;
+  min-width: 300rpx; /* 确保版权信息有足够空间 */
   font-family: 'Source Han Sans CN';
   font-style: normal;
   font-weight: 400;

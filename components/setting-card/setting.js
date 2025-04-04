@@ -17,6 +17,7 @@ Component({
   data: {
     soundOn: true,
     vibrationOn: false,
+    skipAnimation: false, // 跳过动画开关
     fontSize: 'medium', // 'small', 'medium', 'large'
     statusBarHeight: 0,
     // 拖拽相关变量
@@ -41,24 +42,14 @@ Component({
    * 组件的方法列表
    */
   methods: {
-    onClickLeft() {
-      this.triggerEvent('clickleft');
-    },
-    
-    onClickRight() {
-      this.triggerEvent('clickright');
-    },
-
-    // 切换音效和震动开关
+    // 切换开关
     toggleSwitch(e) {
-      const type = e.currentTarget.dataset.type;
-      const newValue = !this.data[type];
-      
+      const { type, checked } = e.detail;
       this.setData({
-        [type]: newValue
+        [type]: checked
       });
       
-      this.triggerEvent('switchchange', { type, value: newValue });
+      this.triggerEvent('switchchange', { type, value: checked });
     },
     
     // 放弃当前海龟汤
@@ -97,14 +88,14 @@ Component({
       });
     },
     
-    // 选择字体大小
-    selectFontSize(e) {
-      const size = e.currentTarget.dataset.size;
+    // 处理自定义radio按钮的变化
+    handleRadioChange(e) {
+      const { value } = e.detail;
       this.setData({
-        fontSize: size
+        fontSize: value
       });
       
-      this.triggerEvent('fontsizechange', { size });
+      this.triggerEvent('fontsizechange', { size: value });
     },
     
     // 下拉开始

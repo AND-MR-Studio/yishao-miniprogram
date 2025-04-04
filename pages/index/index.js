@@ -9,7 +9,9 @@ Page({
       // 是否只使用默认汤面
       useDefaultOnly: false,
       // 自动播放动画
-      autoPlay: true
+      autoPlay: true,
+      // 静态模式（跳过动画）
+      staticMode: false
     },
     // 控制按钮显示
     showButtons: false,
@@ -125,5 +127,25 @@ Page({
       soupDisplay.resetAnimation();
       soupDisplay.loadSoupData();
     }
-  }
+  },
+
+  /**
+   * 处理设置变化
+   */
+  handleSettingChange(e) {
+    const { type, value } = e.detail;
+    if (type === 'skipAnimation') {
+      // 更新soup-display的静态模式
+      this.setData({
+        'soupConfig.staticMode': value
+      });
+      
+      // 如果开启了跳过动画，直接显示按钮
+      if (value && !this.data.showButtons) {
+        this.setData({
+          showButtons: true
+        });
+      }
+    }
+  },
 })

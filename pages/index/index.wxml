@@ -10,9 +10,16 @@
       id="soupDisplay"
       useDefaultOnly="{{soupConfig.useDefaultOnly}}"
       autoPlay="{{soupConfig.autoPlay}}"
-      staticMode="{{currentSoupViewed}}"
+      staticMode="{{soupConfig.staticMode}}"
       bind:animationComplete="onSoupAnimationComplete"
     ></soup-display>
+    
+    <!-- 设置卡片 -->
+    <setting-card
+      show="{{showSetting}}"
+      bind:switchchange="handleSettingChange"
+      bind:close="onSettingClose"
+    ></setting-card>
     
     <!-- 按钮区域 -->
     <view class="button-container">
@@ -20,6 +27,8 @@
         type="light" 
         text="开始喝汤" 
         animation="slide-up"
+        width="100rpx"
+        height="56rpx"
         bind:tap="onStartSoup" 
         show="{{showButtons}}" 
         delay="0.3">
@@ -28,6 +37,8 @@
         type="unlight" 
         text="下一个" 
         animation="slide-up"
+        width="100rpx"
+        height="56rpx"
         bind:tap="onNextSoup" 
         show="{{showButtons}}" 
         delay="0.8">
