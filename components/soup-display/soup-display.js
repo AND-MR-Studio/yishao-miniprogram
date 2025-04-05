@@ -22,16 +22,6 @@ Component({
       type: Number,
       value: 60
     },
-    // 行间延迟（毫秒）
-    lineDelay: {
-      type: Number,
-      value: 500
-    },
-    // 标点符号延迟倍数
-    punctuationDelay: {
-      type: Number,
-      value: 2.5
-    },
     // 静态模式(不显示动画，直接显示完整内容)
     staticMode: {
       type: Boolean,
@@ -59,13 +49,9 @@ Component({
     'currentSoup'(currentSoup) {
       this._updateDisplayContent();
     },
-    'typeSpeed, lineDelay, punctuationDelay'(typeSpeed, lineDelay, punctuationDelay) {
+    'typeSpeed'(typeSpeed) {
       if (this.typeAnimator) {
-        this.typeAnimator.updateConfig({
-          typeSpeed,
-          lineDelay,
-          punctuationDelay
-        });
+        this.typeAnimator.updateSpeed(typeSpeed);
       }
     },
     'staticMode'(staticMode) {
@@ -93,7 +79,9 @@ Component({
     lineAnimationComplete: false,
     animationComplete: false,
     isAnimating: false,
-    loading: false
+    loading: false,
+    // 固定使用发光效果
+    typeEffect: 'glow'
   },
 
   /**
@@ -133,8 +121,8 @@ Component({
     _initTypeAnimator() {
       this.typeAnimator = typeAnimation.createInstance(this, {
         typeSpeed: this.data.typeSpeed,
-        lineDelay: this.data.lineDelay,
-        punctuationDelay: this.data.punctuationDelay,
+        // 固定使用发光效果
+        typeEffect: 'glow',
         onAnimationStart: () => this.triggerEvent('animationStart'),
         onAnimationComplete: () => this.triggerEvent('animationComplete')
       });

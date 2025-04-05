@@ -107,8 +107,15 @@ page {
   transform: scale(1);
 }
 
-/* 活跃状态 - 当前正在输入的字符 */
-.char-typing.active {
+/* 活跃状态 - 普通打字机 */
+.char-typing.active.effect-normal {
+  opacity: 1;
+  transform: scale(1);
+  color: var(--color-text-primary);
+}
+
+/* 活跃状态 - 发光打字机 */
+.char-typing.active.effect-glow {
   opacity: 1;
   transform: scale(1.05);
   text-shadow: 0 0 8rpx var(--color-primary);

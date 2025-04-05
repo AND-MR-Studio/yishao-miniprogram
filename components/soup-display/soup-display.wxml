@@ -26,7 +26,7 @@
               wx:for-item="char"
               wx:for-index="charIndex"
               wx:key="charIndex" 
-              class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active' : ''}} {{char.prev ? 'prev' : ''}}"
+              class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active effect-' + typeEffect : ''}} {{char.prev ? 'prev' : ''}}"
             >{{char.char}}</text>
           </text>
         </view>

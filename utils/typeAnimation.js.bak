@@ -20,16 +20,20 @@ const typeAnimation = {
 
     // 打字机效果类型
     const TYPE_EFFECTS = {
-      NORMAL: 'normal',    // 普通效果，无发光
+      NORMAL: 'normal',    // 普通效果，无发光和缩放
       GLOW: 'glow'         // 发光效果（包含发光和缩放）
     };
 
-    // 简化配置
+    // 默认配置
     const config = {
-      typeSpeed: options.typeSpeed || 60, // 打字速度（毫秒/字）
+      typeSpeed: options.typeSpeed || 60,
+      lineDelay: options.lineDelay || 500,
+      punctuationDelay: options.punctuationDelay || 2.5,
+      charActiveDuration: options.charActiveDuration || 180,
+      charPrevDuration: options.charPrevDuration || 320,
       onAnimationStart: options.onAnimationStart || null,
       onAnimationComplete: options.onAnimationComplete || null,
-      typeEffect: options.typeEffect || TYPE_EFFECTS.GLOW // 默认为发光效果
+      typeEffect: options.typeEffect || TYPE_EFFECTS.NORMAL
     };
 
     // 标点符号列表
@@ -52,11 +56,10 @@ const typeAnimation = {
      * @returns {Number} 实际延迟时间
      */
     const getCharDelay = (char) => {
-      // 标点符号停顿时间延长2.5倍
       if (punctuations.includes(char)) {
-        return config.typeSpeed * 2.5;
+        return config.typeSpeed * config.punctuationDelay;
       }
-      // 添加随机变化使打字效果更自然
+      // 添加随机变化使打字效果更自然（缓存随机值减少计算）
       const variance = Math.floor(Math.random() * 20) - 10;
       return Math.max(config.typeSpeed / 2, config.typeSpeed + variance);
     };
@@ -103,7 +106,6 @@ const typeAnimation = {
       let prevActive = -1;
       let displayLines = [];
       
-      // 更新UI状态
       const updateUIState = (state = {}) => {
         component.setData({
           displayLines,
@@ -157,8 +159,7 @@ const typeAnimation = {
           currentActive = -1;
           prevActive = -1;
           
-          // 行间延迟固定为 typeSpeed * 8
-          animationTimer = setTimeout(showNextChar, config.typeSpeed * 8);
+          animationTimer = setTimeout(showNextChar, config.lineDelay);
           return;
         }
 
@@ -299,25 +300,23 @@ const typeAnimation = {
       },
       
       /**
+       * 更新配置
+       * @param {Object} newOptions 新配置
+       */
+      updateConfig(newOptions) {
+        Object.assign(config, newOptions);
+      },
+      
+      /**
        * 设置打字机效果类型
-       * @param {String} effectType 效果类型，'normal'或'glow'
+       * @param {String} effectType 效果类型，可选值为NORMAL或GLOW
        */
       setTypeEffect(effectType) {
-        if (effectType === TYPE_EFFECTS.NORMAL || effectType === TYPE_EFFECTS.GLOW) {
+        if (Object.values(TYPE_EFFECTS).includes(effectType)) {
           config.typeEffect = effectType;
           component.setData({ typeEffect: effectType });
         } else {
           console.error('无效的效果类型，可用类型:', Object.values(TYPE_EFFECTS));
-        }
-      },
-      
-      /**
-       * 更新打字速度
-       * @param {Number} speed 新的打字速度
-       */
-      updateSpeed(speed) {
-        if (typeof speed === 'number' && speed > 0) {
-          config.typeSpeed = speed;
         }
       },
       
