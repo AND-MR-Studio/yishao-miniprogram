@@ -1,24 +1,13 @@
 /* components/soup-display/soup-display.wxss */
 
-:host {
-  --soup-padding-top: 100rpx;
-  --soup-min-height: 443rpx;
-  --soup-title-size: 44rpx;
-  --soup-text-size: 34rpx;
-  --soup-line-height: 48rpx;
-  --soup-spacing: 40rpx;
-  --transition-duration: 0.3s;
-  --transition-timing: cubic-bezier(0.215, 0.610, 0.355, 1.000);
-}
-
 /* 汤面容器 */
 .soup-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--soup-padding-top) 0 0;
+  padding: var(--spacing-xxl) 0 0;
   width: 100%;
-  min-height: var(--soup-min-height);
+  min-height: 443rpx;
   position: relative;
   box-sizing: border-box;
   will-change: transform;
@@ -35,7 +24,7 @@
 }
 
 .loading-text {
-  font-size: var(--soup-text-size);
+  font-size: var(--font-size-md);
   color: var(--color-text-primary);
   text-align: center;
 }
@@ -46,8 +35,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 10rpx;
-  margin-bottom: var(--soup-spacing);
+  padding: 0 var(--spacing-xs);
+  margin-bottom: var(--spacing-xl);
   text-align: center;
 }
 
@@ -65,9 +54,9 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   font-family: 'Huiwen-mincho';
-  font-size: var(--soup-title-size);
+  font-size: var(--font-size-xl);
   color: var(--color-text-primary);
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
@@ -87,11 +76,11 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: 20rpx 0;
-  margin-bottom: 20rpx;
+  padding: var(--spacing-md) 0;
+  margin-bottom: var(--spacing-md);
   min-height: 200px;
   max-height: 335px;
-  border-radius: 8rpx;
+  border-radius: var(--radius-sm);
   position: relative;
   transition: all var(--transition-duration) var(--transition-timing);
   will-change: transform, opacity;
@@ -109,11 +98,11 @@
 /* 汤面内容行样式 */
 .soup-line-container {
   width: fit-content;
-  margin-bottom: 30rpx;
+  margin-bottom: var(--spacing-lg);
   position: relative;
   display: flex;
   align-items: center;
-  min-height: var(--soup-line-height);
+  min-height: calc(var(--font-size-md) * var(--line-height-md));
 }
 
 .soup-text-line {
@@ -122,9 +111,9 @@
   white-space: nowrap;
   font-family: 'Huiwen-mincho';
   font-style: normal;
-  font-weight: 400;
-  font-size: var(--soup-text-size);
-  line-height: var(--soup-line-height);
+  font-weight: var(--font-weight-normal);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
   color: var(--color-text-primary);
   transition: color var(--transition-duration) var(--transition-timing);
   transform: translateZ(0);

@@ -34,10 +34,7 @@ page {
   
   /* 光标颜色（供打字机效果使用） */
   --cursor-color: #FA5151;
-}
 
-/* 排版 */
-page {
   /* 字号 */
   --font-size-xs: 24rpx;
   --font-size-sm: 28rpx;
@@ -58,10 +55,7 @@ page {
   --font-weight-medium: 500;
   --font-weight-bold: 700;
   --font-weight-black: 900;
-}
 
-/* 间距 */
-page {
   /* 内外边距 */
   --spacing-xxs: 4rpx;
   --spacing-xs: 10rpx;
@@ -75,10 +69,7 @@ page {
   --layout-gutter: 30rpx;
   --layout-spacing: 40rpx;
   --layout-margin: 30rpx;
-}
 
-/* 边框 */
-page {
   /* 圆角 */
   --radius-xs: 4rpx;
   --radius-sm: 8rpx;
@@ -92,10 +83,8 @@ page {
   --border-width-normal: 2px;
   --border-width-thick: 4px;
   --border-color: rgba(255, 255, 255, 0.1);
-}
 
-/* 阴影 */
-page {
+  /* 阴影 */
   --shadow-sm: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
   --shadow-md: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
   --shadow-lg: 0 6rpx 16rpx rgba(0, 0, 0, 0.25);
@@ -104,4 +93,8 @@ page {
   /* 发光效果 */
   --glow-primary: 0 0 15rpx rgba(23, 255, 93, 0.6);
   --glow-accent: 0 0 15rpx rgba(250, 81, 81, 0.6);
-} 
+
+  /* 动画相关变量 */
+  --transition-duration: 0.3s;
+  --transition-timing: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+}

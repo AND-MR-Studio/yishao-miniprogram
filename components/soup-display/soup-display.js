@@ -103,7 +103,6 @@ Component({
     currentSoup: null,
     title: '',
     contentLines: [],
-    soupId: '',
     // 动画相关数据
     titleChars: [],
     titleAnimationComplete: false,
