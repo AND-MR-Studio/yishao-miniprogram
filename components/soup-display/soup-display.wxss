@@ -1,15 +1,27 @@
 /* components/soup-display/soup-display.wxss */
 
+:host {
+  --soup-padding-top: 100rpx;
+  --soup-min-height: 443rpx;
+  --soup-title-size: 44rpx;
+  --soup-text-size: 34rpx;
+  --soup-line-height: 48rpx;
+  --soup-spacing: 40rpx;
+  --transition-duration: 0.3s;
+  --transition-timing: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+}
+
 /* 汤面容器 */
 .soup-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 100rpx 0rpx 0rpx;
+  padding: var(--soup-padding-top) 0 0;
   width: 100%;
-  min-height: 443rpx;
+  min-height: var(--soup-min-height);
   position: relative;
   box-sizing: border-box;
+  will-change: transform;
 }
 
 /* 加载中样式 */
@@ -23,10 +35,9 @@
 }
 
 .loading-text {
-  font-size: 32rpx;
+  font-size: var(--soup-text-size);
   color: var(--color-text-primary);
   text-align: center;
-  /* 使用animation.wxss中的blink动画 */
 }
 
 /* 汤面标题区样式 */
@@ -36,7 +47,7 @@
   justify-content: center;
   align-items: center;
   padding: 0 10rpx;
-  margin-bottom: 40rpx;
+  margin-bottom: var(--soup-spacing);
   text-align: center;
 }
 
@@ -56,16 +67,15 @@
   text-align: center;
   font-weight: 700;
   font-family: 'Huiwen-mincho';
-  font-size: 44rpx;
+  font-size: var(--soup-title-size);
   color: var(--color-text-primary);
-  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58), 0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  transform: translateZ(0);
 }
 
 /* 动画状态样式 */
-.soup-title.animation-active {
-  position: relative;
-}
-
+.soup-title.animation-active,
 .soup-title.animation-complete {
   position: relative;
 }
@@ -77,13 +87,14 @@
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: 20rpx 0rpx ;
+  padding: 20rpx 0;
   margin-bottom: 20rpx;
   min-height: 200px;
   max-height: 335px;
   border-radius: 8rpx;
   position: relative;
-  transition: all 0.3s var(--transition-emphasized, cubic-bezier(0.215, 0.610, 0.355, 1.000));
+  transition: all var(--transition-duration) var(--transition-timing);
+  will-change: transform, opacity;
 }
 
 .soup-content {
@@ -102,7 +113,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 48rpx;
+  min-height: var(--soup-line-height);
 }
 
 .soup-text-line {
@@ -112,13 +123,14 @@
   font-family: 'Huiwen-mincho';
   font-style: normal;
   font-weight: 400;
-  font-size: 34rpx;
-  line-height: 48rpx;
+  font-size: var(--soup-text-size);
+  line-height: var(--soup-line-height);
   color: var(--color-text-primary);
-  transition: color 0.3s var(--transition-emphasized, cubic-bezier(0.215, 0.610, 0.355, 1.000));
+  transition: color var(--transition-duration) var(--transition-timing);
+  transform: translateZ(0);
 }
 
-/* 静态模式样式 - 关闭所有动画效果 */
+/* 静态模式样式 */
 .soup-container.static-mode .typing-cursor {
   display: none;
 }

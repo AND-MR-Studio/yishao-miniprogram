@@ -9,15 +9,14 @@ Page({
   data: {
     // 页面配置
     soupConfig: {
-      // 是否只使用默认汤面
-      useDefaultOnly: false,
-      // 自动播放动画
-      autoPlay: true,
-      // 静态模式
-      staticMode: true
+      soupId: '',  // 不指定则随机获取，设为'default'显示默认汤面
+      autoPlay: false,  // 是否自动播放动画
+      staticMode: true  // 静态模式(不显示动画)
     },
     // 当前汤面ID
-    currentSoupId: ''
+    currentSoupId: '',
+    // 当前汤面数据
+    currentSoupData: null
   },
 
   /**
@@ -31,32 +30,41 @@ Page({
     this.setData({
       currentSoupId: soupId || ''
     });
-    
-    // 获取数据通道
-    const eventChannel = this.getOpenerEventChannel();
-    // 监听数据传递事件
-    eventChannel.on('acceptDataFromOpenerPage', (soupData) => {
-      console.log('接收到的汤面数据：', soupData);
-      // 获取soup-display组件实例并设置数据
-      const soupDisplay = this.selectComponent('#soupDisplay');
-      if (soupDisplay) {
-        soupDisplay.setCurrentSoup(soupData);
-      }
-    });
+
+    // 如果有soupId，直接从服务获取对应的汤面数据
+    if (soupId) {
+      soupService.getSoupData({
+        soupId: soupId,
+        success: (soupData) => {
+          if (soupData) {
+            // 保存完整的汤面数据到页面状态
+            this.setData({
+              currentSoupData: soupData
+            });
+            
+            // 获取soup-display组件实例并设置数据
+            const soupDisplay = this.selectComponent('#soupDisplay');
+            if (soupDisplay) {
+              soupDisplay.setCurrentSoup(soupData);
+            }
+          }
+        }
+      });
+    }
   },
 
   /**
    * 汤面动画播放完成事件处理
    */
   onSoupAnimationComplete() {
-    console.log('dialog页面汤面动画播放完成');
+    // 动画播放完成的处理逻辑
   },
 
   /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady() {
-
+    // 页面初次渲染完成的处理逻辑
   },
 
   /**
@@ -74,23 +82,20 @@ Page({
    * 生命周期函数--监听页面隐藏
    */
   onHide() {
-
+    // 页面隐藏时的处理逻辑
   },
 
   /**
    * 生命周期函数--监听页面卸载
    */
   onUnload() {
-    // 页面卸载时标记当前汤面为已回答
-    if (this.data.currentSoupId) {
-      soupService.markSoupAsAnswered(this.data.currentSoupId);
-    }
+    // 页面卸载时的处理逻辑
   },
 
   /**
    * 用户点击右上角分享
    */
   onShareAppMessage() {
-
+    // 分享逻辑
   }
 })

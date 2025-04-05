@@ -6,9 +6,9 @@
   
   <view class="container">
     <!-- 汤面显示区域 -->
-    <soup-display 
+    <soup-display
       id="soupDisplay"
-      useDefaultOnly="{{soupConfig.useDefaultOnly}}"
+      soupId="{{soupConfig.soupId}}"
       autoPlay="{{soupConfig.autoPlay}}"
       staticMode="{{soupConfig.staticMode}}"
       bind:animationComplete="onSoupAnimationComplete"

@@ -1,31 +1,56 @@
 <!--components/soup-display/soup-display.wxml-->
-<view class="soup-container {{staticMode ? 'static-mode' : ''}}" style="{{_cursorStyle}}">
+<view 
+  class="soup-container {{staticMode ? 'static-mode' : ''}}" 
+  style="{{_cursorStyle}}"
+  aria-busy="{{loading}}"
+>
   <!-- 加载中状态 -->
-  <view class="loading-container" wx:if="{{loading}}">
+  <view 
+    class="loading-container" 
+    wx:if="{{loading}}"
+    aria-live="polite"
+  >
     <text class="loading-text blink-animation">汤面加载中...</text>
   </view>
   
   <!-- 汤面内容区域 -->
   <block wx:else>
     <!-- 汤面标题 -->
-    <view class="soup-title-section">
+    <view 
+      class="soup-title-section"
+      aria-label="汤面标题"
+    >
       <view class="soup-title-frame">
-        <text class="soup-title {{titleAnimationComplete ? 'animation-complete' : 'animation-active'}}">
-          <text wx:for="{{titleChars}}" wx:key="index" 
-                class="char-typing {{item.show ? 'show' : ''}} {{item.active ? 'active' : ''}} {{item.prev ? 'prev' : ''}}">
-            {{item.char}}
-          </text>
+        <text 
+          class="soup-title {{titleAnimationComplete ? 'animation-complete' : 'animation-active'}}"
+          aria-label="{{title}}"
+        >
+          <text 
+            wx:for="{{titleChars}}" 
+            wx:key="index" 
+            class="char-typing {{item.show ? 'show' : ''}} {{item.active ? 'active' : ''}} {{item.prev ? 'prev' : ''}}"
+          >{{item.char}}</text>
         </text>
       </view>
     </view>
     
     <!-- 汤面正文 -->
-    <view class="soup-content-section">
+    <view 
+      class="soup-content-section"
+      aria-label="汤面内容"
+    >
       <view class="soup-content">
         <block wx:for="{{displayLines}}" wx:key="index">
-          <view class="soup-line-container">
+          <view 
+            class="soup-line-container"
+            aria-label="第{{index + 1}}行"
+          >
             <text class="soup-text-line">{{item}}</text>
-            <view class="typing-cursor" wx:if="{{currentLineIndex === index && !lineAnimationComplete && isAnimating}}"></view>
+            <view 
+              class="typing-cursor" 
+              wx:if="{{currentLineIndex === index && !lineAnimationComplete && isAnimating}}"
+              aria-hidden="true"
+            ></view>
           </view>
         </block>
       </view>

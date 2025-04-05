@@ -2,121 +2,93 @@
 
 ## 简介
 
-汤面组件是一个可配置的打字机效果文本展示组件，用于展示恐怖/悬疑风格的短文本，支持从后台动态获取汤面数据，或使用默认汤面数据。组件采用模块化设计，将数据服务和动画效果解耦，便于维护和扩展。
+汤面组件是一个专门用于展示恐怖/悬疑风格短文本的微信小程序组件。它提供了可配置的打字机动画效果，支持动态加载汤面数据，并且可以根据需要切换静态/动态显示模式。
+
+## 特性
+
+- 🎬 流畅的打字机动画效果
+- 🔄 支持动态加载和切换汤面
+- ⚡ 静态/动态显示模式切换
+- 🎨 可自定义光标样式
+- 🎮 完整的动画控制接口
+- 🔧 高度可配置的动画参数
 
 ## 架构设计
 
-组件采用三层架构设计，实现了关注点分离：
-
-1. **展示层 (soup-display)**: 负责UI渲染和事件触发
-2. **动画层 (typeAnimation)**: 提供打字机动画效果
-3. **数据层 (soupService)**: 处理数据加载和默认数据管理
-
-### 组件依赖关系
+组件采用三层架构设计，实现关注点分离：
 
 ```
-soup-display.js
-    ├── typeAnimation.js (动画服务)
-    └── soupService.js   (数据服务)
+soup-display（展示层）
+    ├── typeAnimation（动画层）
+    └── soupService（数据层）
 ```
 
-## 功能特性
-
-- 打字机逐字显示效果
-- 自动从后台加载汤面数据
-- 加载失败时自动降级为默认汤面
-- 可配置的打字速度、行间延迟
-- 丰富的事件通知
-- 完全组件化，低耦合设计
-- 支持动画控制（开始、暂停、重置）
-
-## 完整数据流过程
-
-### 1. 初始化阶段
-
-```
-页面初始化 → 汤面组件创建 → attached生命周期 → 初始化动画工具
-    ↓                                         
-检查autoLoad属性 → 自动加载数据或使用默认汤面
-```
-
-### 2. 数据加载阶段
-
-```
-loadSoupData() → 设置loading=true → 触发loadStart事件
-    ↓
-soupService.getSoupData() → 获取汤面数据 → 返回数据或默认汤面
-    ↓
-设置currentSoup → 触发loadSuccess事件 → 触发loadComplete事件
-```
-
-### 3. 动画展示阶段
-
-```
-autoPlay=true → startAnimation() → typeAnimator.start() → 触发animationStart事件
-    ↓
-动画进行 → 逐字显示标题 → 逐行逐字显示内容
-    ↓
-动画完成 → 触发animationComplete事件
-```
-
-## 属性说明
+## 属性配置
 
 | 属性名 | 类型 | 默认值 | 说明 |
 |-------|------|-------|------|
-| useDefaultOnly | Boolean | false | 是否只使用默认汤面，忽略后台数据 |
+| soupId | String | '' | 指定要显示的汤面ID |
 | autoPlay | Boolean | true | 是否自动播放动画 |
-| titleTypeSpeed | Number | 150 | 标题打字速度（毫秒/字） |
-| contentTypeSpeed | Number | 100 | 内容打字速度（毫秒/字） |
-| lineDelay | Number | 800 | 行间延迟（毫秒） |
-| autoLoad | Boolean | true | 组件初始化时是否自动加载数据 |
+| titleTypeSpeed | Number | 80 | 标题打字速度(ms/字) |
+| contentTypeSpeed | Number | 60 | 内容打字速度(ms/字) |
+| lineDelay | Number | 500 | 行间延迟(ms) |
+| punctuationDelay | Number | 2.5 | 标点符号延迟倍数 |
+| staticMode | Boolean | false | 静态模式(不显示动画) |
+| cursorColor | String | '' | 自定义光标颜色 |
 
-## 事件说明
+## 事件系统
 
-| 事件名 | 说明 | 回调参数 |
-|-------|------|---------|
+| 事件名 | 触发时机 | 回调参数 |
+|-------|---------|---------|
 | loadStart | 开始加载数据 | - |
 | loadSuccess | 数据加载成功 | { soupData } |
 | loadFail | 数据加载失败 | { error } |
 | loadComplete | 数据加载完成 | - |
-| contentChange | 内容发生变化 | { soupId, title, contentLines } |
-| animationStart | 动画开始播放 | - |
+| contentChange | 内容变化时 | { soupId, title, contentLines } |
+| animationStart | 动画开始 | - |
 | animationPause | 动画暂停 | - |
 | animationReset | 动画重置 | - |
-| animationComplete | 动画播放完成 | - |
+| animationComplete | 动画完成 | - |
 
-## 方法说明
+## API 接口
 
-| 方法名 | 说明 | 参数 | 返回值 |
-|-------|------|------|-------|
-| loadSoupData | 从后台加载汤面数据 | - | - |
-| setCurrentSoup | 设置当前汤面 | soup: Object | Boolean |
-| clearCurrentSoup | 恢复使用默认汤面 | - | Boolean |
-| updateDefaultSoup | 更新默认汤面 | soup: Object | Boolean |
-| startAnimation | 开始动画 | - | - |
-| pauseAnimation | 暂停动画 | - | - |
-| resetAnimation | 重置动画 | - | - |
-| getSoupData | 获取当前汤面数据 | - | Object |
+### 数据控制
+- `loadSoupData()`: 加载汤面数据
+- `setCurrentSoup(soup)`: 设置当前汤面
+- `getSoupData()`: 获取当前汤面数据
+
+### 动画控制
+- `startAnimation()`: 开始动画
+- `pauseAnimation()`: 暂停动画
+- `resetAnimation()`: 重置动画
 
 ## 使用示例
 
-### 基本使用
-
-```html
-<soup-display />
-```
-
-### 高级配置
+### 基础用法
 
 ```html
 <soup-display 
   id="soupDisplay"
-  useDefaultOnly="{{false}}"
+  soupId="{{soupId}}"
   autoPlay="{{true}}"
-  titleTypeSpeed="{{150}}"
-  contentTypeSpeed="{{100}}"
-  lineDelay="{{800}}"
-  autoLoad="{{true}}"
+  bind:loadSuccess="onSoupLoadSuccess"
+  bind:animationComplete="onAnimationComplete"
+/>
+```
+
+### 完整配置
+
+```html
+<soup-display 
+  id="soupDisplay"
+  soupId="{{soupId}}"
+  autoPlay="{{true}}"
+  titleTypeSpeed="{{80}}"
+  contentTypeSpeed="{{60}}"
+  lineDelay="{{500}}"
+  punctuationDelay="{{2.5}}"
+  staticMode="{{false}}"
+  cursorColor="#FF0000"
   bind:loadStart="onSoupLoadStart"
   bind:loadSuccess="onSoupLoadSuccess"
   bind:loadFail="onSoupLoadFail"
@@ -124,144 +96,83 @@ autoPlay=true → startAnimation() → typeAnimator.start() → 触发animationS
   bind:contentChange="onSoupContentChange"
   bind:animationStart="onSoupAnimationStart"
   bind:animationComplete="onSoupAnimationComplete"
+  bind:animationPause="onSoupAnimationPause"
+  bind:animationReset="onSoupAnimationReset"
 />
 ```
 
-### 方法调用
+### 页面逻辑示例
 
 ```javascript
-// 获取组件实例
-const soupDisplay = this.selectComponent('#soupDisplay');
-
-// 手动加载数据
-soupDisplay.loadSoupData();
-
-// 设置自定义汤面
-soupDisplay.setCurrentSoup({
-  soupId: 'custom_001',
-  title: '《自定义汤面》',
-  contentLines: [
-    '第一行文本',
-    '第二行文本',
-    '最后一行'
-  ]
-});
-
-// 恢复使用默认汤面
-soupDisplay.clearCurrentSoup();
-
-// 控制动画
-soupDisplay.startAnimation();
-soupDisplay.pauseAnimation();
-soupDisplay.resetAnimation();
-```
-
-## 汤面数据格式
-
-汤面数据对象格式如下：
-
-```javascript
-{
-  soupId: 'soup_001',      // 汤面唯一标识
-  title: '《汤面标题》',    // 汤面标题
-  contentLines: [          // 汤面内容行数组
-    '第一行文本',
-    '第二行文本',
-    '最后一行'
-  ]
-}
-```
-
-## 如何扩展
-
-### 自定义数据源
-
-可以通过修改 `utils/soupService.js` 文件中的 `getSoupData` 方法来自定义数据源：
-
-```javascript
-getSoupData: function(options = {}) {
-  const { success, fail, complete } = options;
-  
-  // 使用云开发获取数据
-  wx.cloud.callFunction({
-    name: 'getSoup',
-    data: {},
-    success: res => {
-      // 如果获取到有效数据，返回后台数据；否则返回默认汤面
-      const resultData = (res.result && res.result.data) ? res.result.data : this.defaultSoup;
-      if (typeof success === 'function') {
-        success(resultData);
-      }
-    },
-    fail: err => {
-      if (typeof fail === 'function') {
-        fail(err);
-      }
-    },
-    complete: () => {
-      if (typeof complete === 'function') {
-        complete();
-      }
-    }
-  });
-}
-```
-
-### 自定义默认汤面
-
-可以通过soupService的updateDefaultSoup方法更新默认汤面：
-
-```javascript
-soupService.updateDefaultSoup({
-  soupId: 'custom_default',
-  title: '《自定义默认汤面》',
-  contentLines: [
-    '这是自定义的',
-    '默认汤面内容'
-  ]
-});
-```
-
-### 使用打字机动画工具
-
-打字机动画工具是完全独立的，可以在其他组件中复用：
-
-```javascript
-const typeAnimation = require('../../utils/typeAnimation');
-
-// 创建动画实例
-const animator = typeAnimation.createInstance(this, {
-  titleTypeSpeed: 150,
-  contentTypeSpeed: 100,
-  lineDelay: 800,
-  onAnimationStart: () => {
-    console.log('动画开始');
+Page({
+  data: {
+    soupId: 'default_001'
   },
-  onAnimationComplete: () => {
-    console.log('动画完成');
+
+  onLoad() {
+    this.soupDisplay = this.selectComponent('#soupDisplay');
+  },
+
+  // 开始喝汤
+  onStartSoup() {
+    if (!this.soupDisplay) return;
+    
+    const soupData = this.soupDisplay.getSoupData();
+    if (!soupData?.soupId) return;
+    
+    wx.navigateTo({
+      url: `/pages/dialog/dialog?soupId=${soupData.soupId}`
+    });
+  },
+
+  // 切换下一个汤面
+  onNextSoup() {
+    if (this.soupDisplay) {
+      this.soupDisplay.loadSoupData();
+    }
+  },
+
+  // 事件处理
+  onSoupLoadSuccess({ detail }) {
+    console.log('汤面加载成功:', detail.soupData);
+  },
+
+  onAnimationComplete() {
+    console.log('动画播放完成');
   }
 });
-
-// 开始动画
-animator.start({
-  title: '标题文本',
-  contentLines: ['第一行', '第二行']
-});
-
-// 暂停动画
-animator.pause();
-
-// 重置动画
-animator.reset();
-
-// 销毁动画（在组件销毁时调用）
-animator.destroy();
 ```
+
+## 最佳实践
+
+1. **数据加载**
+   - 使用 `soupId` 属性指定要显示的汤面
+   - 监听 `loadSuccess` 和 `loadFail` 事件处理加载结果
+
+2. **动画控制**
+   - 使用 `staticMode` 在需要时禁用动画
+   - 监听 `animationComplete` 事件处理后续逻辑
+
+3. **性能优化**
+   - 避免频繁切换 `staticMode`
+   - 合理设置动画速度和延迟参数
+
+4. **错误处理**
+   - 监听 `loadFail` 事件处理加载失败情况
+   - 组件会自动使用第一个汤面作为后备方案
 
 ## 注意事项
 
-1. 确保汤面数据格式正确，特别是 `contentLines` 必须是数组类型
-2. 当 `useDefaultOnly` 设为 `true` 时，组件将不会请求后台数据
-3. 自动播放（`autoPlay=true`）仅在数据加载完成后触发
-4. 组件销毁时会自动清理动画资源，避免内存泄漏
-5. 数据和动画逻辑已解耦，便于单独维护和测试 
+1. 静态模式下会直接显示完整内容，跳过动画效果
+2. 设置汤面数据时必须包含完整的数据结构
+3. 页面跳转时建议使用 `soupId` 传递数据
+4. `cursorColor` 为空时使用主题默认颜色
+5. 动画完成后会触发 `animationComplete` 事件
+
+## 后续优化计划
+
+1. 支持更多动画效果和过渡方式
+2. 添加更多自定义样式选项
+3. 优化动画性能和内存占用
+4. 增强错误处理机制
+5. 支持更多交互事件和手势控制 
