@@ -7,103 +7,19 @@
   background-color: #061429;
 }
 
-
 /* 毛玻璃效果遮罩层 */
 .frosted-glass {
   position: fixed;
   /* 顶部位置留出导航栏高度 */
-  top: 170rpx; /* 导航栏基础高度 + 状态栏高度 */
+  top: 180rpx; /* 导航栏基础高度 + 状态栏高度 */
   left: 0;
   right: 0;
   /* 底部位置留出 tabbar 高度 */
   bottom: calc(220rpx + env(safe-area-inset-bottom)); /* tabbar高度 + 输入框高度 + 底部安全区域 */
   background-color: rgba(255, 255, 255, 0);
-  backdrop-filter: blur(16rpx);
-  -webkit-backdrop-filter: blur(16rpx);
+  backdrop-filter: blur(15rpx);
+  -webkit-backdrop-filter: blur(15rpx);
   z-index: 100;
   pointer-events: none; /* 确保不会影响底层组件的交互 */
-}
-
-/* 底部输入区域 */
-.input-area {
-  position: fixed;
-  left: 0;
-  bottom: calc(110rpx + env(safe-area-inset-bottom)); /* 留出tabbar的高度 */
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: #061429;
-  z-index: 1000;
-}
-
-.input-container {
-  width: 95%;
-  height: 110rpx;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0 0 0rpx;
-  gap: 20rpx;
-}
-
-/* 语音按钮 */
-.voice-btn {
-  width: 56rpx; /* 28px -> 56rpx */
-  height: 56rpx; /* 28px -> 56rpx */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  background: #959DAE; /* 灰色背景 */
-  border-radius: 50%; /* 圆形 */
-}
-
-.voice-btn .font_family {
-  font-size: 30rpx; /* 调整图标大小 */
-  color: #959DAE; /* Dark20 颜色 */
-}
-
-/* 输入框 */
-.input-box {
-  flex: 1;
-  height: 70rpx;
-  background: #29374F;
-  border: 2rpx solid #2BB319;
-  border-radius: 10rpx;
-  display: flex;
-  align-items: center;
-  padding: 0 40rpx;
-}
-
-.input-field {
-  width: 100%;
-  height: 100%;
-  font-size: 28rpx;
-  color: #FFFFFF;
-}
-
-.input-placeholder {
-  color: #A3ABB8;
-  font-size: 28rpx;
-}
-
-/* 发送按钮 */
-.send-btn {
-  width: 72rpx;
-  height: 72rpx;
-  background: #2BB319;
-  box-shadow: 0 0 20rpx rgba(4, 244, 77, 0.5);
-  border-radius: 198rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.send-btn .font_family {
-  font-size: 36rpx; /* 调整图标大小 */
-  color: #FFFFFF;
 }
 

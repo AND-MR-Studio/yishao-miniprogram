@@ -15,39 +15,18 @@
     ></soup-display>
     <!-- 毛玻璃效果遮罩层 -->
     <view class="frosted-glass"></view>
+    <!-- 对话区域 -->
+    <dialog-area messages="{{messages}}" />
   </view>
 
-  <!-- 底部输入区域 -->
-  <view class="input-area">
-    <view class="input-container">
-      <!-- 语音按钮 -->
-      <view class="voice-btn" bindtap="handleVoice">
-        <text class="font_family icon-voice"></text>
-      </view>
-      
-      <!-- 输入框 -->
-      <view class="input-box">
-        <input class="input-field" 
-          value="{{inputValue}}"
-          placeholder="输入你的问题......"
-          placeholder-class="input-placeholder"
-          cursor-spacing="20"
-          adjust-position="{{true}}"
-          hold-keyboard="{{false}}"
-          confirm-type="send"
-          confirm-hold="{{false}}"
-          bindinput="handleInput"
-          bindconfirm="handleSend"
-          focus="{{inputFocus}}"
-        />
-      </view>
-
-      <!-- 发送按钮 -->
-      <view class="send-btn" bindtap="handleSend">
-        <text class="font_family icon-question"></text>
-      </view>
-    </view>
-  </view>
+  <!-- 输入栏组件 -->
+  <input-bar
+    inputValue="{{inputValue}}"
+    inputFocus="{{inputFocus}}"
+    bind:input="handleInput"
+    bind:send="handleSend"
+    bind:voice="handleVoice"
+  />
 
   <!-- 自定义tabBar -->
   <custom-tab-bar></custom-tab-bar>

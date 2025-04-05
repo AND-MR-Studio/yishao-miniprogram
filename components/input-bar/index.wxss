@@ -1,0 +1,85 @@
+/* components/input-bar/index.wxss */
+@import "/static/css/iconfont.wxss";
+
+/* 底部输入区域 */
+.input-area {
+  position: fixed;
+  left: 0;
+  bottom: calc(110rpx + env(safe-area-inset-bottom)); /* 留出tabbar的高度 */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #061429;
+  z-index: 999;
+}
+
+.input-container {
+  width: 95%;
+  height: 110rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 0 0 0rpx;
+  gap: 20rpx;
+}
+
+/* 语音按钮 */
+.voice-btn {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  background: #959DAE;
+  border-radius: 50%;
+}
+
+.voice-btn .font_family {
+  font-size: 30rpx;
+  color: #061429;
+}
+
+/* 输入框 */
+.input-box {
+  flex: 1;
+  height: 70rpx;
+  background: #29374F;
+  border: 2rpx solid #2BB319;
+  border-radius: 10rpx;
+  display: flex;
+  align-items: center;
+  padding: 0 40rpx;
+}
+
+.input-field {
+  width: 100%;
+  height: 100%;
+  font-size: 28rpx;
+  color: #FFFFFF;
+}
+
+.input-placeholder {
+  color: #A3ABB8;
+  font-size: 28rpx;
+}
+
+/* 发送按钮 */
+.send-btn {
+  width: 72rpx;
+  height: 72rpx;
+  background: #2BB319;
+  box-shadow: 0 0 20rpx rgba(4, 244, 77, 0.5);
+  border-radius: 198rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.send-btn .font_family {
+  font-size: 36rpx;
+  color: #FFFFFF;
+}

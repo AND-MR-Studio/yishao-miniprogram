@@ -1,0 +1,60 @@
+/* 对话区域 */
+.dialog-area {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 50rpx;
+  gap: 20rpx;
+  position: fixed;
+  /* 顶部位置留出导航栏高度 */
+  top: 180rpx; /* 导航栏基础高度 + 状态栏高度 */
+  left: 0;
+  right: 0;
+  /* 底部位置留出 tabbar 高度 */
+  bottom: calc(220rpx + env(safe-area-inset-bottom)); /* tabbar高度 + 输入框高度 + 底部安全区域 */
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 200;
+}
+
+.dialog-content {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 40rpx 0rpx;
+  gap: 10rpx;
+  width: 100%;
+  height: 100%;
+  overflow-y: scroll;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 20rpx;
+}
+
+/* 基础消息样式 */
+.message {
+  font-family: 'Huiwen-mincho';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 34rpx;
+  line-height: 170%;
+  margin-bottom: 10rpx;
+  width: 100%;
+  padding: 0 40rpx;
+  box-sizing: border-box;
+}
+
+/* 回复消息样式（红色） */
+.message-response {
+  color: var(--color-accent);
+}
+
+/* 用户消息样式（白色） */
+.message-user {
+  color: var(--color-text-primary);
+}
+
+/* 提示消息样式（绿色带发光效果） */
+.message-hint {
+  color: var(--color-success);
+  text-shadow: 0rpx 0rpx 20rpx rgba(4, 244, 77, 0.5);
+} 

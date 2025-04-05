@@ -1,0 +1,18 @@
+<view class="dialog-area">
+
+  <scroll-view 
+    class="dialog-content" 
+    scroll-y="true" 
+    scroll-with-animation="true"
+    scroll-anchoring="true"
+    enhanced="true"
+    show-scrollbar="false"
+    enable-flex="true"
+
+  >
+    <block wx:for="{{messages}}" wx:key="index">
+      <text class="message {{item.type === 'system' ? 'message-response' : 'message-user'}}">{{item.type === 'system' ? '> ' + item.content : item.content}}</text>
+      <text wx:if="{{item.response}}" class="message message-response">{{item.response ? '> ' + item.response : ''}}</text>
+    </block>
+  </scroll-view>
+</view> 
