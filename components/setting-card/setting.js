@@ -43,14 +43,7 @@ Component({
       this.setData({ statusBarHeight });
 
       // 初始化设置状态
-      try {
-        const settings = wx.getStorageSync('soupSettings') || {};
-        this.setData({
-          skipAnimation: settings.skipAnimation || false
-        });
-      } catch (e) {
-        console.error('读取设置失败:', e);
-      }
+      this.loadSettings();
     }
   },
 
@@ -58,24 +51,54 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    // 加载设置
+    loadSettings() {
+      try {
+        const settings = wx.getStorageSync('soupSettings') || {};
+        this.setData({
+          soundOn: settings.soundOn ?? true,
+          vibrationOn: settings.vibrationOn ?? false,
+          skipAnimation: settings.skipAnimation ?? false,
+          fontSize: settings.fontSize || 'medium'
+        });
+      } catch (e) {
+        console.error('读取设置失败:', e);
+      }
+    },
+
+    // 保存设置
+    saveSettings() {
+      try {
+        const settings = {
+          soundOn: this.data.soundOn,
+          vibrationOn: this.data.vibrationOn,
+          skipAnimation: this.data.skipAnimation,
+          fontSize: this.data.fontSize
+        };
+        wx.setStorageSync('soupSettings', settings);
+      } catch (e) {
+        console.error('保存设置失败:', e);
+      }
+    },
+
     // 设置字体大小
     setFontSize(e) {
-      // 检查是否是自定义按钮的radiochange事件
       if (e.detail && e.detail.value) {
         const option = this.data.fontSizeOptions.find(option => option.value === e.detail.value);
         if (!option) return;
         
-        // 触发震动
         this.triggerVibration();
         
-        // 只有选择不同的值时才更新
         if (this.data.fontSize !== option.value) {
-          this.setData({ fontSize: option.value });
-          
-          // 触发事件，传递字体大小相关信息
-          this.triggerEvent('fontsizechange', {
-            size: option.value,
-            scaleFactor: option.scaleFactor
+          this.setData({ fontSize: option.value }, () => {
+            // 保存设置
+            this.saveSettings();
+            
+            // 触发事件
+            this.triggerEvent('fontsizechange', {
+              size: option.value,
+              scaleFactor: option.scaleFactor
+            });
           });
         }
       } else {
@@ -121,22 +144,21 @@ Component({
     // 切换开关
     toggleSwitch(e) {
       const { type, checked } = e.detail;
-      
-      // 确保type存在
       if (!type) return;
       
       // 更新对应的状态
-      this.setData({ [type]: checked });
-      
-      // 当振动开关打开时，立即触发震动反馈
-      if (type === 'vibrationOn' && checked) {
-        wx.vibrateShort();
-      } else if (this.data.vibrationOn) {
-        // 其他开关切换时，如果震动已开启，提供反馈
-        this.triggerVibration();
-      }
-      
-      this.triggerEvent('switchchange', { type, value: checked });
+      this.setData({ [type]: checked }, () => {
+        // 保存设置
+        this.saveSettings();
+        
+        // 当开启振动或其他开关切换为true时触发震动
+        if (this.data.vibrationOn && (type === 'vibrationOn' || checked)) {
+          this.triggerVibration();
+        }
+        
+        // 触发事件通知父组件
+        this.triggerEvent('switchchange', { type, value: checked });
+      });
     },
     
     // 放弃当前海龟汤

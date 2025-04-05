@@ -144,15 +144,6 @@ Page({
         'soupConfig.staticMode': value
       });
       
-      // 保存设置到本地存储
-      try {
-        const settings = wx.getStorageSync('soupSettings') || {};
-        settings.skipAnimation = value;
-        wx.setStorageSync('soupSettings', settings);
-      } catch (e) {
-        console.error('保存设置失败:', e);
-      }
-      
       // 如果开启了跳过动画，直接显示按钮
       if (value && !this.data.showButtons) {
         this.setData({
