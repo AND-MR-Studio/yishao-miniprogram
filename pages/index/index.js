@@ -20,10 +20,32 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
+    // 初始化设置
+    this.initSettings();
+    
     // 确保按钮初始状态为隐藏
     this.setData({
       showButtons: false
     });
+  },
+
+  // 初始化设置
+  initSettings() {
+    try {
+      const settings = wx.getStorageSync('soupSettings') || {};
+      this.setData({
+        'soupConfig.staticMode': settings.skipAnimation || false
+      });
+      
+      // 如果开启了静态模式，直接显示按钮
+      if (settings.skipAnimation) {
+        this.setData({
+          showButtons: true
+        });
+      }
+    } catch (e) {
+      console.error('读取设置失败:', e);
+    }
   },
 
   /**
@@ -121,6 +143,15 @@ Page({
       this.setData({
         'soupConfig.staticMode': value
       });
+      
+      // 保存设置到本地存储
+      try {
+        const settings = wx.getStorageSync('soupSettings') || {};
+        settings.skipAnimation = value;
+        wx.setStorageSync('soupSettings', settings);
+      } catch (e) {
+        console.error('保存设置失败:', e);
+      }
       
       // 如果开启了跳过动画，直接显示按钮
       if (value && !this.data.showButtons) {

@@ -2,6 +2,7 @@
 <view class="page">
   <!-- 导航栏 -->
   <nav-bar 
+    bind:settingchange="handleSettingChange"
   />
   
   <view class="container">

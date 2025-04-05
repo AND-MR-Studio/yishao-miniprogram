@@ -41,6 +41,16 @@ Component({
       // 获取状态栏高度
       const { statusBarHeight } = wx.getWindowInfo();
       this.setData({ statusBarHeight });
+
+      // 初始化设置状态
+      try {
+        const settings = wx.getStorageSync('soupSettings') || {};
+        this.setData({
+          skipAnimation: settings.skipAnimation || false
+        });
+      } catch (e) {
+        console.error('读取设置失败:', e);
+      }
     }
   },
 
