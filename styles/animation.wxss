@@ -35,6 +35,26 @@ page {
   --transition-accelerated: cubic-bezier(0.4, 0, 1, 1);
 }
 
+/* 闪烁动画 - 用于加载状态和光标 */
+@keyframes blink {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 打字机光标闪烁动画 */
+@keyframes cursor-blink {
+  from, to {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
 /* 滑入动画 - 按钮滑入使用 */
 @keyframes slide-up {
   from {
@@ -54,7 +74,7 @@ page {
   100% { opacity: 0.7; }
 }
 
-/* 果冻动画 - 开关和按钮点击效果 */
+/* 果冻动画 - 部分按钮和控件点击效果 */
 @keyframes jelly-animation {
   0% { transform: scale(1); }
   30% { transform: scale(1.2, 0.85); }
@@ -65,8 +85,26 @@ page {
   100% { transform: scale(1); }
 }
 
-/* 应用果冻动画的公共类 */
-.jelly-effect {
+/* 打字机动画通用类 */
+.typing-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background-color: var(--cursor-color, #FA5151);
+  margin-left: 2px;
+  vertical-align: middle;
+  animation: cursor-blink 0.6s infinite;
+  box-shadow: 0 0 2px var(--cursor-color, #FA5151);
+  border-radius: 1px;
+}
+
+/* 加载闪烁效果 */
+.blink-animation {
+  animation: blink 1.5s infinite;
+}
+
+/* 应用果冻动画的公共类 - 排除首页按钮 */
+.jelly-effect:not(.btn-light):not(.btn-unlight) {
   animation: jelly-animation 0.6s var(--transition-ease);
 }
 
@@ -75,4 +113,48 @@ page {
   opacity: 0;
   animation: slide-up var(--animation-normal) var(--transition-decelerated);
   animation-fill-mode: forwards;
+}
+
+/* 打字机字符动画通用类 */
+.char-typing {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 160ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+  position: relative;
+}
+
+/* 普通显示状态 */
+.char-typing.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 活跃状态 - 当前正在输入的字符 */
+.char-typing.active {
+  opacity: 1;
+  transform: scale(1.05);
+  text-shadow: 0 0 8rpx var(--color-primary);
+  color: #fff;
+}
+
+/* 前一个字符状态 - 刚刚输入完的字符 */
+.char-typing.prev {
+  opacity: 0.9;
+  transform: scale(1);
+  transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+}
+
+/* 按钮点击效果 - 点亮按钮 */
+.btn-light:active {
+  transform: scale(0.95);
+  background-color: rgba(70, 196, 0, 0.8);
+  box-shadow: 0rpx 5rpx 10rpx rgba(4, 244, 77, 0.15);
+}
+
+/* 按钮点击效果 - 未点亮按钮 */
+.btn-unlight:active {
+  transform: scale(0.95);
+  background-color: rgba(74, 78, 87, 0.3);
+  border-color: rgba(74, 78, 87, 0.6);
 } 

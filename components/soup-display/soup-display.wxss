@@ -5,7 +5,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 100rpx 0 20rpx;
+  padding: 100rpx 0rpx 0rpx;
   width: 100%;
   min-height: 443rpx;
   position: relative;
@@ -26,16 +26,7 @@
   font-size: 32rpx;
   color: var(--color-text-primary);
   text-align: center;
-  animation: blink 1.5s infinite;
-}
-
-@keyframes blink {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 1;
-  }
+  /* 使用animation.wxss中的blink动画 */
 }
 
 /* 汤面标题区样式 */
@@ -79,44 +70,14 @@
   position: relative;
 }
 
-/* 逐字打字效果 - 增强版 */
-.char-typing {
-  display: inline-block;
-  opacity: 0;
-  transform: scale(0.9);
-  transition: all 160ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
-  position: relative;
-}
-
-/* 普通显示状态 */
-.char-typing.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* 活跃状态 - 当前正在输入的字符 */
-.char-typing.active {
-  opacity: 1;
-  transform: scale(1.05);
-  text-shadow: 0 0 8rpx var(--color-primary);
-  color: #fff;
-}
-
-/* 前一个字符状态 - 刚刚输入完的字符 */
-.char-typing.prev {
-  opacity: 0.9;
-  transform: scale(1);
-  transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
-}
-
 /* 汤面内容区样式 */
 .soup-content-section {
-  width: 90%;
+  width: 80%;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  padding: 20rpx 0;
+  padding: 20rpx 0rpx ;
   margin-bottom: 20rpx;
   min-height: 200px;
   max-height: 335px;
@@ -137,7 +98,7 @@
 /* 汤面内容行样式 */
 .soup-line-container {
   width: fit-content;
-  margin-bottom: 20rpx;
+  margin-bottom: 30rpx;
   position: relative;
   display: flex;
   align-items: center;
@@ -155,28 +116,6 @@
   line-height: 48rpx;
   color: var(--color-text-primary);
   transition: color 0.3s var(--transition-emphasized, cubic-bezier(0.215, 0.610, 0.355, 1.000));
-}
-
-/* 打字机光标样式 */
-.typing-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  background-color: var(--cursor-color, #FA5151);
-  margin-left: 2px;
-  vertical-align: middle;
-  animation: cursor-blink 0.6s infinite;
-  box-shadow: 0 0 2px var(--cursor-color, #FA5151);
-  border-radius: 1px;
-}
-
-@keyframes cursor-blink {
-  from, to {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
 }
 
 /* 静态模式样式 - 关闭所有动画效果 */

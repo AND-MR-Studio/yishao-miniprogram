@@ -282,12 +282,12 @@
 }
 
 .studio-logo {
-  width: 200rpx; /* 稍微减小logo宽度 */
+  width: 300rpx; /* 稍微减小logo宽度 */
   height: 90rpx;
   background-image: url('https://img.picui.cn/free/2025/04/02/67ecce36c9b6c.png');
   background-size: contain;
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: left;
 }
 
 .copyright {

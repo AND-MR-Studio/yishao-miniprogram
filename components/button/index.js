@@ -89,17 +89,21 @@ Component({
   methods: {
     // 按钮点击事件
     handleTap() {
-      // 开始果冻动画
-      this.setData({
-        jellyAnimating: true
-      });
-      
-      // 监听动画结束并重置状态
-      setTimeout(() => {
+      // 只有特定类型的按钮才执行果冻动画（不包括light和unlight类型）
+      const buttonType = this.properties.type;
+      if (buttonType !== 'light' && buttonType !== 'unlight') {
+        // 开始果冻动画
         this.setData({
-          jellyAnimating: false
+          jellyAnimating: true
         });
-      }, 600); // 与动画持续时间一致
+        
+        // 监听动画结束并重置状态
+        setTimeout(() => {
+          this.setData({
+            jellyAnimating: false
+          });
+        }, 600); // 与动画持续时间一致
+      }
       
       if (this.properties.type === 'switch') {
         const newValue = !this.data.checked;

@@ -31,16 +31,24 @@
   transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
-/* 主页按钮点击效果增强 - 开始喝汤按钮 */
-.button-container .btn-light:active {
-  transform: scale(0.95);
-  background-color: rgba(70, 196, 0, 0.8);
-  box-shadow: 0rpx 5rpx 10rpx rgba(4, 244, 77, 0.15);
+/* 按钮动画控制 */
+.button-container .start-button,
+.button-container .next-button {
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* 主页按钮点击效果增强 - 下一个按钮 */
-.button-container .btn-unlight:active {
-  transform: scale(0.95);
-  background-color: rgba(74, 78, 87, 0.3);
-  border-color: rgba(74, 78, 87, 0.6);
+/* 显示按钮动画 - 开始喝汤按钮 */
+.button-container.show-buttons .start-button {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.3s;
+}
+
+/* 显示按钮动画 - 下一个按钮 */
+.button-container.show-buttons .next-button {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.6s;
 }

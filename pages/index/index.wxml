@@ -22,27 +22,24 @@
     ></setting-card>
     
     <!-- 按钮区域 -->
-    <view class="button-container">
+    <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
       <custom-button 
         type="light" 
         text="开始喝汤" 
-        animation="slide-up"
         width="50%"
         height="80rpx"
         bind:tap="onStartSoup" 
-        bind:animationend="onStartButtonAnimationEnd"
-        show="{{showStartButton}}" 
-        delay="0.3">
+        class="start-button"
+        show="{{showButtons}}">
       </custom-button>
       <custom-button 
         type="unlight" 
         text="下一个" 
-        animation="slide-up"
         width="50%"
         height="80rpx"
         bind:tap="onNextSoup" 
-        show="{{showNextButton}}" 
-        delay="0.3">
+        class="next-button"
+        show="{{showButtons}}">
       </custom-button>
     </view>
   </view>

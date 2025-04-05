@@ -37,6 +37,7 @@
   font-size: 24rpx;
   margin-top: 5rpx;
   transition: all 0.25s ease;
+  font-family: 'Source Han Sans CN';
 }
 
 /* 选中状态的图标容器效果 */

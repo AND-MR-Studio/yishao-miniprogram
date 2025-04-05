@@ -25,12 +25,6 @@
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-.btn-light:active {
-  transform: scale(0.95);
-  background-color: rgba(70, 196, 0, 0.8);
-  box-shadow: 0rpx 5rpx 15rpx rgba(4, 244, 77, 0.15);
-}
-
 /* 点亮按钮文本 */
 .btn-text-light {
   font-family: 'Huiwen-mincho';
@@ -57,12 +51,6 @@
   border: 1rpx solid#4a4e57;
   border-radius: 100rpx;
   transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.btn-unlight:active {
-  transform: scale(0.95);
-  background-color: rgba(50, 50, 50, 0.3);
-  border-color: rgba(74, 78, 87, 0.6);
 }
 
 /* 未点亮按钮文本 */
@@ -307,9 +295,7 @@
   height: 48rpx;
 }
 
-/* 使用公共果冻动画类 */
-.btn-light.jelly-animate,
-.btn-unlight.jelly-animate,
+/* 使用公共果冻动画类 - 只应用于特定类型的按钮，不包括light和unlight */
 .btn-confirm.jelly-animate,
 .btn-dark.jelly-animate,
 .switch.jelly-animate,

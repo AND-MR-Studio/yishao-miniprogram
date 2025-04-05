@@ -13,11 +13,8 @@ Page({
       // 静态模式（跳过动画）
       staticMode: false
     },
-    // 控制按钮显示
-    showStartButton: false,
-    showNextButton: false,
-    // 防止多次点击
-    isNavigating: false
+    // 控制按钮显示 - 使用单一变量控制
+    showButtons: false
   },
 
   /**
@@ -25,13 +22,25 @@ Page({
    */
   onLoad(options) {
     // 页面加载完成，组件会自动处理汤面加载
+    // 确保按钮初始状态为隐藏
+    this.setData({
+      showButtons: false
+    });
   },
 
   /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady() {
-
+    // 获取当前汤面组件实例
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    
+    // 如果开启了静态模式，直接显示按钮
+    if (this.data.soupConfig.staticMode && soupDisplay) {
+      this.setData({
+        showButtons: true
+      });
+    }
   },
 
   /**
@@ -43,26 +52,8 @@ Page({
         selected: 1
       });
     }
-
-    // 恢复导航状态
-    this.setData({
-      isNavigating: false
-    });
-
-    // 获取当前汤面组件实例
-    const soupDisplay = this.selectComponent('#soupDisplay');
-    if (soupDisplay) {
-      // 检查当前汤面是否已查看过
-      const isCurrentSoupViewed = soupDisplay.isCurrentSoupViewed();
-      
-      // 如果当前汤面已查看过，直接显示按钮，不触发动画
-      if (isCurrentSoupViewed) {
-        this.setData({
-          showStartButton: true,
-          showNextButton: true
-        });
-      }
-    }
+    
+    // 不在onShow中检查动画状态，完全依靠组件的事件通知
   },
 
   /**
@@ -79,7 +70,6 @@ Page({
 
   },
 
-
   /**
    * 用户点击右上角分享
    */
@@ -92,22 +82,11 @@ Page({
    */
   onSoupAnimationComplete() {
     console.log('汤面动画播放完成');
-    // 只显示第一个按钮
+    // 显示按钮，CSS会控制动画顺序
     wx.nextTick(() => {
       this.setData({
-        showStartButton: true
+        showButtons: true
       });
-    });
-  },
-
-  /**
-   * 开始喝汤按钮动画完成事件
-   */
-  onStartButtonAnimationEnd() {
-    console.log('开始喝汤按钮动画完成');
-    // 显示下一个按钮
-    this.setData({
-      showNextButton: true
     });
   },
 
@@ -115,14 +94,6 @@ Page({
    * 开始喝汤按钮点击事件
    */
   onStartSoup() {
-    // 防止重复点击
-    if (this.data.isNavigating) return;
-    
-    // 设置导航状态
-    this.setData({
-      isNavigating: true
-    });
-
     // 获取当前汤面组件实例
     const soupDisplay = this.selectComponent('#soupDisplay');
     const currentSoupData = soupDisplay.getSoupData();
@@ -130,32 +101,20 @@ Page({
     // 将当前汤面标记为已查看
     soupDisplay.markCurrentSoupAsViewed();
     
-    // 延迟跳转，确保果冻动画效果显示完成
-    setTimeout(() => {
-      // 使用更简洁的方式传递数据
-      wx.navigateTo({
-        url: `/pages/dialog/dialog?soupId=${currentSoupData.soupId}`,
-        success: (res) => {
-          // 通过eventChannel向dialog页面传送完整数据
-          res.eventChannel.emit('acceptDataFromOpenerPage', currentSoupData);
-        },
-        fail: () => {
-          // 导航失败时重置状态
-          this.setData({
-            isNavigating: false
-          });
-        }
-      });
-    }, 300); // 延迟300ms等待动画
+    // 跳转到对话页面
+    wx.navigateTo({
+      url: `/pages/dialog/dialog?soupId=${currentSoupData.soupId}`,
+      success: (res) => {
+        // 通过eventChannel向dialog页面传送完整数据
+        res.eventChannel.emit('acceptDataFromOpenerPage', currentSoupData);
+      }
+    });
   },
 
   /**
    * 下一个按钮点击事件
    */
   onNextSoup() {
-    // 防止重复点击
-    if (this.data.isNavigating) return;
-    
     // 获取soup-display组件实例
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (soupDisplay) {
@@ -164,32 +123,14 @@ Page({
         soupDisplay.markCurrentSoupAsAnswered();
       }
       
-      // 设置按钮为可见状态，不立即隐藏
-      // 添加一个标志防止重复操作
+      // 隐藏按钮
       this.setData({
-        isNavigating: true
+        showButtons: false
       });
       
-      // 延迟隐藏按钮，等待按钮动画完成
-      setTimeout(() => {
-        // 隐藏按钮
-        this.setData({
-          showStartButton: false,
-          showNextButton: false
-        });
-        
-        // 加载下一个汤面并重置动画
-        // 延迟加载，确保当前汤面的按钮消失动画完成
-        setTimeout(() => {
-          soupDisplay.resetAnimation();
-          soupDisplay.loadSoupData();
-          
-          // 重置导航状态，允许下一次操作
-          this.setData({
-            isNavigating: false
-          });
-        }, 300);
-      }, 300); // 延迟300ms等待按钮动画
+      // 加载下一个汤面并重置动画
+      soupDisplay.resetAnimation();
+      soupDisplay.loadSoupData();
     }
   },
 
@@ -212,10 +153,9 @@ Page({
       });
       
       // 如果开启了跳过动画，直接显示按钮
-      if (value && !this.data.showStartButton) {
+      if (value && !this.data.showButtons) {
         this.setData({
-          showStartButton: true,
-          showNextButton: true
+          showButtons: true
         });
       }
     }

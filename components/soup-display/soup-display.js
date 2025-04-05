@@ -50,6 +50,19 @@ Component({
   },
 
   /**
+   * 引用外部样式类
+   */
+  externalClasses: [],
+  
+  /**
+   * 组件样式隔离
+   */
+  options: {
+    styleIsolation: 'shared',
+    addGlobalClass: true
+  },
+  
+  /**
    * 数据监听器
    */
   observers: {
