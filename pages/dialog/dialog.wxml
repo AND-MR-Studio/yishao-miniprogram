@@ -16,7 +16,12 @@
     <!-- 毛玻璃效果遮罩层 -->
     <view class="frosted-glass"></view>
     <!-- 对话区域 -->
-    <dialog-area messages="{{messages}}" />
+    <dialog-area 
+      class="dialog-area-component" 
+      messages="{{messages}}" 
+      soupId="{{currentSoupId}}"
+      bind:messagesChange="handleMessagesChange"
+    />
   </view>
 
   <!-- 输入栏组件 -->

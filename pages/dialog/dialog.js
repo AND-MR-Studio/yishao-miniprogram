@@ -40,22 +40,7 @@ Page({
     
     // 保存当前汤面ID
     this.setData({
-      currentSoupId: soupId,
-      // 添加初始系统消息 - 拆分为三条独立的消息，每条单独应用样式
-      messages: [
-        {
-          type: 'system',
-          content: '欢迎来到一勺海龟汤。'
-        },
-        {
-          type: 'system',
-          content: '你需要通过提问来猜测谜底，'
-        },
-        {
-          type: 'system',
-          content: '我只会回答"是"、"否"或"不确定"。'
-        }
-      ]
+      currentSoupId: soupId
     });
 
     // 从服务获取对应的汤面数据
@@ -83,43 +68,23 @@ Page({
    */
   handleSend(e) {
     const { value } = e.detail;
-    if (!value.trim()) {
-      wx.showToast({
-        title: '请输入内容',
-        icon: 'none'
-      });
-      return;
-    }
-
-    // 添加用户消息
-    const newMessages = [...this.data.messages, {
-      type: 'user',
-      content: value
-    }];
-
-    // 模拟系统回复（这里应该替换为实际的回复逻辑）
-    const responses = ['是', '否', '不确定'];
-    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
     
-    // 不需要添加前缀，WXML会处理
-    newMessages.push({
-      type: 'system',
-      content: randomResponse
-    });
+    // 获取dialog-area组件实例，使用class选择器
+    const dialogArea = this.selectComponent('.dialog-area-component');
+    if (dialogArea) {
+      // 调用组件的handleUserMessage方法处理用户消息
+      dialogArea.handleUserMessage(value);
+      // 注意：input-bar组件现在会自动清空输入框，不需要在这里处理
+    }
+  },
 
-    // 更新消息列表并清空输入框
-    this.setData({
-      messages: newMessages,
-      inputValue: ''
-    }, () => {
-      // 在setData的回调中获取组件并滚动
-      const dialogArea = this.selectComponent('dialog-area');
-      if (dialogArea) {
-        setTimeout(() => {
-          dialogArea.scrollToBottom();
-        }, 100);
-      }
-    });
+  /**
+   * 处理消息列表变化事件
+   */
+  handleMessagesChange(e) {
+    // 从事件中获取更新后的消息列表并更新页面状态
+    const { messages } = e.detail;
+    this.setData({ messages });
   },
 
   /**
@@ -139,6 +104,8 @@ Page({
     });
   },
 
+  onSoupAnimationComplete() {
+  },
 
   /**
    * 生命周期函数--监听页面初次渲染完成

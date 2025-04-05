@@ -41,20 +41,23 @@
   width: 100%;
   padding: 0 40rpx;
   box-sizing: border-box;
+  white-space: pre-wrap;
+  word-break: break-all;
 }
 
 /* 回复消息样式（红色） */
-.message-response {
+.response {
   color: var(--color-accent);
-}
-
-/* 用户消息样式（白色） */
-.message-user {
-  color: var(--color-text-primary);
+  position: relative;
 }
 
 /* 提示消息样式（绿色带发光效果） */
-.message-hint {
+.hint {
   color: var(--color-success);
   text-shadow: 0rpx 0rpx 20rpx rgba(4, 244, 77, 0.5);
+} 
+
+/* 用户消息样式（白色） */
+.user {
+  color: var(--color-text-primary);
 } 

@@ -1,7 +1,6 @@
 <!--components/soup-display/soup-display.wxml-->
 <view 
   class="soup-container {{staticMode ? 'static-mode' : ''}}" 
-  style="{{_cursorStyle}}"
   aria-busy="{{loading}}"
 >
   <!-- 加载中状态 -->
@@ -15,45 +14,23 @@
   
   <!-- 汤面内容区域 -->
   <block wx:else>
-    <!-- 汤面标题 -->
-    <view 
-      class="soup-title-section"
-      aria-label="汤面标题"
-    >
-      <view class="soup-title-frame">
-        <text 
-          class="soup-title {{titleAnimationComplete ? 'animation-complete' : 'animation-active'}}"
-          aria-label="{{title}}"
+    <view class="soup-content">
+      <block wx:for="{{displayLines}}" wx:key="index">
+        <view 
+          class="text-line-container {{index === 0 ? 'title' : ''}}"
+          aria-label="{{index === 0 ? '汤面标题' : '第' + index + '行'}}"
         >
-          <text 
-            wx:for="{{titleChars}}" 
-            wx:key="index" 
-            class="char-typing {{item.show ? 'show' : ''}} {{item.active ? 'active' : ''}} {{item.prev ? 'prev' : ''}}"
-          >{{item.char}}</text>
-        </text>
-      </view>
-    </view>
-    
-    <!-- 汤面正文 -->
-    <view 
-      class="soup-content-section"
-      aria-label="汤面内容"
-    >
-      <view class="soup-content">
-        <block wx:for="{{displayLines}}" wx:key="index">
-          <view 
-            class="soup-line-container"
-            aria-label="第{{index + 1}}行"
-          >
-            <text class="soup-text-line">{{item}}</text>
-            <view 
-              class="typing-cursor" 
-              wx:if="{{currentLineIndex === index && !lineAnimationComplete && isAnimating}}"
-              aria-hidden="true"
-            ></view>
-          </view>
-        </block>
-      </view>
+          <text class="text-line {{index === 0 ? 'title' : ''}}">
+            <text 
+              wx:for="{{item.chars}}" 
+              wx:for-item="char"
+              wx:for-index="charIndex"
+              wx:key="charIndex" 
+              class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active' : ''}} {{char.prev ? 'prev' : ''}}"
+            >{{char.char}}</text>
+          </text>
+        </view>
+      </block>
     </view>
   </block>
 </view>

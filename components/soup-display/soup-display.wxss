@@ -70,33 +70,22 @@
 }
 
 /* 汤面内容区样式 */
-.soup-content-section {
-  width: 80%;
+.soup-content {
+  width: 90%;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   align-items: center;
   padding: var(--spacing-md) 0;
   margin-bottom: var(--spacing-md);
   min-height: 200px;
   max-height: 335px;
-  border-radius: var(--radius-sm);
   position: relative;
   transition: all var(--transition-duration) var(--transition-timing);
   will-change: transform, opacity;
 }
 
-.soup-content {
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  position: relative;
-}
-
-/* 汤面内容行样式 */
-.soup-line-container {
+/* 文本行容器 */
+.text-line-container {
   width: fit-content;
   margin-bottom: var(--spacing-lg);
   position: relative;
@@ -105,8 +94,20 @@
   min-height: calc(var(--font-size-md) * var(--line-height-md));
 }
 
-.soup-text-line {
-  display: inline-block;
+/* 标题行特殊样式 */
+.text-line-container.title {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 var(--spacing-xs);
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+/* 文本行基础样式 */
+.text-line {
+  display: inline-flex;
   position: relative;
   white-space: nowrap;
   font-family: 'Huiwen-mincho';
@@ -119,11 +120,50 @@
   transform: translateZ(0);
 }
 
-/* 静态模式样式 */
-.soup-container.static-mode .typing-cursor {
-  display: none;
+/* 标题文本特殊样式 */
+.text-line.title {
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xl);
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
 }
 
+/* 打字机字符动画样式 */
+.char-typing {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 160ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+  position: relative;
+}
+
+/* 普通显示状态 */
+.char-typing.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 活跃状态 - 当前正在输入的字符 */
+.char-typing.active {
+  opacity: 1;
+  transform: scale(1.05);
+  text-shadow: 0 0 8rpx var(--color-primary);
+  color: #fff;
+}
+
+/* 前一个字符状态 - 刚刚输入完的字符 */
+.char-typing.prev {
+  opacity: 0.9;
+  transform: scale(1);
+  transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+}
+
+/* 静态模式样式 */
 .soup-container.static-mode .char-typing {
   opacity: 1 !important;
   transform: none !important;

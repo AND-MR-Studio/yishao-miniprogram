@@ -17,13 +17,8 @@ Component({
       type: Boolean,
       value: true
     },
-    // 标题打字速度（毫秒/字）
-    titleTypeSpeed: {
-      type: Number,
-      value: 80
-    },
-    // 内容打字速度（毫秒/字）
-    contentTypeSpeed: {
+    // 打字速度（毫秒/字）
+    typeSpeed: {
       type: Number,
       value: 60
     },
@@ -41,11 +36,6 @@ Component({
     staticMode: {
       type: Boolean,
       value: false
-    },
-    // 自定义光标颜色
-    cursorColor: {
-      type: String,
-      value: ''  // 空表示使用主题默认值
     }
   },
 
@@ -66,20 +56,19 @@ Component({
    * 数据监听器
    */
   observers: {
-    'currentSoup': function (currentSoup) {
+    'currentSoup'(currentSoup) {
       this._updateDisplayContent();
     },
-    'titleTypeSpeed, contentTypeSpeed, lineDelay, punctuationDelay': function (titleTypeSpeed, contentTypeSpeed, lineDelay, punctuationDelay) {
+    'typeSpeed, lineDelay, punctuationDelay'(typeSpeed, lineDelay, punctuationDelay) {
       if (this.typeAnimator) {
         this.typeAnimator.updateConfig({
-          titleTypeSpeed,
-          contentTypeSpeed,
+          typeSpeed,
           lineDelay,
           punctuationDelay
         });
       }
     },
-    'staticMode': function (staticMode) {
+    'staticMode'(staticMode) {
       if (!this.data.currentSoup) return;
       
       if (staticMode) {
@@ -88,11 +77,6 @@ Component({
         this.resetAnimation();
         this.startAnimation();
       }
-    },
-    'cursorColor': function (color) {
-      this.setData({
-        _cursorStyle: color ? `--cursor-color: ${color};` : ''
-      });
     }
   },
 
@@ -104,31 +88,20 @@ Component({
     title: '',
     contentLines: [],
     // 动画相关数据
-    titleChars: [],
-    titleAnimationComplete: false,
     displayLines: [],
     currentLineIndex: 0,
     lineAnimationComplete: false,
     animationComplete: false,
     isAnimating: false,
-    loading: false,
-    // 内部使用数据
-    _cursorStyle: ''
+    loading: false
   },
 
   /**
    * 组件生命周期
    */
   lifetimes: {
-    attached: function () {
+    attached() {
       this._initTypeAnimator();
-      
-      // 如果有cursorColor，初始化光标样式
-      if (this.data.cursorColor) {
-        this.setData({
-          _cursorStyle: `--cursor-color: ${this.data.cursorColor};`
-        });
-      }
       
       // 加载汤面数据
       this.loadSoupData();
@@ -141,7 +114,7 @@ Component({
       }
     },
 
-    detached: function () {
+    detached() {
       if (this.typeAnimator) {
         this.typeAnimator.destroy();
         this.typeAnimator = null;
@@ -157,10 +130,9 @@ Component({
      * 初始化打字机动画工具
      * @private
      */
-    _initTypeAnimator: function () {
+    _initTypeAnimator() {
       this.typeAnimator = typeAnimation.createInstance(this, {
-        titleTypeSpeed: this.data.titleTypeSpeed,
-        contentTypeSpeed: this.data.contentTypeSpeed,
+        typeSpeed: this.data.typeSpeed,
         lineDelay: this.data.lineDelay,
         punctuationDelay: this.data.punctuationDelay,
         onAnimationStart: () => this.triggerEvent('animationStart'),
@@ -171,22 +143,12 @@ Component({
     /**
      * 从后台加载汤面数据
      */
-    loadSoupData: function () {
+    loadSoupData() {
       this.setData({ loading: true });
       this.triggerEvent('loadStart');
 
-      // 如果当前有soupId，获取下一个汤面的ID
-      let targetSoupId = this.data.soupId;
-      if (targetSoupId) {
-        const currentIndex = soupService.getSoupIndex(targetSoupId);
-        // 如果是最后一个或找不到当前汤面，从第一个开始
-        if (currentIndex === -1 || currentIndex === soupService.soups.length - 1) {
-          targetSoupId = soupService.soups[0].soupId;
-        } else {
-          // 否则获取下一个汤面
-          targetSoupId = soupService.soups[currentIndex + 1].soupId;
-        }
-      }
+      // 获取目标汤面ID
+      let targetSoupId = this._getNextSoupId();
 
       soupService.getSoupData({
         soupId: targetSoupId,
@@ -222,10 +184,28 @@ Component({
     },
 
     /**
+     * 获取下一个汤面ID
+     * @private
+     * @returns {String} 下一个汤面ID
+     */
+    _getNextSoupId() {
+      const currentId = this.data.soupId;
+      if (!currentId) return '';
+      
+      const currentIndex = soupService.getSoupIndex(currentId);
+      // 如果是最后一个或找不到当前汤面，从第一个开始
+      if (currentIndex === -1 || currentIndex === soupService.soups.length - 1) {
+        return soupService.soups[0].soupId;
+      }
+      // 否则获取下一个汤面
+      return soupService.soups[currentIndex + 1].soupId;
+    },
+
+    /**
      * 更新显示内容
      * @private
      */
-    _updateDisplayContent: function () {
+    _updateDisplayContent() {
       const currentSoup = this.data.currentSoup;
       if (!currentSoup) {
         this.setData({
@@ -251,7 +231,7 @@ Component({
      * 显示完整内容（静态模式）
      * @private
      */
-    _showCompleteContent: function () {
+    _showCompleteContent() {
       if (!this.data.title || !this.data.contentLines || !this.typeAnimator) return;
       
       wx.nextTick(() => {
@@ -267,7 +247,7 @@ Component({
      * @param {Object} soup 汤面数据对象
      * @returns {boolean} 是否设置成功
      */
-    setCurrentSoup: function (soup) {
+    setCurrentSoup(soup) {
       if (!soup?.title || !soup?.contentLines) return false;
       
       this.setData({ 
@@ -289,7 +269,7 @@ Component({
      * 获取当前汤面数据
      * @returns {Object} 汤面数据对象
      */
-    getSoupData: function () {
+    getSoupData() {
       return {
         soupId: this.data.soupId,
         title: this.data.title,
@@ -298,9 +278,9 @@ Component({
     },
 
     /**
-     * 动画控制方法
+     * 动画控制方法 - 开始动画
      */
-    startAnimation: function () {
+    startAnimation() {
       if (this.data.isAnimating || this.data.staticMode || !this.typeAnimator) return;
       
       this.typeAnimator.start({
@@ -309,14 +289,20 @@ Component({
       });
     },
 
-    pauseAnimation: function () {
+    /**
+     * 动画控制方法 - 暂停动画
+     */
+    pauseAnimation() {
       if (this.typeAnimator) {
         this.typeAnimator.pause();
         this.triggerEvent('animationPause');
       }
     },
 
-    resetAnimation: function () {
+    /**
+     * 动画控制方法 - 重置动画
+     */
+    resetAnimation() {
       if (this.typeAnimator) {
         this.typeAnimator.reset();
         this.triggerEvent('animationReset');

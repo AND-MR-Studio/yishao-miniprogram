@@ -42,11 +42,22 @@ Component({
         return;
       }
       this.triggerEvent('send', { value });
+      // 发送后自动清空输入框
+      this.clearInput();
     },
 
     // 处理语音按钮点击
     handleVoice() {
       this.triggerEvent('voice');
+    },
+
+    // 清空输入框
+    clearInput() {
+      this.setData({
+        inputValue: ''
+      });
+      // 通知页面输入值已更新
+      this.triggerEvent('input', { value: '' });
     }
   }
 })
