@@ -16,7 +16,11 @@ Page({
     // 当前汤面ID
     currentSoupId: '',
     // 当前汤面数据
-    currentSoupData: null
+    currentSoupData: null,
+    // 输入框的值
+    inputValue: '',
+    // 输入框焦点状态
+    inputFocus: false,
   },
 
   /**
@@ -73,7 +77,7 @@ Page({
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({
-        selected: 1
+        selected: 1  // 设置选中第二个tab
       });
     }
   },
@@ -97,5 +101,42 @@ Page({
    */
   onShareAppMessage() {
     // 分享逻辑
-  }
+  },
+
+  /**
+   * 处理发送按钮点击事件
+   */
+  handleSend() {
+    const { inputValue } = this.data;
+    if (!inputValue.trim()) {
+      wx.showToast({
+        title: '请输入内容',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // TODO: 在这里处理发送消息的逻辑
+    console.log('发送消息:', inputValue);
+
+    // 清空输入框
+    this.setData({
+      inputValue: ''
+    });
+  },
+
+  /**
+   * 处理语音按钮点击事件
+   */
+  handleVoice() {
+    // TODO: 在这里处理语音输入的逻辑
+    console.log('语音输入');
+  },
+
+  // 处理输入事件
+  handleInput(e) {
+    this.setData({
+      inputValue: e.detail.value
+    });
+  },
 })
