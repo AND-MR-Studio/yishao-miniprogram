@@ -1,5 +1,6 @@
 <!--components/setting-card/setting.wxml-->
 <view class="setting-mask {{show ? 'show' : 'hide'}}" bindtap="closePanel" catchtouchmove="preventTouchMove"></view>
+<!-- 面板容器 - 通过panelDrag工具类处理拖拽手势 -->
 <view class="setting-panel {{show ? 'show' : 'hide'}}" 
       style="padding-top: {{statusBarHeight}}rpx; {{panelStyle}}"
       bindtouchstart="handleTouchStart"

@@ -72,7 +72,7 @@
   opacity: 1;
 }
 
-/* 拖拽过程中的样式 */
+/* 拖拽过程中的样式 - 配合panelDrag工具类使用 */
 .dragging .close-indicator {
   animation: pulse 1.5s infinite;
 }
@@ -284,7 +284,7 @@
 .studio-logo {
   width: 300rpx; /* 稍微减小logo宽度 */
   height: 90rpx;
-  background-image: url('https://img.picui.cn/free/2025/04/02/67ecce36c9b6c.png');
+  background-image: url('https://i.postimg.cc/GtWsWKQ6/logo.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: left;

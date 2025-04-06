@@ -31,13 +31,13 @@ Page({
   onLoad(options) {
     // 获取页面参数中的soupId
     const { soupId } = options;
-    
+
     if (!soupId) {
       // 如果没有传入soupId，返回上一页
       wx.navigateBack();
       return;
     }
-    
+
     // 保存当前汤面ID
     this.setData({
       currentSoupId: soupId
@@ -52,7 +52,7 @@ Page({
           this.setData({
             currentSoupData: soupData
           });
-          
+
           // 获取soup-display组件实例并设置数据
           const soupDisplay = this.selectComponent('#soupDisplay');
           if (soupDisplay) {
@@ -68,7 +68,7 @@ Page({
    */
   handleSend(e) {
     const { value } = e.detail;
-    
+
     // 获取dialog-area组件实例，使用class选择器
     const dialogArea = this.selectComponent('.dialog-area-component');
     if (dialogArea) {

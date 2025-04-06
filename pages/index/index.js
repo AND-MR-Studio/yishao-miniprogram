@@ -22,7 +22,7 @@ Page({
   onLoad(options) {
     // 初始化设置
     this.initSettings();
-    
+
     // 确保按钮初始状态为隐藏
     this.setData({
       showButtons: false
@@ -36,7 +36,7 @@ Page({
       this.setData({
         'soupConfig.staticMode': settings.skipAnimation || false
       });
-      
+
       // 如果开启了静态模式，直接显示按钮
       if (settings.skipAnimation) {
         this.setData({
@@ -109,7 +109,7 @@ Page({
     // 获取当前汤面组件实例
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (!soupDisplay) return;
-    
+
     // 跳转到对话页面
     wx.navigateTo({
       url: `/pages/dialog/dialog?soupId=${soupDisplay.data.soupId}`
@@ -143,7 +143,7 @@ Page({
       this.setData({
         'soupConfig.staticMode': value
       });
-      
+
       // 如果开启了跳过动画，直接显示按钮
       if (value && !this.data.showButtons) {
         this.setData({

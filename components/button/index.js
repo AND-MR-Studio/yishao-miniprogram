@@ -96,7 +96,7 @@ Component({
         this.setData({
           jellyAnimating: true
         });
-        
+
         // 监听动画结束并重置状态
         setTimeout(() => {
           this.setData({
@@ -104,7 +104,7 @@ Component({
           });
         }, 600); // 与动画持续时间一致
       }
-      
+
       if (this.properties.type === 'switch') {
         const newValue = !this.data.checked;
         this.setData({
@@ -117,13 +117,13 @@ Component({
       } else if (this.properties.type === 'radio') {
         // 对于radio类型，如果已经是active状态，不触发事件
         if (this.properties.active) return;
-        
+
         // 触发radiochange事件，传递对应的值
         this.triggerEvent('radiochange', {
           value: this.properties.value,
           groupName: this.properties.groupName
         });
-        
+
         // 更新当前radio的状态为选中
         this.setData({
           active: true
@@ -132,7 +132,7 @@ Component({
         this.triggerEvent('tap');
       }
     },
-    
+
     // 监听动画结束事件
     handleAnimationEnd() {
       // 只触发一次动画完成事件
@@ -140,15 +140,15 @@ Component({
         this.setData({
           animationEnd: true
         });
-        
+
         this.triggerEvent('animationend');
       }
     },
-    
+
     // 更新动画相关设置
     updateAnimation() {
       const { show, animation, delay } = this.properties;
-      
+
       if (show) {
         let animationClass = '';
         if (animation !== 'none') {
@@ -177,7 +177,7 @@ Component({
     attached() {
       // 设置动画延迟
       this.updateAnimation();
-      
+
       // 确保初始化设置了状态
       this.setData({
         initialized: true
@@ -189,7 +189,7 @@ Component({
    * 监听属性变化
    */
   observers: {
-    'show, animation, delay': function(show, animation, delay) {
+    'show, animation, delay': function (show, animation, delay) {
       this.updateAnimation();
     }
   }
