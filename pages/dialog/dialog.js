@@ -17,7 +17,7 @@ Page({
     currentSoupId: '',
     // 当前汤面数据
     currentSoupData: null,
-    // 输入框的值
+    // 输入框的值 
     inputValue: '',
     // 输入框焦点状态
     inputFocus: false,

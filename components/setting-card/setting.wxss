@@ -26,8 +26,9 @@
   padding: 32px 15px;
   position: fixed;
   width: 100%;
-  /* 使用100vh确保从底部完整画出，遮盖tabbar */
-  height: 90vh;
+  /* 调整高度使其在小屏幕上更合理 */
+  height: 85vh;
+  max-height: 95vh;
   left: 0;
   bottom: 0;
   background: #959DAE;
@@ -37,7 +38,8 @@
   z-index: 1000;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
   box-sizing: border-box;
-  overflow-x: hidden; /* 确保横向不可滚动 */
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .setting-panel.show {
@@ -51,8 +53,9 @@
 /* 添加关闭指示器 */
 .close-bar {
   width: 100%;
-  height: 40rpx;
+  height: 20rpx;
   display: flex;
+  position:fixed;
   justify-content: center;
   align-items: center;
   margin-bottom: 10rpx;
@@ -77,19 +80,31 @@
   animation: pulse 1.5s infinite;
 }
 
+/* 分割线样式 */
+.divider {
+  width: 100%;
+  height: 1px;
+  background: #000000;
+  opacity: 0.1;
+  margin: 20rpx 0;
+  align-self: center;
+}
+
 /* 设置容器宽度控制 */
 .setting-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0;
-  gap: 10rpx;
+  padding: 0 0 30rpx 0;
+  gap: 20rpx;
   width: 92%;
-  max-width: 650rpx; /* 控制最大宽度，避免在大屏设备上过宽 */
+  max-width: 650rpx;
+  height: auto;
   max-height: calc(100% - 60rpx);
   overflow-y: auto;
-  overflow-x: hidden; /* 确保横向不可滚动 */
-  box-sizing: border-box; /* 确保padding不会导致宽度溢出 */
+  overflow-x: hidden;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* 设置区块 */
@@ -98,7 +113,7 @@
   flex-direction: column;
   align-items: flex-start;
   padding: 0;
-  gap: 36rpx;
+  gap: 20rpx;
   width: 100%;
 }
 
@@ -238,34 +253,84 @@
 /* 联系我们区域调整 */
 .contact-section {
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  gap: 18rpx;
+  width: 100%;
+  height: 88rpx;
+}
+
+.contact-title {
+  width: 136rpx;
+  height: 80rpx;
+  font-family: 'Source Han Sans CN';
+  font-style: normal;
+  font-weight: 700;
+  font-size: 34rpx;
+  line-height: 80rpx;
+  display: flex;
+  align-items: center;
+  color: #061429;
+}
+
+.contact-buttons-container {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 0;
-  gap: 20rpx;
-  width: 100%;
-  height: auto;
+  gap: 10rpx;
 }
 
 .contact-buttons {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 0;
-  gap: 20rpx;
+  gap: 16rpx;
   width: 100%;
   height: 88rpx;
 }
 
-/* 调整按钮样式，确保不重叠 */
+/* 调整按钮样式 */
 .contact-button-class {
   margin: 0;
-  flex: 1;
-  max-width: calc(50% - 10rpx); /* 50%减去间距的一半 */
+  flex: none;
   box-sizing: border-box;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* 覆盖深色按钮样式使其符合设计规范 */
+.contact-button-class .btn-dark {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 6rpx 40rpx;
+  gap: 12rpx;
+  background: #29374F;
+  border-radius: 30rpx;
+  box-shadow: none;
+  transition: all 0.2s ease;
+}
+
+.contact-button-class .btn-dark:active {
+  transform: scale(0.98);
+  background: #1F2A3D;
+}
+
+.contact-button-class .btn-text-dark {
+  font-family: 'Microsoft YaHei';
+  font-style: normal;
+  font-weight: 400;
+  font-size: 28rpx;
+  line-height: 160%;
+  text-align: center;
+  color: #FFFFFF;
 }
 
 /* 关于我们 */
@@ -278,7 +343,6 @@
   gap: 20rpx;
   width: 100%;
   height: auto;
-  flex-wrap: wrap; /* 允许在必要时换行 */
 }
 
 .studio-logo {

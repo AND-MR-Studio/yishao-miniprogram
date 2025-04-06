@@ -67,11 +67,11 @@ page {
 /* 果冻动画 - 部分按钮和控件点击效果 */
 @keyframes jelly-animation {
   0% { transform: scale(1); }
-  30% { transform: scale(1.2, 0.85); }
-  40% { transform: scale(0.9, 1.15); }
-  50% { transform: scale(1.1, 0.9); }
-  65% { transform: scale(0.95, 1.05); }
-  80% { transform: scale(1.05, 0.98); }
+  30% { transform: scale(1.12, 0.9); }
+  40% { transform: scale(0.92, 1.08); }
+  50% { transform: scale(1.06, 0.94); }
+  65% { transform: scale(0.97, 1.03); }
+  80% { transform: scale(1.02, 0.99); }
   100% { transform: scale(1); }
 }
 
@@ -83,6 +83,13 @@ page {
 /* 应用果冻动画的公共类 - 排除首页按钮 */
 .jelly-effect:not(.btn-light):not(.btn-unlight) {
   animation: jelly-animation 0.6s var(--transition-ease);
+  overflow: visible !important;
+}
+
+/* 确保按钮容器允许溢出 */
+.jelly-effect-container {
+  overflow: visible !important;
+  padding: 2rpx;
 }
 
 /* 从下至上滑入动画 */

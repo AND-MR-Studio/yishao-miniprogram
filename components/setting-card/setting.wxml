@@ -90,23 +90,25 @@
     
     <!-- 联系我们区块 -->
     <view class="contact-section">
-      <view class="section-title">联系我们</view>
-      <view class="contact-buttons">
-        <custom-button 
-          type="dark" 
-          text="用户反馈" 
-          width="auto" 
-          height="88rpx" 
-          bind:tap="contactUs" 
-          class="contact-button-class" />
-        
-        <custom-button 
-          type="dark" 
-          text="关于我们" 
-          width="auto" 
-          height="88rpx" 
-          bind:tap="onAbout" 
-          class="contact-button-class" />
+      <view class="section-title contact-title">联系我们</view>
+      <view class="contact-buttons-container">
+        <view class="contact-buttons">
+          <custom-button 
+            type="dark" 
+            text="问题反馈" 
+            width="192rpx" 
+            height="88rpx" 
+            bind:tap="contactUs" 
+            class="contact-button-class" />
+          
+          <custom-button 
+            type="dark" 
+            text="Github" 
+            width="192rpx" 
+            height="88rpx" 
+            bind:tap="onAbout" 
+            class="contact-button-class" />
+        </view>
       </view>
     </view>
     

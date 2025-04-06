@@ -16,11 +16,13 @@
   position: fixed;
   gap: 27rpx;
   width: 100%;
-  height: 219rpx;
+  /* 使用更灵活的定位方式，避免固定高度和底部距离 */
+  /* height: 219rpx; 删除固定高度 */
   align-self: stretch;
   order: 2;
   flex-grow: 0;
-  bottom: 400rpx; /* 固定在底部 */
+  /* 替换为更动态的计算方式，确保不与tabbar重叠 */
+  bottom: calc(110rpx + env(safe-area-inset-bottom) + 60rpx); /* tabbar高度 + 安全区域 + 间距 */
   left: 0;
   z-index: 999; 
 }

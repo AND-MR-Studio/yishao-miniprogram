@@ -31,7 +31,8 @@ Component({
     // 拖拽相关变量 - 供panelDrag工具类使用
     moveDistance: 0,
     panelStyle: '',
-    isDragging: false
+    isDragging: false,
+    isVibrating: false
   },
 
   lifetimes: {
@@ -54,11 +55,14 @@ Component({
     },
 
     detached() {
-      // 清理震动计时器
+      // 清理所有计时器
       if (this.vibrationTimer) {
         clearTimeout(this.vibrationTimer);
         this.vibrationTimer = null;
       }
+
+      // 重置震动状态
+      this.isVibrating = false;
 
       // 销毁面板拖拽管理器
       if (this.panelDragManager) {
@@ -160,19 +164,22 @@ Component({
     triggerVibration() {
       if (!this.data.vibrationOn) return;
 
-      // 清除之前的震动计时器
-      if (this.vibrationTimer) {
-        clearTimeout(this.vibrationTimer);
-      }
+      // 设置防抖标志，防止短时间内重复触发
+      if (this.isVibrating) return;
+      this.isVibrating = true;
 
-      // 设置一个短暂延迟，确保连续操作时能够正常震动
-      this.vibrationTimer = setTimeout(() => {
-        wx.vibrateShort({
-          fail: (err) => {
-            console.error('震动失败', err);
-          }
-        });
-      }, 50);
+      // 立即执行震动，不使用setTimeout
+      wx.vibrateShort({
+        fail: (err) => {
+          console.error('震动失败', err);
+        },
+        complete: () => {
+          // 设置一个较短的冷却时间，避免系统震动API被连续调用
+          setTimeout(() => {
+            this.isVibrating = false;
+          }, 100);
+        }
+      });
     },
 
     // 切换开关
@@ -182,9 +189,14 @@ Component({
 
       // 更新对应的状态
       this.setData({ [type]: checked }, () => {
-        // 当开启振动或其他开关切换为true时触发震动
-        if (this.data.vibrationOn && (type === 'vibrationOn' || checked)) {
-          this.triggerVibration();
+        // 仅在以下情况触发震动：
+        // 1. 震动功能已开启 且
+        // 2. 不是"震动开关从开到关"的操作
+        if (this.data.vibrationOn && !(type === 'vibrationOn' && !checked)) {
+          // 延迟很短的时间再触发震动，避免和按钮自身的动画冲突
+          setTimeout(() => {
+            this.triggerVibration();
+          }, 10);
         }
 
         // 触发事件通知父组件
