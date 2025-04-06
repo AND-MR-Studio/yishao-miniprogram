@@ -5,6 +5,12 @@
   width: 100%;
   min-height: 100vh;
   background-color: #061429;
+  --dialog-opacity: 1; /* CSS变量控制透明度 */
+}
+
+/* 长按时的透明度控制 */
+.page.peek-soup {
+  --dialog-opacity: 0;
 }
 
 /* 毛玻璃效果遮罩层 */
@@ -21,5 +27,12 @@
   -webkit-backdrop-filter: blur(15rpx);
   z-index: 100;
   pointer-events: none; /* 确保不会影响底层组件的交互 */
+  opacity: var(--dialog-opacity);
+  transition: opacity 0.5s ease, backdrop-filter 0.5s ease;
 }
 
+/* 对话区域样式 */
+.dialog-area-component {
+  opacity: var(--dialog-opacity);
+  transition: opacity 0.5s ease;
+} 

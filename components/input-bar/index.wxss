@@ -10,76 +10,194 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: #061429;
-  z-index: 999;
+  background: linear-gradient(to bottom, rgba(6, 20, 41, 0.95), rgba(6, 20, 41, 1));
+  box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.2);
+  z-index: 1002;
+  padding: 20rpx 0;
 }
 
 .input-container {
-  width: 95%;
+  width: 92%;
   height: 110rpx;
   display: flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  padding: 0 0 0rpx;
-  gap: 20rpx;
+  gap: 24rpx;
 }
 
 /* 语音按钮 */
 .voice-btn {
-  width: 56rpx;
-  height: 56rpx;
+  width: 64rpx;
+  height: 64rpx;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
-  background: #959DAE;
+  background: rgba(149, 157, 174, 0.9);
   border-radius: 50%;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+}
+
+.voice-btn-hover {
+  transform: scale(0.92);
+  background: rgba(149, 157, 174, 1);
 }
 
 .voice-btn .font_family {
-  font-size: 30rpx;
+  font-size: 32rpx;
   color: #061429;
 }
 
 /* 输入框 */
 .input-box {
   flex: 1;
-  height: 70rpx;
-  background: #29374F;
+  height: 80rpx;
+  background: rgba(41, 55, 79, 0.8);
   border: 2rpx solid #2BB319;
-  border-radius: 10rpx;
+  border-radius: 16rpx;
   display: flex;
   align-items: center;
-  padding: 0 40rpx;
+  padding: 0 30rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1), inset 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.input-box:focus-within {
+  background: rgba(41, 55, 79, 1);
+  border-color: #4BD13C;
+  box-shadow: 0 0 16rpx rgba(43, 179, 25, 0.3);
 }
 
 .input-field {
   width: 100%;
   height: 100%;
-  font-size: 28rpx;
+  font-size: 30rpx;
   color: #FFFFFF;
+  letter-spacing: 0.5rpx;
 }
 
 .input-placeholder {
-  color: #A3ABB8;
+  color: rgba(163, 171, 184, 0.7);
+  font-size: 30rpx;
+}
+
+/* 录音状态样式 */
+.input-box.recording {
+  background: rgba(43, 179, 25, 0.2);
+  border-color: #5CE821;
+  box-shadow: 0 0 16rpx rgba(43, 179, 25, 0.3);
+}
+
+/* 取消录音状态样式 */
+.input-box.recording-cancel {
+  background: rgba(225, 51, 51, 0.2);
+  border-color:var(--color-accent);
+  box-shadow: 0 0 16rpx rgba(225, 51, 51, 0.3);
+}
+
+.input-box.recording-cancel .wave {
+  background:var(--color-accent);
+  animation: cancel-wave-animation 0.6s infinite ease-in-out;
+}
+
+@keyframes cancel-wave-animation {
+  0%, 100% {
+    transform: scaleY(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scaleY(1.5);
+    opacity: 1;
+  }
+}
+
+.recording-ui {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.recording-waves {
+  display: flex;
+  align-items: center;
+  height: 40rpx;
+}
+
+.wave {
+  width: 8rpx;
+  background: #2BB319;
+  margin: 0 6rpx;
+  border-radius: 3rpx;
+  animation: wave-animation 1.2s infinite ease-in-out;
+}
+
+.wave1 {
+  height: 18rpx;
+  animation-delay: 0s;
+}
+
+.wave2 {
+  height: 30rpx;
+  animation-delay: 0.2s;
+}
+
+.wave3 {
+  height: 24rpx;
+  animation-delay: 0.4s;
+}
+
+@keyframes wave-animation {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(2);
+  }
+}
+
+.recording-text {
+  color: #FFFFFF;
   font-size: 28rpx;
+  margin-left: auto;
 }
 
 /* 发送按钮 */
 .send-btn {
-  width: 72rpx;
-  height: 72rpx;
-  background: #2BB319;
-  box-shadow: 0 0 20rpx rgba(4, 244, 77, 0.5);
-  border-radius: 198rpx;
+  width: 80rpx;
+  height: 80rpx;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+/* 有内容时的发送按钮 */
+.send-btn.active {
+  background: linear-gradient(135deg, #2BB319, #4BD13C);
+  box-shadow: 0 4rpx 20rpx rgba(4, 244, 77, 0.5);
+}
+
+.send-btn-active-hover {
+  transform: scale(0.92);
+  box-shadow: 0 2rpx 10rpx rgba(4, 244, 77, 0.4);
+}
+
+/* 无内容时的发送按钮 */
+.send-btn.inactive {
+  background: rgba(149, 157, 174, 0.8);
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.2);
 }
 
 .send-btn .font_family {
   font-size: 36rpx;
   color: #FFFFFF;
+  margin-top: 2rpx;
 }
