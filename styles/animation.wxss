@@ -107,16 +107,19 @@ page {
   transform: scale(1);
 }
 
+/* 活跃状态基础样式 */
+.char-typing.active {
+  opacity: 1;
+}
+
 /* 活跃状态 - 普通打字机 */
 .char-typing.active.effect-normal {
-  opacity: 1;
   transform: scale(1);
   color: var(--color-text-primary);
 }
 
 /* 活跃状态 - 发光打字机 */
 .char-typing.active.effect-glow {
-  opacity: 1;
   transform: scale(1.05);
   text-shadow: 0 0 8rpx var(--color-primary);
   color: #fff;
@@ -127,6 +130,13 @@ page {
   opacity: 0.9;
   transform: scale(1);
   transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+}
+
+/* 静态模式样式 */
+.static-mode .char-typing {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
 }
 
 /* 按钮点击效果 - 点亮按钮 */

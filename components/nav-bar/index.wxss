@@ -2,10 +2,11 @@
 @import "/static/css/iconfont.wxss";
 
 .nav-bar {
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 1001;
+  z-index: 999;
   padding-bottom: 10rpx; 
 }
 

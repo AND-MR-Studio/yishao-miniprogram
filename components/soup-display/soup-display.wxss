@@ -5,10 +5,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--spacing-xxl) 0 0;
+  padding: 300rpx 0 0;
   width: 100%;
   min-height: 443rpx;
-  position: relative;
+  position: fixed;
   box-sizing: border-box;
   will-change: transform;
 }
@@ -133,45 +133,7 @@
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
 }
 
-/* 打字机字符动画样式 */
-.char-typing {
-  display: inline-block;
-  opacity: 0;
-  transform: scale(0.9);
-  transition: all 160ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
-  position: relative;
-}
-
-/* 普通显示状态 */
-.char-typing.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* 活跃状态基础样式 */
-.char-typing.active {
-  opacity: 1;
-}
-
-/* 活跃状态 - 普通打字机 */
-.char-typing.active.effect-normal {
-  transform: scale(1);
-  color: var(--color-text-primary);
-}
-
-/* 活跃状态 - 发光打字机 */
-.char-typing.active.effect-glow {
-  transform: scale(1.05);
-  text-shadow: 0 0 8rpx var(--color-primary);
-  color: #fff;
-}
-
-/* 前一个字符状态 - 刚刚输入完的字符 */
-.char-typing.prev {
-  opacity: 0.9;
-  transform: scale(1);
-  transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
-}
+/* 打字机动画样式已移至全局 /styles/animation.wxss 文件中 */
 
 /* 静态模式样式 */
 .soup-container.static-mode .char-typing {
