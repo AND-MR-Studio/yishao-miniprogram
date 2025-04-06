@@ -16,10 +16,10 @@
       <view wx:if="{{item.type === 'user'}}" class="message user">{{item.content}}</view>
       
       <!-- 系统回复消息 - 正常显示 -->
-      <view wx:if="{{item.type === 'system' && index !== animatingMessageIndex}}" class="message response">> {{item.content}}</view>
+      <view wx:if="{{(item.type === 'system' || item.type === 'normal') && index !== animatingMessageIndex}}" class="message response">> {{item.content}}</view>
       
       <!-- 系统回复消息 - 打字机动画 -->
-      <view wx:if="{{item.type === 'system' && index === animatingMessageIndex}}" class="message response typing-container">
+      <view wx:if="{{(item.type === 'system' || item.type === 'normal') && index === animatingMessageIndex}}" class="message response typing-container">
         <text class="prefix-text">> </text>
         <view class="typing-content">
           <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">

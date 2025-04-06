@@ -1,5 +1,6 @@
 // pages/dialog.js
 const soupService = require('../../utils/soupService');
+const dialogService = require('../../utils/dialogService');
 
 Page({
 
@@ -19,17 +20,10 @@ Page({
     currentSoupData: null,
     // 输入框的值 
     inputValue: '',
-    // 输入框焦点状态
-    inputFocus: false,
     // 对话消息列表
     messages: [],
-    userInput: '',
-    isLoading: false,
-    canSend: true,
     keyboardHeight: 0,
-    viewBottomHeight: 0,
     focus: false,
-    dialogId: '', // 当前对话ID
     soupTitle: '', // 当前汤面标题
     isPeekingSoup: false // 控制是否偷看汤面（透明对话区域）
   },
@@ -52,6 +46,12 @@ Page({
       currentSoupId: soupId
     });
 
+    // 告知dialogService当前的soupId
+    dialogService.setCurrentSoupId(soupId);
+
+    // 尝试加载历史对话记录
+    this._loadHistoryMessages(soupId);
+
     // 从服务获取对应的汤面数据
     soupService.getSoupData({
       soupId: soupId,
@@ -60,7 +60,8 @@ Page({
           // 保存完整的汤面数据到页面状态
           this.setData({
             currentSoupData: soupData,
-            'soupConfig.soupId': soupId
+            'soupConfig.soupId': soupId,
+            soupTitle: soupData.title || '未命名汤面' // 保存汤面标题
           });
 
           // 获取soup-display组件实例并设置数据
@@ -78,23 +79,52 @@ Page({
         keyboardHeight: res.height
       });
     });
-    
-    // 初始化对话
-    this.initDialog();
   },
 
   /**
-   * 初始化对话消息
-   * 不再设置初始消息，交由组件内部处理
+   * 加载历史对话记录
+   * @param {string} soupId 汤面ID
+   * @private
    */
-  initDialog() {
-    // 初始消息由dialog-area组件内部创建和管理
-    // 这里可以进行其他初始化操作
-    
-    // 延迟一小段时间后检查组件是否已经创建了消息，如果有则滚动到底部
-    setTimeout(() => {
-      this.scrollToBottom();
-    }, 200);
+  _loadHistoryMessages(soupId) {
+    dialogService.loadDialogMessages({
+      soupId: soupId,
+      success: (messages) => {
+        // 添加初始化系统消息（但不存储）
+        const initialSystemMessages = [
+          {
+            type: 'system',
+            content: '欢迎来到一勺海龟汤。'
+          },
+          {
+            type: 'system',
+            content: '你需要通过提问来猜测谜底，'
+          },
+          {
+            type: 'system',
+            content: '我只会回答"是"、"否"或"不确定"。'
+          },
+          {
+            type: 'system',
+            content: '长按对话区域显示汤面。'
+          }
+        ];
+        
+        // 将初始化消息添加到已加载消息的前面
+        const combinedMessages = [...initialSystemMessages, ...(messages || [])];
+        
+        // 更新页面状态中的消息列表
+        this.setData({ messages: combinedMessages });
+        
+        // 由于此时dialog-area组件可能尚未创建，使用setTimeout延迟设置
+        setTimeout(() => {
+          const dialogArea = this.selectComponent('#dialogArea');
+          if (dialogArea) {
+            dialogArea.setMessages(combinedMessages);
+          }
+        }, 300);
+      }
+    });
   },
 
   /**
@@ -108,7 +138,6 @@ Page({
     if (dialogArea) {
       // 调用组件的handleUserMessage方法处理用户消息
       dialogArea.handleUserMessage(value);
-      // 注意：input-bar组件现在会自动清空输入框，不需要在这里处理
       
       // 发送消息后主动调用滚动
       setTimeout(() => {
@@ -123,26 +152,19 @@ Page({
   handleMessagesChange(e) {
     // 从事件中获取更新后的消息列表并更新页面状态
     const { messages } = e.detail;
-    this.setData({ messages }, () => {
-      // 消息更新后滚动到底部
-      setTimeout(() => {
-        this.scrollToBottom();
-      }, 100);
-    });
+    if (messages && messages.length) {
+      this.setData({ messages });
+    }
   },
 
   /**
    * 滚动到对话区域底部
-   * 使用组件内部提供的方法
    */
   scrollToBottom() {
     // 使用组件实例方法调用组件内部的滚动方法
     const dialogArea = this.selectComponent('#dialogArea');
     if (dialogArea) {
       dialogArea.scrollToBottom();
-      console.log('调用组件内部滚动方法');
-    } else {
-      console.error('未找到dialog-area组件实例');
     }
   },
 
@@ -162,16 +184,11 @@ Page({
       inputValue: e.detail.value
     });
   },
-
-  onSoupAnimationComplete() {
-  },
-
+  
   /**
-   * 生命周期函数--监听页面初次渲染完成
+   * 汤面动画完成事件处理函数
    */
-  onReady() {
-    // 页面初次渲染完成的处理逻辑
-  },
+  onSoupAnimationComplete() {},
 
   /**
    * 生命周期函数--监听页面显示
@@ -188,14 +205,32 @@ Page({
    * 生命周期函数--监听页面隐藏
    */
   onHide() {
-    // 页面隐藏时的处理逻辑
+    // 页面隐藏时保存对话内容
+    const dialogArea = this.selectComponent('#dialogArea');
+    if (dialogArea) {
+      // 检查是否有变化且需要保存
+      if (dialogArea.hasChanged && dialogArea.hasChanged()) {
+        dialogArea.saveMessages();
+      }
+    }
   },
-
+  
   /**
    * 生命周期函数--监听页面卸载
    */
   onUnload() {
-    // 页面卸载时的处理逻辑
+    // 页面卸载时保存对话内容
+    const dialogArea = this.selectComponent('#dialogArea');
+    if (dialogArea) {
+      // 获取最新消息列表
+      const messages = dialogArea.getMessages();
+      const soupId = this.data.currentSoupId;
+      
+      // 无论是否有变化，都进行保存以确保数据安全
+      if (messages && messages.length && soupId) {
+        dialogService.saveDialogMessages(soupId, messages);
+      }
+    }
   },
 
   /**
@@ -203,6 +238,10 @@ Page({
    */
   onShareAppMessage() {
     // 分享逻辑
+    return {
+      title: '这个海龟汤太难了来帮帮我！',
+      path: '/pages/index/index'
+    };
   },
 
   // 输入框获取焦点
@@ -223,7 +262,7 @@ Page({
   handleLongPress() {
     this.setData({ isPeekingSoup: true });
     
-    // 3秒后自动恢复
+    // 5秒后自动恢复
     this.peekTimer = setTimeout(() => {
       this.setData({ isPeekingSoup: false });
     }, 5000);

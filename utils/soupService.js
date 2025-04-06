@@ -41,7 +41,8 @@ const soupService = {
      * @param {string} soupId 汤面ID
      * @returns {number} 汤面索引，未找到返回-1
      */
-    getSoupIndex: function(soupId) {
+    getSoupIndex: function (soupId) {
+        if (!soupId) return -1;
         return this.soups.findIndex(soup => soup.soupId === soupId);
     },
 
@@ -50,7 +51,7 @@ const soupService = {
      * @param {string} currentSoupId 当前汤面ID
      * @returns {string} 下一个汤面的ID
      */
-    getNextSoupId: function(currentSoupId) {
+    getNextSoupId: function (currentSoupId) {
         const currentIndex = this.getSoupIndex(currentSoupId);
         // 如果找不到当前汤面或是最后一个，返回第一个汤面的ID
         if (currentIndex === -1 || currentIndex === this.soups.length - 1) {
@@ -65,7 +66,8 @@ const soupService = {
      * @param {string} soupId 汤面ID
      * @returns {Object|null} 汤面数据或null
      */
-    getSoupById: function(soupId) {
+    getSoupById: function (soupId) {
+        if (!soupId) return null;
         return this.soups.find(soup => soup.soupId === soupId) || null;
     },
 
@@ -74,35 +76,58 @@ const soupService = {
      * @param {Object} options 配置选项
      * @param {string} options.soupId 指定要获取的汤面ID
      * @param {Function} options.success 成功回调
+     * @param {Function} options.fail 失败回调
      * @param {Function} options.complete 完成回调
      */
     getSoupData: function (options = {}) {
-        const { soupId, success, complete } = options;
+        const { soupId, success, fail, complete } = options;
 
         // 模拟网络请求
         setTimeout(() => {
-            let soupData;
-            
-            // 如果指定了soupId，则获取指定的汤面
-            if (soupId) {
-                soupData = this.getSoupById(soupId);
-            }
-            
-            // 如果没有指定soupId或找不到指定的汤面，则获取第一个
-            if (!soupData) {
-                soupData = this.soups[0];
-            }
+            try {
+                let soupData;
 
-            // 调用成功回调
-            if (typeof success === 'function') {
-                success(soupData);
-            }
+                // 如果指定了soupId，则获取指定的汤面
+                if (soupId) {
+                    soupData = this.getSoupById(soupId);
+                }
 
-            // 调用完成回调
-            if (typeof complete === 'function') {
-                complete();
+                // 如果没有指定soupId或找不到指定的汤面，则获取第一个
+                if (!soupData) {
+                    soupData = this.soups[0];
+                }
+
+                // 调用成功回调
+                if (typeof success === 'function') {
+                    success(soupData);
+                }
+            } catch (error) {
+                if (typeof fail === 'function') {
+                    fail(error);
+                }
+            } finally {
+                // 调用完成回调
+                if (typeof complete === 'function') {
+                    complete();
+                }
             }
         }, 300);
+    },
+
+    /**
+     * 获取所有汤面数据
+     * @returns {Array} 所有汤面数据列表
+     */
+    getAllSoups: function () {
+        return [...this.soups];
+    },
+
+    /**
+     * 获取汤面总数
+     * @returns {number} 汤面总数
+     */
+    getSoupCount: function () {
+        return this.soups.length;
     }
 };
 

@@ -10,7 +10,19 @@ Component({
     // 当前汤面ID
     soupId: {
       type: String,
-      value: ''
+      value: '',
+      observer: function(newVal) {
+        if (newVal) {
+          dialogService.setCurrentSoupId(newVal);
+          // 如果有soupId变化，可以尝试加载对应的历史消息
+          this._tryLoadHistoryMessages(newVal);
+        }
+      }
+    },
+    // 是否自动保存消息
+    autoSave: {
+      type: Boolean,
+      value: true
     }
   },
   
@@ -24,51 +36,12 @@ Component({
     isAnimating: false,
     typeEffect: 'normal', // 默认使用普通效果
     animatingMessageIndex: -1, // 当前正在执行动画的消息索引
-    animatedMessageIndexes: [] // 已经完成动画但仍保持打字机视图的消息索引
+    animatedMessageIndexes: [], // 已经完成动画但仍保持打字机视图的消息索引
+    hasMessagesChanged: false  // 标记消息是否有变化
   },
 
   lifetimes: {
     attached() {
-      // 组件初始化时，如果没有消息，添加默认的初始消息
-      // 页面不再提供初始消息，由组件负责创建和管理初始消息
-      if (this.properties.messages.length === 0) {
-        console.log('组件内部创建初始消息');
-        const initialMessages = [
-          {
-            type: 'system',
-            content: '欢迎来到一勺海龟汤。'
-          },
-          {
-            type: 'system',
-            content: '你需要通过提问来猜测谜底，'
-          },
-          {
-            type: 'system',
-            content: '我只会回答"是"、"否"或"不确定"。'
-          },
-          {
-            type: 'system',
-            content: '长按对话区域显示汤面。'
-          }
-        ];
-        
-        this.setData({ messages: initialMessages }, () => {
-          // 触发事件通知页面消息已更新
-          this.triggerEvent('messagesChange', { messages: initialMessages });
-          
-          // 滚动到底部
-          setTimeout(() => {
-            this.scrollToBottom();
-          }, 50);
-        });
-      } else {
-        console.log('页面提供了初始消息，长度:', this.properties.messages.length);
-        // 如果页面提供了消息，确保滚动到底部
-        setTimeout(() => {
-          this.scrollToBottom();
-        }, 50);
-      }
-      
       // 初始化打字机动画实例
       this.typeAnimator = typeAnimation.createInstance(this, {
         typeSpeed: 60,
@@ -82,6 +55,19 @@ Component({
           });
         }
       });
+      
+      // 如果有soupId，先尝试加载历史消息
+      if (this.properties.soupId) {
+        this._tryLoadHistoryMessages(this.properties.soupId);
+      }
+      
+      // 延迟创建初始消息，以确保历史消息有机会先加载
+      setTimeout(() => {
+        // 如果页面提供了消息，确保滚动到底部
+        setTimeout(() => {
+          this.scrollToBottom();
+        }, 50);
+      }, 300); // 给历史消息加载预留时间
     },
     
     detached() {
@@ -89,10 +75,53 @@ Component({
       if (this.typeAnimator) {
         this.typeAnimator.destroy();
       }
+      
+      // 组件销毁时，如果消息有变化且autoSave为true，保存消息
+      if (this.data.hasMessagesChanged && this.properties.autoSave && this.properties.soupId) {
+        this._saveMessages();
+      }
     }
   },
 
   methods: {
+    /**
+     * 尝试加载历史消息
+     * @param {string} soupId 汤面ID
+     * @private
+     */
+    _tryLoadHistoryMessages(soupId) {
+      // 确保始终尝试加载历史消息
+      if (!soupId) return;
+      
+      // 尝试加载历史消息
+      dialogService.loadDialogMessages({
+        soupId: soupId,
+        success: (messages) => {
+          if (messages && messages.length) {
+            this.setData({ messages, hasMessagesChanged: false }, () => {
+              // 通知页面消息已更新
+              this.triggerEvent('messagesChange', { messages });
+              this.scrollToBottom();
+            });
+          }
+        }
+      });
+    },
+    
+    /**
+     * 保存当前消息
+     * @private
+     */
+    _saveMessages() {
+      const soupId = this.properties.soupId;
+      const messages = this.data.messages;
+      
+      if (!soupId || !messages || !messages.length) return;
+      
+      dialogService.saveDialogMessages(soupId, messages);
+      this.setData({ hasMessagesChanged: false });
+    },
+
     /**
      * 处理用户消息并生成回复
      * @param {String} content - 用户消息内容
@@ -114,7 +143,7 @@ Component({
 
       // 添加用户消息
       const messages = [...this.properties.messages, userMessage];
-      this.setData({ messages }, () => {
+      this.setData({ messages, hasMessagesChanged: true }, () => {
         this.scrollToBottom();
       });
 
@@ -133,7 +162,8 @@ Component({
         
         this.setData({ 
           messages: updatedMessages,
-          animatingMessageIndex: updatedMessages.length - 1
+          animatingMessageIndex: updatedMessages.length - 1,
+          hasMessagesChanged: true
         }, () => {
           this.scrollToBottom();
           // 启动打字机动画
@@ -147,6 +177,11 @@ Component({
             this.setData({ messages: finalMessages }, () => {
               this.triggerEvent('messagesChange', { messages: finalMessages });
               this.scrollToBottom();
+              
+              // 自动保存消息
+              if (this.properties.autoSave) {
+                this._saveMessages();
+              }
             });
           }, hintMessage.content.length * 80 + 200); // 估算动画完成时间
         });
@@ -158,15 +193,16 @@ Component({
       const responses = ['是', '否', '不确定'];
       const randomResponse = responses[Math.floor(Math.random() * responses.length)];
       
-      // 添加系统消息（实际内容为空，用于动画）
+      // 添加正常回复消息（实际内容为空，用于动画）
       const updatedMessages = [...messages, {
-        type: 'system',
+        type: 'normal',
         content: ''
       }];
       
       this.setData({ 
         messages: updatedMessages,
-        animatingMessageIndex: updatedMessages.length - 1
+        animatingMessageIndex: updatedMessages.length - 1,
+        hasMessagesChanged: true
       }, () => {
         this.scrollToBottom();
         // 启动打字机动画
@@ -176,13 +212,18 @@ Component({
         setTimeout(() => {
           const finalMessages = [...updatedMessages];
           finalMessages[finalMessages.length - 1] = {
-            type: 'system',
+            type: 'normal',
             content: randomResponse
           };
           
           this.setData({ messages: finalMessages }, () => {
             this.triggerEvent('messagesChange', { messages: finalMessages });
             this.scrollToBottom();
+            
+            // 自动保存消息
+            if (this.properties.autoSave) {
+              this._saveMessages();
+            }
           });
         }, randomResponse.length * 80 + 200); // 估算动画完成时间
       });
@@ -213,20 +254,21 @@ Component({
         
         // 添加用户消息
         const messages = [...this.properties.messages, message];
-        this.setData({ messages }, () => {
+        this.setData({ messages, hasMessagesChanged: true }, () => {
           this.scrollToBottom();
         });
         
         // 添加系统消息（实际内容为空，用于动画）
         const updatedMessages = [...messages, {
-          type: 'system',
+          type: 'normal',
           content: ''
         }];
         
         this.setData({ 
           messages: updatedMessages,
           isReceiving: false,
-          animatingMessageIndex: updatedMessages.length - 1
+          animatingMessageIndex: updatedMessages.length - 1,
+          hasMessagesChanged: true
         }, () => {
           this.scrollToBottom();
           // 启动打字机动画
@@ -235,11 +277,19 @@ Component({
           // 动画完成后更新消息内容
           setTimeout(() => {
             const finalMessages = [...updatedMessages];
-            finalMessages[finalMessages.length - 1] = response;
+            finalMessages[finalMessages.length - 1] = {
+              type: 'normal',
+              content: response.content
+            };
             
             this.setData({ messages: finalMessages }, () => {
               this.triggerEvent('messagesChange', { messages: finalMessages });
               this.scrollToBottom();
+              
+              // 自动保存消息
+              if (this.properties.autoSave) {
+                this._saveMessages();
+              }
             });
           }, response.content.length * 80 + 200); // 估算动画完成时间
         });
@@ -250,6 +300,20 @@ Component({
         this.setData({ isReceiving: false });
         throw error;
       }
+    },
+
+    /**
+     * 保存当前对话消息到存储
+     * 注意：通常不需要主动调用此方法，组件会在适当时机自动保存
+     * @returns {boolean} 保存是否成功
+     */
+    saveMessages() {
+      if (!this.properties.soupId || !this.data.messages.length) {
+        return false;
+      }
+      
+      this._saveMessages();
+      return true;
     },
 
     /**
@@ -265,9 +329,20 @@ Component({
      * @param {Array} messages - 消息列表
      */
     setMessages(messages) {
-      this.setData({ messages }, () => {
+      this.setData({ 
+        messages, 
+        hasMessagesChanged: false  // 重置变更标记，因为这是外部设置的消息
+      }, () => {
         this.scrollToBottom();
       });
+    },
+
+    /**
+     * 检查消息是否有变化
+     * @returns {boolean} 是否有变化
+     */
+    hasChanged() {
+      return this.data.hasMessagesChanged;
     },
 
     /**

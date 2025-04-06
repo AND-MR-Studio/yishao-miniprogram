@@ -19,7 +19,7 @@ Page({
   /**
    * 生命周期函数--监听页面加载
    */
-  onLoad(options) {
+  onLoad() {
     // 初始化设置
     this.initSettings();
 
@@ -49,18 +49,6 @@ Page({
   },
 
   /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
-    // 如果开启了静态模式，直接显示按钮
-    if (this.data.soupConfig.staticMode) {
-      this.setData({
-        showButtons: true
-      });
-    }
-  },
-
-  /**
    * 生命周期函数--监听页面显示
    */
   onShow() {
@@ -72,24 +60,14 @@ Page({
   },
 
   /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide() {
-    // 页面隐藏时的处理逻辑
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-    // 页面卸载时的处理逻辑
-  },
-
-  /**
    * 用户点击右上角分享
    */
   onShareAppMessage() {
     // 分享逻辑
+    return {
+      title: '这个海龟汤太难了来帮帮我！',
+      path: '/pages/index/index'
+    };
   },
 
   /**
@@ -152,4 +130,4 @@ Page({
       }
     }
   }
-})
+});

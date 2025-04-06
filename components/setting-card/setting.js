@@ -189,10 +189,8 @@ Component({
 
       // 更新对应的状态
       this.setData({ [type]: checked }, () => {
-        // 仅在以下情况触发震动：
-        // 1. 震动功能已开启 且
-        // 2. 不是"震动开关从开到关"的操作
-        if (this.data.vibrationOn && !(type === 'vibrationOn' && !checked)) {
+        // 只在开启任意开关时触发震动，关闭开关时不触发
+        if (this.data.vibrationOn && checked) {
           // 延迟很短的时间再触发震动，避免和按钮自身的动画冲突
           setTimeout(() => {
             this.triggerVibration();
