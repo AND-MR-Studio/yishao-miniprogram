@@ -203,7 +203,7 @@ Component({
     },
 
     // 放弃当前海龟汤
-    abandonSoup() {
+     abandonSoup(){
       this.triggerVibration();
 
       wx.showModal({
