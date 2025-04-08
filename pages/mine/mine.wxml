@@ -1,10 +1,65 @@
 <!--pages/mine/mine.wxml-->
 <view class="page">
   <!-- 导航栏 -->
-  <nav-bar 
-  />
+  <nav-bar title="个人中心" />
   
   <view class="container">
-    我的
+    <!-- 用户信息卡片 -->
+    <view class="user-card">
+      <view class="avatar-container">
+        <button 
+          class="avatar-wrapper" 
+          open-type="chooseAvatar" 
+          bindchooseavatar="onChooseAvatar"
+        >
+          <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+        </button>
+      </view>
+      <view class="user-info">
+        <text class="username">{{userInfo.nickName || '未登录'}}</text>
+        <view class="answer-count">
+          <text class="count-label">剩余回答次数：</text>
+          <text class="count-value">{{remainingAnswers || 0}}次</text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 功能列表 -->
+    <view class="function-list">
+      <view class="function-item">
+        <view class="item-icon">
+          <text class="iconfont icon-record"></text>
+        </view>
+        <view class="item-content">
+          <text>我的记录</text>
+        </view>
+        <view class="item-arrow">
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
+      
+      <view class="function-item">
+        <view class="item-icon">
+          <text class="iconfont icon-about"></text>
+        </view>
+        <view class="item-content">
+          <text>关于我们</text>
+        </view>
+        <view class="item-arrow">
+          <text class="iconfont icon-right"></text>
+        </view>
+      </view>
+    </view>
+    
+    <!-- 退出登录按钮 -->
+    <view class="logout-container">
+      <button-component 
+        type="unlight" 
+        text="退出登录" 
+        width="100%" 
+        height="88rpx"
+        bindtap="handleLogout"
+      />
+    </view>
   </view>
 </view>

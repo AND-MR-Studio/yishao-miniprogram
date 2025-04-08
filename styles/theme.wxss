@@ -35,6 +35,12 @@ page {
   /* 光标颜色（供打字机效果使用） */
   --cursor-color: #FA5151;
 
+  /* 字体族 */
+  --font-family-base: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-family-sans: 'Source Han Sans CN', var(--font-family-base);
+  --font-family-mincho: 'Huiwen-mincho', var(--font-family-base);
+  --font-family-yahei: 'Microsoft YaHei', var(--font-family-base);
+
   /* 字号 */
   --font-size-xs: 24rpx;
   --font-size-sm: 28rpx;
@@ -55,6 +61,11 @@ page {
   --font-weight-medium: 500;
   --font-weight-bold: 700;
   --font-weight-black: 900;
+
+  /* 字间距 */
+  --letter-spacing-tight: -0.6rpx;
+  --letter-spacing-normal: 0;
+  --letter-spacing-wide: 0.5rpx;
 
   /* 内外边距 */
   --spacing-xxs: 4rpx;
@@ -98,3 +109,159 @@ page {
   --transition-duration: 0.3s;
   --transition-timing: cubic-bezier(0.215, 0.610, 0.355, 1.000);
 }
+
+/* 文本基础样式 */
+.text-base {
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+  color: var(--color-text-primary);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 标题文本样式 */
+.text-heading {
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--color-text-primary);
+}
+
+.text-heading-xl {
+  composes: text-heading;
+  font-size: var(--font-size-xxl);
+  line-height: var(--line-height-xs);
+}
+
+.text-heading-lg {
+  composes: text-heading;
+  font-size: var(--font-size-xl);
+  line-height: var(--line-height-sm);
+}
+
+.text-heading-md {
+  composes: text-heading;
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-md);
+}
+
+.text-heading-sm {
+  composes: text-heading;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+}
+
+/* 正文文本样式 */
+.text-body {
+  font-family: var(--font-family-sans);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-body-lg {
+  composes: text-body;
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-lg);
+}
+
+.text-body-md {
+  composes: text-body;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+}
+
+.text-body-sm {
+  composes: text-body;
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-md);
+}
+
+.text-body-xs {
+  composes: text-body;
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-sm);
+}
+
+/* 特殊文本样式 */
+.text-mincho {
+  font-family: var(--font-family-mincho);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+.text-mincho-lg {
+  composes: text-mincho;
+  font-size: var(--font-size-lg);
+  line-height: var(--line-height-lg);
+}
+
+.text-mincho-md {
+  composes: text-mincho;
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-md);
+}
+
+/* 辅助文本样式 */
+.text-caption {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  color: var(--color-text-secondary);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.text-hint {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-xs);
+  line-height: var(--line-height-xs);
+  color: var(--color-text-hint);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 按钮文本样式 */
+.text-button {
+  font-family: var(--font-family-yahei);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 导航文本样式 */
+.text-nav {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 文本对齐方式 */
+.text-left { text-align: left; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+
+/* 文本溢出处理 */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-truncate-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 文本颜色变体 */
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-hint { color: var(--color-text-hint); }
+.text-disabled { color: var(--color-text-disabled); }
+.text-success { color: var(--color-success); }
+.text-warning { color: var(--color-warning); }
+.text-error { color: var(--color-error); }
+.text-info { color: var(--color-info); }
+.text-accent { color: var(--color-accent); }

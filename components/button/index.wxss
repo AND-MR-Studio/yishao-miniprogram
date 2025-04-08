@@ -36,13 +36,10 @@
 
 /* 点亮按钮文本 */
 .btn-text-light {
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 24rpx;
-  line-height: 24rpx;
+  composes: text-mincho-sm;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-align: center;
   color: #000000;
 }
@@ -64,26 +61,20 @@
 
 /* 未点亮按钮文本 */
 .btn-text-normal {
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 24rpx;
-  line-height: 24rpx;
+  composes: text-mincho-sm;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-align: center;
   color:#4a4e57;
 }
 
 /* 保留原有的未点亮文本类，以避免兼容问题 */
 .btn-text-unlight {
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 24rpx;
-  line-height: 24rpx;
+  composes: text-mincho-sm;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-align: center;
   color:rgb(77, 77, 77);
 }
@@ -110,13 +101,10 @@
 
 /* 确定按钮文本 */
 .btn-text-confirm {
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 28rpx;
+  composes: text-button;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-align: center;
   color: #FFFFFF;
 }
@@ -144,11 +132,10 @@
 
 /* 深色按钮文本 */
 .btn-text-dark {
-  font-family: 'Microsoft YaHei';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 44rpx;
+  composes: text-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   color: #FFFFFF;
   width: 100%;
@@ -172,14 +159,8 @@
 
 /* 开关标签 */
 .item-label {
+  composes: text-body-md;
   flex: 1;
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 30rpx;
-  line-height: 44rpx;
-  display: flex;
-  align-items: center;
   color: #2A2D32;
   opacity: 0.8;
 }
@@ -257,18 +238,7 @@
 }
 
 .option-label {
-  width: auto;
-  min-width: 28rpx;
-  height: 40rpx;
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 40rpx;
-  display: flex;
-  align-items: center;
-  letter-spacing: -0.6rpx;
-  color: #2A2D32;
+  composes: text-body-sm;
   opacity: 0.6;
 }
 
@@ -281,16 +251,8 @@
 }
 
 .font-size-label {
+  composes: text-body-md;
   width: 100%;
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 30rpx;
-  line-height: 44rpx;
-  display: flex;
-  align-items: center;
-  letter-spacing: -0.6rpx;
-  color: #2A2D32;
   opacity: 0.8;
 }
 

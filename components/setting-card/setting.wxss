@@ -348,7 +348,7 @@
 .studio-logo {
   width: 300rpx; /* 稍微减小logo宽度 */
   height: 90rpx;
-  background-image: url('https://i.postimg.cc/GtWsWKQ6/logo.png');
+  background-image: url('https://img.picui.cn/free/2025/04/07/67f3a7b07374d.png');
   background-size: contain;
   background-repeat: no-repeat;
   background-position: left;

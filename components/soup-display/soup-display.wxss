@@ -24,8 +24,7 @@
 }
 
 .loading-text {
-  font-size: var(--font-size-md);
-  color: var(--color-text-primary);
+  composes: text-body-md;
   text-align: center;
 }
 
@@ -49,14 +48,14 @@
 }
 
 .soup-title {
+  composes: text-mincho;
   height: 80rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-weight: var(--font-weight-bold);
-  font-family: 'Huiwen-mincho';
   font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
@@ -107,28 +106,23 @@
 
 /* 文本行基础样式 */
 .text-line {
+  composes: text-mincho-md;
   display: inline-flex;
   position: relative;
   white-space: nowrap;
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: var(--font-weight-normal);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-md);
-  color: var(--color-text-primary);
-  transition: color var(--transition-duration) var(--transition-timing);
   transform: translateZ(0);
 }
 
 /* 标题文本特殊样式 */
 .text-line.title {
+  composes: text-mincho;
   height: 80rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-weight: var(--font-weight-bold);
   font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
 }

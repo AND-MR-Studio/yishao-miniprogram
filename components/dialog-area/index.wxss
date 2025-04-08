@@ -34,11 +34,7 @@
 
 /* 基础消息样式 */
 .message {
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 34rpx;
-  line-height: 170%;
+  composes: text-mincho-md;
   margin-bottom: 10rpx;
   width: 100%;
   padding: 0 40rpx;
@@ -77,11 +73,7 @@
 
 /* 前缀文本样式 */
 .prefix-text {
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 34rpx;
-  line-height: 170%;
+  composes: text-mincho-md;
   display: inline;
 }
 
@@ -107,7 +99,7 @@
   transform: scale(1);
 }
 
-/* 活跃状态 - 当前正在输入的字符 */
+/* 活跃状态 */
 .char-typing.active {
   opacity: 1;
 }
