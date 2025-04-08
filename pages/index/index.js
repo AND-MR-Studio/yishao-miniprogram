@@ -103,11 +103,16 @@ Page({
       showButtons: false
     });
 
-    // 重置组件状态，组件会自动加载下一个汤面
+    // 先刷新服务器数据，然后重置组件状态
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (soupDisplay) {
+      // 先重置动画
       soupDisplay.resetAnimation();
-      soupDisplay.loadSoupData();
+      
+      // 刷新服务器数据后加载新的汤面
+      soupService.refreshSoups(() => {
+        soupDisplay.loadSoupData();
+      });
     }
   },
 

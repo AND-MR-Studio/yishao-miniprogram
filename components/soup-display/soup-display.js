@@ -180,13 +180,8 @@ Component({
       const currentId = this.data.soupId;
       if (!currentId) return '';
       
-      const currentIndex = soupService.getSoupIndex(currentId);
-      // 如果是最后一个或找不到当前汤面，从第一个开始
-      if (currentIndex === -1 || currentIndex === soupService.soups.length - 1) {
-        return soupService.soups[0].soupId;
-      }
-      // 否则获取下一个汤面
-      return soupService.soups[currentIndex + 1].soupId;
+      // 使用 soupService 的 getNextSoupId 方法获取下一个汤面ID
+      return soupService.getNextSoupId(currentId);
     },
 
     /**
