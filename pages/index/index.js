@@ -1,4 +1,5 @@
 const soupService = require('../../utils/soupService');
+const dialogService = require('../../utils/dialogService');
 
 Page({
 
@@ -88,9 +89,13 @@ Page({
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (!soupDisplay) return;
 
+    // 先设置当前选择的汤面ID
+    const soupId = soupDisplay.data.soupId;
+    dialogService.setCurrentSoupId(soupId);
+
     // 跳转到对话页面
     wx.switchTab({
-      url: `/pages/dialog/dialog?soupId=${soupDisplay.data.soupId}`
+      url: '/pages/dialog/dialog'
     });
   },
 

@@ -1,8 +1,6 @@
-const { chatAPI } = require('../api');
-
 /**
  * 对话服务类
- * 处理与后端的对话交互，支持消息存储和加载
+ * 处理对话数据的本地存储与加载
  */
 class DialogService {
     constructor() {
@@ -11,56 +9,28 @@ class DialogService {
             soupId: '',
             messageDirty: false
         };
+        
+        // 预设的回复选项
+        this._defaultReplies = [
+            '是', 
+            '否', 
+            '不确定'
+        ];
     }
 
     /**
-     * 发送普通对话消息
-     * @param {Object} params - 消息参数
-     * @returns {Promise} - 返回处理后的响应
+     * 生成一个简单的回复
+     * @returns {Object} 回复消息对象
      */
-    async sendMessage(params) {
-        try {
-            const response = await chatAPI.sendMessage(params);
-
-            // 转换为项目使用的消息格式 {type: 'normal', content: 'xxx'}
-            return {
-                type: 'normal',
-                content: this._formatResponseContent(response)
-            };
-        } catch (error) {
-            console.error('发送消息失败:', error);
-            wx.showToast({
-                title: '请求失败',
-                icon: 'none'
-            });
-            throw error;
-        }
-    }
-
-    /**
-     * 格式化响应内容
-     * @param {Object} response - API返回的原始响应
-     * @returns {String} - 格式化后的响应内容
-     * @private
-     */
-    _formatResponseContent(response) {
-        // 根据API实际返回格式，提取文本内容
-        if (response && typeof response === 'object') {
-            if (response.content) return response.content;
-            if (response.message) return response.message;
-            if (response.text) return response.text;
-            if (response.data && response.data.content) return response.data.content;
-        }
-
-        // 如果是字符串，直接返回
-        if (typeof response === 'string') return response;
-
-        // 最后尝试将整个响应转为字符串
-        try {
-            return JSON.stringify(response);
-        } catch (e) {
-            return '收到回复';
-        }
+    generateReply() {
+        // 随机选择一个预设回复
+        const randomIndex = Math.floor(Math.random() * this._defaultReplies.length);
+        const replyContent = this._defaultReplies[randomIndex];
+        
+        return {
+            type: 'normal',
+            content: replyContent
+        };
     }
 
     /**
