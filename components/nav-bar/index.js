@@ -34,6 +34,11 @@ Component({
     titleStyle: {
       type: String,
       value: ''
+    },
+    // 当前汤面ID
+    soupId: {
+      type: String,
+      value: ''
     }
   },
 
@@ -79,6 +84,7 @@ Component({
     },
     
     onSettingClose() {
+      console.log('关闭设置面板');
       this.setData({
         showSettingPanel: false
       });
@@ -105,6 +111,12 @@ Component({
     onAbout() {
       // 触发关于我们事件
       this.triggerEvent('about');
+    },
+    
+    // 处理放弃汤面事件
+    onAbandon() {
+      // 触发放弃汤面事件给页面处理
+      this.triggerEvent('abandon');
     }
   }
 })

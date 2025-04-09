@@ -28,6 +28,26 @@ Page({
     this.setData({
       showButtons: false
     });
+
+    // 页面加载后，延迟一下确保组件已挂载，然后主动加载汤面数据
+    setTimeout(() => {
+      this._initSoupDisplay();
+    }, 100);
+  },
+
+  /**
+   * 初始化汤面展示组件
+   * @private
+   */
+  _initSoupDisplay() {
+    // 获取汤面展示组件实例
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (!soupDisplay) return;
+
+    // 如果没有指定soupId或当前组件没有显示内容，则主动加载数据
+    if (!soupDisplay.data.currentSoup) {
+      soupDisplay.loadSoupData();
+    }
   },
 
   // 初始化设置
@@ -45,7 +65,7 @@ Page({
         });
       }
     } catch (e) {
-      console.error('读取设置失败:', e);
+      // 读取设置失败
     }
   },
 
@@ -58,6 +78,14 @@ Page({
         selected: 0
       });
     }
+
+    // 每次显示页面时，检查汤面组件是否有内容，没有则初始化
+    setTimeout(() => {
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      if (soupDisplay && !soupDisplay.data.currentSoup) {
+        this._initSoupDisplay();
+      }
+    }, 100);
   },
 
   /**
@@ -89,13 +117,24 @@ Page({
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (!soupDisplay) return;
 
-    // 先设置当前选择的汤面ID
+    // 获取当前选择的汤面ID
     const soupId = soupDisplay.data.soupId;
-    dialogService.setCurrentSoupId(soupId);
-
-    // 跳转到对话页面
+    
+    // 通过URL参数将soupId传递到对话页面
     wx.switchTab({
-      url: '/pages/dialog/dialog'
+      url: '/pages/dialog/dialog',
+      success: () => {
+        // 使用页面实例方法来传递参数给dialog页面
+        const dialogPage = getCurrentPages().find(page => page.route === 'pages/dialog/dialog');
+        if (dialogPage) {
+          // 如果能获取到页面实例，直接设置参数
+          dialogPage.setSoupId(soupId);
+        } else {
+          // 如果获取不到页面实例，使用全局变量暂存soupId
+          getApp().globalData = getApp().globalData || {};
+          getApp().globalData.pendingSoupId = soupId;
+        }
+      }
     });
   },
 
@@ -108,17 +147,26 @@ Page({
       showButtons: false
     });
 
-    // 先刷新服务器数据，然后重置组件状态
+    // 获取当前汤面组件实例
     const soupDisplay = this.selectComponent('#soupDisplay');
-    if (soupDisplay) {
-      // 先重置动画
-      soupDisplay.resetAnimation();
-      
-      // 刷新服务器数据后加载新的汤面
-      soupService.refreshSoups(() => {
-        soupDisplay.loadSoupData();
-      });
-    }
+    if (!soupDisplay) return;
+
+    // 重置动画
+    soupDisplay.resetAnimation();
+    
+    // 获取当前汤面ID
+    const currentSoupId = soupDisplay.data.soupId;
+    
+    // 获取下一个汤面ID
+    const nextSoupId = soupService.getNextSoupId(currentSoupId);
+    
+    // 设置新的soupId
+    this.setData({
+      'soupConfig.soupId': nextSoupId
+    }, () => {
+      // 加载新汤面数据
+      soupDisplay.loadSoupData();
+    });
   },
 
   /**

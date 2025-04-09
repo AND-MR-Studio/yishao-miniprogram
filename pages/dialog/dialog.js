@@ -25,7 +25,31 @@ Page({
     keyboardHeight: 0,
     focus: false,
     soupTitle: '', // 当前汤面标题
-    isPeekingSoup: false // 控制是否偷看汤面（透明对话区域）
+    isPeekingSoup: false, // 控制是否偷看汤面（透明对话区域）
+    showSoupTruth: false // 控制是否显示汤底组件
+  },
+
+  /**
+   * 页面实例方法：设置当前使用的汤面ID
+   * 供index页面调用
+   */
+  setSoupId(soupId) {
+    if (!soupId) return;
+    
+    // 如果当前已有相同的soupId，不需要重新加载
+    if (soupId === this.data.currentSoupId) return;
+    
+    // 设置当前汤面ID - 同时更新soupConfig.soupId以便传递给组件
+    this.setData({ 
+      currentSoupId: soupId,
+      'soupConfig.soupId': soupId
+    });
+    
+    // 加载汤面数据
+    this._fetchSoupData(soupId);
+    
+    // 加载历史消息
+    this._loadHistoryMessages(soupId);
   },
 
   /**
@@ -35,43 +59,19 @@ Page({
     // 获取页面参数中的soupId
     const { soupId } = options;
 
-    if (!soupId) {
-      // 如果没有传入soupId，返回上一页
-      wx.navigateBack();
-      return;
+    if (soupId) {
+      // 保存当前汤面ID
+      this.setData({
+        currentSoupId: soupId,
+        'soupConfig.soupId': soupId
+      });
+
+      // 尝试加载历史对话记录
+      this._loadHistoryMessages(soupId);
+
+      // 从服务获取对应的汤面数据
+      this._fetchSoupData(soupId);
     }
-
-    // 保存当前汤面ID
-    this.setData({
-      currentSoupId: soupId
-    });
-
-    // 告知dialogService当前的soupId
-    dialogService.setCurrentSoupId(soupId);
-
-    // 尝试加载历史对话记录
-    this._loadHistoryMessages(soupId);
-
-    // 从服务获取对应的汤面数据
-    soupService.getSoupData({
-      soupId: soupId,
-      success: (soupData) => {
-        if (soupData) {
-          // 保存完整的汤面数据到页面状态
-          this.setData({
-            currentSoupData: soupData,
-            'soupConfig.soupId': soupId,
-            soupTitle: soupData.title || '未命名汤面' // 保存汤面标题
-          });
-
-          // 获取soup-display组件实例并设置数据
-          const soupDisplay = this.selectComponent('#soupDisplay');
-          if (soupDisplay) {
-            soupDisplay.setCurrentSoup(soupData);
-          }
-        }
-      }
-    });
     
     // 监听键盘高度变化
     wx.onKeyboardHeightChange(res => {
@@ -82,34 +82,36 @@ Page({
   },
 
   /**
-   * 加载历史对话记录
+   * 加载历史对话记录 - 包含初始系统消息
    * @param {string} soupId 汤面ID
    * @private
    */
   _loadHistoryMessages(soupId) {
+    if (!soupId) return;
+    
+    // 添加初始化系统消息
+    const initialSystemMessages = [
+      {
+        type: 'system',
+        content: '欢迎来到一勺海龟汤。'
+      },
+      {
+        type: 'system',
+        content: '你需要通过提问来猜测谜底，'
+      },
+      {
+        type: 'system',
+        content: '我只会回答"是"、"否"或"不确定"。'
+      },
+      {
+        type: 'system',
+        content: '长按对话区域显示汤面。'
+      }
+    ];
+    
     dialogService.loadDialogMessages({
       soupId: soupId,
       success: (messages) => {
-        // 添加初始化系统消息（但不存储）
-        const initialSystemMessages = [
-          {
-            type: 'system',
-            content: '欢迎来到一勺海龟汤。'
-          },
-          {
-            type: 'system',
-            content: '你需要通过提问来猜测谜底，'
-          },
-          {
-            type: 'system',
-            content: '我只会回答"是"、"否"或"不确定"。'
-          },
-          {
-            type: 'system',
-            content: '长按对话区域显示汤面。'
-          }
-        ];
-        
         // 将初始化消息添加到已加载消息的前面
         const combinedMessages = [...initialSystemMessages, ...(messages || [])];
         
@@ -132,6 +134,43 @@ Page({
    */
   handleSend(e) {
     const { value } = e.detail;
+    
+    // 检查是否输入了"汤底"关键词
+    if (value && value.trim() === '汤底') {
+      // 显示汤底提示消息
+      const dialogArea = this.selectComponent('#dialogArea');
+      if (dialogArea) {
+        // 添加系统消息
+        dialogArea.addSystemMessage('你喝到了汤底');
+        
+        // 显示汤底组件，隐藏汤面组件
+        this.setData({ 
+          showSoupTruth: true,
+          isPeekingSoup: false
+        });
+        
+        // 设置汤底组件数据
+        const soupTruth = this.selectComponent('#soupTruth');
+        if (soupTruth && this.data.currentSoupData) {
+          soupTruth.setCurrentSoup(this.data.currentSoupData);
+        }
+        
+        // 延迟跳转回主页
+        setTimeout(() => {
+          // 保存当前对话记录
+          if (dialogArea) {
+            dialogArea.saveMessages();
+          }
+          
+          // 跳转到首页
+          wx.switchTab({
+            url: '/pages/index/index'
+          });
+        }, 3000);
+        
+        return;
+      }
+    }
     
     // 获取dialog-area组件实例
     const dialogArea = this.selectComponent('#dialogArea');
@@ -173,7 +212,34 @@ Page({
    */
   handleVoice() {
     // TODO: 在这里处理语音输入的逻辑
-    console.log('语音输入');
+  },
+
+  /**
+   * 处理放弃当前汤面的事件
+   */
+  handleAbandonSoup() {
+    // 清除当前汤面的对话记录
+    if (this.data.currentSoupId) {
+      dialogService.deleteDialogMessages(this.data.currentSoupId);
+    }
+    
+    try {
+      // 使用id选择器查找导航栏组件，确保关闭设置面板
+      const navBar = this.selectComponent('#navBar');
+      if (navBar && navBar.onSettingClose) {
+        // 关闭设置面板
+        navBar.onSettingClose();
+      }
+    } catch (e) {
+      // 关闭设置面板失败
+    }
+    
+    // 返回首页前确保等待设置面板关闭
+    setTimeout(() => {
+      wx.switchTab({
+        url: '/pages/index/index'
+      });
+    }, 100);
   },
 
   /**
@@ -200,28 +266,13 @@ Page({
       });
     }
 
-    // 从dialogService获取当前选中的汤面ID
-    const soupId = dialogService.getCurrentSoupId();
-    
-    // 如果有选中的汤面ID，则加载对应的汤面数据
-    if (soupId) {
-      // 如果soupId变更，或者当前页面没有加载汤面，则加载新的汤面
-      if (soupId !== this.data.currentSoupId || !this.data.currentSoupId) {
-        console.log('加载汤面ID:', soupId);
-        
-        // 设置当前汤面ID
-        this.setData({ 
-          currentSoupId: soupId
-        });
-        
-        // 加载汤面数据
-        this._fetchSoupData(soupId);
-        
-        // 加载历史消息
-        this._tryLoadHistoryMessages(soupId);
-      }
-    } else {
-      // 如果没有选中的汤面ID，尝试加载默认汤面
+    // 检查全局变量中是否有待处理的soupId
+    if (getApp().globalData && getApp().globalData.pendingSoupId) {
+      const soupId = getApp().globalData.pendingSoupId;
+      delete getApp().globalData.pendingSoupId; // 使用后删除
+      this.setSoupId(soupId);
+    } else if (!this.data.currentSoupId) {
+      // 如果没有soupId，尝试加载默认汤面
       this._loadDefaultSoup();
     }
   },
@@ -238,16 +289,6 @@ Page({
         dialogArea.saveMessages();
       }
     }
-    
-    // 保存后清除当前对话服务中的汤面ID
-    dialogService.clearCurrentSoupId();
-    
-    // 页面隐藏时清除当前页面状态，确保下次通过tabBar切换回来时能重新加载
-    // 这样从我的页面点击不同汤面时，可以正确加载新的汤面
-    this.setData({
-      currentSoupId: '', // 清空当前汤面ID，强制下次onShow时重新加载
-      'soupConfig.soupId': ''
-    });
     
     // 清除长按查看汤面的定时器
     if (this.peekTimer) {
@@ -318,38 +359,6 @@ Page({
   },
 
   /**
-   * 尝试加载历史消息
-   * @param {string} soupId 汤面ID
-   * @private
-   */
-  _tryLoadHistoryMessages(soupId) {
-    dialogService.loadDialogMessages({
-      soupId: soupId,
-      success: (messages) => {
-        if (messages && messages.length) {
-          // 合并系统消息和历史消息
-          const systemMessages = this._getInitialSystemMessages(soupId);
-          const allMessages = [...systemMessages, ...messages];
-          
-          this.setData({
-            messages: allMessages
-          });
-          
-          console.log('已加载历史消息:', messages.length);
-        } else {
-          // 没有历史消息，只加载系统初始消息
-          const systemMessages = this._getInitialSystemMessages(soupId);
-          this.setData({
-            messages: systemMessages
-          });
-          
-          console.log('无历史消息，加载系统消息');
-        }
-      }
-    });
-  },
-
-  /**
    * 加载默认汤面
    * @private
    */
@@ -361,45 +370,17 @@ Page({
         
         // 设置当前汤面ID
         this.setData({ 
-          currentSoupId: soupId 
+          currentSoupId: soupId,
+          'soupConfig.soupId': soupId 
         });
-        
-        // 同步到dialogService
-        dialogService.setCurrentSoupId(soupId);
         
         // 加载汤面数据
         this._fetchSoupData(soupId);
         
         // 加载历史消息
-        this._tryLoadHistoryMessages(soupId);
+        this._loadHistoryMessages(soupId);
       }
     });
-  },
-
-  /**
-   * 获取初始化系统消息
-   * @param {string} soupId 汤面ID
-   * @private
-   */
-  _getInitialSystemMessages(soupId) {
-    return [
-      {
-        type: 'system',
-        content: '欢迎来到一勺海龟汤。'
-      },
-      {
-        type: 'system',
-        content: '你需要通过提问来猜测谜底，'
-      },
-      {
-        type: 'system',
-        content: '我只会回答"是"、"否"或"不确定"。'
-      },
-      {
-        type: 'system',
-        content: '长按对话区域显示汤面。'
-      }
-    ];
   },
 
   /**
@@ -408,6 +389,8 @@ Page({
    * @private
    */
   _fetchSoupData(soupId) {
+    if (!soupId) return;
+    
     soupService.getSoupData({
       soupId: soupId,
       success: (soupData) => {

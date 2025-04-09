@@ -1,7 +1,11 @@
 <!--pages/dialog.wxml-->
 <view class="page {{isPeekingSoup ? 'peek-soup' : ''}}">
   <!-- 导航栏 -->
-  <nav-bar />
+  <nav-bar 
+    id="navBar"
+    soupId="{{currentSoupId}}" 
+    bind:abandon="handleAbandonSoup" 
+  />
   
   <view class="container" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
     <!-- 汤面显示区域 -->
@@ -11,7 +15,16 @@
       autoPlay="{{soupConfig.autoPlay}}"
       staticMode="{{soupConfig.staticMode}}"
       bind:animationComplete="onSoupAnimationComplete"
+      hidden="{{showSoupTruth}}"
     ></soup-display>
+    
+    <!-- 汤底显示区域 -->
+    <soup-truth
+      id="soupTruth"
+      soupId="{{currentSoupId}}"
+      wx:if="{{showSoupTruth}}"
+    ></soup-truth>
+    
     <!-- 毛玻璃效果遮罩层 -->
     <view class="frosted-glass"></view>
     <!-- 对话区域 -->

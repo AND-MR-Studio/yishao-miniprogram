@@ -5,16 +5,21 @@ Component({
   properties: {
     messages: {
       type: Array,
-      value: []
+      value: [],
+      observer: function(newVal) {
+        // 当父组件设置messages时，标记为已从父组件加载，避免重复加载
+        if (newVal && newVal.length > 0) {
+          this.hasLoadedFromParent = true;
+        }
+      }
     },
     // 当前汤面ID
     soupId: {
       type: String,
       value: '',
-      observer: function(newVal) {
-        if (newVal) {
-          dialogService.setCurrentSoupId(newVal);
-          // 如果有soupId变化，可以尝试加载对应的历史消息
+      observer: function(newVal, oldVal) {
+        // 只有当soupId变化且未从父组件加载消息时，才尝试加载历史消息
+        if (newVal && newVal !== oldVal && !this.hasLoadedFromParent) {
           this._tryLoadHistoryMessages(newVal);
         }
       }
@@ -42,6 +47,9 @@ Component({
 
   lifetimes: {
     attached() {
+      // 初始化标志，用于跟踪是否已从父组件加载了消息
+      this.hasLoadedFromParent = false;
+      
       // 初始化打字机动画实例
       this.typeAnimator = typeAnimation.createInstance(this, {
         typeSpeed: 60,
@@ -56,18 +64,15 @@ Component({
         }
       });
       
-      // 如果有soupId，先尝试加载历史消息
-      if (this.properties.soupId) {
+      // 只有当没有从父组件接收到消息时才尝试加载历史消息
+      if (this.properties.soupId && !this.properties.messages.length && !this.hasLoadedFromParent) {
         this._tryLoadHistoryMessages(this.properties.soupId);
       }
       
-      // 延迟创建初始消息，以确保历史消息有机会先加载
+      // 延迟滚动到底部，确保视图已渲染
       setTimeout(() => {
-        // 如果页面提供了消息，确保滚动到底部
-        setTimeout(() => {
-          this.scrollToBottom();
-        }, 50);
-      }, 300); // 给历史消息加载预留时间
+        this.scrollToBottom();
+      }, 300);
     },
     
     detached() {
@@ -90,8 +95,8 @@ Component({
      * @private
      */
     _tryLoadHistoryMessages(soupId) {
-      // 确保始终尝试加载历史消息
-      if (!soupId) return;
+      // 如果已经从父组件加载了消息，或者没有soupId，则不加载
+      if (this.hasLoadedFromParent || !soupId) return;
       
       // 尝试加载历史消息
       dialogService.loadDialogMessages({
@@ -296,7 +301,6 @@ Component({
         
         return updatedMessages;
       } catch (error) {
-        console.error('发送消息失败:', error);
         this.setData({ isReceiving: false });
         throw error;
       }
@@ -329,6 +333,9 @@ Component({
      * @param {Array} messages - 消息列表
      */
     setMessages(messages) {
+      // 标记为已从父组件加载消息，避免重复加载
+      this.hasLoadedFromParent = true;
+      
       this.setData({ 
         messages, 
         hasMessagesChanged: false  // 重置变更标记，因为这是外部设置的消息
@@ -381,8 +388,57 @@ Component({
             .exec();
         }, 50);
       } catch (err) {
-        console.error('组件内滚动失败:', err);
+        // 组件内滚动失败
       }
+    },
+
+    /**
+     * 添加系统消息
+     * @param {String} content - 系统消息内容
+     * @returns {Array} - 返回更新后的消息数组
+     */
+    addSystemMessage(content) {
+      if (!content || !content.trim()) return this.data.messages;
+
+      // 创建系统消息对象（实际内容为空，用于动画）
+      const systemMessage = {
+        type: 'system',
+        content: ''
+      };
+
+      // 添加系统消息
+      const messages = [...this.data.messages, systemMessage];
+      
+      this.setData({ 
+        messages,
+        animatingMessageIndex: messages.length - 1,
+        hasMessagesChanged: true
+      }, () => {
+        this.scrollToBottom();
+        // 启动打字机动画
+        this.typeAnimator.start(content);
+        
+        // 动画完成后更新消息内容
+        setTimeout(() => {
+          const finalMessages = [...messages];
+          finalMessages[finalMessages.length - 1] = {
+            type: 'system',
+            content: content
+          };
+          
+          this.setData({ messages: finalMessages }, () => {
+            this.triggerEvent('messagesChange', { messages: finalMessages });
+            this.scrollToBottom();
+            
+            // 自动保存消息
+            if (this.properties.autoSave) {
+              this._saveMessages();
+            }
+          });
+        }, content.length * 80 + 200); // 估算动画完成时间
+      });
+
+      return messages;
     }
   }
 });

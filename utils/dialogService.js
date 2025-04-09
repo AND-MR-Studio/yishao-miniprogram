@@ -2,11 +2,12 @@
  * 对话服务类
  * 处理对话数据的本地存储与加载
  */
+const soupService = require('./soupService');
+
 class DialogService {
     constructor() {
         // 存储当前对话状态
         this._dialogState = {
-            soupId: '',
             messageDirty: false
         };
         
@@ -34,22 +35,6 @@ class DialogService {
     }
 
     /**
-     * 设置当前对话的soupId
-     * @param {string} soupId 汤面ID
-     */
-    setCurrentSoupId(soupId) {
-        this._dialogState.soupId = soupId;
-    }
-
-    /**
-     * 获取当前对话的soupId
-     * @returns {string} 当前汤面ID
-     */
-    getCurrentSoupId() {
-        return this._dialogState.soupId;
-    }
-
-    /**
      * 设置对话内容已更改标志
      * @param {boolean} isDirty 是否已更改
      */
@@ -70,40 +55,28 @@ class DialogService {
      */
     resetDialogState() {
         this._dialogState = {
-            soupId: '',
             messageDirty: false
         };
     }
 
     /**
-     * 清除当前汤面ID
-     * 在页面切换时调用，确保下次加载页面时能正确设置新的汤面ID
-     */
-    clearCurrentSoupId() {
-        this._dialogState.soupId = '';
-    }
-
-    /**
      * 获取存储的对话记录键
-     * @param {string} soupId 汤面ID，如果不提供则使用当前soupId
+     * @param {string} soupId 汤面ID
      * @returns {string} 存储键
      */
     getDialogStorageKey(soupId) {
-        const id = soupId || this._dialogState.soupId;
-        if (!id) return null;
-        return `dialog_messages_${id}`;
+        if (!soupId) return null;
+        return `dialog_messages_${soupId}`;
     }
 
     /**
      * 保存对话记录
-     * @param {string} soupId 汤面ID，如果不提供则使用当前soupId
+     * @param {string} soupId 汤面ID
      * @param {Array} messages 对话消息数组
      * @returns {boolean} 保存是否成功
      */
     saveDialogMessages(soupId, messages) {
-        const id = soupId || this._dialogState.soupId;
-
-        if (!id || !messages || !messages.length) {
+        if (!soupId || !messages || !messages.length) {
             console.error('DialogService: 保存对话记录失败: 无效的参数');
             return false;
         }
@@ -116,7 +89,7 @@ class DialogService {
             return true; // 仅有系统消息情况下，视为成功
         }
 
-        const storageKey = this.getDialogStorageKey(id);
+        const storageKey = this.getDialogStorageKey(soupId);
 
         try {
             // 存储过滤后的消息
@@ -134,16 +107,13 @@ class DialogService {
     /**
      * 加载对话记录
      * @param {Object} options 配置选项
-     * @param {string} options.soupId 汤面ID，如果不提供则使用当前soupId
+     * @param {string} options.soupId 汤面ID
      * @param {Function} options.success 成功回调函数，参数为加载的消息数组
      * @param {Function} options.fail 失败回调函数，参数为错误信息
      * @param {Function} options.complete 完成回调函数
      */
     loadDialogMessages(options = {}) {
         let { soupId, success, fail, complete } = options;
-
-        // 如果没有提供soupId，使用当前状态中的soupId
-        soupId = soupId || this._dialogState.soupId;
 
         if (!soupId) {
             const error = 'DialogService: 加载对话记录失败: 缺少汤面ID';
@@ -180,14 +150,13 @@ class DialogService {
 
     /**
      * 删除对话记录
-     * @param {string} soupId 汤面ID，如果不提供则使用当前soupId
+     * @param {string} soupId 汤面ID
      * @returns {boolean} 删除是否成功
      */
     deleteDialogMessages(soupId) {
-        const id = soupId || this._dialogState.soupId;
-        if (!id) return false;
+        if (!soupId) return false;
 
-        const storageKey = this.getDialogStorageKey(id);
+        const storageKey = this.getDialogStorageKey(soupId);
         try {
             wx.removeStorageSync(storageKey);
             return true;

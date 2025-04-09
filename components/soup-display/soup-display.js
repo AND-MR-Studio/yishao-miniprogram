@@ -91,14 +91,15 @@ Component({
     attached() {
       this._initTypeAnimator();
       
-      // 加载汤面数据
-      this.loadSoupData();
+      // 只有当父组件没有传入soupId时，组件才自动加载数据
+      // 如果父组件传入了soupId，等待父组件通过setCurrentSoup方法设置数据
+      if (!this.properties.soupId) {
+        this.loadSoupData();
+      }
       
-      // 如果是静态模式，直接显示完整内容
+      // 如果是静态模式且已有汤面数据，直接显示完整内容
       if (this.data.staticMode && this.data.currentSoup) {
         this._showCompleteContent();
-      } else if (this.data.autoPlay) {
-        this.startAnimation();
       }
     },
 
@@ -135,15 +136,21 @@ Component({
       this.setData({ loading: true });
       this.triggerEvent('loadStart');
 
-      // 获取目标汤面ID
-      let targetSoupId = this._getNextSoupId();
+      // 获取目标汤面ID，优先使用properties中的soupId
+      let targetSoupId = this.properties.soupId || this.data.soupId || '';
+      
+      // 如果没有指定soupId，则使用下一个soupId
+      if (!targetSoupId) {
+        targetSoupId = this._getNextSoupId();
+      }
 
       soupService.getSoupData({
         soupId: targetSoupId,
         success: (soupData) => {
           this.setData({
             currentSoup: soupData,
-            loading: false
+            loading: false,
+            soupId: soupData.soupId || '' // 更新组件的soupId属性
           });
 
           this.triggerEvent('loadSuccess', { soupData });
@@ -156,11 +163,11 @@ Component({
           }
         },
         fail: (error) => {
-          console.error('获取汤面数据失败:', error);
           // 加载失败时使用第一个汤面
           const defaultSoup = soupService.soups[0];
           this.setData({ 
             currentSoup: defaultSoup,
+            soupId: defaultSoup.soupId || '', // 更新组件的soupId属性
             loading: false 
           });
           this.triggerEvent('loadFail', { error });
@@ -177,11 +184,17 @@ Component({
      * @returns {String} 下一个汤面ID
      */
     _getNextSoupId() {
-      const currentId = this.data.soupId;
-      if (!currentId) return '';
+      const currentId = this.properties.soupId || this.data.soupId || '';
       
       // 使用 soupService 的 getNextSoupId 方法获取下一个汤面ID
-      return soupService.getNextSoupId(currentId);
+      const nextId = soupService.getNextSoupId(currentId);
+      
+      // 如果获取失败或获取到的是当前ID，返回第一个汤面ID
+      if (!nextId || nextId === currentId) {
+        return soupService.soups[0]?.soupId || '';
+      }
+      
+      return nextId;
     },
 
     /**
@@ -226,7 +239,7 @@ Component({
     },
 
     /**
-     * 设置当前汤面
+     * 设置当前汤面 - 父组件通过这个方法传递数据
      * @param {Object} soup 汤面数据对象
      * @returns {boolean} 是否设置成功
      */

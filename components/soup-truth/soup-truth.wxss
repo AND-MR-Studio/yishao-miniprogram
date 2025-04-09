@@ -1,0 +1,91 @@
+/* components/soup-truth/soup-truth.wxss */
+
+/* 汤底容器 */
+.soup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30rpx 0;
+  width: 100%;
+  min-height: 300rpx;
+  box-sizing: border-box;
+  background-color: rgba(0, 0, 0, 0.03);
+  border-radius: 16rpx;
+}
+
+/* 加载中样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200rpx;
+  width: 100%;
+}
+
+.loading-text {
+  font-size: 28rpx;
+  text-align: center;
+  color: #666;
+}
+
+.blink-animation {
+  animation: blink 1.5s infinite ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* 汤底内容区样式 */
+.soup-content {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+  min-height: 200rpx;
+  position: relative;
+}
+
+/* 标题容器 */
+.soup-title-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20rpx 0;
+  margin-bottom: 30rpx;
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* 标题样式 */
+.soup-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+}
+
+/* 汤底容器 */
+.soup-truth-container {
+  width: 100%;
+  padding: 30rpx;
+  margin-top: 20rpx;
+  background-color: rgba(23, 255, 93, 0.05);
+  border-radius: 12rpx;
+  box-shadow: 0 0 15rpx rgba(23, 255, 93, 0.1);
+}
+
+/* 汤底文本样式 */
+.soup-truth {
+  font-size: 30rpx;
+  line-height: 1.8;
+  color: #333;
+  text-align: center;
+  display: block;
+  padding: 10rpx;
+}

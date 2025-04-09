@@ -17,14 +17,14 @@ Component({
       {
         pagePath: "/pages/index/index",
         text: "主页",
-        icon: "icon-community_UnSelected",
-        selectedIcon: "icon-community_Selected"
+        icon: "icon-soup_UnSelected",
+        selectedIcon: "icon-soup_Selected"
       },
       {
         pagePath: "/pages/dialog/dialog",
         text: "喝汤",
-        icon: "icon-soup_UnSelected",
-        selectedIcon: "icon-soup_Selected"
+        icon: "icon-community_UnSelected",
+        selectedIcon: "icon-community_Selected"
       },
       {
         pagePath: "/pages/mine/mine",

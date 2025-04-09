@@ -63,6 +63,10 @@
                 <label for="soupContent" class="form-label">内容</label>
                 <textarea class="form-control" id="soupContent" rows="4" placeholder="输入汤面内容，每行一句，用回车分隔"></textarea>
             </div>
+            <div class="mb-3">
+                <label for="soupTruth" class="form-label">汤底</label>
+                <input type="text" class="form-control" id="soupTruth" placeholder="输入汤底">
+            </div>
             <button type="button" class="btn btn-primary" id="addSoupBtn">添加汤面</button>
         </div>
         
@@ -96,8 +100,14 @@
     </div>
 
     <script>
-        // API基础URL
-        const API_BASE_URL = 'http://71.137.1.230:8081/api/soups';
+        // 自动检测当前环境并设置API基础URL
+        const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const API_BASE_URL = isLocalhost 
+            ? `${window.location.protocol}//${window.location.host}/api/soups` 
+            : 'http://71.137.1.230:8081/api/soups';
+        
+        console.log(`当前环境: ${isLocalhost ? '本地开发' : '生产'}`);
+        console.log(`API地址: ${API_BASE_URL}`);
         
         // DOM元素
         const soupsListEl = document.getElementById('soupsList');
@@ -164,6 +174,7 @@
                             <div class="soup-preview mb-3">
                                 ${contentHtml}
                             </div>
+                            <p><strong>汤底:</strong> ${soup.truth || '无'}</p>
                             <div class="action-buttons">
                                 <button class="btn btn-sm btn-primary edit-soup-btn" data-soup-id="${soup.soupId}">编辑</button>
                                 <button class="btn btn-sm btn-danger delete-soup-btn" data-soup-id="${soup.soupId}">删除</button>
@@ -189,6 +200,7 @@
         async function addSoup() {
             const title = soupTitleEl.value.trim();
             const content = soupContentEl.value.trim();
+            const truth = document.getElementById('soupTruth').value.trim();
             
             if (!title || !content) {
                 alert('标题和内容不能为空');
@@ -208,7 +220,8 @@
                     },
                     body: JSON.stringify({
                         title,
-                        contentLines
+                        contentLines,
+                        truth
                     })
                 });
                 

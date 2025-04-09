@@ -14,7 +14,8 @@ const soupService = {
                 '咚咚咚',
                 '哗啦哗啦',
                 '哒…哒…哒…"我找到你了哦…"'
-            ]
+            ],
+            truth: '这是一个关于寻找的故事'
         },
         {
             soupId: 'default_002',
@@ -24,7 +25,8 @@ const soupService = {
                 '然后是同类的尸体，',
                 '接着是同类，',
                 '最后是自己。'
-            ]
+            ],
+            truth: '这是一个关于自我发现的故事'
         },
         {
             soupId: 'default_003',
@@ -33,12 +35,43 @@ const soupService = {
                 '红色男子清晨起来刷牙，',
                 '发现自己牙齿是绿色的，',
                 '他吓疯了过去。'
-            ]
+            ],
+            truth: '这是一个关于恐惧的故事'
         }
     ],
 
-    // API基础URL
-    API_BASE_URL: 'http://71.137.1.230:8081/api/soups',
+    // 环境配置
+    ENV: {
+        DEV: 'development',
+        PROD: 'production'
+    },
+    
+    // 当前环境 - 默认为开发环境
+    currentEnv: 'development',
+    
+    // API基础URL配置
+    API_URLS: {
+        development: 'http://localhost:8081/api/soups',
+        production: 'http://71.137.1.230:8081/api/soups'
+    },
+    
+    // 获取当前环境的API基础URL
+    get API_BASE_URL() {
+        return this.API_URLS[this.currentEnv];
+    },
+    
+    /**
+     * 切换环境
+     * @param {string} env 环境名称 ('development' 或 'production')
+     */
+    switchEnvironment: function(env) {
+        if (this.API_URLS[env]) {
+            this.currentEnv = env;
+            this.isDataLoaded = false; // 切换环境后需要重新加载数据
+            return true;
+        }
+        return false;
+    },
 
     // 是否已从服务器加载数据
     isDataLoaded: false,
@@ -56,9 +89,6 @@ const soupService = {
                     // 更新本地汤面数据
                     this.soups = res.data;
                     this.isDataLoaded = true;
-                    console.log('从服务器加载汤面数据成功:', this.soups.length);
-                } else {
-                    console.warn('服务器返回的汤面数据为空，使用默认数据');
                 }
                 
                 if (typeof callback === 'function') {
@@ -66,7 +96,6 @@ const soupService = {
                 }
             },
             fail: (err) => {
-                console.error('从服务器加载汤面数据失败:', err);
                 if (typeof callback === 'function') {
                     callback(this.soups);
                 }

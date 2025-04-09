@@ -1,7 +1,24 @@
 # 汤面服务（soupService）
 
 ## 功能说明
-汤面服务是小程序的核心数据服务，负责处理汤面数据的获取和管理逻辑。目前采用前端模拟数据的方式实现，后续将对接后端API。
+汤面服务是小程序的核心数据服务，负责处理汤面数据的获取和管理逻辑。现已实现前后端分离，后端服务部署在远程服务器上。
+
+## 服务器配置
+
+### 后端服务器
+- 服务器地址：http://71.137.1.230:8081
+- API基础路径：/api/soups
+- 管理后台：http://71.137.1.230:8081/admin.html
+
+### 启动服务
+1. **启动后端服务**
+   ```bash
+   # 进入服务器目录
+   cd /path/to/server
+   
+   # 启动Node.js服务器
+   node server.js
+   ```
 
 ## 当前实现
 
@@ -220,3 +237,32 @@ const index = soupService.getSoupIndex('default_001');
   - 支持多设备同步回答状态
   - 需要记录用户查看历史
   - 支持查看次数统计和时长分析
+
+## 服务初始化
+```javascript
+// 初始化服务并加载数据
+soupService.loadSoupsFromServer(() => {
+  console.log('汤面数据加载完成');
+});
+
+// 切换生产环境
+soupService.switchEnvironment('production');
+```
+
+## 新增功能
+### 环境切换
+```javascript
+// 切换到开发环境
+soupService.switchEnvironment('development');
+
+// 切换到生产环境
+soupService.switchEnvironment('production');
+```
+
+### 数据刷新
+```javascript
+// 强制刷新服务器数据
+soupService.refreshSoups((newSoups) => {
+  console.log('最新数据:', newSoups.length);
+});
+```

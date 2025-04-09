@@ -135,7 +135,6 @@ Page({
         icon: 'success'
       });
     } catch (error) {
-      console.error('更新头像失败:', error);
       wx.showToast({
         title: error.message || '操作失败',
         icon: 'error'
@@ -178,11 +177,9 @@ Page({
 
               resolve(mockUserInfo);
             } catch (error) {
-              console.error('登录失败:', error);
               reject(error);
             }
           } else {
-            console.error('登录失败:', res);
             reject(new Error('登录失败'));
           }
         },
@@ -293,9 +290,7 @@ Page({
       
       if (Array.isArray(soups) && soups.length > 0) {
         this.setData({ soupList: soups });
-        console.log('成功加载汤面列表，数量:', soups.length);
       } else {
-        console.warn('汤面列表为空或格式不正确');
         // 如果列表为空，可以显示提示
         wx.showToast({
           title: '暂无汤面数据',
@@ -385,37 +380,30 @@ Page({
    * @param {Object} e 事件对象
    */
   handleSoupItemClick(e) {
-    const soupId = e.currentTarget.dataset.soupId;
+    const { soupId } = e.currentTarget.dataset;
+    if (!soupId) return;
     
-    // 检查是否有效的soupId
-    if (!soupId) {
-      console.error('无效的汤面ID:', e.currentTarget.dataset);
-      wx.showToast({
-        title: '无效的汤面ID',
-        icon: 'none'
-      });
-      return;
-    }
+    // 关闭汤面列表弹窗
+    this.closeSoupList();
     
-    // 获取汤面信息
-    const soupInfo = this.data.soupList.find(soup => soup.soupId === soupId) || 
-                    this.data.userSoupHistory.find(item => item.soupId === soupId) || 
-                    { title: '未命名汤面' };
-    
-    console.log('点击汤面项:', soupId, soupInfo.title);
-    
-    // 先清除当前dialogService中的汤面ID
-    dialogService.clearCurrentSoupId();
-    
-    // 设置当前选中的汤面ID到dialogService中
-    dialogService.setCurrentSoupId(soupId);
-    
-    // 添加到用户汤面历史
+    // 记录用户选择的汤面到历史记录
     this._addToUserSoupHistory(soupId);
-
-    // 使用switchTab跳转到对话页面
+    
+    // 跳转到对话页面
     wx.switchTab({
-      url: '/pages/dialog/dialog'
+      url: '/pages/dialog/dialog',
+      success: () => {
+        // 使用页面实例方法来传递参数给dialog页面
+        const dialogPage = getCurrentPages().find(page => page.route === 'pages/dialog/dialog');
+        if (dialogPage) {
+          // 如果能获取到页面实例，直接设置参数
+          dialogPage.setSoupId(soupId);
+        } else {
+          // 如果获取不到页面实例，使用全局变量暂存soupId
+          getApp().globalData = getApp().globalData || {};
+          getApp().globalData.pendingSoupId = soupId;
+        }
+      }
     });
   },
 
@@ -426,7 +414,6 @@ Page({
    */
   _addToUserSoupHistory(soupId) {
     if (!soupId) {
-      console.error('添加历史记录失败: 无效的汤面ID');
       return;
     }
     
@@ -461,7 +448,6 @@ Page({
       wx.setStorageSync('userSoupHistory', userSoupHistory);
       this.setData({ userSoupHistory });
     } else {
-      console.warn('无法找到汤面信息:', soupId);
       // 如果在本地找不到汤面信息，尝试重新加载汤面列表
       this._loadSoupList();
     }
