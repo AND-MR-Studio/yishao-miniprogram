@@ -1,6 +1,38 @@
+@import "/static/css/iconfont.wxss";
+
 /* pages/dialog.wxss */
 .page {
   width: 100%;
   min-height: 100vh;
   background-color: #061429;
+  --dialog-opacity: 1; /* CSS变量控制透明度 */
 }
+
+/* 长按时的透明度控制 */
+.page.peek-soup {
+  --dialog-opacity: 0;
+}
+
+/* 毛玻璃效果遮罩层 */
+.frosted-glass {
+  position: fixed;
+  /* 顶部位置留出导航栏高度 */
+  top: 180rpx; /* 导航栏基础高度 + 状态栏高度 */
+  left: 0;
+  right: 0;
+  /* 底部位置留出 tabbar 高度 */
+  bottom: calc(220rpx + env(safe-area-inset-bottom)); /* tabbar高度 + 输入框高度 + 底部安全区域 */
+  background-color: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(15rpx);
+  -webkit-backdrop-filter: blur(15rpx);
+  z-index: 100;
+  pointer-events: none; /* 确保不会影响底层组件的交互 */
+  opacity: var(--dialog-opacity);
+  transition: opacity 0.5s ease, backdrop-filter 0.5s ease;
+}
+
+/* 对话区域样式 */
+.dialog-area-component {
+  opacity: var(--dialog-opacity);
+  transition: opacity 0.5s ease;
+} 

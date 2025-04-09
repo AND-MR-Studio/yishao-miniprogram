@@ -7,91 +7,61 @@ Component({
    * 组件的属性列表
    */
   properties: {
-    // 强制使用默认汤面(忽略后台数据)
-    useDefaultOnly: {
-      type: Boolean,
-      value: false
+    // 指定要显示的汤面ID，不指定则随机获取
+    soupId: {
+      type: String,
+      value: ''
     },
     // 是否自动播放动画
     autoPlay: {
       type: Boolean,
       value: true
     },
-    // 标题打字速度（毫秒/字）
-    titleTypeSpeed: {
+    // 打字速度（毫秒/字）
+    typeSpeed: {
       type: Number,
-      value: 80  
-    },
-    // 内容打字速度（毫秒/字）
-    contentTypeSpeed: {
-      type: Number,
-      value: 60  
-    },
-    // 行间延迟（毫秒）
-    lineDelay: {
-      type: Number,
-      value: 500  
-    },
-    // 标点符号延迟倍数
-    punctuationDelay: {
-      type: Number,
-      value: 2.5  
-    },
-    // 自动加载数据
-    autoLoad: {
-      type: Boolean,
-      value: true
+      value: 60
     },
     // 静态模式(不显示动画，直接显示完整内容)
     staticMode: {
       type: Boolean,
       value: false
-    },
-    // 自定义光标颜色
-    cursorColor: {
-      type: String,
-      value: ''  // 空表示使用主题默认值
     }
+  },
+
+  /**
+   * 引用外部样式类
+   */
+  externalClasses: [],
+
+  /**
+   * 组件样式隔离
+   */
+  options: {
+    styleIsolation: 'shared',
+    addGlobalClass: true
   },
 
   /**
    * 数据监听器
    */
   observers: {
-    'currentSoup': function(currentSoup) {
+    'currentSoup'(currentSoup) {
       this._updateDisplayContent();
     },
-    'titleTypeSpeed, contentTypeSpeed, lineDelay, punctuationDelay': function(titleTypeSpeed, contentTypeSpeed, lineDelay, punctuationDelay) {
+    'typeSpeed'(typeSpeed) {
       if (this.typeAnimator) {
-        const config = {};
-        
-        // 更新所有值
-        config.titleTypeSpeed = titleTypeSpeed;
-        config.contentTypeSpeed = contentTypeSpeed;
-        config.lineDelay = lineDelay;
-        config.punctuationDelay = punctuationDelay;
-        
-        this.typeAnimator.updateConfig(config);
+        this.typeAnimator.updateSpeed(typeSpeed);
       }
     },
-    'staticMode': function(staticMode) {
-      // 当staticMode变化时，更新动画状态
-      if (staticMode && this.data.currentSoup) {
+    'staticMode'(staticMode) {
+      if (!this.data.currentSoup) return;
+      
+      if (staticMode) {
         this._showCompleteContent();
-      } else if (this.data.autoPlay && this.data.currentSoup) {
+      } else if (this.data.autoPlay) {
         this.resetAnimation();
         this.startAnimation();
-      }
-    },
-    'cursorColor': function(color) {
-      if (color) {
-        this.setData({
-          _cursorStyle: `--cursor-color: ${color};`
-        });
-      } else {
-        this.setData({
-          _cursorStyle: ''
-        });
       }
     }
   },
@@ -103,50 +73,36 @@ Component({
     currentSoup: null,
     title: '',
     contentLines: [],
-    soupId: '',
     // 动画相关数据
-    titleChars: [],
-    titleAnimationComplete: false,
     displayLines: [],
     currentLineIndex: 0,
     lineAnimationComplete: false,
     animationComplete: false,
     isAnimating: false,
     loading: false,
-    // 内部使用数据
-    _cursorStyle: ''
+    // 固定使用发光效果
+    typeEffect: 'glow'
   },
 
   /**
    * 组件生命周期
    */
   lifetimes: {
-    attached: function() {
-      // 初始化光标样式
-      if (this.data.cursorColor) {
-        this.setData({
-          _cursorStyle: `--cursor-color: ${this.data.cursorColor};`
-        });
-      }
-      
+    attached() {
       this._initTypeAnimator();
       
-      if (this.data.autoLoad && !this.data.useDefaultOnly) {
-        this.loadSoupData();
-      } else {
-        // 使用默认汤面
-        this._updateDisplayContent();
-        
-        // 如果是静态模式，直接显示完整内容
-        if (this.data.staticMode) {
-          this._showCompleteContent();
-        } else if (this.data.autoPlay) {
-          this.startAnimation();
-        }
+      // 加载汤面数据
+      this.loadSoupData();
+      
+      // 如果是静态模式，直接显示完整内容
+      if (this.data.staticMode && this.data.currentSoup) {
+        this._showCompleteContent();
+      } else if (this.data.autoPlay) {
+        this.startAnimation();
       }
     },
 
-    detached: function() {
+    detached() {
       if (this.typeAnimator) {
         this.typeAnimator.destroy();
         this.typeAnimator = null;
@@ -162,36 +118,28 @@ Component({
      * 初始化打字机动画工具
      * @private
      */
-    _initTypeAnimator: function() {
+    _initTypeAnimator() {
       this.typeAnimator = typeAnimation.createInstance(this, {
-        titleTypeSpeed: this.data.titleTypeSpeed,
-        contentTypeSpeed: this.data.contentTypeSpeed,
-        lineDelay: this.data.lineDelay,
-        punctuationDelay: this.data.punctuationDelay,
-        onAnimationStart: () => {
-          this.triggerEvent('animationStart');
-        },
-        onAnimationComplete: () => {
-          this.triggerEvent('animationComplete');
-        }
+        typeSpeed: this.data.typeSpeed,
+        // 固定使用发光效果
+        typeEffect: 'glow',
+        onAnimationStart: () => this.triggerEvent('animationStart'),
+        onAnimationComplete: () => this.triggerEvent('animationComplete')
       });
     },
 
     /**
      * 从后台加载汤面数据
      */
-    loadSoupData: function() {
-      if (this.data.useDefaultOnly) {
-        this.setData({
-          currentSoup: soupService.getDefaultSoup()
-        });
-        return;
-      }
-
+    loadSoupData() {
       this.setData({ loading: true });
       this.triggerEvent('loadStart');
 
+      // 获取目标汤面ID
+      let targetSoupId = this._getNextSoupId();
+
       soupService.getSoupData({
+        soupId: targetSoupId,
         success: (soupData) => {
           this.setData({
             currentSoup: soupData,
@@ -203,14 +151,16 @@ Component({
           if (this.data.staticMode) {
             this._showCompleteContent();
           } else if (this.data.autoPlay) {
+            this.resetAnimation();
             this.startAnimation();
           }
         },
         fail: (error) => {
           console.error('获取汤面数据失败:', error);
-          // 加载失败时使用默认汤面
+          // 加载失败时使用第一个汤面
+          const defaultSoup = soupService.soups[0];
           this.setData({ 
-            currentSoup: soupService.getDefaultSoup(),
+            currentSoup: defaultSoup,
             loading: false 
           });
           this.triggerEvent('loadFail', { error });
@@ -222,18 +172,29 @@ Component({
     },
 
     /**
+     * 获取下一个汤面ID
+     * @private
+     * @returns {String} 下一个汤面ID
+     */
+    _getNextSoupId() {
+      const currentId = this.data.soupId;
+      if (!currentId) return '';
+      
+      // 使用 soupService 的 getNextSoupId 方法获取下一个汤面ID
+      return soupService.getNextSoupId(currentId);
+    },
+
+    /**
      * 更新显示内容
      * @private
      */
-    _updateDisplayContent: function() {
+    _updateDisplayContent() {
       const currentSoup = this.data.currentSoup;
-
-      // 处理null情况
       if (!currentSoup) {
         this.setData({
-          currentSoup: soupService.getDefaultSoup()
+          currentSoup: soupService.soups[0]
         });
-        return; // 触发currentSoup的observer会再次调用此方法
+        return;
       }
 
       this.setData({
@@ -253,23 +214,29 @@ Component({
      * 显示完整内容（静态模式）
      * @private
      */
-    _showCompleteContent: function() {
-      if (!this.data.currentSoup) return;
+    _showCompleteContent() {
+      if (!this.data.title || !this.data.contentLines || !this.typeAnimator) return;
       
-      if (this.typeAnimator) {
+      wx.nextTick(() => {
         this.typeAnimator.showComplete({
           title: this.data.title,
           contentLines: this.data.contentLines
         });
-      }
+      });
     },
 
     /**
      * 设置当前汤面
      * @param {Object} soup 汤面数据对象
+     * @returns {boolean} 是否设置成功
      */
-    setCurrentSoup: function(soup) {
-      this.setData({ currentSoup: soup });
+    setCurrentSoup(soup) {
+      if (!soup?.title || !soup?.contentLines) return false;
+      
+      this.setData({ 
+        loading: false,
+        currentSoup: soup
+      });
       
       if (this.data.staticMode) {
         this._showCompleteContent();
@@ -282,32 +249,10 @@ Component({
     },
 
     /**
-     * 清除当前汤面，使用默认汤面
-     */
-    clearCurrentSoup: function() {
-      this.setData({
-        currentSoup: soupService.getDefaultSoup()
-      });
-      return true;
-    },
-
-    /**
-     * 更新默认汤面
-     * @param {Object} soup 默认汤面数据
-     */
-    updateDefaultSoup: function(soup) {
-      const updated = soupService.updateDefaultSoup(soup);
-      if (updated && !this.data.currentSoup) {
-        this.clearCurrentSoup();
-      }
-      return updated;
-    },
-
-    /**
      * 获取当前汤面数据
      * @returns {Object} 汤面数据对象
      */
-    getSoupData: function() {
+    getSoupData() {
       return {
         soupId: this.data.soupId,
         title: this.data.title,
@@ -316,39 +261,35 @@ Component({
     },
 
     /**
-     * 获取当前动画配置
-     * @returns {Object} 动画配置
+     * 动画控制方法 - 开始动画
      */
-    getAnimationConfig: function() {
-      return this.typeAnimator ? this.typeAnimator.getConfig() : null;
+    startAnimation() {
+      if (this.data.isAnimating || this.data.staticMode || !this.typeAnimator) return;
+      
+      this.typeAnimator.start({
+        title: this.data.title,
+        contentLines: this.data.contentLines
+      });
     },
 
     /**
-     * 动画控制方法
+     * 动画控制方法 - 暂停动画
      */
-    startAnimation: function() {
-      if (this.data.isAnimating || this.data.staticMode) return;
-      
-      if (this.typeAnimator) {
-        this.typeAnimator.start({
-          title: this.data.title,
-          contentLines: this.data.contentLines
-        });
-      }
-    },
-
-    pauseAnimation: function() {
+    pauseAnimation() {
       if (this.typeAnimator) {
         this.typeAnimator.pause();
+        this.triggerEvent('animationPause');
       }
-      this.triggerEvent('animationPause');
     },
 
-    resetAnimation: function() {
+    /**
+     * 动画控制方法 - 重置动画
+     */
+    resetAnimation() {
       if (this.typeAnimator) {
         this.typeAnimator.reset();
+        this.triggerEvent('animationReset');
       }
-      this.triggerEvent('animationReset');
     }
   }
 });

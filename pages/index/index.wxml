@@ -2,32 +2,46 @@
 <view class="page">
   <!-- 导航栏 -->
   <nav-bar 
+    bind:settingchange="handleSettingChange"
   />
   
   <view class="container">
     <!-- 汤面显示区域 -->
-    <soup-display 
+    <soup-display
       id="soupDisplay"
-      useDefaultOnly="{{soupConfig.useDefaultOnly}}"
+      soupId="{{soupConfig.soupId}}"
       autoPlay="{{soupConfig.autoPlay}}"
+      staticMode="{{soupConfig.staticMode}}"
       bind:animationComplete="onSoupAnimationComplete"
+      bind:loadFail="onSoupLoadFail"
     ></soup-display>
     
+    <!-- 设置卡片 -->
+    <setting-card
+      show="{{showSetting}}"
+      bind:switchchange="handleSettingChange"
+      bind:close="onSettingClose"
+    ></setting-card>
+    
     <!-- 按钮区域 -->
-    <view class="button-container">
+    <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
       <custom-button 
         type="light" 
         text="开始喝汤" 
+        width="50%"
+        height="80rpx"
         bind:tap="onStartSoup" 
-        show="{{showButtons}}" 
-        delay="0.3">
+        class="start-button"
+        show="{{showButtons}}">
       </custom-button>
       <custom-button 
         type="unlight" 
         text="下一个" 
+        width="50%"
+        height="80rpx"
         bind:tap="onNextSoup" 
-        show="{{showButtons}}" 
-        delay="0.8">
+        class="next-button"
+        show="{{showButtons}}">
       </custom-button>
     </view>
   </view>

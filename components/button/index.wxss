@@ -1,5 +1,13 @@
 /* components/button/index.wxss */
 
+/* 果冻动画容器样式 */
+.jelly-effect-container {
+  position: relative;
+  display: inline-flex;
+  overflow: visible;
+  z-index: 1;
+}
+
 /* 按钮容器 */
 .btn-container {
   display: flex;
@@ -7,6 +15,7 @@
   align-items: center;
   width: 100%;
   height: 120rpx;
+  overflow: visible;
 }
 
 /* 点亮按钮 */
@@ -15,25 +24,22 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 13rpx 132rpx;
+  padding: 13rpx 0rpx;
   gap: 10rpx;
   width: 100rpx;
   height: 56rpx;
   background: #5CE821;
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
-  opacity: 0; /* 初始透明度为0 */
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
 /* 点亮按钮文本 */
 .btn-text-light {
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 24rpx;
-  line-height: 24rpx;
+  composes: text-mincho-sm;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-align: center;
   color: #000000;
 }
@@ -44,29 +50,226 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 13rpx 132rpx;
+  padding: 13rpx 0rpx;
   gap: 10rpx;
   width: 100rpx;
   height: 56rpx;
-  border: 1rpx solid #959DAE;
+  border: 1rpx solid#4a4e57;
   border-radius: 100rpx;
-  opacity: 0; /* 初始透明度为0 */
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
 /* 未点亮按钮文本 */
 .btn-text-normal {
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 24rpx;
-  line-height: 24rpx;
+  composes: text-mincho-sm;
   display: flex;
   align-items: center;
+  justify-content: center;
   text-align: center;
-  color: #959DAE;
+  color:#4a4e57;
 }
 
-/* 自定义动画持续时间 */
-.btn-slide-up {
-  animation-duration: 0.5s;
+/* 保留原有的未点亮文本类，以避免兼容问题 */
+.btn-text-unlight {
+  composes: text-mincho-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color:rgb(77, 77, 77);
+}
+
+/* 确定类型按钮 - 完全独立样式 */
+.btn-confirm {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0;
+  width: 102rpx;
+  height: 62rpx;
+  border: 1px solid #FFFFFF;
+  border-radius: 30rpx;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.btn-confirm:active {
+  transform: scale(0.95);
+  background: #5CE821;
+}
+
+/* 确定按钮文本 */
+.btn-text-confirm {
+  composes: text-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #FFFFFF;
+}
+
+/* 深色按钮样式 */
+.btn-dark {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 6rpx 20rpx;
+  gap: 8rpx;
+  width: 100%; /* 默认宽度，可通过属性覆盖 */
+  height: 88rpx; /* 默认高度，可通过属性覆盖 */
+  background: #29374F;
+  border-radius: 30rpx;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.btn-dark:active {
+  transform: scale(0.95);
+  background: #1a2436;
+}
+
+/* 深色按钮文本 */
+.btn-text-dark {
+  composes: text-button;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #FFFFFF;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* 开关容器 */
+.switch-item {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  gap: 20rpx;
+  width: 100%;
+  height: 62rpx;
+  box-sizing: border-box;
+}
+
+/* 开关标签 */
+.item-label {
+  composes: text-body-md;
+  flex: 1;
+  color: #2A2D32;
+  opacity: 0.8;
+}
+
+/* Switch 开关样式 */
+.switch {
+  position: relative;
+  margin: 0;
+  width: 51px;
+  height: 31px;
+  background: #E9E9EA;
+  border-radius: 100px;
+  flex: none;
+  align-self: center;
+  transition: background-color 0.3s ease;
+}
+
+.switch.active {
+  background: #5CE821;
+}
+
+/* 开关圆形按钮 */
+.switch-knob {
+  position: absolute;
+  width: 27px;
+  height: 27px;
+  left: 2px;
+  top: calc(50% - 27px/2);
+  background: #FFFFFF;
+  border: 0.5px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 50%;
+  transition: left 0.3s ease;
+}
+
+.switch.active .switch-knob {
+  left: calc(50% - 27px/2 + 10px);
+}
+
+/* Radio 单选按钮样式 */
+.font-size-option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 0;
+  gap: 20rpx;
+  width: auto;
+  height: 48rpx;
+}
+
+.radio {
+  box-sizing: border-box;
+  width: 48rpx;
+  height: 48rpx;
+  background: #F4F4F4;
+  mix-blend-mode: normal;
+  border: 3rpx solid #CACACA;
+  border-radius: 100rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.radio.active {
+  background: #5CE821;
+  border: none;
+}
+
+.radio-inner {
+  width: 24rpx;
+  height: 24rpx;
+  background: #FFFFFF;
+  border-radius: 50%;
+}
+
+.option-label {
+  composes: text-body-sm;
+  opacity: 0.6;
+}
+
+/* 字体大小选择组合样式 */
+.font-size-setting {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20rpx;
+  height: 134rpx;
+}
+
+.font-size-label {
+  composes: text-body-md;
+  width: 100%;
+  opacity: 0.8;
+}
+
+.font-size-options {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0;
+  width: 100%;
+  height: 48rpx;
+}
+
+/* 使用公共果冻动画类 - 只应用于特定类型的按钮，不包括light和unlight */
+.btn-confirm.jelly-animate,
+.btn-dark.jelly-animate,
+.switch.jelly-animate,
+.radio.jelly-animate {
+  animation: jelly-animation 0.6s var(--transition-ease);
 }

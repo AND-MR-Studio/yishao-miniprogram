@@ -1,0 +1,51 @@
+<view class="dialog-area">
+  <scroll-view 
+    class="dialog-content" 
+    scroll-y="true" 
+    scroll-with-animation="true"
+    scroll-anchoring="true"
+    enhanced="true"
+    bounces="true"
+    show-scrollbar="false"
+    enable-passive="true"
+    enable-flex="true"
+    id="dialogScroll"
+  >
+    <block wx:for="{{messages}}" wx:key="index">
+      <!-- 用户消息 -->
+      <view wx:if="{{item.type === 'user'}}" class="message user">{{item.content}}</view>
+      
+      <!-- 系统回复消息 - 正常显示 -->
+      <view wx:if="{{(item.type === 'system' || item.type === 'normal') && index !== animatingMessageIndex}}" class="message response">> {{item.content}}</view>
+      
+      <!-- 系统回复消息 - 打字机动画 -->
+      <view wx:if="{{(item.type === 'system' || item.type === 'normal') && index === animatingMessageIndex}}" class="message response typing-container">
+        <text class="prefix-text">> </text>
+        <view class="typing-content">
+          <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
+            <block wx:for="{{line.chars}}" wx:for-item="charObj" wx:for-index="charIdx" wx:key="charIdx">
+              <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}} {{charObj.prev ? 'prev' : ''}} {{charObj.active && typeEffect === 'normal' ? 'response-char-typing-active' : ''}} effect-{{typeEffect}}">{{charObj.char}}</text>
+            </block>
+          </block>
+        </view>
+      </view>
+      
+      <!-- 提示消息 - 正常显示 -->
+      <view wx:if="{{item.type === 'hint' && index !== animatingMessageIndex}}" class="message hint">> {{item.content}}</view>
+      
+      <!-- 提示消息 - 打字机动画 -->
+      <view wx:if="{{item.type === 'hint' && index === animatingMessageIndex}}" class="message hint typing-container">
+        <text class="prefix-text">> </text>
+        <view class="typing-content">
+          <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
+            <block wx:for="{{line.chars}}" wx:for-item="charObj" wx:for-index="charIdx" wx:key="charIdx">
+              <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}} {{charObj.prev ? 'prev' : ''}} {{charObj.active && typeEffect === 'normal' ? 'hint-char-typing-active' : ''}} effect-{{typeEffect}}">{{charObj.char}}</text>
+            </block>
+          </block>
+        </view>
+      </view>
+    </block>
+    <!-- 用于滚动到底部的锚点 -->
+    <view id="scrollBottom" style="height: 2rpx;"></view>
+  </scroll-view>
+</view> 

@@ -1,6 +1,10 @@
 {
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
-    "soup-display": "/components/soup-display/soup-display"
-  }
+    "soup-display": "/components/soup-display/soup-display",
+    "custom-tab-bar": "/custom-tab-bar/index",
+    "input-bar": "/components/input-bar/index",
+    "dialog-area": "/components/dialog-area/index"
+  },
+  "styleIsolation": "apply-shared"
 }

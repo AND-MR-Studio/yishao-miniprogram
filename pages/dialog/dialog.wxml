@@ -1,16 +1,38 @@
 <!--pages/dialog.wxml-->
-<view class="page">
+<view class="page {{isPeekingSoup ? 'peek-soup' : ''}}">
   <!-- 导航栏 -->
-  <nav-bar 
-  />
+  <nav-bar />
   
-  <view class="container">
+  <view class="container" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
     <!-- 汤面显示区域 -->
-    <soup-display 
+    <soup-display
       id="soupDisplay"
-      useDefaultOnly="{{soupConfig.useDefaultOnly}}"
+      soupId="{{soupConfig.soupId}}"
       autoPlay="{{soupConfig.autoPlay}}"
+      staticMode="{{soupConfig.staticMode}}"
       bind:animationComplete="onSoupAnimationComplete"
     ></soup-display>
+    <!-- 毛玻璃效果遮罩层 -->
+    <view class="frosted-glass"></view>
+    <!-- 对话区域 -->
+    <dialog-area 
+      id="dialogArea" 
+      class="dialog-area-component" 
+      messages="{{messages}}" 
+      soupId="{{currentSoupId}}"
+      bind:messagesChange="handleMessagesChange"
+    />
   </view>
+
+  <!-- 输入栏组件 -->
+  <input-bar
+    inputValue="{{inputValue}}"
+    inputFocus="{{inputFocus}}"
+    bind:input="handleInput"
+    bind:send="handleSend"
+    bind:voice="handleVoice"
+  />
+
+  <!-- 自定义tabBar -->
+  <custom-tab-bar></custom-tab-bar>
 </view>

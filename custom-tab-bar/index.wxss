@@ -11,6 +11,7 @@
   padding-bottom: env(safe-area-inset-bottom);
   box-shadow: 0 -4rpx 85rpx rgba(94, 232, 33, 0.15);
   overflow: visible;
+  z-index:1001
 }
 
 
@@ -37,6 +38,7 @@
   font-size: 24rpx;
   margin-top: 5rpx;
   transition: all 0.25s ease;
+  font-family: 'Source Han Sans CN';
 }
 
 /* 选中状态的图标容器效果 */

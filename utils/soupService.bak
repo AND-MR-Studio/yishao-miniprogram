@@ -3,9 +3,8 @@
  * 负责处理汤面数据的加载、获取等操作
  */
 const soupService = {
-    // 汤面数据缓存
+    // 汤面数据库 - 模拟多个汤面
     soups: [
-        // 默认汤面数据，将在首次加载时被服务器数据替换
         {
             soupId: 'default_001',
             title: '《找到你了》',
@@ -36,43 +35,6 @@ const soupService = {
             ]
         }
     ],
-
-    // API基础URL
-    API_BASE_URL: 'http://71.137.1.230:8081/api/soups',
-
-    // 是否已从服务器加载数据
-    isDataLoaded: false,
-
-    /**
-     * 从服务器加载所有汤面数据
-     * @param {Function} callback 加载完成后的回调函数
-     */
-    loadSoupsFromServer: function(callback) {
-        wx.request({
-            url: `${this.API_BASE_URL}/list`,
-            method: 'GET',
-            success: (res) => {
-                if (res.statusCode === 200 && res.data && res.data.length > 0) {
-                    // 更新本地汤面数据
-                    this.soups = res.data;
-                    this.isDataLoaded = true;
-                    console.log('从服务器加载汤面数据成功:', this.soups.length);
-                } else {
-                    console.warn('服务器返回的汤面数据为空，使用默认数据');
-                }
-                
-                if (typeof callback === 'function') {
-                    callback(this.soups);
-                }
-            },
-            fail: (err) => {
-                console.error('从服务器加载汤面数据失败:', err);
-                if (typeof callback === 'function') {
-                    callback(this.soups);
-                }
-            }
-        });
-    },
 
     /**
      * 获取指定汤面的索引
@@ -110,7 +72,7 @@ const soupService = {
     },
 
     /**
-     * 获取汤面数据
+     * 获取汤面数据（模拟异步请求）
      * @param {Object} options 配置选项
      * @param {string} options.soupId 指定要获取的汤面ID
      * @param {Function} options.success 成功回调
@@ -120,21 +82,7 @@ const soupService = {
     getSoupData: function (options = {}) {
         const { soupId, success, fail, complete } = options;
 
-        // 如果还没有从服务器加载数据，先加载
-        if (!this.isDataLoaded) {
-            this.loadSoupsFromServer((soups) => {
-                this._processSoupData(soupId, success, fail, complete);
-            });
-        } else {
-            this._processSoupData(soupId, success, fail, complete);
-        }
-    },
-
-    /**
-     * 处理汤面数据请求
-     * @private
-     */
-    _processSoupData: function(soupId, success, fail, complete) {
+        // 模拟网络请求
         setTimeout(() => {
             try {
                 let soupData;
@@ -145,7 +93,7 @@ const soupService = {
                 }
 
                 // 如果没有指定soupId或找不到指定的汤面，则获取第一个
-                if (!soupData && this.soups.length > 0) {
+                if (!soupData) {
                     soupData = this.soups[0];
                 }
 
@@ -168,14 +116,9 @@ const soupService = {
 
     /**
      * 获取所有汤面数据
-     * @param {Function} callback 回调函数，接收汤面数据列表
+     * @returns {Array} 所有汤面数据列表
      */
-    getAllSoups: function (callback) {
-        if (!this.isDataLoaded) {
-            this.loadSoupsFromServer(callback);
-        } else if (typeof callback === 'function') {
-            callback([...this.soups]);
-        }
+    getAllSoups: function () {
         return [...this.soups];
     },
 
@@ -185,15 +128,6 @@ const soupService = {
      */
     getSoupCount: function () {
         return this.soups.length;
-    },
-
-    /**
-     * 刷新汤面数据（从服务器重新加载）
-     * @param {Function} callback 刷新完成后的回调函数
-     */
-    refreshSoups: function(callback) {
-        this.isDataLoaded = false;
-        this.loadSoupsFromServer(callback);
     }
 };
 

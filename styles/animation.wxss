@@ -35,22 +35,13 @@ page {
   --transition-accelerated: cubic-bezier(0.4, 0, 1, 1);
 }
 
-/* 渐隐渐现动画 - 汤面加载中使用 */
-@keyframes fade-in {
-  from {
-    opacity: 0;
+/* 闪烁动画 - 用于加载状态 */
+@keyframes blink {
+  0%, 100% {
+    opacity: 0.3;
   }
-  to {
+  50% {
     opacity: 1;
-  }
-}
-
-@keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
   }
 }
 
@@ -73,17 +64,98 @@ page {
   100% { opacity: 0.7; }
 }
 
-/* 定义页面使用但未添加的动画工具类 */
-.animate-fade-in {
-  animation: fade-in var(--animation-normal) var(--transition-decelerated);
+/* 果冻动画 - 部分按钮和控件点击效果 */
+@keyframes jelly-animation {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.12, 0.9); }
+  40% { transform: scale(0.92, 1.08); }
+  50% { transform: scale(1.06, 0.94); }
+  65% { transform: scale(0.97, 1.03); }
+  80% { transform: scale(1.02, 0.99); }
+  100% { transform: scale(1); }
 }
 
-.animate-fade-out {
-  animation: fade-out var(--animation-normal) var(--transition-accelerated);
+/* 加载闪烁效果 */
+.blink-animation {
+  animation: blink 1.5s infinite;
+}
+
+/* 应用果冻动画的公共类 - 排除首页按钮 */
+.jelly-effect:not(.btn-light):not(.btn-unlight) {
+  animation: jelly-animation 0.6s var(--transition-ease);
+  overflow: visible !important;
+}
+
+/* 确保按钮容器允许溢出 */
+.jelly-effect-container {
+  overflow: visible !important;
+  padding: 2rpx;
 }
 
 /* 从下至上滑入动画 */
 .animate-slide-up {
+  opacity: 0;
   animation: slide-up var(--animation-normal) var(--transition-decelerated);
   animation-fill-mode: forwards;
+}
+
+/* 打字机字符动画通用类 */
+.char-typing {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 160ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+  position: relative;
+}
+
+/* 普通显示状态 */
+.char-typing.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 活跃状态基础样式 */
+.char-typing.active {
+  opacity: 1;
+}
+
+/* 活跃状态 - 普通打字机 */
+.char-typing.active.effect-normal {
+  transform: scale(1);
+  color: var(--color-text-primary);
+}
+
+/* 活跃状态 - 发光打字机 */
+.char-typing.active.effect-glow {
+  transform: scale(1.05);
+  text-shadow: 0 0 8rpx var(--color-primary);
+  color: #fff;
+}
+
+/* 前一个字符状态 - 刚刚输入完的字符 */
+.char-typing.prev {
+  opacity: 0.9;
+  transform: scale(1);
+  transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+}
+
+/* 静态模式样式 */
+.static-mode .char-typing {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+}
+
+/* 按钮点击效果 - 点亮按钮 */
+.btn-light:active {
+  transform: scale(0.95);
+  background-color: rgba(70, 196, 0, 0.8);
+  box-shadow: 0rpx 5rpx 10rpx rgba(4, 244, 77, 0.15);
+}
+
+/* 按钮点击效果 - 未点亮按钮 */
+.btn-unlight:active {
+  transform: scale(0.95);
+  background-color: rgba(74, 78, 87, 0.3);
+  border-color: rgba(74, 78, 87, 0.6);
 } 

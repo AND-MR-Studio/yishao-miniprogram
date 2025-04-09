@@ -1,5 +1,6 @@
 <!--components/setting-card/setting.wxml-->
 <view class="setting-mask {{show ? 'show' : 'hide'}}" bindtap="closePanel" catchtouchmove="preventTouchMove"></view>
+<!-- 面板容器 - 通过panelDrag工具类处理拖拽手势 -->
 <view class="setting-panel {{show ? 'show' : 'hide'}}" 
       style="padding-top: {{statusBarHeight}}rpx; {{panelStyle}}"
       bindtouchstart="handleTouchStart"
@@ -18,37 +19,34 @@
       
       <view class="setting-item">
         <view class="item-label">放弃当前海龟汤</view>
-        <view class="confirm-button" bindtap="abandonSoup">确定</view>
+        <custom-button 
+          type="confirm" 
+          text="确定" 
+          bind:tap="abandonSoup" />
       </view>
       
       <view class="setting-item">
         <view class="item-label">清理缓存</view>
-        <view class="confirm-button" bindtap="clearCache">确定</view>
+        <custom-button 
+          type="confirm" 
+          text="确定" 
+          bind:tap="clearCache" />
       </view>
       
       <view class="setting-item font-size-setting">
         <view class="font-size-label">字体大小</view>
         <view class="font-size-options">
-          <view class="font-size-option" bindtap="selectFontSize" data-size="small">
-            <view class="radio {{fontSize === 'small' ? 'active' : ''}}">
-              <view wx:if="{{fontSize === 'small'}}" class="radio-inner"></view>
-            </view>
-            <view class="option-label">小</view>
-          </view>
-          
-          <view class="font-size-option" bindtap="selectFontSize" data-size="medium">
-            <view class="radio {{fontSize === 'medium' ? 'active' : ''}}">
-              <view wx:if="{{fontSize === 'medium'}}" class="radio-inner"></view>
-            </view>
-            <view class="option-label">中</view>
-          </view>
-          
-          <view class="font-size-option" bindtap="selectFontSize" data-size="large">
-            <view class="radio {{fontSize === 'large' ? 'active' : ''}}">
-              <view wx:if="{{fontSize === 'large'}}" class="radio-inner"></view>
-            </view>
-            <view class="option-label">大</view>
-          </view>
+          <block wx:for="{{fontSizeOptions}}" wx:key="value">
+            <custom-button 
+              type="radio"
+              text="{{item.label}}"
+              value="{{item.value}}"
+              active="{{fontSize === item.value}}"
+              groupName="fontSize"
+              bind:radiochange="setFontSize"
+              data-index="{{index}}"
+            />
+          </block>
         </view>
       </view>
     </view>
@@ -59,29 +57,58 @@
     <view class="setting-section">
       <view class="section-title">通用设置</view>
       
-      <view class="setting-item">
-        <view class="item-label">音效</view>
-        <view class="switch {{soundOn ? 'active' : ''}}" bindtap="toggleSwitch" data-type="soundOn">
-          <view class="switch-knob"></view>
-        </view>
-      </view>
+      <!-- 使用button组件作为开关 -->
+      <custom-button 
+        type="switch"
+        label="音效"
+        checked="{{soundOn}}"
+        dataType="soundOn"
+        bind:change="toggleSwitch"
+        class="custom-button-class"
+      />
       
-      <view class="setting-item">
-        <view class="item-label">震动</view>
-        <view class="switch {{vibrationOn ? 'active' : ''}}" bindtap="toggleSwitch" data-type="vibrationOn">
-          <view class="switch-knob"></view>
-        </view>
-      </view>
+      <custom-button 
+        type="switch"
+        label="震动"
+        checked="{{vibrationOn}}"
+        dataType="vibrationOn"
+        bind:change="toggleSwitch"
+        class="custom-button-class"
+      />
+
+      <custom-button 
+        type="switch"
+        label="跳过动画"
+        checked="{{skipAnimation}}"
+        dataType="skipAnimation"
+        bind:change="toggleSwitch"
+        class="custom-button-class"
+      />
     </view>
     
     <view class="divider"></view>
     
     <!-- 联系我们区块 -->
     <view class="contact-section">
-      <view class="section-title">联系我们</view>
-      <view class="contact-buttons">
-        <view class="contact-button" bindtap="contactUs">用户反馈</view>
-        <view class="contact-button" bindtap="onAbout">关于我们</view>
+      <view class="section-title contact-title">联系我们</view>
+      <view class="contact-buttons-container">
+        <view class="contact-buttons">
+          <custom-button 
+            type="dark" 
+            text="问题反馈" 
+            width="192rpx" 
+            height="88rpx" 
+            bind:tap="contactUs" 
+            class="contact-button-class" />
+          
+          <custom-button 
+            type="dark" 
+            text="Github" 
+            width="192rpx" 
+            height="88rpx" 
+            bind:tap="onAbout" 
+            class="contact-button-class" />
+        </view>
       </view>
     </view>
     

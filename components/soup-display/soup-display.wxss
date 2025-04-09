@@ -5,11 +5,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 100rpx 0 20rpx;
+  padding: 300rpx 0 0;
   width: 100%;
   min-height: 443rpx;
-  position: relative;
+  position: fixed;
   box-sizing: border-box;
+  will-change: transform;
 }
 
 /* 加载中样式 */
@@ -23,19 +24,8 @@
 }
 
 .loading-text {
-  font-size: 32rpx;
-  color: var(--color-text-primary);
+  composes: text-body-md;
   text-align: center;
-  animation: blink 1.5s infinite;
-}
-
-@keyframes blink {
-  0%, 100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 
 /* 汤面标题区样式 */
@@ -44,8 +34,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 10rpx;
-  margin-bottom: 40rpx;
+  padding: 0 var(--spacing-xs);
+  margin-bottom: var(--spacing-xl);
   text-align: center;
 }
 
@@ -58,132 +48,88 @@
 }
 
 .soup-title {
+  composes: text-mincho;
   height: 80rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  font-weight: 700;
-  font-family: 'Huiwen-mincho';
-  font-size: 44rpx;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58), 0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  transform: translateZ(0);
 }
 
 /* 动画状态样式 */
-.soup-title.animation-active {
-  position: relative;
-}
-
+.soup-title.animation-active,
 .soup-title.animation-complete {
   position: relative;
 }
 
-/* 逐字打字效果 - 增强版 */
-.char-typing {
-  display: inline-block;
-  opacity: 0;
-  transform: scale(0.9);
-  transition: all 160ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
-  position: relative;
-}
-
-/* 普通显示状态 */
-.char-typing.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* 活跃状态 - 当前正在输入的字符 */
-.char-typing.active {
-  opacity: 1;
-  transform: scale(1.05);
-  text-shadow: 0 0 8rpx var(--color-primary);
-  color: #fff;
-}
-
-/* 前一个字符状态 - 刚刚输入完的字符 */
-.char-typing.prev {
-  opacity: 0.9;
-  transform: scale(1);
-  transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
-}
-
 /* 汤面内容区样式 */
-.soup-content-section {
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 20rpx 0;
-  margin-bottom: 20rpx;
-  min-height: 200px;
-  max-height: 335px;
-  border-radius: 8rpx;
-  position: relative;
-  transition: all 0.3s var(--transition-emphasized, cubic-bezier(0.215, 0.610, 0.355, 1.000));
-}
-
 .soup-content {
   width: 90%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
+  align-items: center;
+  padding: var(--spacing-md) 0;
+  margin-bottom: var(--spacing-md);
+  min-height: 200px;
+  max-height: 335px;
   position: relative;
+  transition: all var(--transition-duration) var(--transition-timing);
+  will-change: transform, opacity;
 }
 
-/* 汤面内容行样式 */
-.soup-line-container {
+/* 文本行容器 */
+.text-line-container {
   width: fit-content;
-  margin-bottom: 20rpx;
+  margin-bottom: var(--spacing-lg);
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 48rpx;
+  min-height: calc(var(--font-size-md) * var(--line-height-md));
 }
 
-.soup-text-line {
-  display: inline-block;
+/* 标题行特殊样式 */
+.text-line-container.title {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 var(--spacing-xs);
+  margin-bottom: var(--spacing-xl);
+  text-align: center;
+}
+
+/* 文本行基础样式 */
+.text-line {
+  composes: text-mincho-md;
+  display: inline-flex;
   position: relative;
   white-space: nowrap;
-  font-family: 'Huiwen-mincho';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 34rpx;
-  line-height: 48rpx;
-  color: var(--color-text-primary);
-  transition: color 0.3s var(--transition-emphasized, cubic-bezier(0.215, 0.610, 0.355, 1.000));
+  transform: translateZ(0);
 }
 
-/* 打字机光标样式 */
-.typing-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1em;
-  background-color: var(--cursor-color, #FA5151);
-  margin-left: 2px;
-  vertical-align: middle;
-  animation: cursor-blink 0.6s infinite;
-  box-shadow: 0 0 2px var(--cursor-color, #FA5151);
-  border-radius: 1px;
+/* 标题文本特殊样式 */
+.text-line.title {
+  composes: text-mincho;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
 }
 
-@keyframes cursor-blink {
-  from, to {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
+/* 打字机动画样式已移至全局 /styles/animation.wxss 文件中 */
 
-/* 静态模式样式 - 关闭所有动画效果 */
-.soup-container.static-mode .typing-cursor {
-  display: none;
-}
-
+/* 静态模式样式 */
 .soup-container.static-mode .char-typing {
   opacity: 1 !important;
   transform: none !important;

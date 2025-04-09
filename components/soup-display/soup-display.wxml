@@ -1,34 +1,36 @@
 <!--components/soup-display/soup-display.wxml-->
-<view class="soup-container {{staticMode ? 'static-mode' : ''}}" style="{{_cursorStyle}}">
+<view 
+  class="soup-container {{staticMode ? 'static-mode' : ''}}" 
+  aria-busy="{{loading}}"
+>
   <!-- 加载中状态 -->
-  <view class="loading-container" wx:if="{{loading}}">
-    <text class="loading-text">汤面加载中...</text>
+  <view 
+    class="loading-container" 
+    wx:if="{{loading}}"
+    aria-live="polite"
+  >
+    <text class="loading-text blink-animation">汤面加载中...</text>
   </view>
   
   <!-- 汤面内容区域 -->
   <block wx:else>
-    <!-- 汤面标题 -->
-    <view class="soup-title-section">
-      <view class="soup-title-frame">
-        <text class="soup-title {{titleAnimationComplete ? 'animation-complete' : 'animation-active'}}">
-          <text wx:for="{{titleChars}}" wx:key="index" 
-                class="char-typing {{item.show ? 'show' : ''}} {{item.active ? 'active' : ''}} {{item.prev ? 'prev' : ''}}">
-            {{item.char}}
+    <view class="soup-content">
+      <block wx:for="{{displayLines}}" wx:key="index">
+        <view 
+          class="text-line-container {{index === 0 ? 'title' : ''}}"
+          aria-label="{{index === 0 ? '汤面标题' : '第' + index + '行'}}"
+        >
+          <text class="text-line {{index === 0 ? 'title' : ''}}">
+            <text 
+              wx:for="{{item.chars}}" 
+              wx:for-item="char"
+              wx:for-index="charIndex"
+              wx:key="charIndex" 
+              class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active effect-' + typeEffect : ''}} {{char.prev ? 'prev' : ''}}"
+            >{{char.char}}</text>
           </text>
-        </text>
-      </view>
-    </view>
-    
-    <!-- 汤面正文 -->
-    <view class="soup-content-section">
-      <view class="soup-content">
-        <block wx:for="{{displayLines}}" wx:key="index">
-          <view class="soup-line-container">
-            <text class="soup-text-line">{{item}}</text>
-            <view class="typing-cursor" wx:if="{{currentLineIndex === index && !lineAnimationComplete && isAnimating}}"></view>
-          </view>
-        </block>
-      </view>
+        </view>
+      </block>
     </view>
   </block>
 </view>

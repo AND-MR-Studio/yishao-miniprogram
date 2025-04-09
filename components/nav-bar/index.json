@@ -2,5 +2,9 @@
   "component": true,
   "usingComponents": {
     "setting-card": "/components/setting-card/setting"
+  },
+  "componentPlaceholder": {
+    "type": "view",
+    "style": "height: 88px; background-color: #061429;"
   }
 }

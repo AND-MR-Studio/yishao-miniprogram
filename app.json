@@ -19,10 +19,10 @@
     "list": [
       {
         "pagePath": "pages/community/community",
-        "text": "首页"
+        "text": "论坛"
       },
       {
-        "pagePath": "pages/dialog/dialog",
+        "pagePath": "pages/index/index",
         "text": "喝汤"
       },
       {
@@ -34,5 +34,6 @@
   "style": "v2",
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index"
-  }
+  },
+   "lazyCodeLoading": "requiredComponents"
 }

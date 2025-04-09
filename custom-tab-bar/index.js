@@ -21,7 +21,7 @@ Component({
         selectedIcon: "icon-community_Selected"
       },
       {
-        pagePath: "/pages/dialog/dialog",
+        pagePath: "/pages/index/index",
         text: "喝汤",
         icon: "icon-soup_UnSelected",
         selectedIcon: "icon-soup_Selected"

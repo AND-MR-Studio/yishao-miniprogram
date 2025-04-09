@@ -1,4 +1,6 @@
 /* pages/index.wxss */
+@import "../../styles/animation.wxss";
+
 .page {
   width: 100%;
   min-height: 100vh;
@@ -11,11 +13,47 @@
   flex-direction: column;
   align-items: center;
   padding: 32rpx 0rpx;
+  position: fixed;
   gap: 27rpx;
   width: 100%;
-  height: 219rpx;
+  /* 使用更灵活的定位方式，避免固定高度和底部距离 */
+  /* height: 219rpx; 删除固定高度 */
   align-self: stretch;
   order: 2;
   flex-grow: 0;
-  margin-top: 40rpx;
+  /* 替换为更动态的计算方式，确保不与tabbar重叠 */
+  bottom: calc(110rpx + env(safe-area-inset-bottom) + 60rpx); /* tabbar高度 + 安全区域 + 间距 */
+  left: 0;
+  z-index: 998; 
+}
+
+/* 强制主页按钮宽度 */
+.button-container .btn-light,
+.button-container .btn-unlight {
+  width: 50% !important;
+  min-width: 300rpx !important;
+  /* 增加过渡时间以使效果更明显 */
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* 按钮动画控制 */
+.button-container .start-button,
+.button-container .next-button {
+  opacity: 0;
+  transform: translateY(100%);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* 显示按钮动画 - 开始喝汤按钮 */
+.button-container.show-buttons .start-button {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.3s;
+}
+
+/* 显示按钮动画 - 下一个按钮 */
+.button-container.show-buttons .next-button {
+  opacity: 1;
+  transform: translateY(0);
+  transition-delay: 0.6s;
 }
