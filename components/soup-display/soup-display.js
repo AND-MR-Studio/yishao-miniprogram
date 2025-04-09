@@ -89,6 +89,9 @@ Component({
    */
   lifetimes: {
     attached() {
+      // 添加防止循环调用的标记
+      this._isLoadingData = false;
+      
       this._initTypeAnimator();
       
       // 只有当父组件没有传入soupId时，组件才自动加载数据
@@ -133,24 +136,60 @@ Component({
      * 从后台加载汤面数据
      */
     loadSoupData() {
+      // 防止重复加载
+      if (this._isLoadingData) {
+        console.log('正在加载中，忽略重复调用');
+        return;
+      }
+      
+      this._isLoadingData = true;
+      console.log('开始加载汤面数据');
       this.setData({ loading: true });
       this.triggerEvent('loadStart');
 
       // 获取目标汤面ID，优先使用properties中的soupId
       let targetSoupId = this.properties.soupId || this.data.soupId || '';
+      console.log('目标汤面ID:', targetSoupId);
       
       // 如果没有指定soupId，则使用下一个soupId
       if (!targetSoupId) {
         targetSoupId = this._getNextSoupId();
+        console.log('未指定ID，使用下一个ID:', targetSoupId);
       }
 
+      // 如果还是没有targetSoupId，先刷新数据
+      if (!targetSoupId && !soupService.isDataLoaded) {
+        console.log('无可用ID且数据未加载，先刷新数据');
+        soupService.refreshSoups(() => {
+          this._loadSoupWithId(targetSoupId || soupService.soups[0]?.soupId);
+        });
+        return;
+      }
+
+      this._loadSoupWithId(targetSoupId);
+    },
+
+    /**
+     * 使用指定ID加载汤面
+     * @private
+     */
+    _loadSoupWithId(soupId) {
+      console.log('加载指定ID的汤面:', soupId);
       soupService.getSoupData({
-        soupId: targetSoupId,
+        soupId: soupId,
         success: (soupData) => {
+          console.log('加载汤面成功:', soupData);
+          if (!soupData) {
+            console.warn('获取到的汤面数据为空');
+            this.setData({ loading: false });
+            this._isLoadingData = false;
+            return;
+          }
+
           this.setData({
             currentSoup: soupData,
             loading: false,
-            soupId: soupData.soupId || '' // 更新组件的soupId属性
+            soupId: soupData.soupId || ''
           });
 
           this.triggerEvent('loadSuccess', { soupData });
@@ -161,16 +200,27 @@ Component({
             this.resetAnimation();
             this.startAnimation();
           }
+          
+          // 重置加载标记
+          setTimeout(() => {
+            this._isLoadingData = false;
+          }, 100);
         },
         fail: (error) => {
+          console.error('加载汤面失败:', error);
           // 加载失败时使用第一个汤面
           const defaultSoup = soupService.soups[0];
-          this.setData({ 
-            currentSoup: defaultSoup,
-            soupId: defaultSoup.soupId || '', // 更新组件的soupId属性
-            loading: false 
-          });
+          if (defaultSoup) {
+            this.setData({ 
+              currentSoup: defaultSoup,
+              soupId: defaultSoup.soupId || '',
+              loading: false 
+            });
+          } else {
+            this.setData({ loading: false });
+          }
           this.triggerEvent('loadFail', { error });
+          this._isLoadingData = false;
         },
         complete: () => {
           this.triggerEvent('loadComplete');
@@ -185,13 +235,23 @@ Component({
      */
     _getNextSoupId() {
       const currentId = this.properties.soupId || this.data.soupId || '';
+      console.log('获取下一个汤面，当前ID:', currentId);
+      
+      // 如果数据未加载，先返回空
+      if (!soupService.isDataLoaded) {
+        console.log('数据未加载，返回空ID');
+        return '';
+      }
       
       // 使用 soupService 的 getNextSoupId 方法获取下一个汤面ID
       const nextId = soupService.getNextSoupId(currentId);
+      console.log('获取到的下一个ID:', nextId);
       
-      // 如果获取失败或获取到的是当前ID，返回第一个汤面ID
-      if (!nextId || nextId === currentId) {
-        return soupService.soups[0]?.soupId || '';
+      // 如果获取失败，返回第一个汤面ID
+      if (!nextId) {
+        const firstId = soupService.soups[0]?.soupId || '';
+        console.log('获取失败，返回第一个ID:', firstId);
+        return firstId;
       }
       
       return nextId;

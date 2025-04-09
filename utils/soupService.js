@@ -4,41 +4,7 @@
  */
 const soupService = {
     // 汤面数据缓存
-    soups: [
-        // 默认汤面数据，将在首次加载时被服务器数据替换
-        {
-            soupId: 'default_001',
-            title: '《找到你了》',
-            contentLines: [
-                '哒..哒...哒....',
-                '咚咚咚',
-                '哗啦哗啦',
-                '哒…哒…哒…"我找到你了哦…"'
-            ],
-            truth: '这是一个关于寻找的故事'
-        },
-        {
-            soupId: 'default_002',
-            title: '《最后是自己》',
-            contentLines: [
-                '一开始是动物，',
-                '然后是同类的尸体，',
-                '接着是同类，',
-                '最后是自己。'
-            ],
-            truth: '这是一个关于自我发现的故事'
-        },
-        {
-            soupId: 'default_003',
-            title: '《绿牙》',
-            contentLines: [
-                '红色男子清晨起来刷牙，',
-                '发现自己牙齿是绿色的，',
-                '他吓疯了过去。'
-            ],
-            truth: '这是一个关于恐惧的故事'
-        }
-    ],
+    soups: [],  // 改为空数组，完全依赖服务器数据
 
     // 环境配置
     ENV: {
@@ -81,14 +47,17 @@ const soupService = {
      * @param {Function} callback 加载完成后的回调函数
      */
     loadSoupsFromServer: function(callback) {
+        console.log('开始从服务器加载汤面数据');
         wx.request({
             url: `${this.API_BASE_URL}/list`,
             method: 'GET',
             success: (res) => {
-                if (res.statusCode === 200 && res.data && res.data.length > 0) {
+                console.log('服务器返回数据:', res.data);
+                if (res.statusCode === 200 && res.data && Array.isArray(res.data)) {
                     // 更新本地汤面数据
                     this.soups = res.data;
                     this.isDataLoaded = true;
+                    console.log('更新本地数据成功，当前数据量:', this.soups.length);
                 }
                 
                 if (typeof callback === 'function') {
@@ -96,6 +65,7 @@ const soupService = {
                 }
             },
             fail: (err) => {
+                console.error('从服务器加载数据失败:', err);
                 if (typeof callback === 'function') {
                     callback(this.soups);
                 }
@@ -110,7 +80,9 @@ const soupService = {
      */
     getSoupIndex: function (soupId) {
         if (!soupId) return -1;
-        return this.soups.findIndex(soup => soup.soupId === soupId);
+        const index = this.soups.findIndex(soup => soup.soupId === soupId);
+        console.log('获取汤面索引:', { soupId, index, totalSoups: this.soups.length });
+        return index;
     },
 
     /**
@@ -119,12 +91,23 @@ const soupService = {
      * @returns {string} 下一个汤面的ID
      */
     getNextSoupId: function (currentSoupId) {
+        console.log('获取下一个汤面:', { currentSoupId, totalSoups: this.soups.length });
         const currentIndex = this.getSoupIndex(currentSoupId);
-        // 如果找不到当前汤面或是最后一个，返回第一个汤面的ID
-        if (currentIndex === -1 || currentIndex === this.soups.length - 1) {
+        
+        // 如果找不到当前汤面，返回第一个汤面的ID
+        if (currentIndex === -1) {
+            console.log('未找到当前汤面，返回第一个汤面');
+            return this.soups[0]?.soupId;
+        }
+        
+        // 如果是最后一个，返回第一个汤面的ID
+        if (currentIndex === this.soups.length - 1) {
+            console.log('当前是最后一个汤面，返回第一个汤面');
             return this.soups[0].soupId;
         }
+        
         // 返回下一个汤面的ID
+        console.log('返回下一个汤面:', this.soups[currentIndex + 1].soupId);
         return this.soups[currentIndex + 1].soupId;
     },
 
@@ -135,19 +118,18 @@ const soupService = {
      */
     getSoupById: function (soupId) {
         if (!soupId) return null;
-        return this.soups.find(soup => soup.soupId === soupId) || null;
+        const soup = this.soups.find(soup => soup.soupId === soupId);
+        console.log('获取指定汤面:', { soupId, found: !!soup });
+        return soup || null;
     },
 
     /**
      * 获取汤面数据
      * @param {Object} options 配置选项
-     * @param {string} options.soupId 指定要获取的汤面ID
-     * @param {Function} options.success 成功回调
-     * @param {Function} options.fail 失败回调
-     * @param {Function} options.complete 完成回调
      */
     getSoupData: function (options = {}) {
         const { soupId, success, fail, complete } = options;
+        console.log('获取汤面数据:', { soupId, isDataLoaded: this.isDataLoaded });
 
         // 如果还没有从服务器加载数据，先加载
         if (!this.isDataLoaded) {
@@ -221,6 +203,7 @@ const soupService = {
      * @param {Function} callback 刷新完成后的回调函数
      */
     refreshSoups: function(callback) {
+        console.log('刷新汤面数据');
         this.isDataLoaded = false;
         this.loadSoupsFromServer(callback);
     }

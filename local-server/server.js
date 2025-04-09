@@ -21,12 +21,14 @@ if (!fs.existsSync(DATA_FILE)) {
     {
       soupId: 'local_001',
       title: '《本地测试汤面1》',
-      contentLines: ['这是一个', '本地测试汤面', '用于开发环境测试']
+      contentLines: ['这是一个', '本地测试汤面', '用于开发环境测试'],
+      truth: '这是一个测试用的汤底'
     },
     {
       soupId: 'local_002',
       title: '《本地测试汤面2》',
-      contentLines: ['又一个', '本地测试汤面', '开发环境专用']
+      contentLines: ['又一个', '本地测试汤面', '开发环境专用'],
+      truth: '这是另一个测试用的汤底'
     }
   ];
   fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2));
@@ -46,6 +48,7 @@ function getSoupsData() {
 // 保存汤面数据
 function saveSoupsData(soups) {
   try {
+    console.log('准备保存数据:', JSON.stringify(soups, null, 2).substring(0, 200) + '...');
     fs.writeFileSync(DATA_FILE, JSON.stringify(soups, null, 2));
     return true;
   } catch (error) {
@@ -75,7 +78,7 @@ app.get('/api/soups/:soupId', (req, res) => {
 
 // 添加汤面
 app.post('/api/soups', (req, res) => {
-  const { title, contentLines } = req.body;
+  const { title, contentLines, truth } = req.body;
   
   if (!title || !contentLines || !Array.isArray(contentLines)) {
     return res.status(400).json({ error: '无效的汤面数据' });
@@ -85,7 +88,8 @@ app.post('/api/soups', (req, res) => {
   const newSoup = {
     soupId: `local_${Date.now()}`,
     title,
-    contentLines
+    contentLines,
+    truth
   };
   
   soups.push(newSoup);
@@ -99,7 +103,11 @@ app.post('/api/soups', (req, res) => {
 
 // 更新汤面
 app.put('/api/soups/:soupId', (req, res) => {
-  const { title, contentLines } = req.body;
+  const { title, contentLines, truth } = req.body;
+  
+  console.log('更新汤面请求:', req.params.soupId);
+  console.log('请求体数据:', req.body);
+  console.log('汤底字段:', truth);
   
   if (!title || !contentLines || !Array.isArray(contentLines)) {
     return res.status(400).json({ error: '无效的汤面数据' });
@@ -112,15 +120,23 @@ app.put('/api/soups/:soupId', (req, res) => {
     return res.status(404).json({ error: '汤面不存在' });
   }
   
-  soups[index] = {
+  const updatedSoup = {
     ...soups[index],
     title,
-    contentLines
+    contentLines,
+    truth
   };
   
+  console.log('更新前的汤面:', soups[index]);
+  console.log('更新后的汤面:', updatedSoup);
+  
+  soups[index] = updatedSoup;
+  
   if (saveSoupsData(soups)) {
-    res.json(soups[index]);
+    console.log('汤面更新成功，已保存到文件');
+    res.json(updatedSoup);
   } else {
+    console.error('汤面更新失败，保存文件时出错');
     res.status(500).json({ error: '更新汤面失败' });
   }
 });

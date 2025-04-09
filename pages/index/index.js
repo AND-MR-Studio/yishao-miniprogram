@@ -19,7 +19,8 @@ Page({
     showTruth: false,  // 是否显示汤底组件
     truthSoupId: '',  // 汤底对应的soupId
     truthData: null,   // 汤底数据
-    isCorrect: false   // 是否猜对了汤底（用于控制组件切换）
+    isCorrect: false,   // 是否猜对了汤底（用于控制组件切换）
+    _isSwitchingSoup: false  // 防止重复点击
   },
 
   /**
@@ -33,11 +34,17 @@ Page({
     this.setData({
       showButtons: false
     });
+    
+    // 初始化切换锁定状态
+    this._isSwitchingSoup = false;
 
-    // 页面加载后，延迟一下确保组件已挂载，然后主动加载汤面数据
-    setTimeout(() => {
-      this._initSoupDisplay();
-    }, 100);
+    // 先从服务器加载最新数据
+    soupService.refreshSoups(() => {
+      // 页面加载后，延迟一下确保组件已挂载，然后主动加载汤面数据
+      setTimeout(() => {
+        this._initSoupDisplay();
+      }, 100);
+    });
   },
 
   /**
@@ -222,6 +229,13 @@ Page({
    * 下一个按钮点击事件
    */
   onNextSoup() {
+    // 防止重复点击
+    if (this._isSwitchingSoup) {
+      console.log('正在切换汤面，忽略重复点击');
+      return;
+    }
+    this._isSwitchingSoup = true;
+    
     // 如果正在显示汤底，切换回汤面显示
     if (this.data.isCorrect || this.data.showTruth) {
       this.setData({
@@ -241,6 +255,7 @@ Page({
             showButtons: true
           });
         }
+        this._isSwitchingSoup = false;
       }, 100);
       
       return;
@@ -253,7 +268,10 @@ Page({
 
     // 获取当前汤面组件实例
     const soupDisplay = this.selectComponent('#soupDisplay');
-    if (!soupDisplay) return;
+    if (!soupDisplay) {
+      this._isSwitchingSoup = false;
+      return;
+    }
 
     // 重置动画
     soupDisplay.resetAnimation();
@@ -261,8 +279,24 @@ Page({
     // 获取当前汤面ID
     const currentSoupId = soupDisplay.data.soupId;
     
+    // 确保数据已加载
+    if (!soupService.isDataLoaded) {
+      soupService.refreshSoups(() => {
+        this._switchToNextSoup(currentSoupId, soupDisplay);
+      });
+    } else {
+      this._switchToNextSoup(currentSoupId, soupDisplay);
+    }
+  },
+
+  /**
+   * 切换到下一个汤面
+   * @private
+   */
+  _switchToNextSoup(currentSoupId, soupDisplay) {
     // 获取下一个汤面ID
     const nextSoupId = soupService.getNextSoupId(currentSoupId);
+    console.log('切换到下一个汤面:', nextSoupId);
     
     // 设置新的soupId
     this.setData({
@@ -270,6 +304,12 @@ Page({
     }, () => {
       // 加载新汤面数据
       soupDisplay.loadSoupData();
+      
+      // 延迟解除锁定
+      setTimeout(() => {
+        this._isSwitchingSoup = false;
+        console.log('汤面切换完成，解除锁定');
+      }, 500);
     });
   },
 

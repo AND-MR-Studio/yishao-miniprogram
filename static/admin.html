@@ -82,6 +82,10 @@
                 <label for="editSoupContent" class="form-label">内容</label>
                 <textarea class="form-control" id="editSoupContent" rows="4" placeholder="输入汤面内容，每行一句，用回车分隔"></textarea>
             </div>
+            <div class="mb-3">
+                <label for="editSoupTruth" class="form-label">汤底</label>
+                <input type="text" class="form-control" id="editSoupTruth" placeholder="输入汤底">
+            </div>
             <div class="d-flex gap-2">
                 <button type="button" class="btn btn-success" id="updateSoupBtn">保存修改</button>
                 <button type="button" class="btn btn-secondary" id="cancelEditBtn">取消</button>
@@ -260,6 +264,7 @@
                 editSoupIdEl.value = soup.soupId;
                 editSoupTitleEl.value = soup.title;
                 editSoupContentEl.value = soup.contentLines.join('\n');
+                document.getElementById('editSoupTruth').value = soup.truth || '';
                 
                 // 显示编辑表单，隐藏添加表单
                 addSoupFormEl.style.display = 'none';
@@ -278,6 +283,7 @@
             const soupId = editSoupIdEl.value;
             const title = editSoupTitleEl.value.trim();
             const content = editSoupContentEl.value.trim();
+            const truth = document.getElementById('editSoupTruth').value.trim();
             
             if (!title || !content) {
                 alert('标题和内容不能为空');
@@ -297,13 +303,20 @@
                     },
                     body: JSON.stringify({
                         title,
-                        contentLines
+                        contentLines,
+                        truth
                     })
                 });
                 
                 if (!response.ok) {
                     throw new Error('更新汤面失败');
                 }
+                
+                // 清空编辑表单
+                editSoupIdEl.value = '';
+                editSoupTitleEl.value = '';
+                editSoupContentEl.value = '';
+                document.getElementById('editSoupTruth').value = '';
                 
                 // 隐藏编辑表单，显示添加表单
                 addSoupFormEl.style.display = 'block';
@@ -353,6 +366,7 @@
             editSoupIdEl.value = '';
             editSoupTitleEl.value = '';
             editSoupContentEl.value = '';
+            document.getElementById('editSoupTruth').value = '';
             
             // 隐藏编辑表单，显示添加表单
             addSoupFormEl.style.display = 'block';

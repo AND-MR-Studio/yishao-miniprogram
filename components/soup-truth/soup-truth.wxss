@@ -5,12 +5,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 30rpx 0;
+  padding: 300rpx 0 0;
   width: 100%;
   min-height: 300rpx;
+  position: fixed;
   box-sizing: border-box;
-  background-color: rgba(0, 0, 0, 0.03);
-  border-radius: 16rpx;
+  will-change: transform;
 }
 
 /* 加载中样式 */
@@ -44,8 +44,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20rpx;
-  margin-bottom: 20rpx;
+  padding: var(--spacing-md, 20rpx) 0;
+  margin-bottom: var(--spacing-md, 20rpx);
   min-height: 200rpx;
   position: relative;
 }
@@ -56,7 +56,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20rpx 0;
+  padding: 0rpx 0;
   margin-bottom: 30rpx;
   text-align: center;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
@@ -64,45 +64,33 @@
 
 /* 标题样式 */
 .soup-title {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
+  font-size: var(--font-size-xl, 32rpx);
+  font-weight: var(--font-weight-bold, bold);
+  color: var(--color-text-primary, #333);
   text-align: center;
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
 }
 
 /* 汤底容器 */
 .soup-truth-container {
-  width: 100%;
-  padding: 30rpx;
-  margin-top: 20rpx;
-  background-color: rgba(23, 255, 93, 0.05);
+  width: 80%;
+  padding: 40rpx;
+  margin-left: auto;
+  margin-right: auto;
   border-radius: 12rpx;
-  box-shadow: 0 0 15rpx rgba(23, 255, 93, 0.1);
 }
 
 /* 汤底文本样式 */
 .soup-truth {
   font-size: 30rpx;
-  line-height: 1.8;
-  color: #333;
+  line-height: 2.2;
+  color: var(--color-text-primary, #333);
   text-align: center;
   display: block;
-  padding: 10rpx;
-}
-
-/* 调试信息 */
-.debug-info {
-  margin-top: 20rpx;
-  font-size: 24rpx;
-  color: #999;
-  background-color: rgba(0,0,0,0.05);
-  padding: 10rpx;
-  border-radius: 8rpx;
-  display: flex;
-  flex-direction: column;
-}
-
-/* 调试信息文本 - 使用类选择器替代标签选择器 */
-.debug-text {
-  line-height: 1.5;
+  padding: 20rpx;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
+  text-shadow: 1rpx 1rpx 0rpx rgba(33, 123, 15, 0.3);
 }
