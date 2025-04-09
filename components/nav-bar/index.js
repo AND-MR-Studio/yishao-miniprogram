@@ -60,9 +60,9 @@ Component({
   methods: {
     // 处理点击左侧图标
     onClickLeft() {
-      // 跳转到首页
-      wx.switchTab({
-        url: '/pages/index/index'
+      // 返回上一页
+      wx.navigateBack({
+        delta: 1
       });
     },
     

@@ -51,14 +51,14 @@
       </view>
     </view>
     
-    <!-- 退出登录按钮 -->
+    <!-- 登录/退出按钮 -->
     <view class="logout-container">
       <button-component 
-        type="unlight" 
-        text="退出登录" 
+        type="{{buttonConfig.type}}" 
+        text="{{buttonConfig.text}}" 
         width="100%" 
         height="88rpx"
-        bindtap="handleLogout"
+        bind:tap="handleLogout"
       />
     </view>
   </view>

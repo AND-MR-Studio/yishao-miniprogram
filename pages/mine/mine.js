@@ -7,7 +7,12 @@ Page({
   data: {
     userInfo: null,
     remainingAnswers: 0,
-    defaultAvatarUrl: 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
+    defaultAvatarUrl: 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0',
+    buttonConfig: {
+      type: 'light',
+      text: '登录'
+    },
+    isLoggingOut: false
   },
 
   /**
@@ -47,7 +52,19 @@ Page({
     const userInfo = wx.getStorageSync('userInfo');
     if (userInfo) {
       this.setData({
-        userInfo: userInfo
+        userInfo: userInfo,
+        buttonConfig: {
+          type: 'unlight',
+          text: '退出登录'
+        }
+      });
+    } else {
+      this.setData({
+        userInfo: null,
+        buttonConfig: {
+          type: 'light',
+          text: '登录'
+        }
       });
     }
   },
@@ -129,13 +146,22 @@ Page({
               // 示例：模拟后端返回的用户信息
               const mockUserInfo = {
                 nickName: '游客' + Math.floor(Math.random() * 10000),
-                avatarUrl: '/images/default-avatar.png'
+                avatarUrl: this.data.defaultAvatarUrl // 使用 data 中定义的默认头像
               };
 
               // 保存用户信息到本地
               wx.setStorageSync('userInfo', mockUserInfo);
               this.setData({
-                userInfo: mockUserInfo
+                userInfo: mockUserInfo,
+                buttonConfig: {
+                  type: 'unlight',
+                  text: '退出登录'
+                }
+              });
+
+              wx.showToast({
+                title: '登录成功',
+                icon: 'success'
               });
 
               resolve(mockUserInfo);
@@ -157,6 +183,19 @@ Page({
    * 处理退出登录
    */
   handleLogout() {
+    // 如果未登录，则执行登录操作
+    if (!this.data.userInfo) {
+      this.handleLogin();
+      return;
+    }
+
+    // 如果正在退出登录，则不再显示弹窗
+    if (this.data.isLoggingOut) {
+      return;
+    }
+
+    // 已登录，执行退出操作
+    this.setData({ isLoggingOut: true }); // 设置标志位
     wx.showModal({
       title: '提示',
       content: '确定要退出登录吗？',
@@ -167,7 +206,11 @@ Page({
           // 重置数据
           this.setData({
             userInfo: null,
-            remainingAnswers: 0
+            remainingAnswers: 0,
+            buttonConfig: {
+              type: 'light',
+              text: '登录'
+            }
           });
           // 提示用户
           wx.showToast({
@@ -176,6 +219,12 @@ Page({
             duration: 2000
           });
         }
+        // 无论是确认还是取消，都重置标志位
+        this.setData({ isLoggingOut: false });
+      },
+      fail: () => {
+        // 发生错误时也要重置标志位
+        this.setData({ isLoggingOut: false });
       }
     });
   },

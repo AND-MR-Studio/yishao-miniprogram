@@ -7,15 +7,19 @@
   min-height: 100vh;
   background-color: var(--color-background);
   box-sizing: border-box;
-  padding-top: calc(88rpx + env(safe-area-inset-top)); /* 导航栏高度 + 顶部安全区域 */
-  padding-bottom: env(safe-area-inset-bottom); /* 底部安全区域 */
+  display: flex;
+  flex-direction: column;
 }
 
 .container {
-  padding: 30rpx;
-  box-sizing: border-box;
+  flex: 1;
   width: 100%;
-  height: 100%;
+  box-sizing: border-box;
+  /* 顶部位置留出导航栏高度 */
+  padding: calc(180rpx + env(safe-area-inset-top)) 30rpx calc(110rpx + env(safe-area-inset-bottom)) 30rpx;
+  /* 底部留出 tabbar 高度 */
+  position: relative;
+  overflow-y: auto;
 }
 
 /* 用户信息卡片样式 */

@@ -18,11 +18,11 @@
     "custom": true,
     "list": [
       {
-        "pagePath": "pages/community/community",
-        "text": "论坛"
+        "pagePath": "pages/index/index",
+        "text": "主页"
       },
       {
-        "pagePath": "pages/index/index",
+        "pagePath": "pages/dialog/dialog",
         "text": "喝汤"
       },
       {

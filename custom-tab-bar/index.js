@@ -10,18 +10,18 @@ Component({
    * 组件的初始数据
    */
   data: {
-    selected: 1,
+    selected: 0,
     color: "#DBFFEC",
     selectedColor: "#5CE821",
     list: [
       {
-        pagePath: "/pages/community/community",
-        text: "论坛",
+        pagePath: "/pages/index/index",
+        text: "主页",
         icon: "icon-community_UnSelected",
         selectedIcon: "icon-community_Selected"
       },
       {
-        pagePath: "/pages/index/index",
+        pagePath: "/pages/dialog/dialog",
         text: "喝汤",
         icon: "icon-soup_UnSelected",
         selectedIcon: "icon-soup_Selected"
