@@ -25,8 +25,7 @@ Page({
     keyboardHeight: 0,
     focus: false,
     soupTitle: '', // 当前汤面标题
-    isPeekingSoup: false, // 控制是否偷看汤面（透明对话区域）
-    showSoupTruth: false // 控制是否显示汤底组件
+    isPeekingSoup: false // 控制是否偷看汤面（透明对话区域）
   },
 
   /**
@@ -137,39 +136,82 @@ Page({
     
     // 检查是否输入了"汤底"关键词
     if (value && value.trim() === '汤底') {
-      // 显示汤底提示消息
+      // 添加系统消息
       const dialogArea = this.selectComponent('#dialogArea');
       if (dialogArea) {
-        // 添加系统消息
-        dialogArea.addSystemMessage('你喝到了汤底');
+        // 获取当前消息列表
+        const currentMessages = dialogArea.getMessages();
         
-        // 显示汤底组件，隐藏汤面组件
-        this.setData({ 
-          showSoupTruth: true,
-          isPeekingSoup: false
-        });
+        // 添加用户消息（手动添加，不通过handleUserMessage方法）
+        const userMessage = {
+          type: 'user',
+          content: value.trim()
+        };
         
-        // 设置汤底组件数据
-        const soupTruth = this.selectComponent('#soupTruth');
-        if (soupTruth && this.data.currentSoupData) {
-          soupTruth.setCurrentSoup(this.data.currentSoupData);
-        }
+        // 添加特殊回复
+        const systemMessage = {
+          type: 'system',
+          content: '你喝到了汤底'
+        };
         
-        // 延迟跳转回主页
-        setTimeout(() => {
-          // 保存当前对话记录
-          if (dialogArea) {
-            dialogArea.saveMessages();
+        // 更新消息列表（同时添加用户消息和系统回复）
+        const updatedMessages = [...currentMessages, userMessage, systemMessage];
+        
+        // 设置回组件
+        dialogArea.setMessages(updatedMessages);
+        
+        // 滚动到底部
+        this.scrollToBottom();
+        
+        // 设置汤面ID和汤底信息到全局，以便在主页显示
+        const app = getApp();
+        if (app.globalData) {
+          // 创建全局数据对象（如果不存在）
+          app.globalData = app.globalData || {};
+          
+          // 获取汤面数据（优先使用现有数据或同步获取）
+          let truthData = null;
+          
+          // 确保汤面数据完整
+          if (this.data.currentSoupData && this.data.currentSoupData.truth) {
+            truthData = JSON.parse(JSON.stringify(this.data.currentSoupData));
+          } else {
+            // 尝试同步获取数据
+            const soupData = soupService.getSoupById(this.data.currentSoupId);
+            if (soupData && soupData.truth) {
+              truthData = JSON.parse(JSON.stringify(soupData));
+            }
           }
           
-          // 跳转到首页
+          // 如果成功获取数据，设置到全局变量
+          if (truthData) {
+            app.globalData.showTruth = true;
+            app.globalData.isCorrect = true;
+            app.globalData.truthSoupId = this.data.currentSoupId;
+            app.globalData.truthData = truthData;
+            
+            console.log('成功设置汤底数据：', {
+              id: truthData.soupId,
+              title: truthData.title,
+              truth: truthData.truth
+            });
+          } else {
+            // 无法获取完整数据，设置最小必要信息
+            console.log('无法获取完整汤底数据，仅设置ID');
+            app.globalData.showTruth = true;
+            app.globalData.isCorrect = true;
+            app.globalData.truthSoupId = this.data.currentSoupId;
+          }
+        }
+        
+        // 短暂延迟后跳转到主页
+        setTimeout(() => {
           wx.switchTab({
             url: '/pages/index/index'
           });
-        }, 3000);
-        
-        return;
+        }, 1500);
       }
+      return;
     }
     
     // 获取dialog-area组件实例

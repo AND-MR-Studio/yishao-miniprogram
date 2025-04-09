@@ -14,7 +14,15 @@
       staticMode="{{soupConfig.staticMode}}"
       bind:animationComplete="onSoupAnimationComplete"
       bind:loadFail="onSoupLoadFail"
+      wx:if="{{!isCorrect && !showTruth}}"
     ></soup-display>
+    
+    <!-- 汤底显示区域 -->
+    <soup-truth
+      id="soupTruth"
+      soupId="{{truthSoupId}}"
+      wx:if="{{isCorrect || showTruth}}"
+    ></soup-truth>
     
     <!-- 设置卡片 -->
     <setting-card
@@ -27,7 +35,7 @@
     <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
       <custom-button 
         type="light" 
-        text="开始喝汤" 
+        text="{{(isCorrect || showTruth) ? '分享汤面' : '开始喝汤'}}" 
         width="50%"
         height="80rpx"
         bind:tap="onStartSoup" 

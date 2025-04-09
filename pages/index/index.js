@@ -14,7 +14,12 @@ Page({
       staticMode: false  // 静态模式(不显示动画)
     },
     // 控制按钮显示
-    showButtons: false
+    showButtons: false,
+    // 汤底相关
+    showTruth: false,  // 是否显示汤底组件
+    truthSoupId: '',  // 汤底对应的soupId
+    truthData: null,   // 汤底数据
+    isCorrect: false   // 是否猜对了汤底（用于控制组件切换）
   },
 
   /**
@@ -79,13 +84,71 @@ Page({
       });
     }
 
-    // 每次显示页面时，检查汤面组件是否有内容，没有则初始化
-    setTimeout(() => {
-      const soupDisplay = this.selectComponent('#soupDisplay');
-      if (soupDisplay && !soupDisplay.data.currentSoup) {
-        this._initSoupDisplay();
-      }
-    }, 100);
+    // 检查全局变量，是否需要显示汤底
+    const app = getApp();
+    if (app.globalData && app.globalData.showTruth) {
+      console.log('显示汤底模式，数据：', {
+        soupId: app.globalData.truthSoupId,
+        hasData: !!app.globalData.truthData,
+        truth: app.globalData.truthData?.truth
+      });
+      
+      // 重要：先清除全局标志，防止再次进入此逻辑
+      app.globalData.showTruth = false;
+      
+      // 设置显示汤底并标记为已猜对
+      this.setData({
+        showTruth: true,
+        isCorrect: true,
+        truthSoupId: app.globalData.truthSoupId || '',
+        truthData: app.globalData.truthData || null,
+        showButtons: true  // 直接显示按钮
+      });
+      
+      // 在一个单独的setTimeout中处理组件设置，避免循环调用
+      setTimeout(() => {
+        // 只有当数据不完整且有soupId时才尝试加载
+        if ((!app.globalData.truthData || !app.globalData.truthData.truth) && app.globalData.truthSoupId) {
+          console.log('汤底数据不完整，尝试一次性加载');
+          
+          // 同步获取数据，避免异步操作导致的循环
+          const soupData = soupService.getSoupById(app.globalData.truthSoupId);
+          if (soupData) {
+            console.log('直接获取到汤底数据:', soupData);
+            this.setData({ truthData: soupData });
+            app.globalData.truthData = soupData;
+            
+            // 获取组件并设置数据
+            const soupTruth = this.selectComponent('#soupTruth');
+            if (soupTruth) {
+              soupTruth.setCurrentSoup(soupData);
+            }
+            return; // 成功获取数据后直接返回，不执行后续代码
+          }
+        }
+        
+        // 如果已有完整数据，直接设置到组件
+        if (app.globalData.truthData && app.globalData.truthData.truth) {
+          const soupTruth = this.selectComponent('#soupTruth');
+          if (soupTruth) {
+            soupTruth.setCurrentSoup(app.globalData.truthData);
+          }
+        }
+      }, 100);
+    } else {
+      // 确保showTruth为false
+      this.setData({
+        showTruth: false
+      });
+      
+      // 每次显示页面时，检查汤面组件是否有内容，没有则初始化
+      setTimeout(() => {
+        const soupDisplay = this.selectComponent('#soupDisplay');
+        if (soupDisplay && !soupDisplay.data.currentSoup) {
+          this._initSoupDisplay();
+        }
+      }, 100);
+    }
   },
 
   /**
@@ -113,6 +176,23 @@ Page({
    * 开始喝汤按钮点击事件
    */
   onStartSoup() {
+    // 如果当前显示的是汤底，点击按钮时先清除汤底显示状态
+    if (this.data.isCorrect || this.data.showTruth) {
+      this.setData({
+        showTruth: false,
+        isCorrect: false,
+        truthSoupId: '',
+        truthData: null
+      });
+      
+      // 延迟一下再初始化汤面组件
+      setTimeout(() => {
+        this._initSoupDisplay();
+      }, 100);
+      
+      return;
+    }
+    
     // 获取当前汤面组件实例
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (!soupDisplay) return;
@@ -142,6 +222,30 @@ Page({
    * 下一个按钮点击事件
    */
   onNextSoup() {
+    // 如果正在显示汤底，切换回汤面显示
+    if (this.data.isCorrect || this.data.showTruth) {
+      this.setData({
+        showTruth: false,
+        isCorrect: false,
+        truthSoupId: '',
+        truthData: null
+      });
+      
+      // 延迟一下再初始化汤面组件
+      setTimeout(() => {
+        this._initSoupDisplay();
+        
+        // 如果是静态模式，直接显示按钮
+        if (this.data.soupConfig.staticMode) {
+          this.setData({
+            showButtons: true
+          });
+        }
+      }, 100);
+      
+      return;
+    }
+    
     // 隐藏按钮
     this.setData({
       showButtons: false

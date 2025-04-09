@@ -390,55 +390,6 @@ Component({
       } catch (err) {
         // 组件内滚动失败
       }
-    },
-
-    /**
-     * 添加系统消息
-     * @param {String} content - 系统消息内容
-     * @returns {Array} - 返回更新后的消息数组
-     */
-    addSystemMessage(content) {
-      if (!content || !content.trim()) return this.data.messages;
-
-      // 创建系统消息对象（实际内容为空，用于动画）
-      const systemMessage = {
-        type: 'system',
-        content: ''
-      };
-
-      // 添加系统消息
-      const messages = [...this.data.messages, systemMessage];
-      
-      this.setData({ 
-        messages,
-        animatingMessageIndex: messages.length - 1,
-        hasMessagesChanged: true
-      }, () => {
-        this.scrollToBottom();
-        // 启动打字机动画
-        this.typeAnimator.start(content);
-        
-        // 动画完成后更新消息内容
-        setTimeout(() => {
-          const finalMessages = [...messages];
-          finalMessages[finalMessages.length - 1] = {
-            type: 'system',
-            content: content
-          };
-          
-          this.setData({ messages: finalMessages }, () => {
-            this.triggerEvent('messagesChange', { messages: finalMessages });
-            this.scrollToBottom();
-            
-            // 自动保存消息
-            if (this.properties.autoSave) {
-              this._saveMessages();
-            }
-          });
-        }, content.length * 80 + 200); // 估算动画完成时间
-      });
-
-      return messages;
     }
   }
 });
