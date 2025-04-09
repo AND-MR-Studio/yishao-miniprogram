@@ -143,3 +143,124 @@
   padding: 20rpx 40rpx;
   margin-top: 80rpx;
 }
+
+/* 汤面列表弹窗样式 */
+.soup-list-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.soup-list-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.soup-list-container {
+  width: 90%;
+  max-width: 600rpx;
+  max-height: 70vh;
+  background-color: var(--color-background-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: scale-in 0.3s ease forwards;
+}
+
+.soup-list-header {
+  padding: 30rpx;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.soup-list-title {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.soup-list-close {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-text-hint);
+  font-size: 40rpx;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.soup-list-close:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.soup-list-body {
+  flex: 1;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.soup-list-item {
+  padding: 30rpx;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.soup-list-item:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.soup-item-title {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* 汤面列表空状态 */
+.soup-list-empty {
+  padding: 60rpx 0;
+  text-align: center;
+  color: var(--color-text-hint);
+  font-size: var(--font-size-md);
+}
+
+/* 汤面列表分割线 */
+.soup-list-divider {
+  padding: 20rpx 30rpx;
+  background-color: rgba(0, 0, 0, 0.2);
+  color: var(--color-text-hint);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 汤面项时间样式 */
+.soup-item-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-hint);
+  margin-top: 8rpx;
+  display: block;
+}

@@ -89,7 +89,7 @@ Page({
     if (!soupDisplay) return;
 
     // 跳转到对话页面
-    wx.navigateTo({
+    wx.switchTab({
       url: `/pages/dialog/dialog?soupId=${soupDisplay.data.soupId}`
     });
   },

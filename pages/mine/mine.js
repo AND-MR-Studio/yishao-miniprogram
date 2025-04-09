@@ -1,4 +1,7 @@
 // pages/mine/mine.js
+const soupService = require('../../utils/soupService');
+const dialogService = require('../../utils/dialogService');
+
 Page({
 
   /**
@@ -12,7 +15,12 @@ Page({
       type: 'light',
       text: '登录'
     },
-    isLoggingOut: false
+    isLoggingOut: false,
+    // 汤面列表相关
+    showSoupList: false,
+    soupList: [],
+    // 用户汤面记录
+    userSoupHistory: []
   },
 
   /**
@@ -21,6 +29,10 @@ Page({
   onLoad(options) {
     this.getUserInfo();
     this.getRemainingAnswers();
+    // 获取汤面列表
+    this._loadSoupList();
+    // 获取用户汤面历史
+    this._loadUserSoupHistory();
   },
 
   /**
@@ -262,5 +274,203 @@ Page({
    */
   onShareAppMessage() {
 
+  },
+
+  /**
+   * 加载汤面列表
+   * @private
+   */
+  _loadSoupList() {
+    // 显示加载中提示
+    wx.showLoading({
+      title: '加载中...',
+      mask: true
+    });
+    
+    soupService.getAllSoups((soups) => {
+      // 隐藏加载提示
+      wx.hideLoading();
+      
+      if (Array.isArray(soups) && soups.length > 0) {
+        this.setData({ soupList: soups });
+        console.log('成功加载汤面列表，数量:', soups.length);
+      } else {
+        console.warn('汤面列表为空或格式不正确');
+        // 如果列表为空，可以显示提示
+        wx.showToast({
+          title: '暂无汤面数据',
+          icon: 'none'
+        });
+      }
+    });
+  },
+
+  /**
+   * 加载用户汤面历史记录
+   * @private
+   */
+  _loadUserSoupHistory() {
+    // 从本地存储获取用户记录
+    const userSoupHistory = wx.getStorageSync('userSoupHistory') || [];
+    
+    // 格式化时间
+    userSoupHistory.forEach(item => {
+      if (item.timestamp) {
+        item.formattedTime = this._formatTime(item.timestamp);
+      }
+    });
+    
+    this.setData({ userSoupHistory });
+  },
+
+  /**
+   * 格式化时间戳
+   * @param {number} timestamp 时间戳
+   * @returns {string} 格式化后的时间
+   * @private
+   */
+  _formatTime(timestamp) {
+    if (!timestamp) return '';
+    
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diff = now - date; // 时间差(毫秒)
+    
+    // 一分钟内
+    if (diff < 60 * 1000) {
+      return '刚刚';
+    }
+    
+    // 一小时内
+    if (diff < 60 * 60 * 1000) {
+      return Math.floor(diff / (60 * 1000)) + '分钟前';
+    }
+    
+    // 一天内
+    if (diff < 24 * 60 * 60 * 1000) {
+      return Math.floor(diff / (60 * 60 * 1000)) + '小时前';
+    }
+    
+    // 一周内
+    if (diff < 7 * 24 * 60 * 60 * 1000) {
+      return Math.floor(diff / (24 * 60 * 60 * 1000)) + '天前';
+    }
+    
+    // 其他情况显示日期
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}-${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
+  },
+
+  /**
+   * 处理查看历史记录
+   */
+  handleViewHistory() {
+    if (this.data.soupList.length === 0) {
+      this._loadSoupList();
+    }
+    this.setData({ showSoupList: true });
+  },
+
+  /**
+   * 关闭汤面列表弹窗
+   */
+  closeSoupList() {
+    this.setData({ showSoupList: false });
+  },
+
+  /**
+   * 处理点击汤面项
+   * @param {Object} e 事件对象
+   */
+  handleSoupItemClick(e) {
+    const soupId = e.currentTarget.dataset.soupId;
+    
+    // 检查是否有效的soupId
+    if (!soupId) {
+      console.error('无效的汤面ID:', e.currentTarget.dataset);
+      wx.showToast({
+        title: '无效的汤面ID',
+        icon: 'none'
+      });
+      return;
+    }
+    
+    // 获取汤面信息
+    const soupInfo = this.data.soupList.find(soup => soup.soupId === soupId) || 
+                    this.data.userSoupHistory.find(item => item.soupId === soupId) || 
+                    { title: '未命名汤面' };
+    
+    console.log('点击汤面项:', soupId, soupInfo.title);
+    
+    // 先清除当前dialogService中的汤面ID
+    dialogService.clearCurrentSoupId();
+    
+    // 设置当前选中的汤面ID到dialogService中
+    dialogService.setCurrentSoupId(soupId);
+    
+    // 添加到用户汤面历史
+    this._addToUserSoupHistory(soupId);
+
+    // 使用switchTab跳转到对话页面
+    wx.switchTab({
+      url: '/pages/dialog/dialog'
+    });
+  },
+
+  /**
+   * 添加到用户历史记录
+   * @param {string} soupId 汤面ID
+   * @private
+   */
+  _addToUserSoupHistory(soupId) {
+    if (!soupId) {
+      console.error('添加历史记录失败: 无效的汤面ID');
+      return;
+    }
+    
+    const userSoupHistory = this.data.userSoupHistory || [];
+    
+    // 如果已存在，则移除旧记录
+    const index = userSoupHistory.findIndex(item => item.soupId === soupId);
+    if (index > -1) {
+      userSoupHistory.splice(index, 1);
+    }
+
+    // 获取汤面信息
+    const soupInfo = this.data.soupList.find(soup => soup.soupId === soupId);
+    
+    if (soupInfo) {
+      const timestamp = new Date().getTime();
+      
+      // 添加到历史记录最前面
+      userSoupHistory.unshift({
+        soupId: soupId,
+        title: soupInfo.title || '未命名汤面',
+        timestamp: timestamp,
+        formattedTime: this._formatTime(timestamp)
+      });
+
+      // 最多保存20条记录
+      if (userSoupHistory.length > 20) {
+        userSoupHistory.pop();
+      }
+
+      // 保存到本地存储
+      wx.setStorageSync('userSoupHistory', userSoupHistory);
+      this.setData({ userSoupHistory });
+    } else {
+      console.warn('无法找到汤面信息:', soupId);
+      // 如果在本地找不到汤面信息，尝试重新加载汤面列表
+      this._loadSoupList();
+    }
+  },
+
+  /**
+   * 防止滚动穿透
+   */
+  catchTouchMove() {
+    return false;
   }
 })

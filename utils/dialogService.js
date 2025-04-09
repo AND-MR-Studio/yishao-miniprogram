@@ -106,6 +106,14 @@ class DialogService {
     }
 
     /**
+     * 清除当前汤面ID
+     * 在页面切换时调用，确保下次加载页面时能正确设置新的汤面ID
+     */
+    clearCurrentSoupId() {
+        this._dialogState.soupId = '';
+    }
+
+    /**
      * 获取存储的对话记录键
      * @param {string} soupId 汤面ID，如果不提供则使用当前soupId
      * @returns {string} 存储键
