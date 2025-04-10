@@ -30,11 +30,11 @@
         </view>
       </view>
       
-      <!-- 提示消息 - 正常显示 -->
-      <view wx:if="{{item.type === 'hint' && index !== animatingMessageIndex}}" class="message hint">> {{item.content}}</view>
+      <!-- 提示消息 - 正常显示（支持自定义样式） -->
+      <view wx:if="{{item.type === 'hint' && index !== animatingMessageIndex}}" class="message hint" style="{{item.style}}"> {{item.content}}</view>
       
       <!-- 提示消息 - 打字机动画 -->
-      <view wx:if="{{item.type === 'hint' && index === animatingMessageIndex}}" class="message hint typing-container">
+      <view wx:if="{{item.type === 'hint' && index === animatingMessageIndex}}" class="message hint typing-container" style="{{item.style}}">
         <text class="prefix-text">> </text>
         <view class="typing-content">
           <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">

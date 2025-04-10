@@ -354,7 +354,7 @@
   background-position: left;
 }
 
-.copyright {
+.developed {
   flex: 1;
   min-width: 300rpx; /* 确保版权信息有足够空间 */
   font-family: 'Source Han Sans CN';

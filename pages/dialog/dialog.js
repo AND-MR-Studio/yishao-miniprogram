@@ -25,7 +25,9 @@ Page({
     keyboardHeight: 0,
     focus: false,
     soupTitle: '', // 当前汤面标题
-    isPeekingSoup: false // 控制是否偷看汤面（透明对话区域）
+    isPeekingSoup: false, // 控制是否偷看汤面（透明对话区域）
+    userQuestionCount: 0, // 记录用户提问次数
+    lastInteractionTime: 0, // 上次交互时间戳
   },
 
   /**
@@ -38,11 +40,17 @@ Page({
     // 如果当前已有相同的soupId，不需要重新加载
     if (soupId === this.data.currentSoupId) return;
     
+    // 重置提示定时器
+    this._resetIdleTimer();
+    
     // 设置当前汤面ID - 同时更新soupConfig.soupId以便传递给组件
     this.setData({ 
       currentSoupId: soupId,
       'soupConfig.soupId': soupId
     });
+    
+    // 重置对话状态
+    dialogService.resetDialogState();
     
     // 加载汤面数据
     this._fetchSoupData(soupId);
@@ -78,6 +86,105 @@ Page({
         keyboardHeight: res.height
       });
     });
+    
+    // 启动提示定时器
+    this._startIdleTimer();
+  },
+
+  /**
+   * 启动长时间未提问检测定时器
+   * @private
+   */
+  _startIdleTimer() {
+    // 先清除现有定时器
+    this._resetIdleTimer();
+
+    // 设置定时器，每15秒检查一次是否长时间未提问
+    this.idleCheckTimer = setInterval(() => {
+      this._checkUserIdle();
+    }, 15000); // 15秒检查一次
+    
+    // 更新交互时间
+    dialogService.updateInteractionTime();
+    
+    console.log('启动空闲检测定时器');
+  },
+
+  /**
+   * 重置长时间未提问检测定时器
+   * @private
+   */
+  _resetIdleTimer() {
+    if (this.idleCheckTimer) {
+      clearInterval(this.idleCheckTimer);
+      this.idleCheckTimer = null;
+    }
+
+    if (this.idleHintTimer) {
+      clearTimeout(this.idleHintTimer);
+      this.idleHintTimer = null;
+    }
+  },
+
+  /**
+   * 检查用户是否长时间未提问
+   * @private
+   */
+  _checkUserIdle() {
+    // 获取dialog-area组件实例
+    const dialogArea = this.selectComponent('#dialogArea');
+    if (!dialogArea) return;
+    
+    // 获取当前消息列表
+    const currentMessages = dialogArea.getMessages();
+    
+    // 不连续显示提示，确保至少间隔一定时间
+    if (!this.idleHintTimer) {
+      // 准备显示提示
+      this.idleHintTimer = setTimeout(() => {
+        // 使用dialogService检查是否需要显示空闲提示
+        const hintMessage = dialogService.checkIdleAndGenerateHint(currentMessages);
+        
+        if (hintMessage) {
+          // 更新消息列表
+          const updatedMessages = [...currentMessages, hintMessage];
+          
+          // 设置回组件
+          dialogArea.setMessages(updatedMessages);
+          
+          // 滚动到底部确保提示消息可见
+          this.scrollToBottom();
+        }
+        
+        this.idleHintTimer = null;
+      }, 500);
+    }
+  },
+  
+  /**
+   * 测试强制显示空闲提示（仅用于调试）
+   * @private
+   */
+  _testShowIdleHint() {
+    const dialogArea = this.selectComponent('#dialogArea');
+    if (!dialogArea) return;
+    
+    // 获取当前消息列表
+    const currentMessages = dialogArea.getMessages();
+    
+    // 使用dialogService强制生成提示
+    const hintMessage = dialogService.forceIdleHint();
+    
+    // 更新消息列表
+    const updatedMessages = [...currentMessages, hintMessage];
+    
+    // 设置回组件
+    dialogArea.setMessages(updatedMessages);
+    
+    // 滚动到底部确保提示消息可见
+    this.scrollToBottom();
+    
+    console.log('已强制显示空闲提示');
   },
 
   /**
@@ -133,6 +240,16 @@ Page({
    */
   handleSend(e) {
     const { value } = e.detail;
+    
+    // 更新交互时间
+    dialogService.updateInteractionTime();
+    
+    // 检查是否是测试命令
+    if (value && value.trim() === '测试提示') {
+      this._testShowIdleHint();
+      this.setData({ inputValue: '' });
+      return;
+    }
     
     // 检查是否输入了"汤底"关键词
     if (value && value.trim() === '汤底') {
@@ -217,8 +334,32 @@ Page({
     // 获取dialog-area组件实例
     const dialogArea = this.selectComponent('#dialogArea');
     if (dialogArea) {
+      // 获取当前消息列表
+      const currentMessages = dialogArea.getMessages();
+      
       // 调用组件的handleUserMessage方法处理用户消息
       dialogArea.handleUserMessage(value);
+      
+      // 使用dialogService检查是否需要显示第三次提问提示
+      const hintMessage = dialogService.updateQuestionCountAndCheckHint(currentMessages);
+      
+      // 如果需要显示提示消息
+      if (hintMessage) {
+        // 延迟添加提示，让回答先显示
+        setTimeout(() => {
+          // 重新获取最新消息列表（包含刚添加的用户消息和系统回复）
+          const updatedMessages = dialogArea.getMessages();
+          
+          // 添加绿色提示消息
+          const finalMessages = [...updatedMessages, hintMessage];
+          
+          // 设置回组件
+          dialogArea.setMessages(finalMessages);
+          
+          // 滚动到底部确保提示消息可见
+          this.scrollToBottom();
+        }, 500);
+      }
       
       // 发送消息后主动调用滚动
       setTimeout(() => {
@@ -288,6 +429,9 @@ Page({
    * 处理输入事件
    */
   handleInput(e) {
+    // 更新交互时间
+    dialogService.updateInteractionTime();
+    
     this.setData({
       inputValue: e.detail.value
     });
@@ -307,6 +451,9 @@ Page({
         selected: 1
       });
     }
+    
+    // 重新启动提示定时器
+    this._startIdleTimer();
 
     // 检查全局变量中是否有待处理的soupId
     if (getApp().globalData && getApp().globalData.pendingSoupId) {
@@ -337,6 +484,9 @@ Page({
       clearTimeout(this.peekTimer);
       this.peekTimer = null;
     }
+    
+    // 清除提示定时器
+    this._resetIdleTimer();
   },
   
   /**
@@ -355,6 +505,9 @@ Page({
         dialogService.saveDialogMessages(soupId, messages);
       }
     }
+    
+    // 清除提示定时器
+    this._resetIdleTimer();
   },
 
   /**
@@ -370,6 +523,7 @@ Page({
 
   // 输入框获取焦点
   handleFocus() {
+    dialogService.updateInteractionTime();
     this.setData({
       focus: true
     });
@@ -384,6 +538,7 @@ Page({
 
   // 长按处理 - 查看汤面
   handleLongPress() {
+    dialogService.updateInteractionTime();
     this.setData({ isPeekingSoup: true });
     
     // 5秒后自动恢复

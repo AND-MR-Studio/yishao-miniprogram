@@ -117,7 +117,7 @@
     <!-- 关于信息 -->
     <view class="about-section">
       <view class="studio-logo"></view>
-      <view class="copyright">Copyright © 2025 AND Studio.Designed by Yavin, Coded by Alex.</view>
+      <view class="developed">developed © 2025 AND Studio.Designed by Yavin, Coded by Alex.</view>
     </view>
   </view>
 </view>
