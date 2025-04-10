@@ -13,9 +13,11 @@
           bindchooseavatar="onChooseAvatar"
         >
           <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+          <view class="avatar-hint">{{userInfo ? '点击更换头像' : '点击设置头像'}}</view>
         </button>
       </view>
       <view class="user-info">
+        <!-- 显示昵称（不再使用输入框） -->
         <text class="username">{{userInfo.nickName || '未登录'}}</text>
         <view class="answer-count">
           <text class="count-label">剩余回答次数：</text>
@@ -53,13 +55,24 @@
     
     <!-- 登录/退出按钮 -->
     <view class="logout-container">
-      <button-component 
-        type="{{buttonConfig.type}}" 
-        text="{{buttonConfig.text}}" 
-        width="100%" 
-        height="88rpx"
-        bind:tap="handleLogout"
-      />
+      <!-- 已登录状态下显示退出登录按钮 -->
+      <block wx:if="{{userInfo}}">
+        <button-component 
+          type="{{buttonConfig.type}}" 
+          text="{{buttonConfig.text}}" 
+          width="100%" 
+          height="88rpx"
+          bind:tap="handleLogout"
+        />
+      </block>
+      <!-- 未登录状态下，显示微信登录按钮 -->
+      <block wx:else>
+        <button 
+          class="weui-btn login-btn" 
+          type="primary" 
+          bindtap="handleSimulateLogin"
+        >微信登录</button>
+      </block>
     </view>
   </view>
 
