@@ -62,6 +62,19 @@
   color: var(--color-text-primary);
 } 
 
+/* 加载消息样式 */
+.loading {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+  100% { opacity: 0.5; }
+}
+
 /* 打字机容器样式 */
 .typing-container {
   display: block;

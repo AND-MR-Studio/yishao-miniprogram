@@ -1,23 +1,35 @@
 <!--components/soup-truth/soup-truth.wxml-->
-<view class="soup-container">
+<view 
+  class="soup-container static-mode" 
+  aria-busy="{{loading}}"
+>
   <!-- 加载中状态 -->
   <view 
     class="loading-container" 
     wx:if="{{loading}}"
+    aria-live="polite"
   >
     <text class="loading-text blink-animation">汤底加载中...</text>
   </view>
   
   <!-- 汤底内容区域 -->
-  <view class="soup-content" wx:else>
-    <!-- 标题 -->
-    <view class="soup-title-container">
-      <text class="soup-title">{{title || '未命名汤底'}}</text>
+  <block wx:else>
+    <view class="soup-content">
+      <!-- 标题行 -->
+      <view 
+        class="text-line-container title-line"
+        aria-label="汤面标题"
+      >
+        <text class="text-line">{{title || '未命名汤底'}}</text>
+      </view>
+      
+      <!-- 汤底内容行 -->
+      <view 
+        class="text-line-container truth-line"
+        aria-label="汤底内容"
+      >
+        <text class="text-line">{{truth || '汤底未知'}}</text>
+      </view>
     </view>
-    
-    <!-- 汤底 -->
-    <view class="soup-truth-container">
-      <text class="soup-truth">{{truth || '汤底未知'}}</text>
-    </view>
-  </view>
+  </block>
 </view>

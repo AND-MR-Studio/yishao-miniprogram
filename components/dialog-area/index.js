@@ -28,14 +28,28 @@ Component({
     autoSave: {
       type: Boolean,
       value: true
+    },
+    // 是否启用打字机效果
+    enableTyping: {
+      type: Boolean,
+      value: true
+    },
+    // 打字机速度
+    typeSpeed: {
+      type: Number,
+      value: 60
+    },
+    // 是否添加初始化系统消息
+    addInitialSystemMessages: {
+      type: Boolean,
+      value: true
     }
   },
   
   data: {
-    isReceiving: false, // 是否正在接收消息
-    // 打字机动画相关数据（已精简）
+    loading: false, // 是否正在加载消息
+    // 打字机动画相关数据
     displayLines: [],
-    currentLineIndex: 0,
     isAnimating: false,
     animatingMessageIndex: -1, // 当前正在执行动画的消息索引
     hasMessagesChanged: false  // 标记消息是否有变化
@@ -46,9 +60,9 @@ Component({
       // 初始化标志，用于跟踪是否已从父组件加载了消息
       this.hasLoadedFromParent = false;
       
-      // 初始化打字机动画实例（已精简配置）
+      // 初始化打字机动画实例
       this.typeAnimator = typeAnimation.createInstance(this, {
-        typeSpeed: 60,
+        typeSpeed: this.properties.typeSpeed,
         onAnimationComplete: () => {
           // 动画完成时触发回调
           this.setData({ isAnimating: false });
@@ -85,23 +99,40 @@ Component({
      * @param {string} soupId 汤面ID
      * @private
      */
-    _tryLoadHistoryMessages(soupId) {
+    async _tryLoadHistoryMessages(soupId) {
       // 如果已经从父组件加载了消息，或者没有soupId，则不加载
       if (this.hasLoadedFromParent || !soupId) return;
       
-      // 尝试加载历史消息
-      dialogService.loadDialogMessages({
-        soupId: soupId,
-        success: (messages) => {
-          if (messages && messages.length) {
-            this.setData({ messages, hasMessagesChanged: false }, () => {
-              // 通知页面消息已更新
-              this.triggerEvent('messagesChange', { messages });
-              this.scrollToBottom();
-            });
-          }
+      try {
+        // 设置加载中状态
+        this.setData({ loading: true });
+        
+        // 使用dialogService的异步方法加载历史消息
+        const messages = await dialogService.loadDialogMessagesAsync(soupId);
+        
+        // 如果需要添加初始系统消息，使用dialogService的方法合并
+        let combinedMessages = messages;
+        if (this.properties.addInitialSystemMessages) {
+          combinedMessages = dialogService.combineWithInitialMessages(messages);
         }
-      });
+        
+        if (combinedMessages.length) {
+          this.setData({ 
+            messages: combinedMessages, 
+            hasMessagesChanged: false,
+            loading: false 
+          }, () => {
+            // 通知页面消息已更新
+            this.triggerEvent('messagesChange', { messages: combinedMessages });
+            this.scrollToBottom();
+          });
+        } else {
+          this.setData({ loading: false });
+        }
+      } catch (error) {
+        console.error('加载历史消息失败', error);
+        this.setData({ loading: false });
+      }
     },
     
     /**
@@ -132,6 +163,90 @@ Component({
         return;
       }
 
+      // 检查是否为特殊关键词
+      const inputResult = dialogService.handleUserInput(content.trim());
+      if (inputResult.isSpecial) {
+        // 使用特殊响应处理
+        const userMessage = inputResult.userMessage;
+        const specialReply = inputResult.reply;
+        
+        // 添加用户消息
+        const messages = [...this.properties.messages, userMessage];
+        await new Promise(resolve => {
+          this.setData({ messages, hasMessagesChanged: true }, () => {
+            this.scrollToBottom();
+            resolve();
+          });
+        });
+        
+        if (!this.properties.enableTyping) {
+          // 不使用打字机效果时，直接添加完整内容
+          const finalMessages = [...messages, specialReply];
+          
+          await new Promise(resolve => {
+            this.setData({ 
+              messages: finalMessages,
+              hasMessagesChanged: true
+            }, () => {
+              this.triggerEvent('messagesChange', { messages: finalMessages });
+              this.scrollToBottom();
+              resolve();
+            });
+          });
+          
+          // 自动保存消息
+          if (this.properties.autoSave) {
+            this._saveMessages();
+          }
+          
+          return finalMessages;
+        }
+        
+        // 使用打字机效果时，先添加空内容
+        const updatedMessages = [...messages, {
+          type: specialReply.type,
+          content: ''
+        }];
+        
+        await new Promise(resolve => {
+          this.setData({ 
+            messages: updatedMessages,
+            animatingMessageIndex: updatedMessages.length - 1,
+            isAnimating: true,
+            hasMessagesChanged: true
+          }, () => {
+            this.scrollToBottom();
+            resolve();
+          });
+        });
+
+        // 启动打字机动画
+        await this.typeAnimator.start(specialReply.content);
+        
+        // 动画完成后更新消息内容
+        const finalMessages = [...updatedMessages];
+        finalMessages[finalMessages.length - 1] = specialReply;
+        
+        await new Promise(resolve => {
+          this.setData({ 
+            messages: finalMessages,
+            animatingMessageIndex: -1,
+            hasMessagesChanged: true
+          }, () => {
+            this.triggerEvent('messagesChange', { messages: finalMessages });
+            this.scrollToBottom();
+            resolve();
+          });
+        });
+        
+        // 自动保存消息
+        if (this.properties.autoSave) {
+          this._saveMessages();
+        }
+        
+        return finalMessages;
+      }
+
       // 创建用户消息对象
       const userMessage = {
         type: 'user',
@@ -147,58 +262,46 @@ Component({
         });
       });
 
-      // 如果输入"提示"，则显示特殊提示信息
-      if (content.trim() === '提示') {
-        const hintMessage = {
-          type: 'hint',
-          content: '这是一段很长的提示文字，用来测试打字机动画效果。这段文字包含了一些标点符号，比如逗号、句号。还有一些感叹号！问号？以及其他标点符号；冒号：破折号——等等。这些标点符号会有不同的停顿时间，让打字机效果更加自然。'
-        };
-        
-        // 添加提示消息（实际内容为空，用于动画）
-        const updatedMessages = [...messages, {
-          type: 'hint',
-          content: ''
+      // 普通消息处理，使用dialogService生成回复
+      const reply = inputResult.reply || dialogService.generateReply();
+      return this._displayReply(messages, reply);
+    },
+    
+    /**
+     * 显示回复消息（处理打字机效果）
+     * @param {Array} messages 当前消息列表
+     * @param {Object} reply 回复消息
+     * @returns {Promise<Array>} 更新后的消息列表
+     * @private
+     */
+    async _displayReply(messages, reply) {
+      if (!this.properties.enableTyping) {
+        // 不使用打字机效果时，直接添加完整回复
+        const finalMessages = [...messages, {
+          type: 'normal',
+          content: reply.content
         }];
         
         await new Promise(resolve => {
           this.setData({ 
-            messages: updatedMessages,
-            animatingMessageIndex: updatedMessages.length - 1,
+            messages: finalMessages,
             hasMessagesChanged: true
           }, () => {
-            this.scrollToBottom();
-            resolve();
-          });
-        });
-
-        // 启动打字机动画并等待完成
-        await this.typeAnimator.start(hintMessage.content);
-        
-        // 动画完成后更新消息内容
-        const finalMessages = [...updatedMessages];
-        finalMessages[finalMessages.length - 1] = hintMessage;
-        
-        await new Promise(resolve => {
-          this.setData({ messages: finalMessages }, () => {
             this.triggerEvent('messagesChange', { messages: finalMessages });
             this.scrollToBottom();
-            
-            // 自动保存消息
-            if (this.properties.autoSave) {
-              this._saveMessages();
-            }
             resolve();
           });
         });
+        
+        // 自动保存消息
+        if (this.properties.autoSave) {
+          this._saveMessages();
+        }
         
         return finalMessages;
       }
-
-      // 生成系统回复（简单随机模拟）
-      const responses = ['是', '否', '不确定'];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
       
-      // 添加正常回复消息（实际内容为空，用于动画）
+      // 使用打字机效果时，先添加空内容
       const updatedMessages = [...messages, {
         type: 'normal',
         content: ''
@@ -208,6 +311,7 @@ Component({
         this.setData({ 
           messages: updatedMessages,
           animatingMessageIndex: updatedMessages.length - 1,
+          isAnimating: true,
           hasMessagesChanged: true
         }, () => {
           this.scrollToBottom();
@@ -215,108 +319,34 @@ Component({
         });
       });
 
-      // 启动打字机动画并等待完成
-      await this.typeAnimator.start(randomResponse);
+      // 启动打字机动画
+      await this.typeAnimator.start(reply.content);
       
       // 动画完成后更新消息内容
       const finalMessages = [...updatedMessages];
       finalMessages[finalMessages.length - 1] = {
         type: 'normal',
-        content: randomResponse
+        content: reply.content
       };
       
       await new Promise(resolve => {
-        this.setData({ messages: finalMessages }, () => {
+        this.setData({ 
+          messages: finalMessages,
+          animatingMessageIndex: -1,
+          hasMessagesChanged: true
+        }, () => {
           this.triggerEvent('messagesChange', { messages: finalMessages });
           this.scrollToBottom();
-          
-          // 自动保存消息
-          if (this.properties.autoSave) {
-            this._saveMessages();
-          }
           resolve();
         });
       });
+      
+      // 自动保存消息
+      if (this.properties.autoSave) {
+        this._saveMessages();
+      }
 
       return finalMessages;
-    },
-
-    /**
-     * 发送消息并处理回复（保留API接口以便未来扩展）
-     * @param {Object} message - 用户消息对象 {type: 'user', content: '消息内容'}
-     * @param {Object} params - 请求参数
-     * @returns {Promise<Array>} - 返回更新后的消息数组的Promise
-     */
-    async sendMessageToAPI(message, params) {
-      try {
-        // 设置正在接收状态
-        this.setData({ isReceiving: true });
-        
-        // 创建必要的参数，如果没有提供
-        if (!params) {
-          params = {
-            message: message.content
-          };
-        }
-        
-        // 发送请求
-        const response = await dialogService.sendMessage(params);
-        
-        // 添加用户消息
-        const messages = [...this.properties.messages, message];
-        await new Promise(resolve => {
-          this.setData({ messages, hasMessagesChanged: true }, () => {
-            this.scrollToBottom();
-            resolve();
-          });
-        });
-        
-        // 添加系统消息（实际内容为空，用于动画）
-        const updatedMessages = [...messages, {
-          type: 'normal',
-          content: ''
-        }];
-        
-        await new Promise(resolve => {
-          this.setData({ 
-            messages: updatedMessages,
-            isReceiving: false,
-            animatingMessageIndex: updatedMessages.length - 1,
-            hasMessagesChanged: true
-          }, () => {
-            this.scrollToBottom();
-            resolve();
-          });
-        });
-        
-        // 启动打字机动画并等待完成
-        await this.typeAnimator.start(response.content);
-        
-        // 动画完成后更新消息内容
-        const finalMessages = [...updatedMessages];
-        finalMessages[finalMessages.length - 1] = {
-          type: 'normal',
-          content: response.content
-        };
-        
-        await new Promise(resolve => {
-          this.setData({ messages: finalMessages }, () => {
-            this.triggerEvent('messagesChange', { messages: finalMessages });
-            this.scrollToBottom();
-            
-            // 自动保存消息
-            if (this.properties.autoSave) {
-              this._saveMessages();
-            }
-            resolve();
-          });
-        });
-        
-        return finalMessages;
-      } catch (error) {
-        this.setData({ isReceiving: false });
-        throw error;
-      }
     },
 
     /**
@@ -384,24 +414,8 @@ Component({
             }
           })
           .exec();
-
-        // 备用方法，直接设置scrollTop
-        setTimeout(() => {
-          query.select('#dialogScroll')
-            .fields({
-              node: true,
-              size: true,
-              scrollOffset: true
-            }, res => {
-              if (res && res.node) {
-                const scrollView = res.node;
-                scrollView.scrollTop = scrollView.scrollHeight;
-              }
-            })
-            .exec();
-        }, 50);
       } catch (err) {
-        // 组件内滚动失败
+        console.error('滚动到底部失败', err);
       }
     }
   }

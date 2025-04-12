@@ -10,16 +10,29 @@
     enable-passive="true"
     enable-flex="true"
     id="dialogScroll"
+    aria-busy="{{loading}}"
   >
+    <block wx:if="{{loading && !messages.length}}">
+      <view class="message loading">加载中...</view>
+    </block>
+    
     <block wx:for="{{messages}}" wx:key="index">
       <!-- 用户消息 -->
-      <view wx:if="{{item.type === 'user'}}" class="message user">{{item.content}}</view>
+      <view wx:if="{{item.type === 'user'}}" class="message user" aria-label="用户消息: {{item.content}}">{{item.content}}</view>
       
       <!-- 系统回复消息 - 正常显示 -->
-      <view wx:if="{{(item.type === 'system' || item.type === 'normal') && index !== animatingMessageIndex}}" class="message response">> {{item.content}}</view>
+      <view 
+        wx:if="{{(item.type === 'system' || item.type === 'normal') && index !== animatingMessageIndex}}" 
+        class="message response"
+        aria-label="系统回复: {{item.content}}"
+      >> {{item.content}}</view>
       
       <!-- 系统回复消息 - 打字机动画 -->
-      <view wx:if="{{(item.type === 'system' || item.type === 'normal') && index === animatingMessageIndex}}" class="message response typing-container">
+      <view 
+        wx:if="{{(item.type === 'system' || item.type === 'normal') && index === animatingMessageIndex}}" 
+        class="message response typing-container"
+        aria-live="polite"
+      >
         <text class="prefix-text">> </text>
         <view class="typing-content">
           <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
@@ -31,10 +44,18 @@
       </view>
       
       <!-- 提示消息 - 正常显示 -->
-      <view wx:if="{{item.type === 'hint' && index !== animatingMessageIndex}}" class="message hint">> {{item.content}}</view>
+      <view 
+        wx:if="{{item.type === 'hint' && index !== animatingMessageIndex}}" 
+        class="message hint"
+        aria-label="提示消息: {{item.content}}"
+      >> {{item.content}}</view>
       
       <!-- 提示消息 - 打字机动画 -->
-      <view wx:if="{{item.type === 'hint' && index === animatingMessageIndex}}" class="message hint typing-container">
+      <view 
+        wx:if="{{item.type === 'hint' && index === animatingMessageIndex}}" 
+        class="message hint typing-container"
+        aria-live="polite"
+      >
         <text class="prefix-text">> </text>
         <view class="typing-content">
           <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
@@ -45,6 +66,7 @@
         </view>
       </view>
     </block>
+    
     <!-- 用于滚动到底部的锚点 -->
     <view id="scrollBottom" style="height: 2rpx;"></view>
   </scroll-view>

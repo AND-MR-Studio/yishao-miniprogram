@@ -22,7 +22,8 @@ const typeAnimation = {
     // 简化配置
     const config = {
       typeSpeed: options.typeSpeed || 60, // 打字速度（毫秒/字）
-      onComplete: options.onAnimationComplete || null
+      onComplete: options.onAnimationComplete || null,
+      formatContent: options.formatContent || null // 自定义内容格式化函数
     };
 
     // 标点符号列表
@@ -57,44 +58,48 @@ const typeAnimation = {
      * @returns {Array} 处理后的文本行数组
      */
     const normalizeContent = (content) => {
+      // 如果有自定义格式化函数，优先使用
+      if (config.formatContent && typeof config.formatContent === 'function') {
+        const formattedContent = config.formatContent(content);
+        if (Array.isArray(formattedContent)) {
+          return formattedContent;
+        }
+      }
+      
       // 处理空值
       if (!content) return [];
-      
+
       // 字符串：按换行符分割
       if (typeof content === 'string') {
         return content.split(/\r?\n/);
       }
-      
+
       // 数组：确保每项都是字符串
       if (Array.isArray(content)) {
-        return content.map(item => 
+        return content.map(item =>
           typeof item === 'string' ? item : String(item)
         );
       }
 
       // 对象：尝试智能提取文本内容
       if (typeof content === 'object') {
-        // 尝试使用自定义toString方法
-        if (content.toString !== Object.prototype.toString) {
-          return content.toString().split(/\r?\n/);
-        }
-        
-        // 提取常见文本属性
-        const textFields = ['text', 'content', 'message', 'description'];
-        for (const field of textFields) {
-          if (content[field]) {
-            return typeof content[field] === 'string' ? 
-              content[field].split(/\r?\n/) : [String(content[field])];
+        // 提取标题和内容
+        if (content.title) {
+          const lines = [content.title];
+          
+          // 首先尝试使用contentLines字段
+          if (content.contentLines && Array.isArray(content.contentLines)) {
+            lines.push(...content.contentLines.map(line => String(line)));
+            return lines;
           }
-        }
-        
-        // 提取数组类型的字段
-        const arrayFields = ['lines', 'contentLines', 'contents', 'messages'];
-        for (const field of arrayFields) {
-          if (content[field] && Array.isArray(content[field])) {
-            return content[field].map(line => 
-              typeof line === 'string' ? line : String(line)
-            );
+          // 然后尝试使用content字段
+          else if (content.content) {
+            if (typeof content.content === 'string') {
+              lines.push(...content.content.split(/\r?\n/));
+            } else if (Array.isArray(content.content)) {
+              lines.push(...content.content.map(line => String(line)));
+            }
+            return lines;
           }
         }
         
@@ -105,7 +110,7 @@ const typeAnimation = {
           return ['[对象数据]'];
         }
       }
-      
+
       // 其他类型：转换为字符串
       return [String(content)];
     };
@@ -120,7 +125,7 @@ const typeAnimation = {
       let charIndex = 0;
       let currentActive = -1;
       let displayLines = [];
-      
+
       // 更新UI状态
       const updateUI = (isComplete = false) => {
         component.setData({
@@ -129,16 +134,16 @@ const typeAnimation = {
           isAnimating: !isComplete
         });
       };
-      
+
       const showNextChar = () => {
         // 所有行处理完毕
         if (lineIndex >= lines.length) {
           updateUI(true);
-          
+
           if (config.onComplete) {
             config.onComplete();
           }
-          
+
           // 解析Promise
           if (animationResolve) {
             animationResolve();
@@ -148,7 +153,7 @@ const typeAnimation = {
         }
 
         const currentLine = lines[lineIndex];
-        
+
         // 初始化当前行
         if (displayLines.length <= lineIndex) {
           displayLines.push({
@@ -166,11 +171,11 @@ const typeAnimation = {
           if (currentActive >= 0) {
             displayLines[lineIndex].chars[currentActive].active = false;
           }
-          
+
           lineIndex++;
           charIndex = 0;
           currentActive = -1;
-          
+
           // 行间延迟
           animationTimer = setTimeout(showNextChar, config.typeSpeed * 5);
           return;
@@ -185,14 +190,14 @@ const typeAnimation = {
         displayLines[lineIndex].chars[charIndex].show = true;
         displayLines[lineIndex].chars[charIndex].active = true;
         displayLines[lineIndex].text = currentLine.substring(0, charIndex + 1);
-        
+
         currentActive = charIndex;
-        
+
         // 更新界面
         updateUI();
 
         charIndex++;
-        
+
         // 计算下一个字符的延迟时间
         const delay = getCharDelay(currentLine[charIndex - 1]);
         animationTimer = setTimeout(showNextChar, delay);
@@ -211,22 +216,22 @@ const typeAnimation = {
        */
       start(content) {
         clearTimer();
-        
+
         if (!content) return Promise.resolve();
-        
+
         component.setData({
           displayLines: [],
           currentLineIndex: 0,
           isAnimating: true
         });
-        
+
         // 创建并返回Promise
         return new Promise((resolve) => {
           animationResolve = resolve;
           animateText(content);
         });
       },
-      
+
       /**
        * 立即显示完整内容
        * @param {*} content 任意内容
@@ -234,9 +239,9 @@ const typeAnimation = {
        */
       showComplete(content) {
         clearTimer();
-        
+
         if (!content) return Promise.resolve();
-        
+
         const lines = normalizeContent(content);
         const displayLines = lines.map(line => ({
           text: line,
@@ -246,20 +251,20 @@ const typeAnimation = {
             active: false
           }))
         }));
-        
+
         component.setData({
           displayLines,
           currentLineIndex: displayLines.length,
           isAnimating: false
         });
-        
+
         if (config.onComplete) {
           config.onComplete();
         }
-        
+
         return Promise.resolve();
       },
-      
+
       /**
        * 暂停动画
        */
@@ -267,25 +272,25 @@ const typeAnimation = {
         clearTimer();
         component.setData({ isAnimating: false });
       },
-      
+
       /**
        * 重置动画
        */
       reset() {
         clearTimer();
-        
+
         if (animationResolve) {
           animationResolve();
           animationResolve = null;
         }
-        
+
         component.setData({
           displayLines: [],
           currentLineIndex: 0,
           isAnimating: false
         });
       },
-      
+
       /**
        * 更新打字速度
        * @param {Number} speed 新的打字速度
@@ -295,13 +300,13 @@ const typeAnimation = {
           config.typeSpeed = speed;
         }
       },
-      
+
       /**
        * 清理资源
        */
       destroy() {
         clearTimer();
-        
+
         if (animationResolve) {
           animationResolve();
           animationResolve = null;
