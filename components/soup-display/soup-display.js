@@ -71,17 +71,11 @@ Component({
    */
   data: {
     currentSoup: null,
-    title: '',
-    contentLines: [],
-    // 动画相关数据
+    soupId: '',
     displayLines: [],
     currentLineIndex: 0,
-    lineAnimationComplete: false,
-    animationComplete: false,
     isAnimating: false,
-    loading: false,
-    // 固定使用发光效果
-    typeEffect: 'glow'
+    loading: false
   },
 
   /**
@@ -125,9 +119,6 @@ Component({
     _initTypeAnimator() {
       this.typeAnimator = typeAnimation.createInstance(this, {
         typeSpeed: this.data.typeSpeed,
-        // 固定使用发光效果
-        typeEffect: 'glow',
-        onAnimationStart: () => this.triggerEvent('animationStart'),
         onAnimationComplete: () => this.triggerEvent('animationComplete')
       });
     },
@@ -270,16 +261,15 @@ Component({
         return;
       }
 
+      // 只更新soupId，其他内容由打字机自动处理
       this.setData({
-        title: currentSoup.title,
-        contentLines: currentSoup.contentLines,
         soupId: currentSoup.soupId || ''
       });
 
+      // 触发内容变化事件
       this.triggerEvent('contentChange', {
         soupId: this.data.soupId,
-        title: this.data.title,
-        contentLines: this.data.contentLines
+        soupData: currentSoup
       });
     },
 
@@ -288,13 +278,11 @@ Component({
      * @private
      */
     _showCompleteContent() {
-      if (!this.data.title || !this.data.contentLines || !this.typeAnimator) return;
+      if (!this.data.currentSoup || !this.typeAnimator) return;
       
       wx.nextTick(() => {
-        this.typeAnimator.showComplete({
-          title: this.data.title,
-          contentLines: this.data.contentLines
-        });
+        // 直接传入整个汤面对象
+        this.typeAnimator.showComplete(this.data.currentSoup);
       });
     },
 
@@ -304,7 +292,7 @@ Component({
      * @returns {boolean} 是否设置成功
      */
     setCurrentSoup(soup) {
-      if (!soup?.title || !soup?.contentLines) return false;
+      if (!soup) return false;
       
       this.setData({ 
         loading: false,
@@ -326,23 +314,20 @@ Component({
      * @returns {Object} 汤面数据对象
      */
     getSoupData() {
-      return {
-        soupId: this.data.soupId,
-        title: this.data.title,
-        contentLines: this.data.contentLines
-      };
+      return this.data.currentSoup;
     },
 
     /**
      * 动画控制方法 - 开始动画
+     * @returns {Promise} 动画完成后解析的Promise
      */
-    startAnimation() {
-      if (this.data.isAnimating || this.data.staticMode || !this.typeAnimator) return;
+    async startAnimation() {
+      if (this.data.isAnimating || this.data.staticMode || !this.typeAnimator) {
+        return Promise.resolve();
+      }
       
-      this.typeAnimator.start({
-        title: this.data.title,
-        contentLines: this.data.contentLines
-      });
+      // 直接传入整个汤面对象
+      return this.typeAnimator.start(this.data.currentSoup);
     },
 
     /**

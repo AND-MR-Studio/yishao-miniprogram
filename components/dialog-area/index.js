@@ -33,15 +33,11 @@ Component({
   
   data: {
     isReceiving: false, // 是否正在接收消息
-    // 打字机动画相关数据
+    // 打字机动画相关数据（已精简）
     displayLines: [],
     currentLineIndex: 0,
-    lineAnimationComplete: false,
-    animationComplete: true, // 初始状态为完成
     isAnimating: false,
-    typeEffect: 'normal', // 默认使用普通效果
     animatingMessageIndex: -1, // 当前正在执行动画的消息索引
-    animatedMessageIndexes: [], // 已经完成动画但仍保持打字机视图的消息索引
     hasMessagesChanged: false  // 标记消息是否有变化
   },
 
@@ -50,17 +46,12 @@ Component({
       // 初始化标志，用于跟踪是否已从父组件加载了消息
       this.hasLoadedFromParent = false;
       
-      // 初始化打字机动画实例
+      // 初始化打字机动画实例（已精简配置）
       this.typeAnimator = typeAnimation.createInstance(this, {
         typeSpeed: 60,
-        typeEffect: 'normal',
-        onAnimationStart: () => {
-          this.setData({ isAnimating: true });
-        },
         onAnimationComplete: () => {
-          this.setData({ 
-            isAnimating: false
-          });
+          // 动画完成时触发回调
+          this.setData({ isAnimating: false });
         }
       });
       
@@ -130,8 +121,9 @@ Component({
     /**
      * 处理用户消息并生成回复
      * @param {String} content - 用户消息内容
+     * @returns {Promise<Array>} - 返回更新后的消息数组的Promise
      */
-    handleUserMessage(content) {
+    async handleUserMessage(content) {
       if (!content || !content.trim()) {
         wx.showToast({
           title: '请输入内容',
@@ -148,8 +140,11 @@ Component({
 
       // 添加用户消息
       const messages = [...this.properties.messages, userMessage];
-      this.setData({ messages, hasMessagesChanged: true }, () => {
-        this.scrollToBottom();
+      await new Promise(resolve => {
+        this.setData({ messages, hasMessagesChanged: true }, () => {
+          this.scrollToBottom();
+          resolve();
+        });
       });
 
       // 如果输入"提示"，则显示特殊提示信息
@@ -165,33 +160,38 @@ Component({
           content: ''
         }];
         
-        this.setData({ 
-          messages: updatedMessages,
-          animatingMessageIndex: updatedMessages.length - 1,
-          hasMessagesChanged: true
-        }, () => {
-          this.scrollToBottom();
-          // 启动打字机动画
-          this.typeAnimator.start(hintMessage.content);
-          
-          // 动画完成后更新消息内容
-          setTimeout(() => {
-            const finalMessages = [...updatedMessages];
-            finalMessages[finalMessages.length - 1] = hintMessage;
+        await new Promise(resolve => {
+          this.setData({ 
+            messages: updatedMessages,
+            animatingMessageIndex: updatedMessages.length - 1,
+            hasMessagesChanged: true
+          }, () => {
+            this.scrollToBottom();
+            resolve();
+          });
+        });
+
+        // 启动打字机动画并等待完成
+        await this.typeAnimator.start(hintMessage.content);
+        
+        // 动画完成后更新消息内容
+        const finalMessages = [...updatedMessages];
+        finalMessages[finalMessages.length - 1] = hintMessage;
+        
+        await new Promise(resolve => {
+          this.setData({ messages: finalMessages }, () => {
+            this.triggerEvent('messagesChange', { messages: finalMessages });
+            this.scrollToBottom();
             
-            this.setData({ messages: finalMessages }, () => {
-              this.triggerEvent('messagesChange', { messages: finalMessages });
-              this.scrollToBottom();
-              
-              // 自动保存消息
-              if (this.properties.autoSave) {
-                this._saveMessages();
-              }
-            });
-          }, hintMessage.content.length * 80 + 200); // 估算动画完成时间
+            // 自动保存消息
+            if (this.properties.autoSave) {
+              this._saveMessages();
+            }
+            resolve();
+          });
         });
         
-        return updatedMessages;
+        return finalMessages;
       }
 
       // 生成系统回复（简单随机模拟）
@@ -204,43 +204,48 @@ Component({
         content: ''
       }];
       
-      this.setData({ 
-        messages: updatedMessages,
-        animatingMessageIndex: updatedMessages.length - 1,
-        hasMessagesChanged: true
-      }, () => {
-        this.scrollToBottom();
-        // 启动打字机动画
-        this.typeAnimator.start(randomResponse);
-        
-        // 动画完成后更新消息内容
-        setTimeout(() => {
-          const finalMessages = [...updatedMessages];
-          finalMessages[finalMessages.length - 1] = {
-            type: 'normal',
-            content: randomResponse
-          };
-          
-          this.setData({ messages: finalMessages }, () => {
-            this.triggerEvent('messagesChange', { messages: finalMessages });
-            this.scrollToBottom();
-            
-            // 自动保存消息
-            if (this.properties.autoSave) {
-              this._saveMessages();
-            }
-          });
-        }, randomResponse.length * 80 + 200); // 估算动画完成时间
+      await new Promise(resolve => {
+        this.setData({ 
+          messages: updatedMessages,
+          animatingMessageIndex: updatedMessages.length - 1,
+          hasMessagesChanged: true
+        }, () => {
+          this.scrollToBottom();
+          resolve();
+        });
       });
 
-      return updatedMessages;
+      // 启动打字机动画并等待完成
+      await this.typeAnimator.start(randomResponse);
+      
+      // 动画完成后更新消息内容
+      const finalMessages = [...updatedMessages];
+      finalMessages[finalMessages.length - 1] = {
+        type: 'normal',
+        content: randomResponse
+      };
+      
+      await new Promise(resolve => {
+        this.setData({ messages: finalMessages }, () => {
+          this.triggerEvent('messagesChange', { messages: finalMessages });
+          this.scrollToBottom();
+          
+          // 自动保存消息
+          if (this.properties.autoSave) {
+            this._saveMessages();
+          }
+          resolve();
+        });
+      });
+
+      return finalMessages;
     },
 
     /**
      * 发送消息并处理回复（保留API接口以便未来扩展）
      * @param {Object} message - 用户消息对象 {type: 'user', content: '消息内容'}
      * @param {Object} params - 请求参数
-     * @returns {Array} - 返回更新后的消息数组
+     * @returns {Promise<Array>} - 返回更新后的消息数组的Promise
      */
     async sendMessageToAPI(message, params) {
       try {
@@ -259,8 +264,11 @@ Component({
         
         // 添加用户消息
         const messages = [...this.properties.messages, message];
-        this.setData({ messages, hasMessagesChanged: true }, () => {
-          this.scrollToBottom();
+        await new Promise(resolve => {
+          this.setData({ messages, hasMessagesChanged: true }, () => {
+            this.scrollToBottom();
+            resolve();
+          });
         });
         
         // 添加系统消息（实际内容为空，用于动画）
@@ -269,37 +277,42 @@ Component({
           content: ''
         }];
         
-        this.setData({ 
-          messages: updatedMessages,
-          isReceiving: false,
-          animatingMessageIndex: updatedMessages.length - 1,
-          hasMessagesChanged: true
-        }, () => {
-          this.scrollToBottom();
-          // 启动打字机动画
-          this.typeAnimator.start(response.content);
-          
-          // 动画完成后更新消息内容
-          setTimeout(() => {
-            const finalMessages = [...updatedMessages];
-            finalMessages[finalMessages.length - 1] = {
-              type: 'normal',
-              content: response.content
-            };
-            
-            this.setData({ messages: finalMessages }, () => {
-              this.triggerEvent('messagesChange', { messages: finalMessages });
-              this.scrollToBottom();
-              
-              // 自动保存消息
-              if (this.properties.autoSave) {
-                this._saveMessages();
-              }
-            });
-          }, response.content.length * 80 + 200); // 估算动画完成时间
+        await new Promise(resolve => {
+          this.setData({ 
+            messages: updatedMessages,
+            isReceiving: false,
+            animatingMessageIndex: updatedMessages.length - 1,
+            hasMessagesChanged: true
+          }, () => {
+            this.scrollToBottom();
+            resolve();
+          });
         });
         
-        return updatedMessages;
+        // 启动打字机动画并等待完成
+        await this.typeAnimator.start(response.content);
+        
+        // 动画完成后更新消息内容
+        const finalMessages = [...updatedMessages];
+        finalMessages[finalMessages.length - 1] = {
+          type: 'normal',
+          content: response.content
+        };
+        
+        await new Promise(resolve => {
+          this.setData({ messages: finalMessages }, () => {
+            this.triggerEvent('messagesChange', { messages: finalMessages });
+            this.scrollToBottom();
+            
+            // 自动保存消息
+            if (this.properties.autoSave) {
+              this._saveMessages();
+            }
+            resolve();
+          });
+        });
+        
+        return finalMessages;
       } catch (error) {
         this.setData({ isReceiving: false });
         throw error;

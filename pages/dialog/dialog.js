@@ -8,23 +8,14 @@ Page({
    * 页面的初始数据
    */
   data: {
-    // 页面配置
-    soupConfig: {
-      soupId: '',  // 从index页面传入的汤面ID
-      autoPlay: false,  // 是否自动播放动画
-      staticMode: true  // 静态模式(不显示动画)
-    },
     // 当前汤面ID
     currentSoupId: '',
-    // 当前汤面数据
-    currentSoupData: null,
     // 输入框的值 
     inputValue: '',
     // 对话消息列表
     messages: [],
     keyboardHeight: 0,
     focus: false,
-    soupTitle: '', // 当前汤面标题
     isPeekingSoup: false // 控制是否偷看汤面（透明对话区域）
   },
 
@@ -38,10 +29,9 @@ Page({
     // 如果当前已有相同的soupId，不需要重新加载
     if (soupId === this.data.currentSoupId) return;
     
-    // 设置当前汤面ID - 同时更新soupConfig.soupId以便传递给组件
+    // 设置当前汤面ID
     this.setData({ 
-      currentSoupId: soupId,
-      'soupConfig.soupId': soupId
+      currentSoupId: soupId
     });
     
     // 加载汤面数据
@@ -61,8 +51,7 @@ Page({
     if (soupId) {
       // 保存当前汤面ID
       this.setData({
-        currentSoupId: soupId,
-        'soupConfig.soupId': soupId
+        currentSoupId: soupId
       });
 
       // 尝试加载历史对话记录
@@ -163,53 +152,8 @@ Page({
         // 滚动到底部
         this.scrollToBottom();
         
-        // 设置汤面ID和汤底信息到全局，以便在主页显示
-        const app = getApp();
-        if (app.globalData) {
-          // 创建全局数据对象（如果不存在）
-          app.globalData = app.globalData || {};
-          
-          // 获取汤面数据（优先使用现有数据或同步获取）
-          let truthData = null;
-          
-          // 确保汤面数据完整
-          if (this.data.currentSoupData && this.data.currentSoupData.truth) {
-            truthData = JSON.parse(JSON.stringify(this.data.currentSoupData));
-          } else {
-            // 尝试同步获取数据
-            const soupData = soupService.getSoupById(this.data.currentSoupId);
-            if (soupData && soupData.truth) {
-              truthData = JSON.parse(JSON.stringify(soupData));
-            }
-          }
-          
-          // 如果成功获取数据，设置到全局变量
-          if (truthData) {
-            app.globalData.showTruth = true;
-            app.globalData.isCorrect = true;
-            app.globalData.truthSoupId = this.data.currentSoupId;
-            app.globalData.truthData = truthData;
-            
-            console.log('成功设置汤底数据：', {
-              id: truthData.soupId,
-              title: truthData.title,
-              truth: truthData.truth
-            });
-          } else {
-            // 无法获取完整数据，设置最小必要信息
-            console.log('无法获取完整汤底数据，仅设置ID');
-            app.globalData.showTruth = true;
-            app.globalData.isCorrect = true;
-            app.globalData.truthSoupId = this.data.currentSoupId;
-          }
-        }
-        
-        // 短暂延迟后跳转到主页
-        setTimeout(() => {
-          wx.switchTab({
-            url: '/pages/index/index'
-          });
-        }, 1500);
+        // 显示汤底的逻辑可以保留在对话页面，不再需要跳转到主页
+        console.log('汤底已显示，不再跳转主页');
       }
       return;
     }
@@ -276,12 +220,11 @@ Page({
       // 关闭设置面板失败
     }
     
-    // 返回首页前确保等待设置面板关闭
-    setTimeout(() => {
-      wx.switchTab({
-        url: '/pages/index/index'
-      });
-    }, 100);
+    // 不再需要跳转到主页
+    console.log('放弃当前汤面，但不跳转主页');
+    
+    // 可以在这里添加加载新汤面的逻辑
+    this._loadDefaultSoup();
   },
 
   /**
@@ -294,9 +237,11 @@ Page({
   },
   
   /**
-   * 汤面动画完成事件处理函数
+   * 汤面动画完成事件处理函数 - 已不需要，保留空函数以便引用
    */
-  onSoupAnimationComplete() {},
+  onSoupAnimationComplete() {
+    // 已移除soup-display组件，此方法不再需要
+  },
 
   /**
    * 生命周期函数--监听页面显示
@@ -308,13 +253,8 @@ Page({
       });
     }
 
-    // 检查全局变量中是否有待处理的soupId
-    if (getApp().globalData && getApp().globalData.pendingSoupId) {
-      const soupId = getApp().globalData.pendingSoupId;
-      delete getApp().globalData.pendingSoupId; // 使用后删除
-      this.setSoupId(soupId);
-    } else if (!this.data.currentSoupId) {
-      // 如果没有soupId，尝试加载默认汤面
+    // 如果没有当前汤面ID，加载默认汤面
+    if (!this.data.currentSoupId) {
       this._loadDefaultSoup();
     }
   },
@@ -364,7 +304,7 @@ Page({
     // 分享逻辑
     return {
       title: '这个海龟汤太难了来帮帮我！',
-      path: '/pages/index/index'
+      path: `/pages/dialog/dialog?soupId=${this.data.currentSoupId}`
     };
   },
 
@@ -400,57 +340,4 @@ Page({
     }
   },
 
-  /**
-   * 加载默认汤面
-   * @private
-   */
-  _loadDefaultSoup() {
-    soupService.getAllSoups((soups) => {
-      if (soups && soups.length > 0) {
-        const defaultSoup = soups[0];
-        const soupId = defaultSoup.soupId;
-        
-        // 设置当前汤面ID
-        this.setData({ 
-          currentSoupId: soupId,
-          'soupConfig.soupId': soupId 
-        });
-        
-        // 加载汤面数据
-        this._fetchSoupData(soupId);
-        
-        // 加载历史消息
-        this._loadHistoryMessages(soupId);
-      }
-    });
-  },
-
-  /**
-   * 从服务获取汤面数据
-   * @param {string} soupId 汤面ID
-   * @private
-   */
-  _fetchSoupData(soupId) {
-    if (!soupId) return;
-    
-    soupService.getSoupData({
-      soupId: soupId,
-      success: (soupData) => {
-        if (soupData) {
-          // 保存完整的汤面数据到页面状态
-          this.setData({
-            currentSoupData: soupData,
-            'soupConfig.soupId': soupId,
-            soupTitle: soupData.title || '未命名汤面' // 保存汤面标题
-          });
-
-          // 获取soup-display组件实例并设置数据
-          const soupDisplay = this.selectComponent('#soupDisplay');
-          if (soupDisplay) {
-            soupDisplay.setCurrentSoup(soupData);
-          }
-        }
-      }
-    });
-  }
 });

@@ -17,16 +17,16 @@
     <view class="soup-content">
       <block wx:for="{{displayLines}}" wx:key="index">
         <view 
-          class="text-line-container {{index === 0 ? 'title' : ''}}"
+          class="text-line-container"
           aria-label="{{index === 0 ? '汤面标题' : '第' + index + '行'}}"
         >
-          <text class="text-line {{index === 0 ? 'title' : ''}}">
+          <text class="text-line">
             <text 
               wx:for="{{item.chars}}" 
               wx:for-item="char"
               wx:for-index="charIndex"
               wx:key="charIndex" 
-              class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active effect-' + typeEffect : ''}} {{char.prev ? 'prev' : ''}}"
+              class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active' : ''}}"
             >{{char.char}}</text>
           </text>
         </view>

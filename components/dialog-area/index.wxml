@@ -24,7 +24,7 @@
         <view class="typing-content">
           <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
             <block wx:for="{{line.chars}}" wx:for-item="charObj" wx:for-index="charIdx" wx:key="charIdx">
-              <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}} {{charObj.prev ? 'prev' : ''}} {{charObj.active && typeEffect === 'normal' ? 'response-char-typing-active' : ''}} effect-{{typeEffect}}">{{charObj.char}}</text>
+              <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}}">{{charObj.char}}</text>
             </block>
           </block>
         </view>
@@ -39,7 +39,7 @@
         <view class="typing-content">
           <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
             <block wx:for="{{line.chars}}" wx:for-item="charObj" wx:for-index="charIdx" wx:key="charIdx">
-              <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}} {{charObj.prev ? 'prev' : ''}} {{charObj.active && typeEffect === 'normal' ? 'hint-char-typing-active' : ''}} effect-{{typeEffect}}">{{charObj.char}}</text>
+              <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}}">{{charObj.char}}</text>
             </block>
           </block>
         </view>

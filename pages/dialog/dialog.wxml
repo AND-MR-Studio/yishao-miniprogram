@@ -8,14 +8,7 @@
   />
   
   <view class="container" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
-    <!-- 汤面显示区域 -->
-    <soup-display
-      id="soupDisplay"
-      soupId="{{soupConfig.soupId}}"
-      autoPlay="{{soupConfig.autoPlay}}"
-      staticMode="{{soupConfig.staticMode}}"
-      bind:animationComplete="onSoupAnimationComplete"
-    ></soup-display>
+    <!-- 汤面显示区域已移除 -->
     <!-- 毛玻璃效果遮罩层 -->
     <view class="frosted-glass"></view>
     <!-- 对话区域 -->
