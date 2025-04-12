@@ -18,12 +18,12 @@
     "custom": true,
     "list": [
       {
-        "pagePath": "pages/index/index",
-        "text": "主页"
+        "pagePath": "pages/community/community",
+        "text": "社区"
       },
       {
-        "pagePath": "pages/dialog/dialog",
-        "text": "喝汤"
+        "pagePath": "pages/index/index",
+        "text": "主页"
       },
       {
         "pagePath": "pages/mine/mine",

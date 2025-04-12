@@ -15,13 +15,13 @@ Component({
     selectedColor: "#5CE821",
     list: [
       {
-        pagePath: "/pages/index/index",
-        text: "主页",
+        pagePath: "/pages/community/community",
+        text: "煮汤",
         icon: "icon-soup_UnSelected",
         selectedIcon: "icon-soup_Selected"
       },
       {
-        pagePath: "/pages/dialog/dialog",
+        pagePath: "/pages/index/index",
         text: "喝汤",
         icon: "icon-community_UnSelected",
         selectedIcon: "icon-community_Selected"

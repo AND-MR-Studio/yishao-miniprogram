@@ -41,33 +41,60 @@ const soupService = {
 
     // 是否已从服务器加载数据
     isDataLoaded: false,
+    
+    // 加载状态标志
+    _isLoading: false,
+    
+    // 加载Promise缓存
+    _loadingPromise: null,
 
     /**
      * 从服务器加载所有汤面数据 (Promise版本)
      * @returns {Promise<Array>} 返回包含汤面数据的Promise
      */
     loadSoupsAsync: function() {
+        // 如果已经在加载中，返回现有的Promise
+        if (this._isLoading && this._loadingPromise) {
+            return this._loadingPromise;
+        }
+        
+        // 标记为加载中
+        this._isLoading = true;
         console.log('开始从服务器加载汤面数据');
-        return new Promise((resolve) => {
+        
+        // 创建加载Promise
+        this._loadingPromise = new Promise((resolve) => {
             wx.request({
                 url: `${this.API_BASE_URL}/list`,
                 method: 'GET',
                 success: (res) => {
-                    console.log('服务器返回数据:', res.data);
                     if (res.statusCode === 200 && res.data && Array.isArray(res.data)) {
+                        console.log('服务器返回数据:', res.data);
                         // 更新本地汤面数据
                         this.soups = res.data;
                         this.isDataLoaded = true;
                         console.log('更新本地数据成功，当前数据量:', this.soups.length);
+                    } else {
+                        console.warn('服务器返回非预期数据格式，状态码:', res.statusCode);
                     }
                     resolve(this.soups);
                 },
                 fail: (err) => {
                     console.error('从服务器加载数据失败:', err);
                     resolve(this.soups);
+                },
+                complete: () => {
+                    // 无论成功或失败，都重置加载状态
+                    this._isLoading = false;
+                    // 清除Promise缓存
+                    setTimeout(() => {
+                        this._loadingPromise = null;
+                    }, 100);
                 }
             });
         });
+        
+        return this._loadingPromise;
     },
 
     /**
@@ -76,7 +103,7 @@ const soupService = {
      * @returns {number} 汤面索引，未找到返回-1
      */
     getSoupIndex: function (soupId) {
-        if (!soupId) return -1;
+        if (!soupId || !this.soups || !this.soups.length) return -1;
         return this.soups.findIndex(soup => soup.soupId === soupId);
     },
 
@@ -86,11 +113,16 @@ const soupService = {
      * @returns {string} 下一个汤面的ID
      */
     getNextSoupId: function (currentSoupId) {
+        // 如果数据未加载或为空，返回空
+        if (!this.isDataLoaded || !this.soups || !this.soups.length) {
+            return '';
+        }
+        
         const currentIndex = this.getSoupIndex(currentSoupId);
         
         // 如果找不到当前汤面，返回第一个汤面的ID
         if (currentIndex === -1) {
-            return this.soups[0]?.soupId;
+            return this.soups[0]?.soupId || '';
         }
         
         // 如果是最后一个，返回第一个汤面的ID
@@ -108,7 +140,7 @@ const soupService = {
      * @returns {Object|null} 汤面数据或null
      */
     getSoupById: function (soupId) {
-        if (!soupId) return null;
+        if (!soupId || !this.soups || !this.soups.length) return null;
         const soup = this.soups.find(soup => soup.soupId === soupId);
         return soup || null;
     },
@@ -126,6 +158,12 @@ const soupService = {
                     await this.loadSoupsAsync();
                 }
 
+                // 检查数据是否成功加载
+                if (!this.soups || !this.soups.length) {
+                    reject(new Error('汤面数据为空，无法获取'));
+                    return;
+                }
+
                 let soupData;
 
                 // 如果指定了soupId，则获取指定的汤面
@@ -138,11 +176,14 @@ const soupService = {
                     soupData = this.soups[0];
                 }
 
-                // 模拟网络延迟
-                setTimeout(() => {
-                    resolve(soupData);
-                }, 300);
+                if (!soupData) {
+                    reject(new Error('无法获取有效的汤面数据'));
+                    return;
+                }
+
+                resolve(soupData);
             } catch (error) {
+                console.error('获取汤面数据失败:', error);
                 reject(error);
             }
         });
@@ -166,7 +207,7 @@ const soupService = {
      * @returns {number} 汤面总数
      */
     getSoupCount: function () {
-        return this.soups.length;
+        return this.soups ? this.soups.length : 0;
     },
 
     /**
@@ -174,6 +215,11 @@ const soupService = {
      * @returns {Promise<Array>} 返回包含新汤面数据的Promise
      */
     refreshSoupsAsync: function() {
+        // 如果已经在加载中，返回现有的Promise
+        if (this._isLoading && this._loadingPromise) {
+            return this._loadingPromise;
+        }
+        
         console.log('刷新汤面数据');
         this.isDataLoaded = false;
         return this.loadSoupsAsync();

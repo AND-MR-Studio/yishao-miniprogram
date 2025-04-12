@@ -389,21 +389,14 @@ Page({
     // 记录用户选择的汤面到历史记录
     this._addToUserSoupHistory(soupId);
     
-    // 跳转到对话页面
+    // 保存soupId到全局变量
+    getApp().globalData = getApp().globalData || {};
+    getApp().globalData.pendingSoupId = soupId;
+    getApp().globalData.openDialogDirectly = true;
+    
+    // 跳转到首页
     wx.switchTab({
-      url: '/pages/dialog/dialog',
-      success: () => {
-        // 使用页面实例方法来传递参数给dialog页面
-        const dialogPage = getCurrentPages().find(page => page.route === 'pages/dialog/dialog');
-        if (dialogPage) {
-          // 如果能获取到页面实例，直接设置参数
-          dialogPage.setSoupId(soupId);
-        } else {
-          // 如果获取不到页面实例，使用全局变量暂存soupId
-          getApp().globalData = getApp().globalData || {};
-          getApp().globalData.pendingSoupId = soupId;
-        }
-      }
+      url: '/pages/index/index'
     });
   },
 

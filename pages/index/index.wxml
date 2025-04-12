@@ -6,7 +6,7 @@
   />
   
   <view class="container">
-    <!-- 汤面显示区域 -->
+    <!-- 汤面显示区域 - 保持可见性，让dialog透明时能看到 -->
     <soup-display
       id="soupDisplay"
       soupId="{{soupConfig.soupId}}"
@@ -14,6 +14,7 @@
       staticMode="{{soupConfig.staticMode}}"
       bind:animationComplete="onSoupAnimationComplete"
       bind:loadFail="onSoupLoadFail"
+      class="soup-display-component {{showDialog ? 'behind-dialog' : ''}} {{showDialog && isPeeking ? 'is-peeking' : ''}}"
       wx:if="{{!isCorrect && !showTruth}}"
     ></soup-display>
     
@@ -53,4 +54,14 @@
       </custom-button>
     </view>
   </view>
+  
+  <!-- 对话组件 -->
+  <dialog-component
+    id="dialogComponent"
+    visible="{{showDialog}}"
+    soupId="{{dialogSoupId}}"
+    bind:close="onDialogClose"
+    bind:showTruth="onShowTruth"
+    bind:peekSoup="onPeekSoup"
+  ></dialog-component>
 </view>

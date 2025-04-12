@@ -5,6 +5,18 @@
   width: 100%;
   min-height: 100vh;
   background-color: #061429;
+  position: relative; /* 确保定位正确 */
+}
+
+/* 汤面显示区域在对话层后面时的样式 */
+.behind-dialog {
+  position: relative;
+  z-index: 10; /* 较低的z-index，保证在dialog组件下方 */
+}
+
+/* 当对话组件处于偷看状态时，汤面显示区域需要提升z-index */
+.soup-display-component.is-peeking {
+  z-index: 1001 !important; /* 确保在偷看时显示在最上层 */
 }
 
 /* 按钮容器样式 */

@@ -9,7 +9,7 @@ Page({
   data: {
     // 页面配置
     soupConfig: {
-      soupId: 'default_001',  // 不指定则随机获取
+      soupId: '',  // 不再指定默认ID，而是在组件中动态获取
       autoPlay: true,  // 是否自动播放动画
       staticMode: false  // 静态模式(不显示动画)
     },
@@ -20,7 +20,11 @@ Page({
     truthSoupId: '',  // 汤底对应的soupId
     truthData: null,   // 汤底数据
     isCorrect: false,   // 是否猜对了汤底（用于控制组件切换）
-    _isSwitchingSoup: false  // 防止重复点击
+    _isSwitchingSoup: false,  // 防止重复点击
+    // 对话组件相关
+    showDialog: false,  // 控制对话组件显示
+    dialogSoupId: '',    // 对话中使用的汤面ID
+    isPeeking: false     // 是否正在偷看汤面
   },
 
   /**
@@ -30,12 +34,22 @@ Page({
     this.initSettings();
     this.setData({ showButtons: false });
     this._isSwitchingSoup = false;
+    this._isInitializing = true;
 
     try {
-      await soupService.refreshSoupsAsync();
-      await this.initSoupDisplay();
+      // 异步加载汤面数据，但不阻塞页面初始化
+      soupService.refreshSoupsAsync().then(() => {
+        if (this._isInitializing) {
+          this.initSoupDisplay();
+          this._isInitializing = false;
+        }
+      }).catch(error => {
+        console.error('初始化汤面数据失败:', error);
+        this._isInitializing = false;
+      });
     } catch (error) {
-      console.error('初始化汤面数据失败:', error);
+      console.error('初始化过程中发生错误:', error);
+      this._isInitializing = false;
     }
   },
 
@@ -76,7 +90,7 @@ Page({
    */
   async onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({ selected: 0 });
+      this.getTabBar().setData({ selected: 1 });
     }
 
     // 检查全局变量，是否需要显示汤底
@@ -86,6 +100,19 @@ Page({
     } else {
       this.setData({ showTruth: false });
       await this.initSoupDisplay();
+      
+      // 检查是否需要直接打开对话
+      if (app.globalData && app.globalData.openDialogDirectly && app.globalData.pendingSoupId) {
+        // 设置对话组件的汤面ID并显示
+        this.setData({
+          dialogSoupId: app.globalData.pendingSoupId,
+          showDialog: true
+        });
+        
+        // 清除标志，防止再次触发
+        app.globalData.openDialogDirectly = false;
+        app.globalData.pendingSoupId = '';
+      }
     }
   },
 
@@ -182,20 +209,51 @@ Page({
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (!soupDisplay) return;
 
-    // 获取当前选择的汤面ID并传递到对话页面
+    // 获取当前选择的汤面ID并打开对话组件
     const soupId = soupDisplay.data.soupId;
-    wx.switchTab({
-      url: '/pages/dialog/dialog',
-      success: () => {
-        const dialogPage = getCurrentPages().find(page => page.route === 'pages/dialog/dialog');
-        if (dialogPage) {
-          dialogPage.setSoupId(soupId);
-        } else {
-          getApp().globalData = getApp().globalData || {};
-          getApp().globalData.pendingSoupId = soupId;
-        }
-      }
+    
+    // 设置对话组件的汤面ID并显示
+    this.setData({
+      dialogSoupId: soupId,
+      showDialog: true
     });
+  },
+
+  /**
+   * 处理对话组件关闭事件
+   */
+  onDialogClose() {
+    this.setData({
+      showDialog: false
+    });
+  },
+
+  /**
+   * 处理显示汤底事件
+   */
+  onShowTruth(e) {
+    const { soupId } = e.detail;
+    if (!soupId) return;
+    
+    // 设置汤底ID并显示汤底
+    this.setData({
+      showTruth: true,
+      truthSoupId: soupId,
+      isCorrect: true,
+      showDialog: false  // 关闭对话组件
+    });
+    
+    // 获取汤底数据
+    const truthData = soupService.getSoupById(soupId);
+    if (truthData) {
+      this.setData({ truthData });
+      
+      // 获取组件并设置数据
+      const soupTruth = this.selectComponent('#soupTruth');
+      if (soupTruth) {
+        soupTruth.setCurrentSoup(truthData);
+      }
+    }
   },
 
   /**
@@ -301,6 +359,26 @@ Page({
       if (value && !this.data.showButtons) {
         this.setData({ showButtons: true });
       }
+    }
+  },
+
+  /**
+   * 处理查看汤面事件
+   */
+  onPeekSoup(e) {
+    const { isPeeking } = e.detail;
+    
+    // 更新页面的偷看状态
+    this.setData({
+      isPeeking: isPeeking
+    });
+    
+    // 将汤面组件放在最前面让它可见
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (soupDisplay) {
+      soupDisplay.setData({
+        isPeeking: isPeeking
+      });
     }
   }
 });
