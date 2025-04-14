@@ -70,10 +70,14 @@ const soupService = {
                 success: (res) => {
                     if (res.statusCode === 200 && res.data && Array.isArray(res.data)) {
                         console.log('服务器返回数据:', res.data);
-                        // 更新本地汤面数据
-                        this.soups = res.data;
+                        // 更新本地汤面数据，确保每个数据都有id字段
+                        this.soups = res.data.map(soup => ({
+                            ...soup,
+                            id: soup.id || soup._id || soup.soupId // 兼容不同的ID字段
+                        }));
                         this.isDataLoaded = true;
                         console.log('更新本地数据成功，当前数据量:', this.soups.length);
+                        console.log('数据示例:', this.soups[0]);
                     } else {
                         console.warn('服务器返回非预期数据格式，状态码:', res.statusCode);
                     }
@@ -103,8 +107,18 @@ const soupService = {
      * @returns {number} 汤面索引，未找到返回-1
      */
     getSoupIndex: function (soupId) {
-        if (!soupId || !this.soups || !this.soups.length) return -1;
-        return this.soups.findIndex(soup => soup.soupId === soupId);
+        if (!soupId || !this.soups || !this.soups.length) {
+            console.log('无效的参数或数据:', { soupId, hasData: !!this.soups, dataLength: this.soups?.length });
+            return -1;
+        }
+        // 尝试多种ID字段匹配
+        const index = this.soups.findIndex(soup => 
+            soup.id === soupId || 
+            soup._id === soupId || 
+            soup.soupId === soupId
+        );
+        console.log('查找汤面索引:', { soupId, index, firstSoup: this.soups[0] });
+        return index;
     },
 
     /**
@@ -115,23 +129,35 @@ const soupService = {
     getNextSoupId: function (currentSoupId) {
         // 如果数据未加载或为空，返回空
         if (!this.isDataLoaded || !this.soups || !this.soups.length) {
+            console.log('数据未加载或为空');
             return '';
         }
         
+        // 如果没有当前ID，返回第一个
+        if (!currentSoupId) {
+            console.log('没有当前ID，返回第一个');
+            return this.soups[0].id;
+        }
+        
         const currentIndex = this.getSoupIndex(currentSoupId);
+        console.log('当前索引:', currentIndex, '当前ID:', currentSoupId);
         
         // 如果找不到当前汤面，返回第一个汤面的ID
         if (currentIndex === -1) {
-            return this.soups[0]?.soupId || '';
+            console.log('找不到当前汤面，返回第一个');
+            return this.soups[0].id;
         }
         
         // 如果是最后一个，返回第一个汤面的ID
         if (currentIndex === this.soups.length - 1) {
-            return this.soups[0].soupId;
+            console.log('是最后一个，返回第一个');
+            return this.soups[0].id;
         }
         
         // 返回下一个汤面的ID
-        return this.soups[currentIndex + 1].soupId;
+        const nextId = this.soups[currentIndex + 1].id;
+        console.log('返回下一个:', nextId);
+        return nextId;
     },
 
     /**
@@ -141,7 +167,12 @@ const soupService = {
      */
     getSoupById: function (soupId) {
         if (!soupId || !this.soups || !this.soups.length) return null;
-        const soup = this.soups.find(soup => soup.soupId === soupId);
+        // 尝试多种ID字段匹配
+        const soup = this.soups.find(soup => 
+            soup.id === soupId || 
+            soup._id === soupId || 
+            soup.soupId === soupId
+        );
         return soup || null;
     },
 

@@ -12,11 +12,11 @@
   align-items: center;
   background: linear-gradient(to bottom, rgba(6, 20, 41, 0.95), rgba(6, 20, 41, 1));
   box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.2);
-  z-index: 998;
-  padding: 20rpx 0;
+  z-index: 1002;
 }
 
 .input-container {
+  position: relative;
   width: 92%;
   height: 110rpx;
   display: flex;
@@ -24,19 +24,23 @@
   justify-content: center;
   align-items: center;
   gap: 24rpx;
+  padding: 20rpx;
+  background-color: #061429;
 }
 
 /* 语音按钮 */
 .voice-btn {
-  width: 64rpx;
-  height: 64rpx;
+  position: relative;
+  z-index: 1003;
+  width: 80rpx;
+  height: 80rpx;
   display: flex;
-  justify-content: center;
   align-items: center;
-  flex-shrink: 0;
-  background: rgba(149, 157, 174, 0.9);
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 50%;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  margin-right: 20rpx;
+  flex-shrink: 0;
   transition: all 0.2s ease;
 }
 

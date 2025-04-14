@@ -20,8 +20,7 @@ class DialogService {
         
         // 特殊关键词处理
         this._specialKeywords = {
-            '汤底': this._handleSoupBottomKeyword.bind(this),
-            '提示': this._handleHintKeyword.bind(this)
+            '汤底': this._handleSoupBottomKeyword.bind(this)
         };
     }
 
@@ -49,7 +48,7 @@ class DialogService {
             }
         ];
     }
-
+    
     /**
      * 合并初始系统消息与历史消息
      * @param {Array} messages 历史消息数组
@@ -57,7 +56,13 @@ class DialogService {
      */
     combineWithInitialMessages(messages) {
         const initialMessages = this.getInitialSystemMessages();
-        return [...initialMessages, ...(messages || [])];
+        const historyMessages = messages || [];
+        
+        // 过滤掉历史消息中的系统消息，避免重复
+        const filteredMessages = historyMessages.filter(msg => msg.type !== 'system');
+        
+        // 合并初始系统消息和过滤后的历史消息
+        return [...initialMessages, ...filteredMessages];
     }
 
     /**
@@ -260,32 +265,6 @@ class DialogService {
             isSpecial: true,
             userMessage: userMessage,
             reply: systemMessage
-        };
-    }
-    
-    /**
-     * 处理"提示"关键词
-     * @param {string} content 用户输入内容
-     * @returns {Object} 处理结果
-     * @private
-     */
-    _handleHintKeyword(content) {
-        // 创建用户消息
-        const userMessage = {
-            type: 'user',
-            content: content
-        };
-        
-        // 创建提示回复
-        const hintMessage = {
-            type: 'hint',
-            content: '这是一段很长的提示文字，用来测试打字机动画效果。这段文字包含了一些标点符号，比如逗号、句号。还有一些感叹号！问号？以及其他标点符号；冒号：破折号——等等。这些标点符号会有不同的停顿时间，让打字机效果更加自然。'
-        };
-        
-        return {
-            isSpecial: true,
-            userMessage: userMessage,
-            reply: hintMessage
         };
     }
     

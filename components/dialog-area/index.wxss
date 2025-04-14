@@ -51,16 +51,18 @@
   position: relative;
 }
 
-/* 提示消息样式（绿色带发光效果） */
-.hint {
-  color: var(--color-success);
-  text-shadow: 0rpx 0rpx 20rpx rgba(4, 244, 77, 0.5);
-} 
-
 /* 用户消息样式（白色） */
 .user {
   color: var(--color-text-primary);
-} 
+}
+
+/* 普通消息样式 */
+.normal {
+  background-color: var(--color-background-light);
+  align-self: flex-start;
+  margin-left: 20rpx;
+  margin-right: auto;
+}
 
 /* 加载消息样式 */
 .loading {
@@ -125,12 +127,6 @@
 /* 活跃状态 - 系统消息打字机 */
 .response-char-typing-active {
   color: var(--color-accent);
-}
-
-/* 活跃状态 - 提示消息打字机 */
-.hint-char-typing-active {
-  color: var(--color-success);
-  text-shadow: 0rpx 0rpx 20rpx rgba(4, 244, 77, 0.5);
 }
 
 /* 前一个字符状态 */
