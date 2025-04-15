@@ -65,9 +65,25 @@ Component({
   methods: {
     // 处理点击左侧图标
     onClickLeft() {
-      // 返回上一页
-      wx.navigateBack({
-        delta: 1
+      // 获取当前页面实例
+      const pages = getCurrentPages();
+      const currentPage = pages[pages.length - 1];
+      
+      // 如果在喝汤页面
+      if (currentPage.route === 'pages/index/index') {
+        // 如果不是viewing状态，则回到viewing状态
+        if (currentPage.data.pageState !== 'viewing') {
+          currentPage.setData({
+            pageState: 'viewing',
+            showButtons: true
+          });
+          return;
+        }
+      }
+      
+      // 其他情况跳转到首页
+      wx.switchTab({
+        url: '/pages/index/index'
       });
     },
     

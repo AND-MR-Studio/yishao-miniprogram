@@ -126,6 +126,11 @@ Component({
             title: '需要录音权限',
             icon: 'none'
           });
+          // 授权失败时重置录音状态
+          this.setData({
+            isRecording: false,
+            isCancelled: false
+          });
         }
       });
     },

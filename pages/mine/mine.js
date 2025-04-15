@@ -1,5 +1,5 @@
 // pages/mine/mine.js
-const soupService = require('../../utils/soupService');
+// const soupService = require('../../utils/soupService');
 const dialogService = require('../../utils/dialogService');
 
 Page({
@@ -11,11 +11,6 @@ Page({
     userInfo: null,
     remainingAnswers: 0,
     defaultAvatarUrl: 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0',
-    buttonConfig: {
-      type: 'light',
-      text: '登录'
-    },
-    isLoggingOut: false,
     // 汤面列表相关
     showSoupList: false,
     soupList: [],
@@ -29,8 +24,6 @@ Page({
   onLoad(options) {
     this.getUserInfo();
     this.getRemainingAnswers();
-    // 获取汤面列表
-    this._loadSoupList();
     // 获取用户汤面历史
     this._loadUserSoupHistory();
   },
@@ -48,7 +41,7 @@ Page({
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({
-        selected: 2
+        selected: 2  // 第三个tab是我的页面
       });
     }
     // 每次显示页面时更新数据
@@ -64,19 +57,11 @@ Page({
     const userInfo = wx.getStorageSync('userInfo');
     if (userInfo) {
       this.setData({
-        userInfo: userInfo,
-        buttonConfig: {
-          type: 'unlight',
-          text: '退出登录'
-        }
+        userInfo: userInfo
       });
     } else {
       this.setData({
-        userInfo: null,
-        buttonConfig: {
-          type: 'light',
-          text: '登录'
-        }
+        userInfo: null
       });
     }
   },
@@ -89,152 +74,6 @@ Page({
     const remainingAnswers = wx.getStorageSync('remainingAnswers') || 0;
     this.setData({
       remainingAnswers: remainingAnswers
-    });
-  },
-
-  /**
-   * 处理头像选择
-   */
-  async onChooseAvatar(e) {
-    // 用户取消选择时不做处理
-    if (e.detail.errMsg && e.detail.errMsg.includes('fail cancel')) {
-      return;
-    }
-
-    const { avatarUrl } = e.detail;
-    if (!avatarUrl) {
-      wx.showToast({
-        title: '获取头像失败',
-        icon: 'error'
-      });
-      return;
-    }
-    
-    try {
-      // 检查是否已登录
-      const isLoggedIn = wx.getStorageSync('userInfo');
-      if (!isLoggedIn) {
-        // 未登录，先进行登录
-        await this.handleLogin();
-      }
-
-      // 更新头像
-      const userInfo = wx.getStorageSync('userInfo') || {};
-      userInfo.avatarUrl = avatarUrl;
-      
-      // 保存到本地存储
-      wx.setStorageSync('userInfo', userInfo);
-      
-      // 更新页面数据
-      this.setData({
-        userInfo: userInfo
-      });
-
-      wx.showToast({
-        title: '头像更新成功',
-        icon: 'success'
-      });
-    } catch (error) {
-      wx.showToast({
-        title: error.message || '操作失败',
-        icon: 'error'
-      });
-    }
-  },
-
-  /**
-   * 处理登录
-   */
-  handleLogin() {
-    return new Promise((resolve, reject) => {
-      wx.login({
-        success: async (res) => {
-          if (res.code) {
-            try {
-              // 这里应该调用你的后端接口，使用code换取用户信息
-              // const { data } = await wx.request({ ... });
-              
-              // 示例：模拟后端返回的用户信息
-              const mockUserInfo = {
-                nickName: '游客' + Math.floor(Math.random() * 10000),
-                avatarUrl: this.data.defaultAvatarUrl // 使用 data 中定义的默认头像
-              };
-
-              // 保存用户信息到本地
-              wx.setStorageSync('userInfo', mockUserInfo);
-              this.setData({
-                userInfo: mockUserInfo,
-                buttonConfig: {
-                  type: 'unlight',
-                  text: '退出登录'
-                }
-              });
-
-              wx.showToast({
-                title: '登录成功',
-                icon: 'success'
-              });
-
-              resolve(mockUserInfo);
-            } catch (error) {
-              reject(error);
-            }
-          } else {
-            reject(new Error('登录失败'));
-          }
-        },
-        fail: reject
-      });
-    });
-  },
-
-  /**
-   * 处理退出登录
-   */
-  handleLogout() {
-    // 如果未登录，则执行登录操作
-    if (!this.data.userInfo) {
-      this.handleLogin();
-      return;
-    }
-
-    // 如果正在退出登录，则不再显示弹窗
-    if (this.data.isLoggingOut) {
-      return;
-    }
-
-    // 已登录，执行退出操作
-    this.setData({ isLoggingOut: true }); // 设置标志位
-    wx.showModal({
-      title: '提示',
-      content: '确定要退出登录吗？',
-      success: (res) => {
-        if (res.confirm) {
-          // 清除本地存储的用户信息
-          wx.removeStorageSync('userInfo');
-          // 重置数据
-          this.setData({
-            userInfo: null,
-            remainingAnswers: 0,
-            buttonConfig: {
-              type: 'light',
-              text: '登录'
-            }
-          });
-          // 提示用户
-          wx.showToast({
-            title: '已退出登录',
-            icon: 'success',
-            duration: 2000
-          });
-        }
-        // 无论是确认还是取消，都重置标志位
-        this.setData({ isLoggingOut: false });
-      },
-      fail: () => {
-        // 发生错误时也要重置标志位
-        this.setData({ isLoggingOut: false });
-      }
     });
   },
 
@@ -271,33 +110,6 @@ Page({
    */
   onShareAppMessage() {
 
-  },
-
-  /**
-   * 加载汤面列表
-   * @private
-   */
-  _loadSoupList() {
-    // 显示加载中提示
-    wx.showLoading({
-      title: '加载中...',
-      mask: true
-    });
-    
-    soupService.getAllSoups((soups) => {
-      // 隐藏加载提示
-      wx.hideLoading();
-      
-      if (Array.isArray(soups) && soups.length > 0) {
-        this.setData({ soupList: soups });
-      } else {
-        // 如果列表为空，可以显示提示
-        wx.showToast({
-          title: '暂无汤面数据',
-          icon: 'none'
-        });
-      }
-    });
   },
 
   /**
@@ -362,10 +174,11 @@ Page({
    * 处理查看历史记录
    */
   handleViewHistory() {
-    if (this.data.soupList.length === 0) {
-      this._loadSoupList();
-    }
-    this.setData({ showSoupList: true });
+    // 暂时禁用汤面列表功能
+    wx.showToast({
+      title: '功能暂时不可用',
+      icon: 'none'
+    });
   },
 
   /**
@@ -380,24 +193,12 @@ Page({
    * @param {Object} e 事件对象
    */
   handleSoupItemClick(e) {
-    const { soupId } = e.currentTarget.dataset;
-    if (!soupId) return;
-    
-    // 关闭汤面列表弹窗
-    this.closeSoupList();
-    
-    // 记录用户选择的汤面到历史记录
-    this._addToUserSoupHistory(soupId);
-    
-    // 保存soupId到全局变量
-    getApp().globalData = getApp().globalData || {};
-    getApp().globalData.pendingSoupId = soupId;
-    getApp().globalData.openDialogDirectly = true;
-    
-    // 跳转到首页
-    wx.switchTab({
-      url: '/pages/index/index'
+    // 暂时禁用汤面选择功能
+    wx.showToast({
+      title: '功能暂时不可用',
+      icon: 'none'
     });
+    return;
   },
 
   /**
@@ -406,44 +207,8 @@ Page({
    * @private
    */
   _addToUserSoupHistory(soupId) {
-    if (!soupId) {
-      return;
-    }
-    
-    const userSoupHistory = this.data.userSoupHistory || [];
-    
-    // 如果已存在，则移除旧记录
-    const index = userSoupHistory.findIndex(item => item.soupId === soupId);
-    if (index > -1) {
-      userSoupHistory.splice(index, 1);
-    }
-
-    // 获取汤面信息
-    const soupInfo = this.data.soupList.find(soup => soup.soupId === soupId);
-    
-    if (soupInfo) {
-      const timestamp = new Date().getTime();
-      
-      // 添加到历史记录最前面
-      userSoupHistory.unshift({
-        soupId: soupId,
-        title: soupInfo.title || '未命名汤面',
-        timestamp: timestamp,
-        formattedTime: this._formatTime(timestamp)
-      });
-
-      // 最多保存20条记录
-      if (userSoupHistory.length > 20) {
-        userSoupHistory.pop();
-      }
-
-      // 保存到本地存储
-      wx.setStorageSync('userSoupHistory', userSoupHistory);
-      this.setData({ userSoupHistory });
-    } else {
-      // 如果在本地找不到汤面信息，尝试重新加载汤面列表
-      this._loadSoupList();
-    }
+    // 暂时禁用添加历史记录功能
+    return;
   },
 
   /**

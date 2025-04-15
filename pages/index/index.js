@@ -92,7 +92,8 @@ Page({
    */
   onDialogClose() {
     this.setData({
-      pageState: PAGE_STATE.VIEWING
+      pageState: PAGE_STATE.VIEWING,
+      showButtons: true
     });
   },
 
@@ -110,7 +111,10 @@ Page({
    */
   onStartSoup() {
     if (this.data.pageState === PAGE_STATE.TRUTH) {
-      this.setData({ pageState: PAGE_STATE.VIEWING });
+      this.setData({ 
+        pageState: PAGE_STATE.VIEWING,
+        showButtons: true
+      });
       return;
     }
     this.switchToDrinking();
@@ -171,5 +175,13 @@ Page({
       title: '这个海龟汤太难了来帮帮我！',
       path: '/pages/index/index'
     };
+  },
+
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({
+        selected: 1  // 第二个tab是喝汤页面
+      })
+    }
   }
 });

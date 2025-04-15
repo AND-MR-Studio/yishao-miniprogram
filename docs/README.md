@@ -24,7 +24,7 @@
 │   ├── index/          # 首页
 │   ├── dialog/         # 对话页
 │   ├── mine/           # 我的页面
-│   ├── community/      # 社区页面
+│   ├── gensoup/      # 社区页面
 │   └── admin/          # 管理页面
 ├── utils/              # 工具目录
 │   ├── soupService.js  # 汤面数据服务（含环境配置、数据缓存）
