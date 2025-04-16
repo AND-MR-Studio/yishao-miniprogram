@@ -13,9 +13,11 @@
           bindchooseavatar="onChooseAvatar"
         >
           <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+          <view class="avatar-hint">{{userInfo ? '点击更换头像' : '点击设置头像'}}</view>
         </button>
       </view>
       <view class="user-info">
+        <!-- 显示昵称（不再使用输入框） -->
         <text class="username">{{userInfo.nickName || '未登录'}}</text>
         <view class="answer-count">
           <text class="count-label">剩余回答次数：</text>
@@ -26,7 +28,7 @@
     
     <!-- 功能列表 -->
     <view class="function-list">
-      <view class="function-item">
+      <view class="function-item" bindtap="handleViewHistory">
         <view class="item-icon">
           <text class="iconfont icon-record"></text>
         </view>
@@ -51,15 +53,63 @@
       </view>
     </view>
     
-    <!-- 退出登录按钮 -->
+    <!-- 登录/退出按钮 -->
     <view class="logout-container">
-      <button-component 
-        type="unlight" 
-        text="退出登录" 
-        width="100%" 
-        height="88rpx"
-        bindtap="handleLogout"
-      />
+      <!-- 已登录状态下显示退出登录按钮 -->
+      <block wx:if="{{userInfo}}">
+        <button-component 
+          type="{{buttonConfig.type}}" 
+          text="{{buttonConfig.text}}" 
+          width="100%" 
+          height="88rpx"
+          bind:tap="handleLogout"
+        />
+      </block>
+      <!-- 未登录状态下，显示微信登录按钮 -->
+      <block wx:else>
+        <button 
+          class="weui-btn login-btn" 
+          type="primary" 
+          bindtap="handleSimulateLogin"
+        >微信登录</button>
+      </block>
+    </view>
+  </view>
+
+  <!-- 汤面列表弹窗 -->
+  <view class="soup-list-modal {{showSoupList ? 'show' : ''}}" catchtouchmove="catchTouchMove">
+    <view class="soup-list-container">
+      <view class="soup-list-header">
+        <text class="soup-list-title">我的汤面记录</text>
+        <view class="soup-list-close" bindtap="closeSoupList">×</view>
+      </view>
+      <scroll-view scroll-y class="soup-list-body">
+        <view wx:if="{{userSoupHistory.length === 0}}" class="soup-list-empty">
+          <text>暂无访问记录</text>
+        </view>
+        <view 
+          class="soup-list-item" 
+          wx:for="{{userSoupHistory}}" 
+          wx:key="timestamp" 
+          data-soup-id="{{item.soupId}}"
+          bindtap="handleSoupItemClick"
+        >
+          <text class="soup-item-title">{{item.title}}</text>
+          <text class="soup-item-time">{{item.formattedTime || '最近访问'}}</text>
+        </view>
+        <view class="soup-list-divider" wx:if="{{userSoupHistory.length > 0 && soupList.length > 0}}">
+          <text>全部汤面</text>
+        </view>
+        <view 
+          class="soup-list-item" 
+          wx:for="{{soupList}}" 
+          wx:key="soupId" 
+          data-soup-id="{{item.soupId}}"
+          bindtap="handleSoupItemClick"
+        >
+          <text class="soup-item-title">{{item.title}}</text>
+        </view>
+      </scroll-view>
     </view>
   </view>
 </view>

@@ -10,6 +10,10 @@ Component({
     show: {
       type: Boolean,
       value: false
+    },
+    soupId: {
+      type: String,
+      value: ''
     }
   },
 
@@ -90,7 +94,7 @@ Component({
           fontSize: settings.fontSize || 'medium'
         });
       } catch (e) {
-        console.error('读取设置失败:', e);
+        // 读取设置失败
       }
     },
 
@@ -108,7 +112,7 @@ Component({
         };
         wx.setStorageSync('soupSettings', settings);
       } catch (e) {
-        console.error('保存设置失败:', e);
+        // 保存设置失败
       }
     },
 
@@ -170,8 +174,8 @@ Component({
 
       // 立即执行震动，不使用setTimeout
       wx.vibrateShort({
-        fail: (err) => {
-          console.error('震动失败', err);
+        fail: () => {
+          // 震动失败
         },
         complete: () => {
           // 设置一个较短的冷却时间，避免系统震动API被连续调用
@@ -212,12 +216,18 @@ Component({
         success: (res) => {
           if (res.confirm) {
             this.triggerVibration();
+            
+            // 触发放弃事件通知父组件处理后续逻辑
             this.triggerEvent('abandon');
+            
+            // 显示提示消息
             wx.showToast({
               title: '已放弃当前海龟汤',
               icon: 'success',
               duration: 1500
             });
+            
+            // 注意：页面跳转和清除对话记录的逻辑已移至dialog.js的handleAbandonSoup中处理
           }
         }
       });

@@ -1,36 +1,64 @@
 # 汤面服务（soupService）
 
 ## 功能说明
-汤面服务是小程序的核心数据服务，负责处理汤面数据的获取和管理逻辑。目前采用前端模拟数据的方式实现，后续将对接后端API。
+汤面服务是小程序的核心数据服务，负责处理汤面数据的获取和管理逻辑。现已实现前后端分离，后端服务部署在远程服务器上。
+
+## 服务器配置
+
+### 后端服务器
+- 服务器地址：http://71.137.1.230:8081
+- API基础路径：/api/soups
+- 管理后台：http://71.137.1.230:8081/admin.html
+
+### 启动服务
+1. **启动后端服务**
+   ```bash
+   # 进入服务器目录
+   cd /path/to/server
+   
+   # 启动Node.js服务器
+   node server.js
+   ```
 
 ## 当前实现
 
 ### 数据结构
 ```javascript
 {
-    soupId: string,     // 汤面唯一标识
-    title: string,      // 汤面标题
-    contentLines: string[]  // 汤面内容行数组
+    soupId: string,       // 汤面唯一标识
+    title: string,        // 汤面标题
+    contentLines: string[]  // 汤面内容行数组，
+    truth: string         // 汤底内容（只有在回答正确后才会显示）
 }
 ```
 
-### 核心方法
+### 核心方法 (Promise风格)
 
 #### 获取汤面数据
 ```javascript
-// 异步获取汤面数据（模拟网络请求）
-soupService.getSoupData({
-    soupId: 'default_001',  // 可选，不传则返回第一个汤面
-    success: (soupData) => {
-        console.log('获取成功:', soupData);
-    },
-    fail: (error) => {
-        console.error('获取失败:', error);
-    },
-    complete: () => {
-        console.log('请求完成');
-    }
-});
+// 使用Promise风格API获取汤面数据
+async function loadSoup() {
+  try {
+    // 不指定soupId则返回第一个汤面
+    const soupData = await soupService.getSoupDataAsync('default_001');
+    console.log('获取成功:', soupData);
+  } catch (error) {
+    console.error('获取失败:', error);
+  }
+}
+```
+
+#### 刷新数据
+```javascript
+// 刷新所有汤面数据
+async function refreshAllSoups() {
+  try {
+    const soups = await soupService.refreshSoupsAsync();
+    console.log('刷新成功，获取到', soups.length, '个汤面');
+  } catch (error) {
+    console.error('刷新失败:', error);
+  }
+}
 ```
 
 #### 导航汤面
@@ -48,7 +76,10 @@ const soup = soupService.getSoupById('default_002');
 const count = soupService.getSoupCount();
 
 // 获取所有汤面数据
-const allSoups = soupService.getAllSoups();
+async function getAllSoups() {
+  const allSoups = await soupService.getAllSoupsAsync();
+  console.log('获取所有汤面:', allSoups.length);
+}
 ```
 
 #### 辅助方法
@@ -58,9 +89,21 @@ const index = soupService.getSoupIndex('default_001');
 ```
 
 ### 错误处理
-现在的实现添加了参数验证和错误处理:
-- 在 `getSoupIndex` 和 `getSoupById` 方法中添加了对 `soupId` 的空值检查
-- `getSoupData` 使用 `try/catch/finally` 结构确保错误处理和回调执行
+所有异步API都使用了Promise，支持try/catch错误处理:
+```javascript
+async function loadSoupWithErrorHandling() {
+  try {
+    const soupData = await soupService.getSoupDataAsync('invalid_id');
+    // 成功处理
+  } catch (error) {
+    // 错误处理
+    console.error('加载失败:', error);
+  } finally {
+    // 无论成功失败都会执行
+    console.log('加载流程完成');
+  }
+}
+```
 
 ## 后端 TODO
 
@@ -208,10 +251,10 @@ const index = soupService.getSoupIndex('default_001');
 - [ ] 添加防刷机制
 
 ## 最佳实践
-1. **异步加载**：使用 `getSoupData` 获取汤面数据，确保处理成功和失败情况
-2. **集合操作**：使用 `getAllSoups` 获取汤面列表，而不是直接访问 `soups` 属性
-3. **错误处理**：检查 `getSoupById` 的返回值，确保处理 `null` 结果
-4. **状态维护**：记录上一个访问的汤面ID，使用 `getNextSoupId` 进行导航
+1. **使用异步API**：优先使用Promise风格的API，搭配async/await使用
+2. **错误处理**：使用try/catch处理异步操作中可能的错误
+3. **集合操作**：使用`getAllSoupsAsync()`获取汤面列表，避免直接访问`soups`属性
+4. **导航操作**：使用`getNextSoupId`进行汤面导航，确保顺序一致性
 
 ## 注意事项
 - 用户状态：
@@ -220,3 +263,31 @@ const index = soupService.getSoupIndex('default_001');
   - 支持多设备同步回答状态
   - 需要记录用户查看历史
   - 支持查看次数统计和时长分析
+
+## 服务初始化
+```javascript
+// 使用Promise风格初始化
+async function initService() {
+  try {
+    const soups = await soupService.loadSoupsAsync();
+    console.log('汤面数据加载完成：', soups.length);
+  } catch (error) {
+    console.error('汤面数据加载失败:', error);
+  }
+}
+
+// 切换生产环境
+soupService.switchEnvironment('production');
+```
+
+## 环境配置
+```javascript
+// 切换到开发环境
+soupService.switchEnvironment('development');
+
+// 切换到生产环境
+soupService.switchEnvironment('production');
+
+// 获取当前环境的API基础URL
+const apiUrl = soupService.API_BASE_URL;
+```

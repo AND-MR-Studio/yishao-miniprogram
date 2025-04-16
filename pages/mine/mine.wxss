@@ -7,15 +7,19 @@
   min-height: 100vh;
   background-color: var(--color-background);
   box-sizing: border-box;
-  padding-top: calc(88rpx + env(safe-area-inset-top)); /* 导航栏高度 + 顶部安全区域 */
-  padding-bottom: env(safe-area-inset-bottom); /* 底部安全区域 */
+  display: flex;
+  flex-direction: column;
 }
 
 .container {
-  padding: 30rpx;
-  box-sizing: border-box;
+  flex: 1;
   width: 100%;
-  height: 100%;
+  box-sizing: border-box;
+  /* 顶部位置留出导航栏高度 */
+  padding: calc(180rpx + env(safe-area-inset-top)) 30rpx calc(110rpx + env(safe-area-inset-bottom)) 30rpx;
+  /* 底部留出 tabbar 高度 */
+  position: relative;
+  overflow-y: auto;
 }
 
 /* 用户信息卡片样式 */
@@ -34,6 +38,7 @@
 
 .avatar-container {
   margin-right: 30rpx;
+  position: relative;
 }
 
 /* 头像按钮样式 */
@@ -45,6 +50,7 @@
   border-radius: 50% !important;
   border: none !important;
   line-height: 1 !important;
+  position: relative;
 }
 
 .avatar-wrapper::after {
@@ -57,6 +63,18 @@
   border-radius: 50%;
   border: 2px solid var(--color-primary);
   box-shadow: var(--glow-primary);
+}
+
+/* 头像提示文字 */
+.avatar-hint {
+  position: absolute;
+  bottom: -30rpx;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 20rpx;
+  color: var(--color-text-hint);
+  white-space: nowrap;
 }
 
 .user-info {
@@ -134,8 +152,145 @@
   font-size: var(--font-size-sm);
 }
 
-/* 退出登录按钮容器样式 */
+/* 登录/退出按钮容器样式 */
 .logout-container {
   padding: 20rpx 40rpx;
   margin-top: 80rpx;
+}
+
+/* 登录按钮样式 */
+.login-btn {
+  width: 100% !important;
+  height: 88rpx !important;
+  line-height: 88rpx !important;
+  font-size: var(--font-size-md) !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: var(--font-weight-medium) !important;
+  background-color: var(--color-primary) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* 按钮按压效果 */
+.login-btn:active {
+  opacity: 0.8;
+}
+
+/* 汤面列表弹窗样式 */
+.soup-list-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.soup-list-modal.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.soup-list-container {
+  width: 90%;
+  max-width: 600rpx;
+  max-height: 70vh;
+  background-color: var(--color-background-light);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: scale-in 0.3s ease forwards;
+}
+
+.soup-list-header {
+  padding: 30rpx;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.soup-list-title {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+}
+
+.soup-list-close {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-text-hint);
+  font-size: 40rpx;
+  cursor: pointer;
+  border-radius: 50%;
+}
+
+.soup-list-close:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.soup-list-body {
+  flex: 1;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.soup-list-item {
+  padding: 30rpx;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  transition: background-color 0.2s ease;
+}
+
+.soup-list-item:active {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.soup-item-title {
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+}
+
+.soup-item-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-hint);
+  margin-top: 8rpx;
+  display: block;
+}
+
+.soup-list-divider {
+  padding: 20rpx 30rpx;
+  color: var(--color-text-hint);
+  font-size: var(--font-size-sm);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+@keyframes scale-in {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+/* 汤面列表空状态 */
+.soup-list-empty {
+  padding: 60rpx 0;
+  text-align: center;
+  color: var(--color-text-hint);
+  font-size: var(--font-size-md);
 }

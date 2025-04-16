@@ -17,6 +17,7 @@
 
 <setting-card 
   show="{{showSettingPanel}}" 
+  soupId="{{soupId}}"
   bind:close="onSettingClose"
   bind:switchchange="onSwitchChange"
   bind:fontsizechange="onFontSizeChange"
@@ -24,4 +25,5 @@
   bind:clickright="onClickRight"
   bind:contact="onContact"
   bind:about="onAbout"
+  bind:abandon="onAbandon"
 />

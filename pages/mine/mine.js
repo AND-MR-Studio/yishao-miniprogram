@@ -1,4 +1,7 @@
 // pages/mine/mine.js
+// const soupService = require('../../utils/soupService');
+const dialogService = require('../../utils/dialogService');
+
 Page({
 
   /**
@@ -7,7 +10,12 @@ Page({
   data: {
     userInfo: null,
     remainingAnswers: 0,
-    defaultAvatarUrl: 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0'
+    defaultAvatarUrl: 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0',
+    // 汤面列表相关
+    showSoupList: false,
+    soupList: [],
+    // 用户汤面记录
+    userSoupHistory: []
   },
 
   /**
@@ -16,6 +24,8 @@ Page({
   onLoad(options) {
     this.getUserInfo();
     this.getRemainingAnswers();
+    // 获取用户汤面历史
+    this._loadUserSoupHistory();
   },
 
   /**
@@ -31,7 +41,7 @@ Page({
   onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({
-        selected: 2
+        selected: 2  // 第三个tab是我的页面
       });
     }
     // 每次显示页面时更新数据
@@ -49,6 +59,10 @@ Page({
       this.setData({
         userInfo: userInfo
       });
+    } else {
+      this.setData({
+        userInfo: null
+      });
     }
   },
 
@@ -60,123 +74,6 @@ Page({
     const remainingAnswers = wx.getStorageSync('remainingAnswers') || 0;
     this.setData({
       remainingAnswers: remainingAnswers
-    });
-  },
-
-  /**
-   * 处理头像选择
-   */
-  async onChooseAvatar(e) {
-    // 用户取消选择时不做处理
-    if (e.detail.errMsg && e.detail.errMsg.includes('fail cancel')) {
-      return;
-    }
-
-    const { avatarUrl } = e.detail;
-    if (!avatarUrl) {
-      wx.showToast({
-        title: '获取头像失败',
-        icon: 'error'
-      });
-      return;
-    }
-    
-    try {
-      // 检查是否已登录
-      const isLoggedIn = wx.getStorageSync('userInfo');
-      if (!isLoggedIn) {
-        // 未登录，先进行登录
-        await this.handleLogin();
-      }
-
-      // 更新头像
-      const userInfo = wx.getStorageSync('userInfo') || {};
-      userInfo.avatarUrl = avatarUrl;
-      
-      // 保存到本地存储
-      wx.setStorageSync('userInfo', userInfo);
-      
-      // 更新页面数据
-      this.setData({
-        userInfo: userInfo
-      });
-
-      wx.showToast({
-        title: '头像更新成功',
-        icon: 'success'
-      });
-    } catch (error) {
-      console.error('更新头像失败:', error);
-      wx.showToast({
-        title: error.message || '操作失败',
-        icon: 'error'
-      });
-    }
-  },
-
-  /**
-   * 处理登录
-   */
-  handleLogin() {
-    return new Promise((resolve, reject) => {
-      wx.login({
-        success: async (res) => {
-          if (res.code) {
-            try {
-              // 这里应该调用你的后端接口，使用code换取用户信息
-              // const { data } = await wx.request({ ... });
-              
-              // 示例：模拟后端返回的用户信息
-              const mockUserInfo = {
-                nickName: '游客' + Math.floor(Math.random() * 10000),
-                avatarUrl: '/images/default-avatar.png'
-              };
-
-              // 保存用户信息到本地
-              wx.setStorageSync('userInfo', mockUserInfo);
-              this.setData({
-                userInfo: mockUserInfo
-              });
-
-              resolve(mockUserInfo);
-            } catch (error) {
-              console.error('登录失败:', error);
-              reject(error);
-            }
-          } else {
-            console.error('登录失败:', res);
-            reject(new Error('登录失败'));
-          }
-        },
-        fail: reject
-      });
-    });
-  },
-
-  /**
-   * 处理退出登录
-   */
-  handleLogout() {
-    wx.showModal({
-      title: '提示',
-      content: '确定要退出登录吗？',
-      success: (res) => {
-        if (res.confirm) {
-          // 清除本地存储的用户信息
-          wx.removeStorageSync('userInfo');
-          // 重置数据
-          this.setData({
-            userInfo: null,
-            remainingAnswers: 0
-          });
-          // 提示用户
-          wx.showToast({
-            title: '已退出登录',
-            icon: 'success',
-            duration: 2000
-          });
-        }
-      }
     });
   },
 
@@ -213,5 +110,111 @@ Page({
    */
   onShareAppMessage() {
 
+  },
+
+  /**
+   * 加载用户汤面历史记录
+   * @private
+   */
+  _loadUserSoupHistory() {
+    // 从本地存储获取用户记录
+    const userSoupHistory = wx.getStorageSync('userSoupHistory') || [];
+    
+    // 格式化时间
+    userSoupHistory.forEach(item => {
+      if (item.timestamp) {
+        item.formattedTime = this._formatTime(item.timestamp);
+      }
+    });
+    
+    this.setData({ userSoupHistory });
+  },
+
+  /**
+   * 格式化时间戳
+   * @param {number} timestamp 时间戳
+   * @returns {string} 格式化后的时间
+   * @private
+   */
+  _formatTime(timestamp) {
+    if (!timestamp) return '';
+    
+    const now = new Date();
+    const date = new Date(timestamp);
+    const diff = now - date; // 时间差(毫秒)
+    
+    // 一分钟内
+    if (diff < 60 * 1000) {
+      return '刚刚';
+    }
+    
+    // 一小时内
+    if (diff < 60 * 60 * 1000) {
+      return Math.floor(diff / (60 * 1000)) + '分钟前';
+    }
+    
+    // 一天内
+    if (diff < 24 * 60 * 60 * 1000) {
+      return Math.floor(diff / (60 * 60 * 1000)) + '小时前';
+    }
+    
+    // 一周内
+    if (diff < 7 * 24 * 60 * 60 * 1000) {
+      return Math.floor(diff / (24 * 60 * 60 * 1000)) + '天前';
+    }
+    
+    // 其他情况显示日期
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}-${month < 10 ? '0' + month : month}-${day < 10 ? '0' + day : day}`;
+  },
+
+  /**
+   * 处理查看历史记录
+   */
+  handleViewHistory() {
+    // 暂时禁用汤面列表功能
+    wx.showToast({
+      title: '功能暂时不可用',
+      icon: 'none'
+    });
+  },
+
+  /**
+   * 关闭汤面列表弹窗
+   */
+  closeSoupList() {
+    this.setData({ showSoupList: false });
+  },
+
+  /**
+   * 处理点击汤面项
+   * @param {Object} e 事件对象
+   */
+  handleSoupItemClick(e) {
+    // 暂时禁用汤面选择功能
+    wx.showToast({
+      title: '功能暂时不可用',
+      icon: 'none'
+    });
+    return;
+  },
+
+  /**
+   * 添加到用户历史记录
+   * @param {string} soupId 汤面ID
+   * @private
+   */
+  _addToUserSoupHistory(soupId) {
+    // 暂时禁用添加历史记录功能
+    return;
+  },
+
+  /**
+   * 防止滚动穿透
+   */
+  catchTouchMove() {
+    return false;
   }
 })

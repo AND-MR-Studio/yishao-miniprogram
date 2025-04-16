@@ -15,16 +15,16 @@ Component({
     selectedColor: "#5CE821",
     list: [
       {
-        pagePath: "/pages/community/community",
-        text: "论坛",
-        icon: "icon-community_UnSelected",
-        selectedIcon: "icon-community_Selected"
+        pagePath: "/pages/gensoup/gensoup",
+        text: "煮汤",
+        icon: "icon-soup_UnSelected",
+        selectedIcon: "icon-soup_Selected"
       },
       {
         pagePath: "/pages/index/index",
         text: "喝汤",
-        icon: "icon-soup_UnSelected",
-        selectedIcon: "icon-soup_Selected"
+        icon: "icon-community_UnSelected",
+        selectedIcon: "icon-community_Selected"
       },
       {
         pagePath: "/pages/mine/mine",

@@ -2,6 +2,8 @@
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
     "soup-display": "/components/soup-display/soup-display",
-    "custom-button": "/components/button/index"
+    "soup-truth": "/components/soup-truth/soup-truth",
+    "custom-button": "/components/button/index",
+    "dialog-component": "/pages/dialog/dialog"
   }
 }
