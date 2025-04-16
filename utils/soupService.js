@@ -13,12 +13,12 @@ const soupService = {
     },
     
     // 当前环境 - 默认为开发环境
-    currentEnv: 'development',
+    currentEnv: 'production',
     
     // API基础URL配置
     API_URLS: {
         development: 'http://localhost:8081/api/soups',
-        production: 'http://71.137.1.230:8081/api/soups'
+        production: 'http://14.103.193.11:8081/api/soups'
     },
     
     // 获取当前环境的API基础URL
