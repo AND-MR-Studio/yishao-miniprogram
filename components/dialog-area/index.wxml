@@ -1,51 +1,75 @@
-<view class="dialog-area">
-  <scroll-view 
-    class="dialog-content" 
-    scroll-y="true" 
-    scroll-with-animation="true"
-    scroll-anchoring="true"
-    enhanced="true"
-    bounces="true"
-    show-scrollbar="false"
-    enable-passive="true"
-    enable-flex="true"
-    id="dialogScroll"
-  >
-    <block wx:for="{{messages}}" wx:key="index">
-      <!-- 用户消息 -->
-      <view wx:if="{{item.type === 'user'}}" class="message user">{{item.content}}</view>
-      
-      <!-- 系统回复消息 - 正常显示 -->
-      <view wx:if="{{(item.type === 'system' || item.type === 'normal') && index !== animatingMessageIndex}}" class="message response">> {{item.content}}</view>
-      
-      <!-- 系统回复消息 - 打字机动画 -->
-      <view wx:if="{{(item.type === 'system' || item.type === 'normal') && index === animatingMessageIndex}}" class="message response typing-container">
-        <text class="prefix-text">> </text>
-        <view class="typing-content">
-          <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
-            <block wx:for="{{line.chars}}" wx:for-item="charObj" wx:for-index="charIdx" wx:key="charIdx">
-              <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}} {{charObj.prev ? 'prev' : ''}} {{charObj.active && typeEffect === 'normal' ? 'response-char-typing-active' : ''}} effect-{{typeEffect}}">{{charObj.char}}</text>
-            </block>
-          </block>
-        </view>
-      </view>
-      
-      <!-- 提示消息 - 正常显示（支持自定义样式） -->
-      <view wx:if="{{item.type === 'hint' && index !== animatingMessageIndex}}" class="message hint" style="{{item.style}}"> {{item.content}}</view>
-      
-      <!-- 提示消息 - 打字机动画 -->
-      <view wx:if="{{item.type === 'hint' && index === animatingMessageIndex}}" class="message hint typing-container" style="{{item.style}}">
-        <text class="prefix-text">> </text>
-        <view class="typing-content">
-          <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
-            <block wx:for="{{line.chars}}" wx:for-item="charObj" wx:for-index="charIdx" wx:key="charIdx">
-              <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}} {{charObj.prev ? 'prev' : ''}} {{charObj.active && typeEffect === 'normal' ? 'hint-char-typing-active' : ''}} effect-{{typeEffect}}">{{charObj.char}}</text>
-            </block>
-          </block>
-        </view>
-      </view>
-    </block>
-    <!-- 用于滚动到底部的锚点 -->
-    <view id="scrollBottom" style="height: 2rpx;"></view>
-  </scroll-view>
-</view> 
+<!--pages/index.wxml-->
+<view class="page">
+  <!-- 导航栏 -->
+  <nav-bar 
+    bind:settingchange="handleSettingChange"
+  />
+  
+  <view class="container">
+    <!-- 汤面显示区域 -->
+    <soup-display
+      id="soupDisplay"
+      soupId="{{currentSoupId}}"
+      class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}}"
+      wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
+    ></soup-display>
+    
+    <!-- 汤底显示区域 -->
+    <soup-truth
+      id="soupTruth"
+      soupId="{{currentSoupId}}"
+      wx:if="{{pageState === 'truth'}}"
+    ></soup-truth>
+    
+    <!-- 设置卡片 -->
+    <setting-card
+      show="{{showSetting}}"
+      bind:switchchange="handleSettingChange"
+      bind:close="onSettingClose"
+    ></setting-card>
+    
+    <!-- 按钮区域 -->
+    <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
+      <custom-button 
+        type="light" 
+        text="开始喝汤" 
+        width="50%"
+        height="80rpx"
+        bind:tap="onStartSoup" 
+        class="start-button"
+        wx:if="{{showButtons}}">
+      </custom-button>
+      <custom-button 
+        type="unlight" 
+        text="下一个" 
+        width="50%"
+        height="80rpx"
+        bind:tap="onNextSoup" 
+        class="next-button"
+        wx:if="{{showButtons}}">
+      </custom-button>
+    </view>
+  </view>
+  
+  <!-- 对话组件 -->
+  <dialog-component
+    id="dialog"
+    visible="{{pageState === 'drinking'}}"
+    soupId="{{currentSoupId}}"
+    bind:close="onDialogClose"
+    bind:showTruth="onShowTruth"
+    bind:peekSoup="onPeekSoup"
+  ></dialog-component>
+
+  <!-- 输入栏组件 -->
+  <input-bar
+    wx:if="{{pageState === 'drinking'}}"
+    class="input-bar"
+    inputValue="{{inputValue}}"
+    bind:input="onInputChange"
+    bind:send="onSendMessage"
+    bind:voiceStart="onVoiceStart"
+    bind:voiceEnd="onVoiceEnd"
+    bind:voiceCancel="onVoiceCancel"
+  ></input-bar>
+</view>

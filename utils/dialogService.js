@@ -8,9 +8,7 @@ class DialogService {
     constructor() {
         // 存储当前对话状态
         this._dialogState = {
-            messageDirty: false,
-            userQuestionCount: 0,
-            lastInteractionTime: Date.now() // 确保初始化时有有效值
+            messageDirty: false
         };
         
         // 预设的回复选项
@@ -20,20 +18,51 @@ class DialogService {
             '不确定'
         ];
         
-        // 仔细思考提示 - 每三次提问显示
-        this._thirdQuestionHints = [
-            '仔细思考汤面中出现的人物',
-            '思考一下事件发生的顺序',
-            '尝试从不同角度理解汤面中的场景'
+        // 特殊关键词处理
+        this._specialKeywords = {
+            '汤底': this._handleSoupBottomKeyword.bind(this)
+        };
+    }
+
+    /**
+     * 获取初始化系统消息
+     * @returns {Array} 系统消息数组
+     */
+    getInitialSystemMessages() {
+        return [
+            {
+                type: 'system',
+                content: '欢迎来到一勺海龟汤。'
+            },
+            {
+                type: 'system',
+                content: '你需要通过提问来猜测谜底，'
+            },
+            {
+                type: 'system',
+                content: '我只会回答"是"、"否"或"不确定"。'
+            },
+            {
+                type: 'system',
+                content: '长按对话区域显示汤面。'
+            }
         ];
+    }
+    
+    /**
+     * 合并初始系统消息与历史消息
+     * @param {Array} messages 历史消息数组
+     * @returns {Array} 合并后的消息数组
+     */
+    combineWithInitialMessages(messages) {
+        const initialMessages = this.getInitialSystemMessages();
+        const historyMessages = messages || [];
         
-        // 长时间未提问提示
-        this._idleHints = [
-            '还在思考吗？不妨换个角度提问试试～'
-        ];
+        // 过滤掉历史消息中的系统消息，避免重复
+        const filteredMessages = historyMessages.filter(msg => msg.type !== 'system');
         
-        // 上次显示空闲提示的时间
-        this._lastIdleHintTime = 0;
+        // 合并初始系统消息和过滤后的历史消息
+        return [...initialMessages, ...filteredMessages];
     }
 
     /**
@@ -49,143 +78,6 @@ class DialogService {
             type: 'normal',
             content: replyContent
         };
-    }
-
-    /**
-     * 更新用户问题计数器并检查是否需要生成提示
-     * @param {Array} messages 当前消息列表
-     * @returns {Object|null} 提示消息对象，如果不需要提示则返回null
-     */
-    updateQuestionCountAndCheckHint(messages) {
-        // 递增问题计数
-        this._dialogState.userQuestionCount += 1;
-        // 更新交互时间
-        this._dialogState.lastInteractionTime = Date.now();
-        
-        // 检查是否每三次问题后需要显示提示
-        if (this._dialogState.userQuestionCount % 3 === 0) {
-            // 随机选择一条提示消息
-            const randomIndex = Math.floor(Math.random() * this._thirdQuestionHints.length);
-            const hintContent = this._thirdQuestionHints[randomIndex];
-            
-            // 返回提示消息对象
-            return {
-                type: 'hint',
-                content: hintContent,
-                style: 'color: #4CAF50;' // 绿色文本样式
-            };
-        }
-        
-        // 不需要提示
-        return null;
-    }
-    
-    /**
-     * 检查是否长时间未提问并生成提示
-     * @param {Array} messages 当前消息列表
-     * @param {boolean} forceCheck 是否强制检查
-     * @returns {Object|null} 提示消息对象，如果不需要提示则返回null
-     */
-    checkIdleAndGenerateHint(messages, forceCheck = false) {
-        // 获取当前时间
-        const now = Date.now();
-        const lastInteraction = this._dialogState.lastInteractionTime;
-        const idleTime = now - lastInteraction;
-        
-        // 距离上次显示提示的时间间隔（确保不会过于频繁显示提示）
-        const timeSinceLastHint = now - this._lastIdleHintTime;
-        
-        console.log('检查空闲状态:', {
-            idleTime: Math.floor(idleTime / 1000) + '秒',
-            timeSinceLastHint: Math.floor(timeSinceLastHint / 1000) + '秒',
-            messagesCount: messages.length,
-            forceCheck
-        });
-        
-        // 判断条件：
-        // 1. 有足够的消息（超过4条初始系统消息）
-        // 2. 空闲时间超过45秒
-        // 3. 距离上次提示超过2分钟
-        // 4. 或者强制检查
-        if ((
-             messages.length > 4 && 
-             idleTime > 45000 && 
-             timeSinceLastHint > 120000
-           ) || forceCheck) {
-            // 更新最后提示时间
-            this._lastIdleHintTime = now;
-            
-            // 随机选择一条提示消息
-            const randomIndex = Math.floor(Math.random() * this._idleHints.length);
-            const hintContent = this._idleHints[randomIndex];
-            
-            console.log('显示空闲提示:', hintContent);
-            
-            // 返回提示消息对象
-            return {
-                type: 'hint',
-                content: hintContent,
-                style: 'color: #4CAF50;' // 绿色文本样式
-            };
-        }
-        
-        // 不需要提示
-        return null;
-    }
-
-    /**
-     * 强制生成空闲提示（用于测试）
-     * @returns {Object} 提示消息对象
-     */
-    forceIdleHint() {
-        // 随机选择一条提示消息
-        const randomIndex = Math.floor(Math.random() * this._idleHints.length);
-        const hintContent = this._idleHints[randomIndex];
-        
-        // 记录提示时间
-        this._lastIdleHintTime = Date.now();
-        
-        // 返回提示消息对象
-        return {
-            type: 'hint',
-            content: hintContent,
-            style: 'color: #4CAF50;' // 绿色文本样式
-        };
-    }
-
-    /**
-     * 重置问题计数和交互时间
-     * @param {number} count 初始计数，默认为0
-     */
-    resetQuestionCount(count = 0) {
-        this._dialogState.userQuestionCount = count;
-        this._dialogState.lastInteractionTime = Date.now();
-        this._lastIdleHintTime = 0; // 重置上次提示时间
-    }
-    
-    /**
-     * 更新最后交互时间
-     */
-    updateInteractionTime() {
-        this._dialogState.lastInteractionTime = Date.now();
-    }
-    
-    /**
-     * 获取当前用户问题计数
-     * @returns {number} 问题计数
-     */
-    getUserQuestionCount() {
-        return this._dialogState.userQuestionCount;
-    }
-    
-    /**
-     * 设置用户问题计数
-     * @param {number} count 问题计数
-     */
-    setUserQuestionCount(count) {
-        if (typeof count === 'number' && count >= 0) {
-            this._dialogState.userQuestionCount = count;
-        }
     }
 
     /**
@@ -209,11 +101,8 @@ class DialogService {
      */
     resetDialogState() {
         this._dialogState = {
-            messageDirty: false,
-            userQuestionCount: 0,
-            lastInteractionTime: Date.now()
+            messageDirty: false
         };
-        this._lastIdleHintTime = 0; // 重置上次提示时间
     }
 
     /**
@@ -289,14 +178,6 @@ class DialogService {
         try {
             // 尝试加载消息
             let messages = wx.getStorageSync(storageKey) || [];
-            
-            // 计算用户问题数量并更新计数器
-            const userMessageCount = messages.filter(msg => msg.type === 'user').length;
-            this.setUserQuestionCount(userMessageCount);
-            
-            // 重置交互时间和提示时间
-            this.updateInteractionTime();
-            this._lastIdleHintTime = 0;
 
             if (typeof success === 'function') {
                 success(messages);
@@ -324,13 +205,94 @@ class DialogService {
         const storageKey = this.getDialogStorageKey(soupId);
         try {
             wx.removeStorageSync(storageKey);
-            // 重置对话状态
-            this.resetDialogState();
             return true;
         } catch (error) {
             console.error(`DialogService: 删除对话记录失败:`, error);
             return false;
         }
+    }
+
+    /**
+     * 处理用户输入的消息
+     * @param {string} content 用户输入的内容
+     * @param {Array} currentMessages 当前消息列表
+     * @returns {Object} 处理结果 {isSpecial: boolean, messages: Array, reply: Object|null}
+     */
+    handleUserInput(content) {
+        if (!content || !content.trim()) {
+            return {
+                isSpecial: false,
+                messages: null,
+                reply: null
+            };
+        }
+        
+        const trimmedContent = content.trim();
+        
+        // 检查是否为特殊关键词
+        if (this._specialKeywords[trimmedContent]) {
+            return this._specialKeywords[trimmedContent](trimmedContent);
+        }
+        
+        // 不是特殊关键词，返回普通处理结果
+        return {
+            isSpecial: false,
+            messages: null,
+            reply: this.generateReply()
+        };
+    }
+    
+    /**
+     * 处理"汤底"关键词
+     * @param {string} content 用户输入内容
+     * @returns {Object} 处理结果
+     * @private
+     */
+    _handleSoupBottomKeyword(content) {
+        // 创建用户消息
+        const userMessage = {
+            type: 'user',
+            content: content
+        };
+        
+        // 创建特殊回复
+        const systemMessage = {
+            type: 'system',
+            content: '你喝到了汤底'
+        };
+        
+        return {
+            isSpecial: true,
+            userMessage: userMessage,
+            reply: systemMessage
+        };
+    }
+    
+    /**
+     * 发送消息并获取回复（模拟API请求）
+     * @param {Object} params 请求参数
+     * @returns {Promise<Object>} 回复消息的Promise
+     */
+    sendMessage(params) {
+        return new Promise((resolve) => {
+            const reply = this.generateReply();
+            resolve(reply);
+        });
+    }
+
+    /**
+     * 异步加载对话消息
+     * @param {string} soupId 汤面ID
+     * @returns {Promise<Array>} 消息数组Promise
+     */
+    loadDialogMessagesAsync(soupId) {
+        return new Promise((resolve, reject) => {
+            this.loadDialogMessages({
+                soupId: soupId,
+                success: (messages) => resolve(messages || []),
+                fail: (error) => reject(error)
+            });
+        });
     }
 }
 

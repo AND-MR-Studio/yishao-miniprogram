@@ -2,7 +2,7 @@
   "pages": [
     "pages/index/index",
     "pages/dialog/dialog",
-    "pages/community/community",
+    "pages/gensoup/gensoup",
     "pages/mine/mine",
     "components/soup-display/soup-display"
   ],
@@ -18,11 +18,11 @@
     "custom": true,
     "list": [
       {
-        "pagePath": "pages/index/index",
-        "text": "主页"
+        "pagePath": "pages/gensoup/gensoup",
+        "text": "煮汤"
       },
       {
-        "pagePath": "pages/dialog/dialog",
+        "pagePath": "pages/index/index",
         "text": "喝汤"
       },
       {

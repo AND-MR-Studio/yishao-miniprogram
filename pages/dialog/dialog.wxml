@@ -1,42 +1,27 @@
 <!--pages/dialog.wxml-->
-<view class="page {{isPeekingSoup ? 'peek-soup' : ''}}">
-  <!-- 导航栏 -->
-  <nav-bar 
-    id="navBar"
-    soupId="{{currentSoupId}}" 
-    bind:abandon="handleAbandonSoup" 
-  />
-  
-  <view class="container" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
-    <!-- 汤面显示区域 -->
-    <soup-display
-      id="soupDisplay"
-      soupId="{{soupConfig.soupId}}"
-      autoPlay="{{soupConfig.autoPlay}}"
-      staticMode="{{soupConfig.staticMode}}"
-      bind:animationComplete="onSoupAnimationComplete"
-    ></soup-display>
-    <!-- 毛玻璃效果遮罩层 -->
-    <view class="frosted-glass"></view>
-    <!-- 对话区域 -->
-    <dialog-area 
-      id="dialogArea" 
-      class="dialog-area-component" 
-      messages="{{messages}}" 
-      soupId="{{currentSoupId}}"
-      bind:messagesChange="handleMessagesChange"
+<view class="dialog-container {{visible ? 'visible' : 'hidden'}}">
+  <view class="page {{isPeekingSoup ? 'peek-soup' : ''}}">
+    <!-- 导航栏 -->
+    <nav-bar 
+      showBackButton="{{true}}"
+      bind:back="handleClose"
     />
+    
+    <view class="container" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
+      <!-- 毛玻璃效果遮罩层 -->
+      <view class="frosted-glass"></view>
+      
+      <!-- 对话区域 -->
+      <dialog-area 
+        id="dialogArea" 
+        class="dialog-area-component" 
+        soupId="{{soupId}}"
+      />
+      
+      <!-- 输入栏组件 -->
+      <input-bar
+        bind:send="handleSend"
+      />
+    </view>
   </view>
-
-  <!-- 输入栏组件 -->
-  <input-bar
-    inputValue="{{inputValue}}"
-    inputFocus="{{inputFocus}}"
-    bind:input="handleInput"
-    bind:send="handleSend"
-    bind:voice="handleVoice"
-  />
-
-  <!-- 自定义tabBar -->
-  <custom-tab-bar></custom-tab-bar>
 </view>

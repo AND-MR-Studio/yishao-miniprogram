@@ -4,10 +4,10 @@
   <view class="input-container">
     <!-- 语音按钮 -->
     <view class="voice-btn" 
-      bindtouchstart="handleVoiceStart" 
-      bindtouchend="handleVoiceEnd"
-      bindtouchmove="handleVoiceMove"
-      bindtouchcancel="handleVoiceEnd"
+      catchtouchstart="handleVoiceStart" 
+      catchtouchend="handleVoiceEnd"
+      catchtouchmove="handleVoiceMove"
+      catchtouchcancel="handleVoiceEnd"
       hover-class="voice-btn-hover">
       <text class="font_family icon-voice"></text>
     </view>
