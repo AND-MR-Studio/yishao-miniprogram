@@ -2,42 +2,11 @@
  * 汤面数据服务类
  * 负责处理汤面数据的加载、获取等操作
  */
+const { soupRequest } = require('./api');
+
 const soupService = {
     // 汤面数据缓存
     soups: [],  // 改为空数组，完全依赖服务器数据
-
-    // 环境配置
-    ENV: {
-        DEV: 'development',
-        PROD: 'production'
-    },
-    
-    // 当前环境 - 默认为开发环境
-    currentEnv: 'production',
-    
-    // API基础URL配置
-    API_URLS: {
-        development: 'http://localhost:8081/api/soups',
-        production: 'http://14.103.193.11:8081/api/soups'
-    },
-    
-    // 获取当前环境的API基础URL
-    get API_BASE_URL() {
-        return this.API_URLS[this.currentEnv];
-    },
-    
-    /**
-     * 切换环境
-     * @param {string} env 环境名称 ('development' 或 'production')
-     */
-    switchEnvironment: function(env) {
-        if (this.API_URLS[env]) {
-            this.currentEnv = env;
-            this.isDataLoaded = false; // 切换环境后需要重新加载数据
-            return true;
-        }
-        return false;
-    },
 
     // 是否已从服务器加载数据
     isDataLoaded: false,
@@ -64,37 +33,36 @@ const soupService = {
         
         // 创建加载Promise
         this._loadingPromise = new Promise((resolve) => {
-            wx.request({
-                url: `${this.API_BASE_URL}/list`,
-                method: 'GET',
-                success: (res) => {
-                    if (res.statusCode === 200 && res.data && Array.isArray(res.data)) {
-                        console.log('服务器返回数据:', res.data);
-                        // 更新本地汤面数据，确保每个数据都有id字段
-                        this.soups = res.data.map(soup => ({
-                            ...soup,
-                            id: soup.id || soup._id || soup.soupId // 兼容不同的ID字段
-                        }));
-                        this.isDataLoaded = true;
-                        console.log('更新本地数据成功，当前数据量:', this.soups.length);
+            soupRequest({
+                url: '/list',
+                method: 'GET'
+            }).then(data => {
+                if (Array.isArray(data)) {
+                    console.log('服务器返回数据:', data);
+                    // 更新本地汤面数据，确保每个数据都有id字段
+                    this.soups = data.map(soup => ({
+                        ...soup,
+                        id: soup.id || soup._id || soup.soupId // 兼容不同的ID字段
+                    }));
+                    this.isDataLoaded = true;
+                    console.log('更新本地数据成功，当前数据量:', this.soups.length);
+                    if (this.soups.length > 0) {
                         console.log('数据示例:', this.soups[0]);
-                    } else {
-                        console.warn('服务器返回非预期数据格式，状态码:', res.statusCode);
                     }
-                    resolve(this.soups);
-                },
-                fail: (err) => {
-                    console.error('从服务器加载数据失败:', err);
-                    resolve(this.soups);
-                },
-                complete: () => {
-                    // 无论成功或失败，都重置加载状态
-                    this._isLoading = false;
-                    // 清除Promise缓存
-                    setTimeout(() => {
-                        this._loadingPromise = null;
-                    }, 100);
+                } else {
+                    console.warn('服务器返回非预期数据格式');
                 }
+                resolve(this.soups);
+            }).catch(err => {
+                console.error('从服务器加载数据失败:', err);
+                resolve(this.soups);
+            }).finally(() => {
+                // 无论成功或失败，都重置加载状态
+                this._isLoading = false;
+                // 清除Promise缓存
+                setTimeout(() => {
+                    this._loadingPromise = null;
+                }, 100);
             });
         });
         
@@ -117,7 +85,7 @@ const soupService = {
             soup._id === soupId || 
             soup.soupId === soupId
         );
-        console.log('查找汤面索引:', { soupId, index, firstSoup: this.soups[0] });
+        console.log('查找汤面索引:', { soupId, index });
         return index;
     },
 
