@@ -1,37 +1,65 @@
 # 汤面小程序
 
 ## 项目简介
-一个随时随地和ai玩海龟汤的微信小程序。
+「汤面小程序」是一款专为微信平台打造的海龟汤游戏应用，让用户随时随地与AI进行海龟汤谜题互动。
 
 ## 技术架构
 
+### 服务器配置
+- 支持开发/生产环境切换
+- API基础路径：
+  - 开发环境：`http://localhost:8081/api/soups`
+  - 生产环境：`http://71.137.1.230:8081/api/soups`
+
 ### 核心模块
 ```
-├── components/          # 组件目录
-│   └── soup-display/   # 汤面展示组件
+├── components/         # 组件目录
+│   ├── soup-display/   # 汤面展示组件
+│   ├── dialog-area/    # 对话区域组件
+│   ├── input-bar/      # 输入栏组件
+│   ├── nav-bar/        # 导航栏组件
+│   ├── setting-card/   # 设置卡片组件
+│   └── button/         # 按钮组件
 ├── pages/              # 页面目录
-│   ├── index/         # 主页
-│   └── dialog/        # 对话页
-└── utils/             # 工具目录
-    ├── soupService.js # 汤面数据服务
-    └── typeAnimation.js # 打字机动画工具
+│   ├── index/          # 首页
+│   ├── dialog/         # 对话页
+│   ├── mine/           # 我的页面
+│   ├── gensoup/      # 社区页面
+│   └── admin/          # 管理页面
+├── utils/              # 工具目录
+│   ├── soupService.js  # 汤面数据服务（含环境配置、数据缓存）
+│   └── typeAnimation.js # 打字机动画工具
+├── static/             # 静态资源目录
+├── images/             # 图像资源目录
+└── styles/             # 全局样式目录
 ```
 
 ### 模块说明
 
 #### 1. 汤面展示组件 (soup-display)
 - 负责汤面内容的展示和动画效果
-- 支持静态/动态展示模式
+- 提供流畅的打字机动画效果
+- 支持静态/动态展示模式切换
+- 可自定义光标样式和动画参数
 - 提供完整的动画控制接口
-- 详细文档：[soup-display/README.md](../components/soup-display/README.md)
 
-#### 2. 汤面数据服务 (soupService)
+#### 2. 对话区域组件 (dialog-area)
+- 管理用户与AI的对话交流
+- 支持多种对话气泡样式
+- 实现自动滚动和历史记录
+
+#### 3. 汤面数据服务 (soupService)
+- 支持多环境配置切换
+- 实现数据缓存和自动更新
+- 提供环境切换接口 `switchEnvironment()`
+- 支持数据刷新 `refreshSoups()`
+- 自动处理网络异常和本地回退
 - 管理汤面数据的获取和缓存
 - 提供数据加载和查询接口
 - 支持按ID获取指定汤面
-- 详细文档：[utils/README.md](../utils/README.md)
+- 处理数据加载失败的后备方案
 
-#### 3. 打字机动画工具 (typeAnimation)
+#### 4. 打字机动画工具 (typeAnimation)
 - 提供仿机械打字机效果
 - 支持字符级动画控制
 - 可配置的动画参数
@@ -44,17 +72,26 @@
 - 支持标题和内容分开动画
 - 智能标点符号延迟
 - 可配置的动画速度
+- 自定义光标样式
 
-### 2. 页面交互
+### 2. 对话交互
+- 与AI进行海龟汤问答
 - 主页汤面预览
 - 对话页完整阅读
 - 动画完成后显示操作按钮
 - 支持页面间数据传递
 
-### 3. 性能优化
+### 3. 用户系统
+- 个人中心页面
+- 收藏喜爱的汤面
+- 历史记录查看
+- 用户设置管理
+
+### 4. 性能优化
 - 静态模式支持（跳过动画）
 - 组件状态智能管理
 - 数据加载失败后备方案
+- 分包加载减少初始化时间
 
 ## 使用说明
 
@@ -65,8 +102,14 @@ Page({
   data: {
     soupConfig: {
       autoPlay: true,        // 自动播放动画
-      staticMode: false      // 静态模式（跳过动画）
+      staticMode: false,     // 静态模式（跳过动画）
+      titleTypeSpeed: 80,    // 标题打字速度
+      contentTypeSpeed: 60   // 内容打字速度
     }
+  },
+  
+  onSoupAnimationComplete() {
+    // 动画完成后的处理逻辑
   }
 });
 ```
@@ -77,10 +120,15 @@ Page({
 Page({
   data: {
     soupConfig: {
-      useDefaultOnly: false,
-      autoPlay: true,
-      staticMode: true      // 对话页默认使用静态模式
+      useDefaultOnly: false,  // 是否仅使用默认汤面
+      autoPlay: true,         // 自动播放
+      staticMode: true        // 对话页默认使用静态模式
     }
+  },
+  
+  // 发送用户输入到AI
+  sendUserInput(input) {
+    // 调用AI交互相关接口
   }
 });
 ```
@@ -89,9 +137,13 @@ Page({
 ```html
 <soup-display 
   id="soupDisplay"
+  soupId="{{soupId}}"
   useDefaultOnly="{{soupConfig.useDefaultOnly}}"
   autoPlay="{{soupConfig.autoPlay}}"
   staticMode="{{soupConfig.staticMode}}"
+  titleTypeSpeed="{{soupConfig.titleTypeSpeed}}"
+  contentTypeSpeed="{{soupConfig.contentTypeSpeed}}"
+  bind:loadSuccess="onSoupLoadSuccess"
   bind:animationComplete="onSoupAnimationComplete"
 />
 ```
@@ -100,13 +152,19 @@ Page({
 
 ### 1. 汤面数据接口
 ```
-GET /api/v1/soups/:soupId
-GET /api/v1/soups/random
-POST /api/v1/soups/:soupId/view
-GET /api/v1/soups/view-status
+GET /api/v1/soups/:soupId       // 获取指定汤面
+GET /api/v1/soups/random        // 获取随机汤面
+POST /api/v1/soups/:soupId/view // 记录汤面查看
+GET /api/v1/soups/view-status   // 获取查看状态
 ```
 
-详细API文档请参考：[utils/README.md](../utils/README.md)
+### 2. 用户交互接口
+```
+POST /api/v1/dialog/message     // 发送对话消息
+GET /api/v1/dialog/:dialogId    // 获取对话历史
+POST /api/v1/soups/:soupId/favorite  // 收藏汤面
+GET /api/v1/user/favorites      // 获取收藏列表
+```
 
 ## 开发计划
 
@@ -136,21 +194,5 @@ GET /api/v1/soups/view-status
    - [ ] 添加收藏功能
    - [ ] 支持分享功能
    - [ ] 添加用户反馈
-
-## 注意事项
-
-1. 组件使用
-   - 确保正确配置组件属性
-   - 注意处理动画完成事件
-   - 合理使用静态模式
-
-2. 数据处理
-   - 使用 soupId 传递数据
-   - 处理数据加载失败情况
-   - 注意数据格式完整性
-
-3. 性能优化
-   - 合理使用静态模式
-   - 避免频繁更新数据
-   - 及时清理组件资源
+   - [ ] 社区互动功能
 

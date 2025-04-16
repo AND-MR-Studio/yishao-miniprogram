@@ -5,6 +5,27 @@
   width: 100%;
   min-height: 100vh;
   background-color: #061429;
+  position: relative; /* 确保定位正确 */
+}
+
+/* 汤面显示区域在对话层后面时的样式 */
+.behind-dialog {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10; /* 较低的z-index，保证在dialog组件下方 */
+  opacity: 0.3; /* 默认半透明 */
+  transition: opacity 0.3s ease;
+  pointer-events: none; /* 防止穿透 */
+}
+
+/* 当对话组件处于偷看状态时，汤面显示区域需要提升z-index和透明度 */
+.soup-display-component.is-peeking {
+  z-index: 1001 !important; /* 确保在偷看时显示在最上层 */
+  opacity: 1 !important; /* 完全不透明 */
+  pointer-events: auto !important; /* 允许交互 */
 }
 
 /* 按钮容器样式 */
@@ -16,12 +37,9 @@
   position: fixed;
   gap: 27rpx;
   width: 100%;
-  /* 使用更灵活的定位方式，避免固定高度和底部距离 */
-  /* height: 219rpx; 删除固定高度 */
   align-self: stretch;
   order: 2;
   flex-grow: 0;
-  /* 替换为更动态的计算方式，确保不与tabbar重叠 */
   bottom: calc(110rpx + env(safe-area-inset-bottom) + 60rpx); /* tabbar高度 + 安全区域 + 间距 */
   left: 0;
   z-index: 998; 
@@ -32,28 +50,18 @@
 .button-container .btn-unlight {
   width: 50% !important;
   min-width: 300rpx !important;
-  /* 增加过渡时间以使效果更明显 */
-  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
 }
 
-/* 按钮动画控制 */
-.button-container .start-button,
-.button-container .next-button {
-  opacity: 0;
-  transform: translateY(100%);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
 
-/* 显示按钮动画 - 开始喝汤按钮 */
-.button-container.show-buttons .start-button {
-  opacity: 1;
-  transform: translateY(0);
-  transition-delay: 0.3s;
-}
-
-/* 显示按钮动画 - 下一个按钮 */
-.button-container.show-buttons .next-button {
-  opacity: 1;
-  transform: translateY(0);
-  transition-delay: 0.6s;
+/* 输入栏样式 */
+.input-bar {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom));
+  left: 0;
+  width: 100%;
+  z-index: 1002; /* 确保在汤面显示层之上 */
+  background-color: #061429;
+  padding: 20rpx;
+  box-sizing: border-box;
+  pointer-events: auto; /* 确保可以接收事件 */
 }

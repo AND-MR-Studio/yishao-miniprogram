@@ -34,6 +34,11 @@ Component({
     titleStyle: {
       type: String,
       value: ''
+    },
+    // 当前汤面ID
+    soupId: {
+      type: String,
+      value: ''
     }
   },
 
@@ -60,7 +65,23 @@ Component({
   methods: {
     // 处理点击左侧图标
     onClickLeft() {
-      // 跳转到首页
+      // 获取当前页面实例
+      const pages = getCurrentPages();
+      const currentPage = pages[pages.length - 1];
+      
+      // 如果在喝汤页面
+      if (currentPage.route === 'pages/index/index') {
+        // 如果不是viewing状态，则回到viewing状态
+        if (currentPage.data.pageState !== 'viewing') {
+          currentPage.setData({
+            pageState: 'viewing',
+            showButtons: true
+          });
+          return;
+        }
+      }
+      
+      // 其他情况跳转到首页
       wx.switchTab({
         url: '/pages/index/index'
       });
@@ -79,6 +100,7 @@ Component({
     },
     
     onSettingClose() {
+      console.log('关闭设置面板');
       this.setData({
         showSettingPanel: false
       });
@@ -105,6 +127,12 @@ Component({
     onAbout() {
       // 触发关于我们事件
       this.triggerEvent('about');
+    },
+    
+    // 处理放弃汤面事件
+    onAbandon() {
+      // 触发放弃汤面事件给页面处理
+      this.triggerEvent('abandon');
     }
   }
 })

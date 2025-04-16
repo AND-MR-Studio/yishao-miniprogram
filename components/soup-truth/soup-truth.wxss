@@ -1,0 +1,139 @@
+/* components/soup-truth/soup-truth.wxss */
+
+/* 汤底容器 */
+.soup-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 300rpx 0 0;
+  width: 100%;
+  min-height: 443rpx;
+  position: fixed;
+  box-sizing: border-box;
+  will-change: transform;
+}
+
+/* 加载中样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400rpx;
+  width: 100%;
+}
+
+.loading-text {
+  text-align: center;
+}
+
+.blink-animation {
+  animation: blink 1.5s infinite ease-in-out;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* 汤底内容区样式 */
+.soup-content {
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--spacing-md, 20rpx) 0;
+  margin-bottom: var(--spacing-md, 20rpx);
+  min-height: 200px;
+  max-height: 335px;
+  position: relative;
+  transition: all var(--transition-duration, 0.3s) var(--transition-timing, ease);
+  will-change: transform, opacity;
+}
+
+/* 文本行容器 */
+.text-line-container {
+  width: fit-content;
+  margin-bottom: var(--spacing-lg, 30rpx);
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: calc(var(--font-size-md, 28rpx) * var(--line-height-md, 1.5));
+  width: 100%;
+  text-align: center;
+}
+
+/* 文本行基础样式 */
+.text-line {
+  display: inline-flex;
+  position: relative;
+  white-space: nowrap;
+  transform: translateZ(0);
+  font-size: var(--font-size-md, 28rpx);
+  margin: 0 auto;
+}
+
+/* 标题行样式 */
+.text-line-container.title-line .text-line {
+  font-size: var(--font-size-xl, 32rpx);
+  font-weight: var(--font-weight-bold, bold);
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+}
+
+/* 汤底内容行样式 */
+.text-line-container.truth-line .text-line {
+  font-size: 30rpx;
+  line-height: 2;
+  color: var(--color-text-primary, #333);
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
+  text-shadow: 1rpx 1rpx 0rpx rgba(33, 123, 15, 0.3);
+  padding: 40rpx 20rpx;
+}
+
+/* 标题容器 */
+.soup-title-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0rpx 0;
+  margin-bottom: 30rpx;
+  text-align: center;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* 标题样式 */
+.soup-title {
+  font-size: var(--font-size-xl, 32rpx);
+  font-weight: var(--font-weight-bold, bold);
+  color: var(--color-text-primary, #333);
+  text-align: center;
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+}
+
+/* 汤底容器 */
+.soup-truth-container {
+  width: 80%;
+  padding: 40rpx;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 12rpx;
+}
+
+/* 汤底文本样式 */
+.soup-truth {
+  font-size: 30rpx;
+  line-height: 2.2;
+  color: var(--color-text-primary, #333);
+  text-align: center;
+  display: block;
+  padding: 20rpx;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
+  text-shadow: 1rpx 1rpx 0rpx rgba(33, 123, 15, 0.3);
+}

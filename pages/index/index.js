@@ -1,138 +1,187 @@
 const soupService = require('../../utils/soupService');
+const dialogService = require('../../utils/dialogService');
+
+// 定义页面状态常量
+const PAGE_STATE = {
+  VIEWING: 'viewing',  // 看汤状态
+  DRINKING: 'drinking', // 喝汤状态(对话)
+  TRUTH: 'truth'       // 汤底状态
+};
 
 Page({
-
-  /**
-   * 页面的初始数据
-   */
   data: {
-    // 页面配置
-    soupConfig: {
-      soupId: 'default_001',  // 不指定则随机获取
-      autoPlay: true,  // 是否自动播放动画
-      staticMode: false  // 静态模式(不显示动画)
-    },
-    // 控制按钮显示
-    showButtons: false
+    pageState: PAGE_STATE.VIEWING,
+    currentSoupId: '',
+    isLoading: true,
+    showButtons: false,
+    isPeeking: false // 添加偷看状态
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad() {
-    // 初始化设置
-    this.initSettings();
-
-    // 确保按钮初始状态为隐藏
-    this.setData({
-      showButtons: false
-    });
-  },
-
-  // 初始化设置
-  initSettings() {
+  async onLoad() {
     try {
-      const settings = wx.getStorageSync('soupSettings') || {};
-      this.setData({
-        'soupConfig.staticMode': settings.skipAnimation || false
-      });
+      this.setData({ isLoading: true });
+      
+      if (!soupService.isDataLoaded) {
+        await soupService.loadSoupsAsync();
+      }
 
-      // 如果开启了静态模式，直接显示按钮
-      if (settings.skipAnimation) {
-        this.setData({
+      const soupData = await soupService.getSoupDataAsync();
+      if (soupData) {
+        this.setData({ 
+          currentSoupId: soupData.id,
+          isLoading: false,
           showButtons: true
         });
       }
-    } catch (e) {
-      console.error('读取设置失败:', e);
-    }
-  },
-
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow() {
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({
-        selected: 1
+    } catch (error) {
+      console.error('初始化汤面数据失败:', error);
+      wx.showToast({
+        title: '加载失败，请重试',
+        icon: 'none'
+      });
+      this.setData({ 
+        isLoading: false,
+        showButtons: false 
       });
     }
   },
 
   /**
-   * 用户点击右上角分享
+   * 切换到喝汤（对话）状态
    */
-  onShareAppMessage() {
-    // 分享逻辑
-    return {
-      title: '这个海龟汤太难了来帮帮我！',
-      path: '/pages/index/index'
-    };
+  switchToDrinking() {
+    if (!this.data.currentSoupId) return;
+    
+    // 立即完成打字机动画
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (soupDisplay) {
+      soupDisplay._showCompleteContent();
+    }
+    
+    this.setData({
+      pageState: PAGE_STATE.DRINKING,
+      showButtons: false
+    });
+
+    // 显示对话框
+    wx.nextTick(() => {
+      const dialog = this.selectComponent('#dialog');
+      if (dialog) {
+        dialog.setData({ visible: true });
+      }
+    });
+  },
+  
+  /**
+   * 切换到汤底状态
+   */
+  switchToTruth(soupId, truthData) {
+    if (!truthData && soupId) {
+      truthData = soupService.getSoupById(soupId);
+    }
+    
+    this.setData({
+      pageState: PAGE_STATE.TRUTH,
+      truthSoupId: soupId,
+      truthData: truthData
+    });
   },
 
   /**
-   * 汤面动画完成回调 - 控制按钮显示
+   * 处理对话组件关闭事件
    */
-  onSoupAnimationComplete() {
-    // 显示按钮
+  onDialogClose() {
     this.setData({
+      pageState: PAGE_STATE.VIEWING,
       showButtons: true
     });
+  },
+
+  /**
+   * 处理显示汤底事件
+   */
+  onShowTruth(e) {
+    const { soupId } = e.detail;
+    if (!soupId) return;
+    this.switchToTruth(soupId);
   },
 
   /**
    * 开始喝汤按钮点击事件
    */
   onStartSoup() {
-    // 获取当前汤面组件实例
-    const soupDisplay = this.selectComponent('#soupDisplay');
-    if (!soupDisplay) return;
+    if (this.data.pageState === PAGE_STATE.TRUTH) {
+      this.setData({ 
+        pageState: PAGE_STATE.VIEWING,
+        showButtons: true
+      });
+      return;
+    }
+    this.switchToDrinking();
+  },
 
-    // 跳转到对话页面
-    wx.navigateTo({
-      url: `/pages/dialog/dialog?soupId=${soupDisplay.data.soupId}`
-    });
+  /**
+   * 处理偷看事件
+   */
+  onPeekSoup(e) {
+    const { isPeeking } = e.detail;
+    this.setData({ isPeeking });
+    
+    // 更新汤面显示组件的偷看状态
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (soupDisplay) {
+      soupDisplay.setData({ isPeeking });
+    }
   },
 
   /**
    * 下一个按钮点击事件
    */
-  onNextSoup() {
-    // 隐藏按钮
-    this.setData({
-      showButtons: false
-    });
+  async onNextSoup() {
+    if (this.data.isLoading) return;
 
-    // 先刷新服务器数据，然后重置组件状态
-    const soupDisplay = this.selectComponent('#soupDisplay');
-    if (soupDisplay) {
-      // 先重置动画
-      soupDisplay.resetAnimation();
-      
-      // 刷新服务器数据后加载新的汤面
-      soupService.refreshSoups(() => {
-        soupDisplay.loadSoupData();
+    try {
+      const nextSoupId = soupService.getNextSoupId(this.data.currentSoupId);
+      if (!nextSoupId) {
+        throw new Error('无法获取下一个汤面');
+      }
+
+      // 更新汤面显示组件
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      if (soupDisplay) {
+        await new Promise((resolve) => {
+          soupDisplay.setData({ soupId: nextSoupId }, () => {
+            soupDisplay.loadSoupData();
+            resolve();
+          });
+        });
+      }
+
+      this.setData({ 
+        currentSoupId: nextSoupId,
+        pageState: PAGE_STATE.VIEWING
+      });
+    } catch (error) {
+      console.error('切换下一个汤面失败:', error);
+      wx.showToast({
+        title: '切换失败，请重试',
+        icon: 'none'
       });
     }
   },
 
-  /**
-   * 处理设置变化
-   */
-  handleSettingChange(e) {
-    const { type, value } = e.detail;
-    if (type === 'skipAnimation') {
-      // 更新静态模式
-      this.setData({
-        'soupConfig.staticMode': value
-      });
+  onShareAppMessage() {
+    return {
+      title: '这个海龟汤太难了来帮帮我！',
+      path: '/pages/index/index'
+    };
+  },
 
-      // 如果开启了跳过动画，直接显示按钮
-      if (value && !this.data.showButtons) {
-        this.setData({
-          showButtons: true
-        });
-      }
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
+      this.getTabBar().setData({
+        selected: 1  // 第二个tab是喝汤页面
+      })
     }
   }
 });

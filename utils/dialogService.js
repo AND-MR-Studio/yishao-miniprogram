@@ -1,82 +1,83 @@
-const { chatAPI } = require('../api');
-
 /**
  * 对话服务类
- * 处理与后端的对话交互，支持消息存储和加载
+ * 处理对话数据的本地存储与加载
  */
+const soupService = require('./soupService');
+
 class DialogService {
     constructor() {
         // 存储当前对话状态
         this._dialogState = {
-            soupId: '',
             messageDirty: false
+        };
+        
+        // 预设的回复选项
+        this._defaultReplies = [
+            '是', 
+            '否', 
+            '不确定'
+        ];
+        
+        // 特殊关键词处理
+        this._specialKeywords = {
+            '汤底': this._handleSoupBottomKeyword.bind(this)
         };
     }
 
     /**
-     * 发送普通对话消息
-     * @param {Object} params - 消息参数
-     * @returns {Promise} - 返回处理后的响应
+     * 获取初始化系统消息
+     * @returns {Array} 系统消息数组
      */
-    async sendMessage(params) {
-        try {
-            const response = await chatAPI.sendMessage(params);
-
-            // 转换为项目使用的消息格式 {type: 'normal', content: 'xxx'}
-            return {
-                type: 'normal',
-                content: this._formatResponseContent(response)
-            };
-        } catch (error) {
-            console.error('发送消息失败:', error);
-            wx.showToast({
-                title: '请求失败',
-                icon: 'none'
-            });
-            throw error;
-        }
+    getInitialSystemMessages() {
+        return [
+            {
+                type: 'system',
+                content: '欢迎来到一勺海龟汤。'
+            },
+            {
+                type: 'system',
+                content: '你需要通过提问来猜测谜底，'
+            },
+            {
+                type: 'system',
+                content: '我只会回答"是"、"否"或"不确定"。'
+            },
+            {
+                type: 'system',
+                content: '长按对话区域显示汤面。'
+            }
+        ];
+    }
+    
+    /**
+     * 合并初始系统消息与历史消息
+     * @param {Array} messages 历史消息数组
+     * @returns {Array} 合并后的消息数组
+     */
+    combineWithInitialMessages(messages) {
+        const initialMessages = this.getInitialSystemMessages();
+        const historyMessages = messages || [];
+        
+        // 过滤掉历史消息中的系统消息，避免重复
+        const filteredMessages = historyMessages.filter(msg => msg.type !== 'system');
+        
+        // 合并初始系统消息和过滤后的历史消息
+        return [...initialMessages, ...filteredMessages];
     }
 
     /**
-     * 格式化响应内容
-     * @param {Object} response - API返回的原始响应
-     * @returns {String} - 格式化后的响应内容
-     * @private
+     * 生成一个简单的回复
+     * @returns {Object} 回复消息对象
      */
-    _formatResponseContent(response) {
-        // 根据API实际返回格式，提取文本内容
-        if (response && typeof response === 'object') {
-            if (response.content) return response.content;
-            if (response.message) return response.message;
-            if (response.text) return response.text;
-            if (response.data && response.data.content) return response.data.content;
-        }
-
-        // 如果是字符串，直接返回
-        if (typeof response === 'string') return response;
-
-        // 最后尝试将整个响应转为字符串
-        try {
-            return JSON.stringify(response);
-        } catch (e) {
-            return '收到回复';
-        }
-    }
-
-    /**
-     * 设置当前对话的soupId
-     * @param {string} soupId 汤面ID
-     */
-    setCurrentSoupId(soupId) {
-        this._dialogState.soupId = soupId;
-    }
-
-    /**
-     * 获取当前对话的soupId
-     * @returns {string} 当前汤面ID
-     */
-    getCurrentSoupId() {
-        return this._dialogState.soupId;
+    generateReply() {
+        // 随机选择一个预设回复
+        const randomIndex = Math.floor(Math.random() * this._defaultReplies.length);
+        const replyContent = this._defaultReplies[randomIndex];
+        
+        return {
+            type: 'normal',
+            content: replyContent
+        };
     }
 
     /**
@@ -100,32 +101,28 @@ class DialogService {
      */
     resetDialogState() {
         this._dialogState = {
-            soupId: '',
             messageDirty: false
         };
     }
 
     /**
      * 获取存储的对话记录键
-     * @param {string} soupId 汤面ID，如果不提供则使用当前soupId
+     * @param {string} soupId 汤面ID
      * @returns {string} 存储键
      */
     getDialogStorageKey(soupId) {
-        const id = soupId || this._dialogState.soupId;
-        if (!id) return null;
-        return `dialog_messages_${id}`;
+        if (!soupId) return null;
+        return `dialog_messages_${soupId}`;
     }
 
     /**
      * 保存对话记录
-     * @param {string} soupId 汤面ID，如果不提供则使用当前soupId
+     * @param {string} soupId 汤面ID
      * @param {Array} messages 对话消息数组
      * @returns {boolean} 保存是否成功
      */
     saveDialogMessages(soupId, messages) {
-        const id = soupId || this._dialogState.soupId;
-
-        if (!id || !messages || !messages.length) {
+        if (!soupId || !messages || !messages.length) {
             console.error('DialogService: 保存对话记录失败: 无效的参数');
             return false;
         }
@@ -138,7 +135,7 @@ class DialogService {
             return true; // 仅有系统消息情况下，视为成功
         }
 
-        const storageKey = this.getDialogStorageKey(id);
+        const storageKey = this.getDialogStorageKey(soupId);
 
         try {
             // 存储过滤后的消息
@@ -156,16 +153,13 @@ class DialogService {
     /**
      * 加载对话记录
      * @param {Object} options 配置选项
-     * @param {string} options.soupId 汤面ID，如果不提供则使用当前soupId
+     * @param {string} options.soupId 汤面ID
      * @param {Function} options.success 成功回调函数，参数为加载的消息数组
      * @param {Function} options.fail 失败回调函数，参数为错误信息
      * @param {Function} options.complete 完成回调函数
      */
     loadDialogMessages(options = {}) {
         let { soupId, success, fail, complete } = options;
-
-        // 如果没有提供soupId，使用当前状态中的soupId
-        soupId = soupId || this._dialogState.soupId;
 
         if (!soupId) {
             const error = 'DialogService: 加载对话记录失败: 缺少汤面ID';
@@ -202,14 +196,13 @@ class DialogService {
 
     /**
      * 删除对话记录
-     * @param {string} soupId 汤面ID，如果不提供则使用当前soupId
+     * @param {string} soupId 汤面ID
      * @returns {boolean} 删除是否成功
      */
     deleteDialogMessages(soupId) {
-        const id = soupId || this._dialogState.soupId;
-        if (!id) return false;
+        if (!soupId) return false;
 
-        const storageKey = this.getDialogStorageKey(id);
+        const storageKey = this.getDialogStorageKey(soupId);
         try {
             wx.removeStorageSync(storageKey);
             return true;
@@ -217,6 +210,89 @@ class DialogService {
             console.error(`DialogService: 删除对话记录失败:`, error);
             return false;
         }
+    }
+
+    /**
+     * 处理用户输入的消息
+     * @param {string} content 用户输入的内容
+     * @param {Array} currentMessages 当前消息列表
+     * @returns {Object} 处理结果 {isSpecial: boolean, messages: Array, reply: Object|null}
+     */
+    handleUserInput(content) {
+        if (!content || !content.trim()) {
+            return {
+                isSpecial: false,
+                messages: null,
+                reply: null
+            };
+        }
+        
+        const trimmedContent = content.trim();
+        
+        // 检查是否为特殊关键词
+        if (this._specialKeywords[trimmedContent]) {
+            return this._specialKeywords[trimmedContent](trimmedContent);
+        }
+        
+        // 不是特殊关键词，返回普通处理结果
+        return {
+            isSpecial: false,
+            messages: null,
+            reply: this.generateReply()
+        };
+    }
+    
+    /**
+     * 处理"汤底"关键词
+     * @param {string} content 用户输入内容
+     * @returns {Object} 处理结果
+     * @private
+     */
+    _handleSoupBottomKeyword(content) {
+        // 创建用户消息
+        const userMessage = {
+            type: 'user',
+            content: content
+        };
+        
+        // 创建特殊回复
+        const systemMessage = {
+            type: 'system',
+            content: '你喝到了汤底'
+        };
+        
+        return {
+            isSpecial: true,
+            userMessage: userMessage,
+            reply: systemMessage
+        };
+    }
+    
+    /**
+     * 发送消息并获取回复（模拟API请求）
+     * @param {Object} params 请求参数
+     * @returns {Promise<Object>} 回复消息的Promise
+     */
+    sendMessage(params) {
+        return new Promise((resolve) => {
+            const reply = this.generateReply();
+            resolve(reply);
+        });
+    }
+
+    /**
+     * 异步加载对话消息
+     * @param {string} soupId 汤面ID
+     * @returns {Promise<Array>} 消息数组Promise
+     */
+    loadDialogMessagesAsync(soupId) {
+        return new Promise((resolve, reject) => {
+            this.loadDialogMessages({
+                soupId: soupId,
+                success: (messages) => resolve(messages || []),
+                fail: (error) => reject(error)
+            });
+        });
     }
 }
 

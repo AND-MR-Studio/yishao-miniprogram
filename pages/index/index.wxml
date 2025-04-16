@@ -9,12 +9,17 @@
     <!-- 汤面显示区域 -->
     <soup-display
       id="soupDisplay"
-      soupId="{{soupConfig.soupId}}"
-      autoPlay="{{soupConfig.autoPlay}}"
-      staticMode="{{soupConfig.staticMode}}"
-      bind:animationComplete="onSoupAnimationComplete"
-      bind:loadFail="onSoupLoadFail"
+      soupId="{{currentSoupId}}"
+      class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}}"
+      wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
     ></soup-display>
+    
+    <!-- 汤底显示区域 -->
+    <soup-truth
+      id="soupTruth"
+      soupId="{{currentSoupId}}"
+      wx:if="{{pageState === 'truth'}}"
+    ></soup-truth>
     
     <!-- 设置卡片 -->
     <setting-card
@@ -32,7 +37,7 @@
         height="80rpx"
         bind:tap="onStartSoup" 
         class="start-button"
-        show="{{showButtons}}">
+        wx:if="{{showButtons}}">
       </custom-button>
       <custom-button 
         type="unlight" 
@@ -41,8 +46,30 @@
         height="80rpx"
         bind:tap="onNextSoup" 
         class="next-button"
-        show="{{showButtons}}">
+        wx:if="{{showButtons}}">
       </custom-button>
     </view>
   </view>
+  
+  <!-- 对话组件 -->
+  <dialog-component
+    id="dialog"
+    visible="{{pageState === 'drinking'}}"
+    soupId="{{currentSoupId}}"
+    bind:close="onDialogClose"
+    bind:showTruth="onShowTruth"
+    bind:peekSoup="onPeekSoup"
+  ></dialog-component>
+
+  <!-- 输入栏组件 -->
+  <input-bar
+    wx:if="{{pageState === 'drinking'}}"
+    class="input-bar"
+    inputValue="{{inputValue}}"
+    bind:input="onInputChange"
+    bind:send="onSendMessage"
+    bind:voiceStart="onVoiceStart"
+    bind:voiceEnd="onVoiceEnd"
+    bind:voiceCancel="onVoiceCancel"
+  ></input-bar>
 </view>
