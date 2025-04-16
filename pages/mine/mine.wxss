@@ -38,6 +38,7 @@
 
 .avatar-container {
   margin-right: 30rpx;
+  position: relative;
 }
 
 /* 头像按钮样式 */
@@ -49,6 +50,7 @@
   border-radius: 50% !important;
   border: none !important;
   line-height: 1 !important;
+  position: relative;
 }
 
 .avatar-wrapper::after {
@@ -61,6 +63,18 @@
   border-radius: 50%;
   border: 2px solid var(--color-primary);
   box-shadow: var(--glow-primary);
+}
+
+/* 头像提示文字 */
+.avatar-hint {
+  position: absolute;
+  bottom: -30rpx;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 20rpx;
+  color: var(--color-text-hint);
+  white-space: nowrap;
 }
 
 .user-info {
@@ -138,10 +152,29 @@
   font-size: var(--font-size-sm);
 }
 
-/* 退出登录按钮容器样式 */
+/* 登录/退出按钮容器样式 */
 .logout-container {
   padding: 20rpx 40rpx;
   margin-top: 80rpx;
+}
+
+/* 登录按钮样式 */
+.login-btn {
+  width: 100% !important;
+  height: 88rpx !important;
+  line-height: 88rpx !important;
+  font-size: var(--font-size-md) !important;
+  border-radius: var(--radius-md) !important;
+  font-weight: var(--font-weight-medium) !important;
+  background-color: var(--color-primary) !important;
+  border: none !important;
+  color: #ffffff !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+/* 按钮按压效果 */
+.login-btn:active {
+  opacity: 0.8;
 }
 
 /* 汤面列表弹窗样式 */
@@ -231,6 +264,20 @@
   color: var(--color-text-primary);
 }
 
+.soup-item-time {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-hint);
+  margin-top: 8rpx;
+  display: block;
+}
+
+.soup-list-divider {
+  padding: 20rpx 30rpx;
+  color: var(--color-text-hint);
+  font-size: var(--font-size-sm);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
 @keyframes scale-in {
   from {
     transform: scale(0.9);
@@ -246,21 +293,4 @@
   text-align: center;
   color: var(--color-text-hint);
   font-size: var(--font-size-md);
-}
-
-/* 汤面列表分割线 */
-.soup-list-divider {
-  padding: 20rpx 30rpx;
-  background-color: rgba(0, 0, 0, 0.2);
-  color: var(--color-text-hint);
-  font-size: var(--font-size-sm);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* 汤面项时间样式 */
-.soup-item-time {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-hint);
-  margin-top: 8rpx;
-  display: block;
 }
