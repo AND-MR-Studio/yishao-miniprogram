@@ -24,7 +24,8 @@
 }
 
 .loading-text {
-  composes: text-body-md;
+  font-size: var(--font-size-md, 28rpx);
+  line-height: var(--line-height-md, 1.5);
   text-align: center;
 }
 
@@ -34,42 +35,41 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--spacing-md) 0;
-  margin-bottom: var(--spacing-md);
+  padding: var(--spacing-md, 20rpx) 0;
+  margin-bottom: var(--spacing-md, 20rpx);
   min-height: 200px;
   max-height: 335px;
   position: relative;
-  transition: all var(--transition-duration) var(--transition-timing);
+  transition: all var(--transition-duration, 0.3s) var(--transition-timing, ease-in-out);
   will-change: transform, opacity;
 }
 
 /* 文本行容器 */
 .text-line-container {
   width: fit-content;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg, 30rpx);
   position: relative;
   display: flex;
   align-items: center;
-  min-height: calc(var(--font-size-md) * var(--line-height-md));
+  min-height: calc(var(--font-size-md, 28rpx) * var(--line-height-md, 1.5));
   width: 100%;
   text-align: center;
 }
 
 /* 文本行基础样式 */
 .text-line {
-  composes: text-mincho-md;
   display: inline-flex;
   position: relative;
   white-space: nowrap;
   transform: translateZ(0);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-md, 28rpx);
   margin: 0 auto;
 }
 
 /* 第一行样式（标题） */
 .text-line-container:first-child .text-line {
-  font-size: var(--font-size-xl);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-xl, 36rpx);
+  font-weight: var(--font-weight-bold, 700);
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
 }

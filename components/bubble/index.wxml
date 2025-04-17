@@ -1,0 +1,14 @@
+<!--components/bubble/index.wxml-->
+<view 
+  class="bubble {{isDragging ? 'dragging' : ''}} {{active ? 'active' : ''}} {{!isVisible ? 'hidden' : ''}} {{isAnimating ? 'animating' : ''}}"
+  animation-delay="{{animationDelay}}"
+  style="left:{{currentLeft}}px; top:{{currentTop}}px;"
+  bind:touchstart="onTouchStart"
+  bind:touchmove="onTouchMove"
+  bind:touchend="onTouchEnd"
+  bind:touchcancel="onTouchEnd"
+>
+  <view class="bubble-inner">
+    <text class="bubble-text">{{bubbleText}}</text>
+  </view>
+</view>

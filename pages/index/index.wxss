@@ -52,9 +52,8 @@
   min-width: 300rpx !important;
 }
 
-
 /* 输入栏样式 */
-.input-bar {
+.input-bar-container {
   position: fixed;
   bottom: calc(env(safe-area-inset-bottom));
   left: 0;
