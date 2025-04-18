@@ -69,7 +69,6 @@
       <view class="input-bar-wrapper">
         <input-bar
           bind:send="handleSend"
-          bind:voiceSend="handleVoiceSend"
           bind:voiceStart="handleVoiceStart"
           bind:voiceEnd="handleVoiceEnd"
           bind:voiceCancel="handleVoiceCancel"

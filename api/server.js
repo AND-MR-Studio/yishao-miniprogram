@@ -6,6 +6,7 @@ const path = require('path');
 // 导入服务路由
 const soupService = require('./soupService');
 const userService = require('./userService');
+const dialogService = require('./dialogService');
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(express.static(path.join(__dirname, '../html')));
 // 注册路由服务
 app.use('/api', soupService);
 app.use('/api', userService);
+app.use('/api', dialogService);
 
 // 端口配置
 const PORT = process.env.PORT || 8089;
@@ -26,4 +28,4 @@ const PORT = process.env.PORT || 8089;
 // 启动服务器
 app.listen(PORT, 'localhost', () => {
     console.log(`服务器运行在 http://localhost:${PORT}`);
-}); 
+});

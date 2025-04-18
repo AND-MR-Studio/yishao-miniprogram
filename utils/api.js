@@ -1,8 +1,8 @@
 // 后端服务器基础URL配置
 const BASE_URLS = {
   user: {
-    development: 'http://localhost:3000',
-    production: 'http://14.103.193.11:3000'  // 使用与soup服务相同的服务器地址
+    development: 'http://localhost:8081',
+    production: 'http://14.103.193.11:8081'  // 使用与soup服务相同的服务器地址
   },
   soup: {
     development: 'http://localhost:8081/api/soups',
