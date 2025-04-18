@@ -60,17 +60,8 @@
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
     bind:peekSoup="onPeekSoup"
+    bind:messageStatusChange="onMessageStatusChange"
   ></dialog-component>
 
-  <!-- 输入栏组件 -->
-  <input-bar
-    wx:if="{{pageState === 'drinking'}}"
-    class="input-bar"
-    inputValue="{{inputValue}}"
-    bind:input="onInputChange"
-    bind:send="onSendMessage"
-    bind:voiceStart="onVoiceStart"
-    bind:voiceEnd="onVoiceEnd"
-    bind:voiceCancel="onVoiceCancel"
-  ></input-bar>
+  <!-- 输入栏组件已移至dialog组件内部 -->
 </view>

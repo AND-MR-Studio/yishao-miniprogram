@@ -1,64 +1,27 @@
 /**
  * 对话服务类
- * 处理用户与系统对话的通信、存储与加载
+ * 处理对话数据的本地存储与加载
  */
-const { request } = require('./api');
-const login = require('./login');
+const soupService = require('./soupService');
 
 class DialogService {
     constructor() {
         // 存储当前对话状态
         this._dialogState = {
-            messageDirty: false,
-            currentSoupId: '',
-            currentDialogId: ''
+            messageDirty: false
         };
-
-        // 预设的回复选项（仅在无法连接服务器时使用）
+        
+        // 预设的回复选项
         this._defaultReplies = [
-            '是',
-            '否',
+            '是', 
+            '否', 
             '不确定'
         ];
-
+        
         // 特殊关键词处理
         this._specialKeywords = {
             '汤底': this._handleSoupBottomKeyword.bind(this)
         };
-    }
-
-    /**
-     * 设置当前汤面ID
-     * @param {string} soupId 汤面ID
-     */
-    setCurrentSoupId(soupId) {
-        if (!soupId) return;
-        this._dialogState.currentSoupId = soupId;
-    }
-
-    /**
-     * 获取当前汤面ID
-     * @returns {string} 当前汤面ID
-     */
-    getCurrentSoupId() {
-        return this._dialogState.currentSoupId;
-    }
-
-    /**
-     * 设置当前对话ID
-     * @param {string} dialogId 对话ID
-     */
-    setCurrentDialogId(dialogId) {
-        if (!dialogId) return;
-        this._dialogState.currentDialogId = dialogId;
-    }
-
-    /**
-     * 获取当前对话ID
-     * @returns {string} 当前对话ID
-     */
-    getCurrentDialogId() {
-        return this._dialogState.currentDialogId;
     }
 
     /**
@@ -85,7 +48,7 @@ class DialogService {
             }
         ];
     }
-
+    
     /**
      * 合并初始系统消息与历史消息
      * @param {Array} messages 历史消息数组
@@ -94,10 +57,10 @@ class DialogService {
     combineWithInitialMessages(messages) {
         const initialMessages = this.getInitialSystemMessages();
         const historyMessages = messages || [];
-
+        
         // 过滤掉历史消息中的系统消息，避免重复
         const filteredMessages = historyMessages.filter(msg => msg.type !== 'system');
-
+        
         // 合并初始系统消息和过滤后的历史消息
         return [...initialMessages, ...filteredMessages];
     }
@@ -110,7 +73,7 @@ class DialogService {
         // 随机选择一个预设回复
         const randomIndex = Math.floor(Math.random() * this._defaultReplies.length);
         const replyContent = this._defaultReplies[randomIndex];
-
+        
         return {
             type: 'normal',
             content: replyContent
@@ -138,9 +101,7 @@ class DialogService {
      */
     resetDialogState() {
         this._dialogState = {
-            messageDirty: false,
-            currentSoupId: '',
-            currentDialogId: ''
+            messageDirty: false
         };
     }
 
@@ -254,40 +215,33 @@ class DialogService {
     /**
      * 处理用户输入的消息
      * @param {string} content 用户输入的内容
-     * @returns {Object} 处理结果 {isSpecial: boolean, userMessage: Object, reply: Object|null}
+     * @param {Array} currentMessages 当前消息列表
+     * @returns {Object} 处理结果 {isSpecial: boolean, messages: Array, reply: Object|null}
      */
     handleUserInput(content) {
         if (!content || !content.trim()) {
             return {
                 isSpecial: false,
-                userMessage: null,
+                messages: null,
                 reply: null
             };
         }
-
+        
         const trimmedContent = content.trim();
-
+        
         // 检查是否为特殊关键词
         if (this._specialKeywords[trimmedContent]) {
             return this._specialKeywords[trimmedContent](trimmedContent);
         }
-
-        // 创建用户消息对象
-        const userMessage = {
-            id: `msg_${Date.now()}`,
-            type: 'user',
-            content: trimmedContent,
-            timestamp: Date.now()
-        };
-
+        
         // 不是特殊关键词，返回普通处理结果
         return {
             isSpecial: false,
-            userMessage: userMessage,
-            reply: null
+            messages: null,
+            reply: this.generateReply()
         };
     }
-
+    
     /**
      * 处理"汤底"关键词
      * @param {string} content 用户输入内容
@@ -297,81 +251,33 @@ class DialogService {
     _handleSoupBottomKeyword(content) {
         // 创建用户消息
         const userMessage = {
-            id: `msg_${Date.now()}`,
             type: 'user',
-            content: content,
-            timestamp: Date.now()
+            content: content
         };
-
+        
         // 创建特殊回复
         const systemMessage = {
-            id: `msg_${Date.now() + 1}`,
             type: 'system',
-            content: '你喝到了汤底',
-            timestamp: Date.now() + 1
+            content: '你喝到了汤底'
         };
-
+        
         return {
             isSpecial: true,
             userMessage: userMessage,
             reply: systemMessage
         };
     }
-
+    
     /**
-     * 发送消息到后端服务器并获取回复
+     * 发送消息并获取回复（模拟API请求）
      * @param {Object} params 请求参数
-     * @param {string} params.message 用户消息内容
-     * @param {string} params.soupId 汤面ID
-     * @param {string} params.dialogId 对话ID（可选）
      * @returns {Promise<Object>} 回复消息的Promise
      */
-    async sendMessage(params) {
-        // 获取用户信息
-        const userInfo = login.getUserInfo();
-        const userId = userInfo?.userId || userInfo?.openId || '';
-
-        // 获取汤面ID
-        const soupId = params.soupId || this.getCurrentSoupId();
-        if (!soupId) {
-            throw new Error('发送消息失败: 缺少汤面ID');
-        }
-
-        // 获取对话ID
-        const dialogId = params.dialogId || this.getCurrentDialogId();
-
-        try {
-            // 发送请求到后端
-            const response = await request({
-                url: '/api/dialog/send',
-                method: 'POST',
-                data: {
-                    userId: userId,
-                    soupId: soupId,
-                    dialogId: dialogId,
-                    message: params.message,
-                    timestamp: Date.now()
-                }
-            });
-
-            // 如果后端返回了对话ID，保存它
-            if (response.dialogId) {
-                this.setCurrentDialogId(response.dialogId);
-            }
-
-            // 返回回复消息
-            return {
-                id: `msg_${Date.now()}`,
-                type: 'normal',
-                content: response.reply || response.content,
-                timestamp: Date.now()
-            };
-        } catch (error) {
-            console.error('发送消息到服务器失败:', error);
-
-            // 如果服务器请求失败，使用本地生成的回复
-            return this.generateReply();
-        }
+    sendMessage(params) {
+        return new Promise((resolve) => {
+            const reply = this.generateReply();
+            resolve(reply);
+        });
     }
 
     /**

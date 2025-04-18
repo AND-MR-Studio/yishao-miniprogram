@@ -58,6 +58,9 @@ Page({
       soupDisplay._showCompleteContent();
     }
 
+    // 设置当前汤面ID到dialogService
+    dialogService.setCurrentSoupId(this.data.currentSoupId);
+
     this.setData({
       pageState: PAGE_STATE.DRINKING,
       showButtons: false
@@ -67,7 +70,14 @@ Page({
     wx.nextTick(() => {
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
-        dialog.setData({ visible: true });
+        // 先设置 soupId，再设置 visible，确保能正确加载对话历史
+        dialog.setData({
+          soupId: this.data.currentSoupId,
+          visible: true
+        });
+
+        // 记录日志，便于调试
+        console.log('切换到喝汤状态，当前汤面ID:', this.data.currentSoupId);
       }
     });
   },
@@ -151,10 +161,21 @@ Page({
         });
       }
 
+      // 更新对话组件的soupId
+      const dialog = this.selectComponent('#dialog');
+      if (dialog) {
+        dialog.setData({ soupId: nextSoupId });
+      }
+
+      // 更新dialogService中的soupId
+      dialogService.setCurrentSoupId(nextSoupId);
+
       this.setData({
         currentSoupId: nextSoupId,
         pageState: PAGE_STATE.VIEWING
       });
+
+      console.log('切换到下一个汤面，当前汤面ID:', nextSoupId);
     } catch (error) {
       console.error('切换下一个汤面失败:', error);
       wx.showToast({
@@ -177,5 +198,15 @@ Page({
         selected: 1  // 第二个tab是喝汤页面
       })
     }
+  },
+
+  /**
+   * 处理对话组件消息状态变化事件
+   */
+  onMessageStatusChange(e) {
+    const { status, message } = e.detail;
+    console.log(`消息状态变化: ${status}`, message);
+    // 可以根据消息状态变化执行相应操作
+    // 例如更新UI、播放提示音等
   }
 });

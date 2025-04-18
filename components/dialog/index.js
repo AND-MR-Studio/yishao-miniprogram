@@ -74,15 +74,27 @@ Component({
 
       if (visible) {
         this.showDialogAsync();
+
+        // 检查是否需要初始化消息
+        if (this._needInitMessages) {
+          this._needInitMessages = false;
+          this.initializeMessages();
+        }
       } else {
         this.hideDialogAsync();
       }
     },
 
     'soupId': function(newId, oldId) {
-      if (newId && newId !== oldId && this.data.visible) {
+      if (newId && newId !== oldId) {
         this.setData({ messages: [] });
-        this.initializeMessages();
+        // 如果组件可见，立即初始化消息
+        if (this.data.visible) {
+          this.initializeMessages();
+        } else {
+          // 如果组件不可见，标记需要在显示时初始化
+          this._needInitMessages = true;
+        }
       }
     }
   },
@@ -119,7 +131,11 @@ Component({
           isAnimating: false
         });
 
-        await this.initializeMessages();
+        // 如果消息为空或者标记了需要初始化，则初始化消息
+        if (this.data.messages.length === 0 || this._needInitMessages) {
+          this._needInitMessages = false;
+          await this.initializeMessages();
+        }
       } catch (error) {
         console.error('显示对话组件出错:', error);
         this.setData({ isAnimating: false });
@@ -153,13 +169,33 @@ Component({
 
     async initializeMessages() {
       try {
-        if (this.data.messages.length === 0) {
-          const initialMessages = dialogService.getInitialSystemMessages();
-          this.setData({
-            messages: initialMessages,
-            loading: false
-          });
+        // 设置当前汤面ID
+        dialogService.setCurrentSoupId(this.properties.soupId);
+
+        // 如果没有汤面ID，直接返回
+        if (!this.properties.soupId) {
+          console.warn('初始化消息失败: 缺少汤面ID');
+          this.setData({ loading: false });
+          return;
         }
+
+        // 尝试从本地存储加载历史消息
+        let historyMessages = [];
+        try {
+          console.log('尝试加载汤面ID为', this.properties.soupId, '的历史消息');
+          historyMessages = await dialogService.loadDialogMessagesAsync(this.properties.soupId);
+          console.log('加载到历史消息:', historyMessages.length, '条');
+        } catch (loadError) {
+          console.warn('加载历史消息失败:', loadError);
+        }
+
+        // 合并初始系统消息与历史消息
+        const initialMessages = dialogService.combineWithInitialMessages(historyMessages);
+
+        this.setData({
+          messages: initialMessages,
+          loading: false
+        });
       } catch (error) {
         console.error('初始化消息出错:', error);
         this.setData({ loading: false });
@@ -180,16 +216,28 @@ Component({
       const { value } = e.detail;
       if (!value || !value.trim()) return;
 
-      if (value.trim() === '汤底') {
-        this.triggerEvent('showTruth', { soupId: this.properties.soupId });
-        this.handleClose();
-        return;
+      // 防止重复发送
+      if (this.data.isAnimating) return;
+
+      // 设置当前汤面ID
+      dialogService.setCurrentSoupId(this.properties.soupId);
+
+      // 处理用户输入
+      const result = dialogService.handleUserInput(value);
+
+      // 如果是特殊关键词
+      if (result.isSpecial) {
+        if (result.userMessage.content === '汤底') {
+          this.triggerEvent('showTruth', { soupId: this.properties.soupId });
+          this.handleClose();
+          return;
+        }
       }
 
-      // 创建用户消息对象
+      // 获取用户消息
       const userMessage = {
-        type: 'user',
-        content: value.trim()
+        ...result.userMessage,
+        status: 'sending'
       };
 
       // 添加用户消息
@@ -198,58 +246,122 @@ Component({
         this.setData({ messages }, resolve);
       });
 
-      // 生成回复
-      const reply = dialogService.generateReply();
+      // 通知页面消息状态变化
+      this.triggerEvent('messageStatusChange', {
+        status: 'sending',
+        message: userMessage
+      });
 
-      if (!this.properties.enableTyping) {
-        // 不使用打字机效果时，直接添加完整回复
-        const finalMessages = [...messages, {
+      try {
+        // 发送消息到服务器并获取回复
+        const reply = await dialogService.sendMessage({
+          message: userMessage.content,
+          soupId: this.properties.soupId
+        });
+
+        const replyMessage = {
+          ...reply,
+          status: 'sent'
+        };
+
+        // 更新用户消息状态
+        this.updateMessageStatus(userMessage.id, 'sent');
+
+        if (!this.properties.enableTyping) {
+          // 不使用打字机效果时，直接添加完整回复
+          const finalMessages = [...messages, replyMessage];
+
+          this.setData({ messages: finalMessages });
+          this.triggerEvent('messagesChange', { messages: finalMessages });
+
+          // 通知页面消息状态变化
+          this.triggerEvent('messageStatusChange', {
+            status: 'sent',
+            message: replyMessage
+          });
+          return;
+        }
+
+        // 使用打字机效果
+        const updatedMessages = [...messages, {
+          id: replyMessage.id,
           type: 'normal',
-          content: reply.content
+          content: '',
+          status: 'typing',
+          timestamp: replyMessage.timestamp
         }];
 
-        this.setData({ messages: finalMessages });
+        this.setData({
+          messages: updatedMessages,
+          animatingMessageIndex: updatedMessages.length - 1,
+          isAnimating: true
+        });
+
+        // 启动打字机动画
+        await this.typeAnimator.start(replyMessage.content);
+
+        // 动画完成后更新消息内容
+        const finalMessages = [...updatedMessages];
+        finalMessages[finalMessages.length - 1] = replyMessage;
+
+        this.setData({
+          messages: finalMessages,
+          animatingMessageIndex: -1
+        });
+
         this.triggerEvent('messagesChange', { messages: finalMessages });
-        return;
+
+        // 通知页面消息状态变化
+        this.triggerEvent('messageStatusChange', {
+          status: 'sent',
+          message: replyMessage
+        });
+      } catch (error) {
+        console.error('发送消息失败:', error);
+
+        // 更新用户消息状态为错误
+        this.updateMessageStatus(userMessage.id, 'error');
+
+        // 通知页面消息状态变化
+        this.triggerEvent('messageStatusChange', {
+          status: 'error',
+          error: error.message
+        });
       }
+    },
 
-      // 使用打字机效果
-      const updatedMessages = [...messages, {
-        type: 'normal',
-        content: ''
-      }];
+    // 更新消息状态
+    updateMessageStatus(messageId, newStatus) {
+      const messages = [...this.data.messages];
+      const index = messages.findIndex(msg => msg.id === messageId);
 
-      this.setData({
-        messages: updatedMessages,
-        animatingMessageIndex: updatedMessages.length - 1,
-        isAnimating: true
-      });
+      if (index !== -1) {
+        messages[index] = {
+          ...messages[index],
+          status: newStatus
+        };
 
-      // 启动打字机动画
-      await this.typeAnimator.start(reply.content);
-
-      // 动画完成后更新消息内容
-      const finalMessages = [...updatedMessages];
-      finalMessages[finalMessages.length - 1] = {
-        type: 'normal',
-        content: reply.content
-      };
-
-      this.setData({
-        messages: finalMessages,
-        animatingMessageIndex: -1
-      });
-
-      this.triggerEvent('messagesChange', { messages: finalMessages });
+        this.setData({ messages });
+      }
     },
 
     async handleVoiceSend(e) {
       const { tempFilePath, duration } = e.detail;
+
+      // 防止重复发送
+      if (this.data.isAnimating) return;
+
+      // 设置当前汤面ID
+      dialogService.setCurrentSoupId(this.properties.soupId);
+
       // 处理语音消息
       const voiceMessage = {
+        id: `msg_${Date.now()}`,
         type: 'voice',
         content: tempFilePath,
-        duration: duration
+        duration: duration,
+        status: 'sending',
+        timestamp: Date.now()
       };
 
       // 添加语音消息
@@ -258,49 +370,90 @@ Component({
         this.setData({ messages }, resolve);
       });
 
-      // 生成回复
-      const reply = dialogService.generateReply();
+      // 通知页面消息状态变化
+      this.triggerEvent('messageStatusChange', {
+        status: 'sending',
+        message: voiceMessage
+      });
 
-      if (!this.properties.enableTyping) {
-        // 不使用打字机效果时，直接添加完整回复
-        const finalMessages = [...messages, {
+      try {
+        // 发送语音消息到服务器并获取回复
+        const reply = await dialogService.sendMessage({
+          message: '[voice]', // 语音消息标记
+          soupId: this.properties.soupId,
+          voiceFile: tempFilePath,
+          duration: duration
+        });
+
+        const replyMessage = {
+          ...reply,
+          status: 'sent'
+        };
+
+        // 更新语音消息状态
+        this.updateMessageStatus(voiceMessage.id, 'sent');
+
+        if (!this.properties.enableTyping) {
+          // 不使用打字机效果时，直接添加完整回复
+          const finalMessages = [...messages, replyMessage];
+
+          this.setData({ messages: finalMessages });
+          this.triggerEvent('messagesChange', { messages: finalMessages });
+
+          // 通知页面消息状态变化
+          this.triggerEvent('messageStatusChange', {
+            status: 'sent',
+            message: replyMessage
+          });
+          return;
+        }
+
+        // 使用打字机效果
+        const updatedMessages = [...messages, {
+          id: replyMessage.id,
           type: 'normal',
-          content: reply.content
+          content: '',
+          status: 'typing',
+          timestamp: replyMessage.timestamp
         }];
 
-        this.setData({ messages: finalMessages });
+        this.setData({
+          messages: updatedMessages,
+          animatingMessageIndex: updatedMessages.length - 1,
+          isAnimating: true
+        });
+
+        // 启动打字机动画
+        await this.typeAnimator.start(replyMessage.content);
+
+        // 动画完成后更新消息内容
+        const finalMessages = [...updatedMessages];
+        finalMessages[finalMessages.length - 1] = replyMessage;
+
+        this.setData({
+          messages: finalMessages,
+          animatingMessageIndex: -1
+        });
+
         this.triggerEvent('messagesChange', { messages: finalMessages });
-        return;
+
+        // 通知页面消息状态变化
+        this.triggerEvent('messageStatusChange', {
+          status: 'sent',
+          message: replyMessage
+        });
+      } catch (error) {
+        console.error('发送语音消息失败:', error);
+
+        // 更新语音消息状态为错误
+        this.updateMessageStatus(voiceMessage.id, 'error');
+
+        // 通知页面消息状态变化
+        this.triggerEvent('messageStatusChange', {
+          status: 'error',
+          error: error.message
+        });
       }
-
-      // 使用打字机效果
-      const updatedMessages = [...messages, {
-        type: 'normal',
-        content: ''
-      }];
-
-      this.setData({
-        messages: updatedMessages,
-        animatingMessageIndex: updatedMessages.length - 1,
-        isAnimating: true
-      });
-
-      // 启动打字机动画
-      await this.typeAnimator.start(reply.content);
-
-      // 动画完成后更新消息内容
-      const finalMessages = [...updatedMessages];
-      finalMessages[finalMessages.length - 1] = {
-        type: 'normal',
-        content: reply.content
-      };
-
-      this.setData({
-        messages: finalMessages,
-        animatingMessageIndex: -1
-      });
-
-      this.triggerEvent('messagesChange', { messages: finalMessages });
     },
 
     handleMessagesChange(e) {
@@ -308,6 +461,34 @@ Component({
       if (messages && messages.length) {
         this.setData({ messages });
       }
+    },
+
+    // 语音相关处理函数
+    handleVoiceStart() {
+      // 开始录音时的处理
+      console.log('开始录音');
+      this.triggerEvent('messageStatusChange', {
+        status: 'recording',
+        message: null
+      });
+    },
+
+    handleVoiceEnd() {
+      // 结束录音时的处理
+      console.log('结束录音');
+      this.triggerEvent('messageStatusChange', {
+        status: 'recordEnd',
+        message: null
+      });
+    },
+
+    handleVoiceCancel() {
+      // 取消录音时的处理
+      console.log('取消录音');
+      this.triggerEvent('messageStatusChange', {
+        status: 'recordCancel',
+        message: null
+      });
     },
 
     // 偷看相关功能
