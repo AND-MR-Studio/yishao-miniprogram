@@ -66,13 +66,15 @@
       </scroll-view>
 
       <!-- 输入栏组件 -->
-      <input-bar
-        bind:send="handleSend"
-        bind:voiceSend="handleVoiceSend"
-        bind:voiceStart="handleVoiceStart"
-        bind:voiceEnd="handleVoiceEnd"
-        bind:voiceCancel="handleVoiceCancel"
-      />
+      <view class="input-bar-wrapper">
+        <input-bar
+          bind:send="handleSend"
+          bind:voiceSend="handleVoiceSend"
+          bind:voiceStart="handleVoiceStart"
+          bind:voiceEnd="handleVoiceEnd"
+          bind:voiceCancel="handleVoiceCancel"
+        />
+      </view>
     </view>
   </view>
 </view>

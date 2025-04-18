@@ -12,7 +12,7 @@
   align-items: center;
   background: linear-gradient(to bottom, rgba(6, 20, 41, 0.95), rgba(6, 20, 41, 1));
   box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.2);
-  z-index: 1002;
+  z-index: 998;
 }
 
 .input-container {

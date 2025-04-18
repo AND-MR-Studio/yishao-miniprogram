@@ -68,11 +68,23 @@ Component({
       // 获取当前页面实例
       const pages = getCurrentPages();
       const currentPage = pages[pages.length - 1];
-      
+
       // 如果在喝汤页面
       if (currentPage.route === 'pages/index/index') {
-        // 如果不是viewing状态，则回到viewing状态
-        if (currentPage.data.pageState !== 'viewing') {
+        // 如果当前是喝汤状态，则触发对话框关闭事件
+        if (currentPage.data.pageState === 'drinking') {
+          // 获取对话组件并触发关闭事件
+          const dialog = currentPage.selectComponent('#dialog');
+          if (dialog) {
+            dialog.handleClose();
+          } else {
+            // 如果无法获取对话组件，直接调用页面的关闭事件处理函数
+            currentPage.onDialogClose();
+          }
+          return;
+        }
+        // 如果是汤底状态，直接返回查看状态
+        else if (currentPage.data.pageState === 'truth') {
           currentPage.setData({
             pageState: 'viewing',
             showButtons: true
@@ -80,13 +92,13 @@ Component({
           return;
         }
       }
-      
+
       // 其他情况跳转到首页
       wx.switchTab({
         url: '/pages/index/index'
       });
     },
-    
+
     // 处理点击右侧图标
     onClickRight() {
       // 显示设置面板
@@ -98,37 +110,37 @@ Component({
         showSettingPanel: true
       });
     },
-    
+
     onSettingClose() {
       console.log('关闭设置面板');
       this.setData({
         showSettingPanel: false
       });
     },
-    
+
     // 添加设置相关回调函数
     onSwitchChange(e) {
       const { type, value } = e.detail;
       // 触发事件给页面处理
       this.triggerEvent('settingchange', { type, value });
     },
-    
+
     onFontSizeChange(e) {
       const { size } = e.detail;
       // 触发事件给页面处理
       this.triggerEvent('fontsizechange', { size });
     },
-    
+
     onContact() {
       // 触发联系我们事件
       this.triggerEvent('contact');
     },
-    
+
     onAbout() {
       // 触发关于我们事件
       this.triggerEvent('about');
     },
-    
+
     // 处理放弃汤面事件
     onAbandon() {
       // 触发放弃汤面事件给页面处理

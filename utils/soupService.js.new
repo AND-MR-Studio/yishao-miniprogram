@@ -18,48 +18,14 @@ const soupService = {
     // 加载Promise缓存
     _loadingPromise: null,
 
-    // 最后一次加载数据的日期
-    _lastLoadDate: null,
-
     /**
      * 从服务器加载汤面ID列表
      * @returns {Promise<Array>} 返回包含汤面ID的Promise
      */
-    /**
-     * 检查是否需要重新加载数据
-     * 汤面数据每天只更新一次，所以只需要每天加载一次
-     * @returns {boolean} 是否需要重新加载
-     */
-    _needReload: function() {
-        // 如果没有加载过数据，需要加载
-        if (!this.isIdsLoaded || !this.soupIds || this.soupIds.length === 0) {
-            return true;
-        }
-
-        // 如果没有记录最后加载日期，需要加载
-        if (!this._lastLoadDate) {
-            return true;
-        }
-
-        // 获取当前日期
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const lastLoadDay = new Date(this._lastLoadDate.getFullYear(), this._lastLoadDate.getMonth(), this._lastLoadDate.getDate());
-
-        // 如果最后加载日期不是今天，需要重新加载
-        return today.getTime() > lastLoadDay.getTime();
-    },
-
     loadSoupIds: function() {
         // 如果已经在加载中，返回现有的Promise
         if (this._isLoading && this._loadingPromise) {
             return this._loadingPromise;
-        }
-
-        // 如果已经加载过数据且今天已经加载过，直接返回缓存的数据
-        if (this.isIdsLoaded && !this._needReload()) {
-            console.log('使用缓存的汤面ID列表，当前数量:', this.soupIds.length);
-            return Promise.resolve(this.soupIds);
         }
 
         // 标记为加载中
@@ -80,8 +46,6 @@ const soupService = {
                     // 只保存ID列表
                     this.soupIds = data.map(soup => soup.soupId || soup.id || soup._id);
                     this.isIdsLoaded = true;
-                    // 更新最后加载日期
-                    this._lastLoadDate = new Date();
                     console.log('更新ID列表成功，当前数量:', this.soupIds.length);
                 } else {
                     console.warn('服务器返回非预期数据格式');
@@ -211,37 +175,55 @@ const soupService = {
      */
     getRandomSoup: async function() {
         try {
-            console.log('从汤面ID列表中随机选择汤面');
+            console.log('从服务器获取随机汤面数据');
 
-            // 先获取所有汤面ID
-            if (!this.isIdsLoaded) {
-                await this.loadSoupIds();
-            }
+            // 直接使用服务器的随机接口
+            const response = await soupRequest({
+                url: '/random',
+                method: 'GET'
+            });
 
-            // 如果ID列表为空，返回null
-            if (!this.soupIds || this.soupIds.length === 0) {
-                console.warn('汤面ID列表为空');
-                return null;
-            }
-
-            // 随机选择一个ID
-            const randomIndex = Math.floor(Math.random() * this.soupIds.length);
-            const randomId = this.soupIds[randomIndex];
-
-            console.log('随机选择的汤面ID:', randomId);
-
-            // 获取该ID的汤面数据
-            const soupData = await this.getSoupById(randomId);
+            // 检查响应格式
+            const soupData = response.data?.data || response.data || response;
 
             if (!soupData) {
-                console.warn('获取随机汤面数据失败');
+                console.warn('服务器返回空数据');
                 return null;
             }
 
-            return soupData;
+            // 确保数据有id字段
+            return {
+                ...soupData,
+                id: soupData.id || soupData.soupId || soupData._id
+            };
         } catch (error) {
             console.error('获取随机汤面数据失败:', error);
-            return null;
+            
+            // 如果随机接口失败，尝试从ID列表中随机选择
+            try {
+                // 先获取所有汤面ID
+                if (!this.isIdsLoaded) {
+                    await this.loadSoupIds();
+                }
+
+                // 如果ID列表为空，返回null
+                if (!this.soupIds || this.soupIds.length === 0) {
+                    console.warn('汤面ID列表为空');
+                    return null;
+                }
+
+                // 随机选择一个ID
+                const randomIndex = Math.floor(Math.random() * this.soupIds.length);
+                const randomId = this.soupIds[randomIndex];
+
+                console.log('随机选择的汤面ID:', randomId);
+
+                // 获取该ID的汤面数据
+                return await this.getSoupById(randomId);
+            } catch (fallbackError) {
+                console.error('备用随机方法也失败:', fallbackError);
+                return null;
+            }
         }
     },
 
@@ -297,12 +279,6 @@ const soupService = {
         // 如果已经在加载中，返回现有的Promise
         if (this._isLoading && this._loadingPromise) {
             return this._loadingPromise;
-        }
-
-        // 如果今天已经加载过数据，且数据不为空，则不需要重新加载
-        if (!this._needReload() && this.soupIds && this.soupIds.length > 0) {
-            console.log('今天已经加载过汤面数据，不需要重新加载');
-            return Promise.resolve(this.soupIds);
         }
 
         console.log('刷新汤面ID列表');

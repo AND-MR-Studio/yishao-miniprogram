@@ -134,19 +134,30 @@ Component({
       try {
         let targetSoupId = this.data.currentSoupId || this.properties.soupId || '';
 
-        if (!soupService.isDataLoaded) {
-          await soupService.refreshSoupsAsync();
+        // 只在ID列表未加载时加载，不再每次都刷新
+        if (!soupService.isIdsLoaded) {
+          await soupService.loadSoupIds();
         }
 
-        let soupData = targetSoupId ? soupService.getSoupById(targetSoupId) : null;
+        // 使用异步方法获取汤面数据
+        let soupData = null;
+        if (targetSoupId) {
+          soupData = await soupService.getSoupById(targetSoupId);
+        }
 
-        if (!soupData && soupService.soups && soupService.soups.length > 0) {
-          soupData = soupService.soups[0];
+        // 如果没有找到指定ID的汤面，获取随机汤面
+        if (!soupData) {
+          soupData = await soupService.getRandomSoup();
+        }
+
+        // 如果仍然没有数据，显示错误
+        if (!soupData) {
+          throw new Error('无法获取有效的汤面数据');
         }
 
         this.setData({
           currentSoup: soupData,
-          currentSoupId: soupData.soupId || '',
+          currentSoupId: soupData.soupId || soupData.id || '',
           loading: false
         });
 

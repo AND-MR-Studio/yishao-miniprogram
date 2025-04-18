@@ -112,18 +112,18 @@ Component({
       }
 
       try {
+        // 初始化动画
         this.animation.translateY('100%').opacity(0).step({ duration: 0 });
-        await new Promise(resolve => {
-          this.setData({ animationData: this.animation.export() }, resolve);
-        });
+        this.setData({ animationData: this.animation.export() });
 
+        // 等待下一帧
         await new Promise(resolve => wx.nextTick(resolve));
 
+        // 执行显示动画
         this.animation.translateY(0).opacity(1).step();
-        await new Promise(resolve => {
-          this.setData({ animationData: this.animation.export() }, resolve);
-        });
+        this.setData({ animationData: this.animation.export() });
 
+        // 等待动画完成
         await new Promise(resolve => setTimeout(resolve, 300));
 
         this.setData({
@@ -131,7 +131,7 @@ Component({
           isAnimating: false
         });
 
-        // 如果消息为空或者标记了需要初始化，则初始化消息
+        // 如果消息为空或者需要初始化，则初始化消息
         if (this.data.messages.length === 0 || this._needInitMessages) {
           this._needInitMessages = false;
           await this.initializeMessages();
@@ -149,15 +149,17 @@ Component({
       if (!this.animation) return;
 
       try {
+        // 保存对话内容
         this.saveDialogContent();
         this.setData({ isFullyVisible: false });
 
+        // 执行隐藏动画
         this.animation.translateY('100%').opacity(0).step();
-        await new Promise(resolve => {
-          this.setData({ animationData: this.animation.export() }, resolve);
-        });
+        this.setData({ animationData: this.animation.export() });
 
+        // 等待动画完成
         await new Promise(resolve => setTimeout(resolve, 300));
+
         this.setData({ isAnimating: false });
         this.triggerEvent('close');
       } catch (error) {
@@ -170,12 +172,16 @@ Component({
     async initializeMessages() {
       try {
         // 设置当前汤面ID
-        dialogService.setCurrentSoupId(this.properties.soupId);
+        const soupId = this.properties.soupId;
+        dialogService.setCurrentSoupId(soupId);
 
-        // 如果没有汤面ID，直接返回
-        if (!this.properties.soupId) {
-          console.warn('初始化消息失败: 缺少汤面ID');
-          this.setData({ loading: false });
+        // 如果没有汤面ID，使用空消息列表
+        if (!soupId) {
+          console.log('没有汤面ID，使用空消息列表');
+          this.setData({
+            messages: [],
+            loading: false
+          });
           return;
         }
 
@@ -214,24 +220,20 @@ Component({
 
     async handleSend(e) {
       const { value } = e.detail;
-      if (!value || !value.trim()) return;
-
-      // 防止重复发送
-      if (this.data.isAnimating) return;
+      if (!value || !value.trim() || this.data.isAnimating) return;
 
       // 设置当前汤面ID
-      dialogService.setCurrentSoupId(this.properties.soupId);
+      const soupId = this.properties.soupId;
+      dialogService.setCurrentSoupId(soupId);
 
       // 处理用户输入
       const result = dialogService.handleUserInput(value);
 
       // 如果是特殊关键词
-      if (result.isSpecial) {
-        if (result.userMessage.content === '汤底') {
-          this.triggerEvent('showTruth', { soupId: this.properties.soupId });
-          this.handleClose();
-          return;
-        }
+      if (result.isSpecial && result.userMessage.content === '汤底') {
+        this.triggerEvent('showTruth', { soupId });
+        this.handleClose();
+        return;
       }
 
       // 获取用户消息
@@ -242,9 +244,7 @@ Component({
 
       // 添加用户消息
       const messages = [...this.data.messages, userMessage];
-      await new Promise(resolve => {
-        this.setData({ messages }, resolve);
-      });
+      this.setData({ messages });
 
       // 通知页面消息状态变化
       this.triggerEvent('messageStatusChange', {
@@ -256,7 +256,7 @@ Component({
         // 发送消息到服务器并获取回复
         const reply = await dialogService.sendMessage({
           message: userMessage.content,
-          soupId: this.properties.soupId
+          soupId
         });
 
         const replyMessage = {
@@ -270,11 +270,8 @@ Component({
         if (!this.properties.enableTyping) {
           // 不使用打字机效果时，直接添加完整回复
           const finalMessages = [...messages, replyMessage];
-
           this.setData({ messages: finalMessages });
           this.triggerEvent('messagesChange', { messages: finalMessages });
-
-          // 通知页面消息状态变化
           this.triggerEvent('messageStatusChange', {
             status: 'sent',
             message: replyMessage
@@ -310,19 +307,13 @@ Component({
         });
 
         this.triggerEvent('messagesChange', { messages: finalMessages });
-
-        // 通知页面消息状态变化
         this.triggerEvent('messageStatusChange', {
           status: 'sent',
           message: replyMessage
         });
       } catch (error) {
         console.error('发送消息失败:', error);
-
-        // 更新用户消息状态为错误
         this.updateMessageStatus(userMessage.id, 'error');
-
-        // 通知页面消息状态变化
         this.triggerEvent('messageStatusChange', {
           status: 'error',
           error: error.message
@@ -347,12 +338,11 @@ Component({
 
     async handleVoiceSend(e) {
       const { tempFilePath, duration } = e.detail;
-
-      // 防止重复发送
       if (this.data.isAnimating) return;
 
       // 设置当前汤面ID
-      dialogService.setCurrentSoupId(this.properties.soupId);
+      const soupId = this.properties.soupId;
+      dialogService.setCurrentSoupId(soupId);
 
       // 处理语音消息
       const voiceMessage = {
@@ -366,9 +356,7 @@ Component({
 
       // 添加语音消息
       const messages = [...this.data.messages, voiceMessage];
-      await new Promise(resolve => {
-        this.setData({ messages }, resolve);
-      });
+      this.setData({ messages });
 
       // 通知页面消息状态变化
       this.triggerEvent('messageStatusChange', {
@@ -380,7 +368,7 @@ Component({
         // 发送语音消息到服务器并获取回复
         const reply = await dialogService.sendMessage({
           message: '[voice]', // 语音消息标记
-          soupId: this.properties.soupId,
+          soupId,
           voiceFile: tempFilePath,
           duration: duration
         });
@@ -396,11 +384,8 @@ Component({
         if (!this.properties.enableTyping) {
           // 不使用打字机效果时，直接添加完整回复
           const finalMessages = [...messages, replyMessage];
-
           this.setData({ messages: finalMessages });
           this.triggerEvent('messagesChange', { messages: finalMessages });
-
-          // 通知页面消息状态变化
           this.triggerEvent('messageStatusChange', {
             status: 'sent',
             message: replyMessage
@@ -436,19 +421,13 @@ Component({
         });
 
         this.triggerEvent('messagesChange', { messages: finalMessages });
-
-        // 通知页面消息状态变化
         this.triggerEvent('messageStatusChange', {
           status: 'sent',
           message: replyMessage
         });
       } catch (error) {
         console.error('发送语音消息失败:', error);
-
-        // 更新语音消息状态为错误
         this.updateMessageStatus(voiceMessage.id, 'error');
-
-        // 通知页面消息状态变化
         this.triggerEvent('messageStatusChange', {
           status: 'error',
           error: error.message

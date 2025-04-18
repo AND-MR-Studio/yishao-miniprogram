@@ -21,11 +21,10 @@ Page({
     try {
       this.setData({ isLoading: true });
 
-      if (!soupService.isDataLoaded) {
-        await soupService.loadSoupsAsync();
-      }
+      // 在小程序初始化时加载汤面ID列表，每天只需要加载一次
+      await soupService.loadSoupIds();
 
-      const soupData = await soupService.getSoupDataAsync();
+      const soupData = await soupService.getSoupData();
       if (soupData) {
         this.setData({
           currentSoupId: soupData.id,
@@ -85,9 +84,9 @@ Page({
   /**
    * 切换到汤底状态
    */
-  switchToTruth(soupId, truthData) {
+  async switchToTruth(soupId, truthData) {
     if (!truthData && soupId) {
-      truthData = soupService.getSoupById(soupId);
+      truthData = await soupService.getSoupById(soupId);
     }
 
     this.setData({
@@ -145,7 +144,7 @@ Page({
     if (this.data.isLoading) return;
 
     try {
-      const nextSoupId = soupService.getNextSoupId(this.data.currentSoupId);
+      const nextSoupId = await soupService.getNextSoupId(this.data.currentSoupId);
       if (!nextSoupId) {
         throw new Error('无法获取下一个汤面');
       }

@@ -30,12 +30,12 @@ Page({
   async onLoad(options) {
     this.getUserInfo();
     this.getRemainingAnswers();
-    
+
     // 确保soupService已初始化
-    if (!soupService.isDataLoaded) {
-      await soupService.loadSoupsAsync();
+    if (!soupService.isIdsLoaded) {
+      await soupService.loadSoupIds();
     }
-    
+
     // 获取汤面列表
     await this._loadSoupList();
     // 获取用户汤面历史
@@ -116,7 +116,7 @@ Page({
       });
       return;
     }
-    
+
     try {
       // 检查是否已登录
       const isLoggedIn = wx.getStorageSync('userInfo');
@@ -128,10 +128,10 @@ Page({
       // 更新头像
       const userInfo = wx.getStorageSync('userInfo') || {};
       userInfo.avatarUrl = avatarUrl;
-      
+
       // 保存到本地存储
       wx.setStorageSync('userInfo', userInfo);
-      
+
       // 更新页面数据
       this.setData({
         userInfo: userInfo
@@ -179,13 +179,13 @@ Page({
 
               if (response.success) {
                 const { userInfo, openid } = response.data;
-                
+
                 // 保存用户信息到本地
                 const userData = {
                   ...userInfo,
                   openid
                 };
-                
+
                 wx.setStorageSync('userInfo', userData);
                 this.setData({
                   userInfo: userData,
@@ -328,13 +328,23 @@ Page({
       title: '加载中...',
       mask: true
     });
-    
+
     try {
-      const soups = await soupService.getAllSoupsAsync();
-      
+      // 获取所有汤面ID
+      const soupIds = await soupService.getAllSoupIds();
+
+      // 获取每个汤面的详细数据
+      const soups = [];
+      for (const id of soupIds) {
+        const soup = await soupService.getSoupById(id);
+        if (soup) {
+          soups.push(soup);
+        }
+      }
+
       // 隐藏加载提示
       wx.hideLoading();
-      
+
       if (Array.isArray(soups) && soups.length > 0) {
         this.setData({ soupList: soups });
       } else {
@@ -361,14 +371,14 @@ Page({
   _loadUserSoupHistory() {
     // 从本地存储获取用户记录
     const userSoupHistory = wx.getStorageSync('userSoupHistory') || [];
-    
+
     // 格式化时间
     userSoupHistory.forEach(item => {
       if (item.timestamp) {
         item.formattedTime = this._formatTime(item.timestamp);
       }
     });
-    
+
     this.setData({ userSoupHistory });
   },
 
@@ -380,31 +390,31 @@ Page({
    */
   _formatTime(timestamp) {
     if (!timestamp) return '';
-    
+
     const now = new Date();
     const date = new Date(timestamp);
     const diff = now - date; // 时间差(毫秒)
-    
+
     // 一分钟内
     if (diff < 60 * 1000) {
       return '刚刚';
     }
-    
+
     // 一小时内
     if (diff < 60 * 60 * 1000) {
       return Math.floor(diff / (60 * 1000)) + '分钟前';
     }
-    
+
     // 一天内
     if (diff < 24 * 60 * 60 * 1000) {
       return Math.floor(diff / (60 * 60 * 1000)) + '小时前';
     }
-    
+
     // 一周内
     if (diff < 7 * 24 * 60 * 60 * 1000) {
       return Math.floor(diff / (24 * 60 * 60 * 1000)) + '天前';
     }
-    
+
     // 其他情况显示日期
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -436,18 +446,18 @@ Page({
   handleSoupItemClick(e) {
     const { soupId } = e.currentTarget.dataset;
     if (!soupId) return;
-    
+
     // 关闭汤面列表弹窗
     this.closeSoupList();
-    
+
     // 记录用户选择的汤面到历史记录
     this._addToUserSoupHistory(soupId);
-    
+
     // 保存soupId到全局变量
     getApp().globalData = getApp().globalData || {};
     getApp().globalData.pendingSoupId = soupId;
     getApp().globalData.openDialogDirectly = true;
-    
+
     // 跳转到首页
     wx.switchTab({
       url: '/pages/index/index'
@@ -463,9 +473,9 @@ Page({
     if (!soupId) {
       return;
     }
-    
+
     const userSoupHistory = this.data.userSoupHistory || [];
-    
+
     // 如果已存在，则移除旧记录
     const index = userSoupHistory.findIndex(item => item.soupId === soupId);
     if (index > -1) {
@@ -474,10 +484,10 @@ Page({
 
     // 获取汤面信息
     const soupInfo = this.data.soupList.find(soup => soup.soupId === soupId);
-    
+
     if (soupInfo) {
       const timestamp = new Date().getTime();
-      
+
       // 添加到历史记录最前面
       userSoupHistory.unshift({
         soupId: soupId,
