@@ -11,10 +11,10 @@ const PAGE_STATE = {
 Page({
   data: {
     pageState: PAGE_STATE.VIEWING,
-    currentSoupId: '',
     isLoading: true,
     showButtons: false,
-    isPeeking: false // 添加偷看状态
+    isPeeking: false, // 添加偷看状态
+    showSetting: false // 设置面板显示状态
   },
 
   async onLoad() {
@@ -24,13 +24,35 @@ Page({
       // 在小程序初始化时加载汤面ID列表，每天只需要加载一次
       await soupService.loadSoupIds();
 
-      const soupData = await soupService.getSoupData();
-      if (soupData) {
-        this.setData({
-          currentSoupId: soupData.id,
-          isLoading: false,
-          showButtons: true
+      // 获取随机汤面数据
+      const soupData = await soupService.getRandomSoup();
+      if (!soupData) {
+        throw new Error('无法获取汤面数据');
+      }
+
+      // 更新页面状态
+      this.setData({
+        isLoading: false,
+        showButtons: true
+      });
+
+      // 获取用户设置
+      const settings = wx.getStorageSync('soupSettings') || {};
+      const skipAnimation = settings.skipAnimation || false;
+
+      // 更新汤面显示组件
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      if (soupDisplay) {
+        // 设置静态模式（根据用户设置）
+        soupDisplay.setData({
+          staticMode: skipAnimation,
+          autoPlay: !skipAnimation
         });
+
+        // 更新汤面数据
+        // 如果跳过动画，直接显示完整内容
+        // 否则显示打字机动画
+        soupDisplay.updateSoupData(soupData, skipAnimation);
       }
     } catch (error) {
       console.error('初始化汤面数据失败:', error);
@@ -49,17 +71,23 @@ Page({
    * 切换到喝汤（对话）状态
    */
   switchToDrinking() {
-    if (!this.data.currentSoupId) return;
+    // 如果已经在喝汤状态，不再重复切换
+    if (this.data.pageState === PAGE_STATE.DRINKING) return;
+
+    // 获取当前汤面ID
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (!soupDisplay) return;
+
+    const currentSoupId = soupDisplay.getCurrentSoupId();
+    if (!currentSoupId) return;
 
     // 立即完成打字机动画
-    const soupDisplay = this.selectComponent('#soupDisplay');
-    if (soupDisplay) {
-      soupDisplay._showCompleteContent();
-    }
+    soupDisplay.showCompleteContent();
 
     // 设置当前汤面ID到dialogService
-    dialogService.setCurrentSoupId(this.data.currentSoupId);
+    dialogService.setCurrentSoupId(currentSoupId);
 
+    // 先更新页面状态
     this.setData({
       pageState: PAGE_STATE.DRINKING,
       showButtons: false
@@ -69,14 +97,14 @@ Page({
     wx.nextTick(() => {
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
+        // 记录日志，便于调试
+        console.log('切换到喝汤状态，当前汤面ID:', currentSoupId);
+
         // 先设置 soupId，再设置 visible，确保能正确加载对话历史
         dialog.setData({
-          soupId: this.data.currentSoupId,
+          soupId: currentSoupId || '',
           visible: true
         });
-
-        // 记录日志，便于调试
-        console.log('切换到喝汤状态，当前汤面ID:', this.data.currentSoupId);
       }
     });
   },
@@ -142,36 +170,54 @@ Page({
    */
   async onNextSoup() {
     if (this.data.isLoading) return;
+    this.setData({ isLoading: true });
 
     try {
-      const nextSoupId = await soupService.getNextSoupId(this.data.currentSoupId);
+      // 获取当前汤面ID
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      const currentSoupId = soupDisplay ? soupDisplay.getCurrentSoupId() : this.data.currentSoupId;
+
+      // 获取下一个汤面ID
+      const nextSoupId = await soupService.getNextSoupId(currentSoupId);
       if (!nextSoupId) {
         throw new Error('无法获取下一个汤面');
       }
 
+      // 直接从服务器获取汤面数据
+      const soupData = await soupService.getSoupById(nextSoupId);
+      if (!soupData) {
+        throw new Error('无法获取汤面数据');
+      }
+
+      // 获取用户设置
+      const settings = wx.getStorageSync('soupSettings') || {};
+      const skipAnimation = settings.skipAnimation || false;
+
       // 更新汤面显示组件
-      const soupDisplay = this.selectComponent('#soupDisplay');
       if (soupDisplay) {
-        await new Promise((resolve) => {
-          soupDisplay.setData({ soupId: nextSoupId }, () => {
-            soupDisplay.loadSoupData();
-            resolve();
-          });
+        // 设置静态模式（根据用户设置）
+        soupDisplay.setData({
+          staticMode: skipAnimation,
+          autoPlay: !skipAnimation
         });
+
+        // 使用公开方法更新汤面数据
+        // 如果设置为跳过动画，则直接显示完整内容
+        soupDisplay.updateSoupData(soupData, skipAnimation);
       }
 
       // 更新对话组件的soupId
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
-        dialog.setData({ soupId: nextSoupId });
+        dialog.setData({ soupId: nextSoupId || '' });
       }
 
       // 更新dialogService中的soupId
       dialogService.setCurrentSoupId(nextSoupId);
 
       this.setData({
-        currentSoupId: nextSoupId,
-        pageState: PAGE_STATE.VIEWING
+        pageState: PAGE_STATE.VIEWING,
+        isLoading: false
       });
 
       console.log('切换到下一个汤面，当前汤面ID:', nextSoupId);
@@ -181,6 +227,7 @@ Page({
         title: '切换失败，请重试',
         icon: 'none'
       });
+      this.setData({ isLoading: false });
     }
   },
 
@@ -207,5 +254,55 @@ Page({
     console.log(`消息状态变化: ${status}`, message);
     // 可以根据消息状态变化执行相应操作
     // 例如更新UI、播放提示音等
+  },
+
+  /**
+   * 处理设置变更事件
+   */
+  handleSettingChange(e) {
+    const { type, value } = e.detail;
+    // 将设置保存到本地存储
+    try {
+      const settings = wx.getStorageSync('soupSettings') || {};
+      settings[type] = value;
+      wx.setStorageSync('soupSettings', settings);
+    } catch (error) {
+      console.error('保存设置失败:', error);
+    }
+
+    // 处理跳过动画设置
+    if (type === 'skipAnimation') {
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      if (soupDisplay) {
+        // 设置汤面组件的静态模式和自动播放属性
+        soupDisplay.setData({
+          staticMode: value,
+          autoPlay: !value
+        });
+
+        // 如果跳过动画开关打开，直接显示完整内容
+        if (value && soupDisplay.data.currentSoup) {
+          soupDisplay.showCompleteContent();
+        } else if (!value && soupDisplay.data.currentSoup) {
+          // 如果开关关闭，重置并开始动画
+          soupDisplay.resetAnimation();
+          soupDisplay.startAnimation();
+        }
+      }
+    }
+  },
+
+  /**
+   * 显示设置面板
+   */
+  showSetting() {
+    this.setData({ showSetting: true });
+  },
+
+  /**
+   * 关闭设置面板
+   */
+  onSettingClose() {
+    this.setData({ showSetting: false });
   }
 });

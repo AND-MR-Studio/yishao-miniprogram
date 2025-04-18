@@ -3,18 +3,18 @@
 <view class="input-area">
   <view class="input-container">
     <!-- 语音按钮 -->
-    <view class="voice-btn" 
-      catchtouchstart="handleVoiceStart" 
+    <view class="voice-btn"
+      catchtouchstart="handleVoiceStart"
       catchtouchend="handleVoiceEnd"
       catchtouchmove="handleVoiceMove"
-      catchtouchcancel="handleVoiceEnd"
+      catchtouchcancel="handleVoiceCancel"
       hover-class="voice-btn-hover">
       <text class="font_family icon-voice"></text>
     </view>
-    
+
     <!-- 输入框 -->
     <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}}">
-      <input class="input-field" 
+      <input class="input-field"
         value="{{inputValue}}"
         placeholder="输入你的问题......"
         placeholder-class="input-placeholder"
@@ -28,7 +28,7 @@
         focus="{{inputFocus}}"
         hidden="{{isRecording}}"
       />
-      
+
       <!-- 录音中UI -->
       <view class="recording-ui" wx:if="{{isRecording}}">
         <view class="recording-waves">

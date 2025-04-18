@@ -1,4 +1,5 @@
 /* components/soup-display/soup-display.wxss */
+@import "../../styles/animation.wxss";
 
 /* 汤面容器 */
 .soup-container {
@@ -31,7 +32,7 @@
 
 /* 汤面内容区样式 */
 .soup-content {
-  width: 90%;
+  width: 70%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -47,11 +48,11 @@
 /* 文本行容器 */
 .text-line-container {
   width: fit-content;
-  margin-bottom: var(--spacing-lg, 30rpx);
+  margin-bottom: var(--spacing-lg, 40rpx);
   position: relative;
   display: flex;
   align-items: center;
-  min-height: calc(var(--font-size-md, 28rpx) * var(--line-height-md, 1.5));
+  min-height: calc(var(--font-size-md, 28rpx) * var(--line-height-md, 1.8));
   width: 100%;
   text-align: center;
 }
@@ -59,11 +60,18 @@
 /* 文本行基础样式 */
 .text-line {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
   position: relative;
-  white-space: nowrap;
+  white-space: normal;
+  word-wrap: break-word;
+  word-break: break-all;
   transform: translateZ(0);
   font-size: var(--font-size-md, 28rpx);
+  line-height: 1.8;
   margin: 0 auto;
+  width: 100%;
+  text-align: center;
 }
 
 /* 第一行样式（标题） */
@@ -72,9 +80,20 @@
   font-weight: var(--font-weight-bold, 700);
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  white-space: nowrap;
 }
 
-/* 静态模式样式 */
+/* 标题字符间距 */
+.soup-container .text-line-container:first-child .char-typing {
+  letter-spacing: 4rpx;
+}
+
+/* 字符间距样式 - 不影响动画效果 */
+.soup-container .char-typing {
+  letter-spacing: 2rpx;
+}
+
+/* 静态模式样式 - 使用全局动画样式中的设置 */
 .soup-container.static-mode .char-typing {
   opacity: 1 !important;
   transform: none !important;

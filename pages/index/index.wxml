@@ -3,13 +3,13 @@
   <!-- 导航栏 -->
   <nav-bar
     bind:settingchange="handleSettingChange"
+    bind:close="onSettingClose"
   />
 
   <view class="container">
     <!-- 汤面显示区域 -->
     <soup-display
       id="soupDisplay"
-      soupId="{{currentSoupId}}"
       isPeeking="{{isPeeking}}"
       class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}}"
       wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
@@ -18,16 +18,12 @@
     <!-- 汤底显示区域 -->
     <soup-truth
       id="soupTruth"
-      soupId="{{currentSoupId}}"
+      soupId="{{truthSoupId || ''}}"
       wx:if="{{pageState === 'truth'}}"
     ></soup-truth>
 
-    <!-- 设置卡片 -->
-    <setting-card
-      show="{{showSetting}}"
-      bind:switchchange="handleSettingChange"
-      bind:close="onSettingClose"
-    ></setting-card>
+    <!-- 设置卡片已移至nav-bar组件中 -->
+    <!-- 不需要在这里使用setting-card组件 -->
 
     <!-- 按钮区域 -->
     <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
@@ -56,12 +52,10 @@
   <dialog-component
     id="dialog"
     visible="{{pageState === 'drinking'}}"
-    soupId="{{currentSoupId}}"
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
     bind:peekSoup="onPeekSoup"
     bind:messageStatusChange="onMessageStatusChange"
   ></dialog-component>
 
-  <!-- 输入栏组件已移至dialog组件内部 -->
 </view>

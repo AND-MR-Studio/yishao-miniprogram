@@ -110,6 +110,7 @@ Component({
         this.setData({
           checked: newValue
         });
+
         this.triggerEvent('change', {
           type: this.properties.dataType || 'switch',
           checked: newValue

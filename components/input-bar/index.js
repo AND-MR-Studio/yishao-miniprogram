@@ -16,10 +16,11 @@ Component({
    */
   data: {
     hasContent: false,
-    isVoiceMode: false,  // 是否处于语音模式
     isRecording: false,  // 是否正在录音
     isCancelled: false,  // 是否取消录音
-    touchStartY: 0,       // 记录触摸开始的Y坐标
+    touchStartY: 0,      // 记录触摸开始的Y坐标
+    touchStartTime: 0,   // 记录触摸开始的时间
+    minRecordDuration: 300, // 最短录音时间（毫秒）
     recordManager: null
   },
 
@@ -34,9 +35,38 @@ Component({
   lifetimes: {
     attached() {
       // 初始化录音管理器
-      this.initRecordManager();
+      const recordManager = wx.getRecorderManager();
+
+      // 录音开始事件
+      recordManager.onStart(() => {
+        console.log('录音开始');
+      });
+
+      // 录音停止事件
+      recordManager.onStop((res) => {
+        console.log('录音停止');
+        if (this.data.isRecording && !this.data.isCancelled) {
+          // 只有在录音状态且不是取消状态时才发送语音
+          this.triggerEvent('sendVoice', {
+            tempFilePath: res.tempFilePath,
+            duration: res.duration
+          });
+        }
+      });
+
+      // 录音错误事件
+      recordManager.onError((res) => {
+        console.error('录音错误:', res);
+        wx.showToast({
+          title: '录音失败',
+          icon: 'none'
+        });
+        this.resetRecordStatus();
+      });
+
+      this.setData({ recordManager });
     },
-    
+
     detached() {
       // 清理录音管理器
       if (this.data.recordManager) {
@@ -49,33 +79,13 @@ Component({
    * 组件的方法列表
    */
   methods: {
-    // 初始化录音管理器
-    initRecordManager() {
-      const recordManager = wx.getRecorderManager();
-      
-      recordManager.onStart(() => {
-        console.log('录音开始');
+    // 重置录音状态
+    resetRecordStatus() {
+      this.setData({
+        isRecording: false,
+        isCancelled: false
       });
-      
-      recordManager.onStop((res) => {
-        if (!this.data.isCancelled) {
-          // 录音结束，发送语音消息
-          this.triggerEvent('sendVoice', { 
-            tempFilePath: res.tempFilePath,
-            duration: res.duration 
-          });
-        }
-      });
-      
-      recordManager.onError((res) => {
-        console.error('录音错误:', res);
-        wx.showToast({
-          title: '录音失败',
-          icon: 'none'
-        });
-      });
-      
-      this.setData({ recordManager });
+      this.triggerEvent('voiceCancel');
     },
 
     // 处理输入事件
@@ -115,60 +125,51 @@ Component({
 
     // 处理语音按钮长按开始
     handleVoiceStart(e) {
+      // 记录触摸开始时间和位置
+      this.setData({
+        touchStartTime: Date.now(),
+        touchStartY: e.touches[0].clientY,
+        isRecording: true,
+        isCancelled: false
+      });
+
       // 检查录音权限
       wx.authorize({
         scope: 'scope.record',
         success: () => {
-          this.startRecording(e);
+          // 开始录音
+          const { recordManager } = this.data;
+          if (recordManager) {
+            recordManager.start({
+              duration: 60000, // 最长录音时间，单位ms
+              sampleRate: 44100,
+              numberOfChannels: 1,
+              encodeBitRate: 192000,
+              format: 'mp3'
+            });
+            this.triggerEvent('voiceStart');
+          }
         },
         fail: () => {
           wx.showToast({
             title: '需要录音权限',
             icon: 'none'
           });
-          // 授权失败时重置录音状态
-          this.setData({
-            isRecording: false,
-            isCancelled: false
-          });
+          this.resetRecordStatus();
         }
       });
-    },
-
-    // 开始录音
-    startRecording(e) {
-      this.setData({ 
-        touchStartY: e.touches[0].clientY,
-        isRecording: true,
-        isCancelled: false
-      });
-      
-      // 开始录音
-      const { recordManager } = this.data;
-      if (recordManager) {
-        recordManager.start({
-          duration: 60000, // 最长录音时间，单位ms
-          sampleRate: 44100,
-          numberOfChannels: 1,
-          encodeBitRate: 192000,
-          format: 'mp3'
-        });
-      }
-      
-      // 触发开始录音事件
-      this.triggerEvent('voiceStart');
     },
 
     // 处理语音按钮长按移动
     handleVoiceMove(e) {
       if (!this.data.isRecording) return;
-      
+
       const touchY = e.touches[0].clientY;
       const moveDistance = this.data.touchStartY - touchY;
-      
+
       // 向上移动超过50px时触发取消状态
       const isCancelled = moveDistance > 50;
-      
+
       if (isCancelled !== this.data.isCancelled) {
         this.setData({ isCancelled });
       }
@@ -177,37 +178,58 @@ Component({
     // 处理语音按钮长按结束
     handleVoiceEnd() {
       if (!this.data.isRecording) return;
-      
-      const { recordManager, isCancelled } = this.data;
-      this.setData({ 
-        isRecording: false,
-        isCancelled: false
-      });
-      
-      if (recordManager) {
-        if (isCancelled) {
+
+      const { recordManager, isCancelled, touchStartTime, minRecordDuration } = this.data;
+      const touchDuration = Date.now() - touchStartTime;
+
+      // 如果触摸时间太短，视为取消录音
+      const isShortTouch = touchDuration < minRecordDuration;
+
+      // 设置取消状态
+      if (isShortTouch || isCancelled) {
+        console.log('录音取消 - ' + (isShortTouch ? '触摸时间过短' : '用户主动取消'));
+        this.setData({
+          isRecording: false,
+          isCancelled: true
+        });
+
+        if (recordManager) {
           recordManager.stop();
-          this.triggerEvent('voiceCancel');
-        } else {
-          recordManager.stop();
-          this.triggerEvent('voiceEnd');
         }
+
+        this.triggerEvent('voiceCancel');
+      } else {
+        // 正常结束录音
+        console.log('录音结束 - 触摸时长:', touchDuration, 'ms');
+        this.setData({
+          isRecording: false,
+          isCancelled: false
+        });
+
+        if (recordManager) {
+          recordManager.stop();
+        }
+
+        this.triggerEvent('voiceEnd');
       }
     },
 
     // 处理语音按钮长按取消（触摸被打断）
     handleVoiceCancel() {
       if (!this.data.isRecording) return;
-      
+
       const { recordManager } = this.data;
+
+      console.log('录音被打断，已取消');
+      this.setData({
+        isRecording: false,
+        isCancelled: true
+      });
+
       if (recordManager) {
         recordManager.stop();
       }
-      
-      this.setData({ 
-        isRecording: false,
-        isCancelled: false
-      });
+
       this.triggerEvent('voiceCancel');
     }
   }

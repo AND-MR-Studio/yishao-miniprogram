@@ -121,6 +121,11 @@ Component({
     // 添加设置相关回调函数
     onSwitchChange(e) {
       const { type, value } = e.detail;
+
+      // 打印日志便于调试
+      console.log('nav-bar 接收到switchchange事件:', { type, value });
+      console.log('触发settingchange事件给页面');
+
       // 触发事件给页面处理
       this.triggerEvent('settingchange', { type, value });
     },

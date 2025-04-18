@@ -13,18 +13,6 @@ class DialogService {
             currentSoupId: '',
             currentDialogId: ''
         };
-
-        // 预设的回复选项（仅在无法连接服务器时使用）
-        this._defaultReplies = [
-            '是',
-            '否',
-            '不确定'
-        ];
-
-        // 特殊关键词处理
-        this._specialKeywords = {
-            '汤底': this._handleSoupBottomKeyword.bind(this)
-        };
     }
 
     /**
@@ -32,7 +20,8 @@ class DialogService {
      * @param {string} soupId 汤面ID
      */
     setCurrentSoupId(soupId) {
-        if (!soupId) return;
+        // 确保 soupId 不为 null 或 undefined
+        soupId = soupId || '';
         this._dialogState.currentSoupId = soupId;
     }
 
@@ -100,21 +89,6 @@ class DialogService {
 
         // 合并初始系统消息和过滤后的历史消息
         return [...initialMessages, ...filteredMessages];
-    }
-
-    /**
-     * 生成一个简单的回复
-     * @returns {Object} 回复消息对象
-     */
-    generateReply() {
-        // 随机选择一个预设回复
-        const randomIndex = Math.floor(Math.random() * this._defaultReplies.length);
-        const replyContent = this._defaultReplies[randomIndex];
-
-        return {
-            type: 'normal',
-            content: replyContent
-        };
     }
 
     /**
@@ -267,11 +241,6 @@ class DialogService {
 
         const trimmedContent = content.trim();
 
-        // 检查是否为特殊关键词
-        if (this._specialKeywords[trimmedContent]) {
-            return this._specialKeywords[trimmedContent](trimmedContent);
-        }
-
         // 创建用户消息对象
         const userMessage = {
             id: `msg_${Date.now()}`,
@@ -280,41 +249,11 @@ class DialogService {
             timestamp: Date.now()
         };
 
-        // 不是特殊关键词，返回普通处理结果
+        // 返回处理结果
         return {
             isSpecial: false,
             userMessage: userMessage,
             reply: null
-        };
-    }
-
-    /**
-     * 处理"汤底"关键词
-     * @param {string} content 用户输入内容
-     * @returns {Object} 处理结果
-     * @private
-     */
-    _handleSoupBottomKeyword(content) {
-        // 创建用户消息
-        const userMessage = {
-            id: `msg_${Date.now()}`,
-            type: 'user',
-            content: content,
-            timestamp: Date.now()
-        };
-
-        // 创建特殊回复
-        const systemMessage = {
-            id: `msg_${Date.now() + 1}`,
-            type: 'system',
-            content: '你喝到了汤底',
-            timestamp: Date.now() + 1
-        };
-
-        return {
-            isSpecial: true,
-            userMessage: userMessage,
-            reply: systemMessage
         };
     }
 
@@ -332,7 +271,7 @@ class DialogService {
         const userId = userInfo?.userId || userInfo?.openId || '';
 
         // 获取汤面ID
-        const soupId = params.soupId || this.getCurrentSoupId();
+        const soupId = params.soupId || this.getCurrentSoupId() || '';
         if (!soupId) {
             throw new Error('发送消息失败: 缺少汤面ID');
         }
@@ -368,9 +307,7 @@ class DialogService {
             };
         } catch (error) {
             console.error('发送消息到服务器失败:', error);
-
-            // 如果服务器请求失败，使用本地生成的回复
-            return this.generateReply();
+            throw error; // 将错误向上传递，让调用者处理
         }
     }
 

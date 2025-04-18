@@ -86,14 +86,29 @@ Component({
     },
 
     'soupId': function(newId, oldId) {
+      // 确保 newId 不为 null 或 undefined
+      newId = newId || '';
+      oldId = oldId || '';
+
+      // 如果当前汤面ID与新设置的ID相同，不需要重新初始化
       if (newId && newId !== oldId) {
-        this.setData({ messages: [] });
-        // 如果组件可见，立即初始化消息
-        if (this.data.visible) {
-          this.initializeMessages();
+        // 检查dialogService中的当前汤面ID是否与新ID相同
+        const currentServiceId = dialogService.getCurrentSoupId();
+
+        // 如果新ID与datalogService中的ID不同，才需要重新初始化
+        if (newId !== currentServiceId) {
+          console.log('汤面ID变化，需要重新初始化消息，新ID:', newId, '旧ID:', currentServiceId);
+          this.setData({ messages: [] });
+
+          // 如果组件可见，立即初始化消息
+          if (this.data.visible) {
+            this.initializeMessages();
+          } else {
+            // 如果组件不可见，标记需要在显示时初始化
+            this._needInitMessages = true;
+          }
         } else {
-          // 如果组件不可见，标记需要在显示时初始化
-          this._needInitMessages = true;
+          console.log('汤面ID与datalogService中的ID相同，不需要重新初始化');
         }
       }
     }
@@ -171,9 +186,15 @@ Component({
 
     async initializeMessages() {
       try {
-        // 设置当前汤面ID
-        const soupId = this.properties.soupId;
-        dialogService.setCurrentSoupId(soupId);
+        // 获取当前汤面ID
+        const soupId = this.properties.soupId || '';
+        const currentServiceId = dialogService.getCurrentSoupId();
+
+        // 只有当ID与datalogService中的ID不同时，才需要重新设置
+        if (soupId !== currentServiceId) {
+          console.log('设置当前汤面ID:', soupId);
+          dialogService.setCurrentSoupId(soupId);
+        }
 
         // 如果没有汤面ID，使用空消息列表
         if (!soupId) {
@@ -188,8 +209,8 @@ Component({
         // 尝试从本地存储加载历史消息
         let historyMessages = [];
         try {
-          console.log('尝试加载汤面ID为', this.properties.soupId, '的历史消息');
-          historyMessages = await dialogService.loadDialogMessagesAsync(this.properties.soupId);
+          console.log('尝试加载汤面ID为', soupId, '的历史消息');
+          historyMessages = await dialogService.loadDialogMessagesAsync(soupId);
           console.log('加载到历史消息:', historyMessages.length, '条');
         } catch (loadError) {
           console.warn('加载历史消息失败:', loadError);
@@ -223,7 +244,7 @@ Component({
       if (!value || !value.trim() || this.data.isAnimating) return;
 
       // 设置当前汤面ID
-      const soupId = this.properties.soupId;
+      const soupId = this.properties.soupId || '';
       dialogService.setCurrentSoupId(soupId);
 
       // 处理用户输入
@@ -341,7 +362,7 @@ Component({
       if (this.data.isAnimating) return;
 
       // 设置当前汤面ID
-      const soupId = this.properties.soupId;
+      const soupId = this.properties.soupId || '';
       dialogService.setCurrentSoupId(soupId);
 
       // 处理语音消息
