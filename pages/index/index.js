@@ -20,14 +20,14 @@ Page({
   async onLoad() {
     try {
       this.setData({ isLoading: true });
-      
+
       if (!soupService.isDataLoaded) {
         await soupService.loadSoupsAsync();
       }
 
       const soupData = await soupService.getSoupDataAsync();
       if (soupData) {
-        this.setData({ 
+        this.setData({
           currentSoupId: soupData.id,
           isLoading: false,
           showButtons: true
@@ -39,9 +39,9 @@ Page({
         title: '加载失败，请重试',
         icon: 'none'
       });
-      this.setData({ 
+      this.setData({
         isLoading: false,
-        showButtons: false 
+        showButtons: false
       });
     }
   },
@@ -51,13 +51,13 @@ Page({
    */
   switchToDrinking() {
     if (!this.data.currentSoupId) return;
-    
+
     // 立即完成打字机动画
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (soupDisplay) {
       soupDisplay._showCompleteContent();
     }
-    
+
     this.setData({
       pageState: PAGE_STATE.DRINKING,
       showButtons: false
@@ -71,7 +71,7 @@ Page({
       }
     });
   },
-  
+
   /**
    * 切换到汤底状态
    */
@@ -79,7 +79,7 @@ Page({
     if (!truthData && soupId) {
       truthData = soupService.getSoupById(soupId);
     }
-    
+
     this.setData({
       pageState: PAGE_STATE.TRUTH,
       truthSoupId: soupId,
@@ -111,7 +111,7 @@ Page({
    */
   onStartSoup() {
     if (this.data.pageState === PAGE_STATE.TRUTH) {
-      this.setData({ 
+      this.setData({
         pageState: PAGE_STATE.VIEWING,
         showButtons: true
       });
@@ -126,12 +126,6 @@ Page({
   onPeekSoup(e) {
     const { isPeeking } = e.detail;
     this.setData({ isPeeking });
-    
-    // 更新汤面显示组件的偷看状态
-    const soupDisplay = this.selectComponent('#soupDisplay');
-    if (soupDisplay) {
-      soupDisplay.setData({ isPeeking });
-    }
   },
 
   /**
@@ -157,7 +151,7 @@ Page({
         });
       }
 
-      this.setData({ 
+      this.setData({
         currentSoupId: nextSoupId,
         pageState: PAGE_STATE.VIEWING
       });

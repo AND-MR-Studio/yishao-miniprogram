@@ -4,6 +4,6 @@
     "soup-display": "/components/soup-display/soup-display",
     "soup-truth": "/components/soup-truth/soup-truth",
     "custom-button": "/components/button/index",
-    "dialog-component": "/pages/dialog/dialog"
+    "dialog-component": "/components/dialog/index"
   }
 }

@@ -19,6 +19,10 @@ Component({
     staticMode: {
       type: Boolean,
       value: false
+    },
+    isPeeking: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -38,7 +42,7 @@ Component({
     },
     'staticMode'(staticMode) {
       if (!this.data.currentSoup) return;
-      
+
       if (staticMode) {
         this._showCompleteContent();
       } else if (this.data.autoPlay) {
@@ -61,12 +65,12 @@ Component({
       this._isLoading = false;
       this._isAttached = true;
       this._initTypeAnimator();
-      
+
       const initialSoupId = this.properties.soupId;
       if (initialSoupId) {
         this.data.currentSoupId = initialSoupId;
       }
-      
+
       wx.nextTick(() => {
         if (!this.data.currentSoup && this._isAttached) {
           this.loadSoupData();
@@ -100,12 +104,12 @@ Component({
 
     _formatSoupContent(soup) {
       if (!soup) return [];
-      
+
       const lines = [];
       if (soup.title) {
         lines.push(soup.title);
       }
-      
+
       if (soup.contentLines && Array.isArray(soup.contentLines)) {
         lines.push(...soup.contentLines.map(line => String(line)));
       }
@@ -116,26 +120,26 @@ Component({
           lines.push(...soup.content.map(line => String(line)));
         }
       }
-      
+
       return lines;
     },
 
     async loadSoupData() {
       if (!this._isAttached || this._isLoading) return;
-      
+
       this._isLoading = true;
       this.setData({ loading: true });
       this.triggerEvent('loadStart');
 
       try {
         let targetSoupId = this.data.currentSoupId || this.properties.soupId || '';
-        
+
         if (!soupService.isDataLoaded) {
           await soupService.refreshSoupsAsync();
         }
-        
+
         let soupData = targetSoupId ? soupService.getSoupById(targetSoupId) : null;
-        
+
         if (!soupData && soupService.soups && soupService.soups.length > 0) {
           soupData = soupService.soups[0];
         }

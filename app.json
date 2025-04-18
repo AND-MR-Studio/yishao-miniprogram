@@ -1,7 +1,6 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/dialog/dialog",
     "pages/gensoup/gensoup",
     "pages/mine/mine",
     "components/soup-display/soup-display"
@@ -33,7 +32,8 @@
   },
   "style": "v2",
   "usingComponents": {
-    "nav-bar": "/components/nav-bar/index"
+    "nav-bar": "/components/nav-bar/index",
+    "dialog": "/components/dialog/index"
   },
    "lazyCodeLoading": "requiredComponents"
 }

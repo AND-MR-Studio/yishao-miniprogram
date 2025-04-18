@@ -1,31 +1,31 @@
 <!--components/soup-display/soup-display.wxml-->
-<view 
-  class="soup-container {{staticMode ? 'static-mode' : ''}}" 
+<view
+  class="soup-container {{staticMode ? 'static-mode' : ''}} {{isPeeking ? 'is-peeking' : ''}}"
   aria-busy="{{loading}}"
 >
   <!-- 加载中状态 -->
-  <view 
-    class="loading-container" 
+  <view
+    class="loading-container"
     wx:if="{{loading}}"
     aria-live="polite"
   >
     <text class="loading-text blink-animation">汤面加载中...</text>
   </view>
-  
+
   <!-- 汤面内容区域 -->
   <block wx:else>
     <view class="soup-content">
       <block wx:for="{{displayLines}}" wx:key="index">
-        <view 
+        <view
           class="text-line-container"
           aria-label="{{index === 0 ? '汤面标题' : '第' + index + '行'}}"
         >
           <text class="text-line">
-            <text 
-              wx:for="{{item.chars}}" 
+            <text
+              wx:for="{{item.chars}}"
               wx:for-item="char"
               wx:for-index="charIndex"
-              wx:key="charIndex" 
+              wx:key="charIndex"
               class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active' : ''}}"
             >{{char.char}}</text>
           </text>

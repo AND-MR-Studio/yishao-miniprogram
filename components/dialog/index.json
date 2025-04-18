@@ -2,8 +2,7 @@
   "component": true,
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
-    "input-bar": "/components/input-bar/index",
-    "dialog-area": "/components/dialog-area/index"
+    "input-bar": "/components/input-bar/index"
   },
   "styleIsolation": "apply-shared"
 }
