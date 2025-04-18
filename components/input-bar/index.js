@@ -20,8 +20,7 @@ Component({
     isRecording: false,  // 是否正在录音
     isCancelled: false,  // 是否取消录音
     touchStartY: 0,       // 记录触摸开始的Y坐标
-    recordManager: null,
-    inputFocus: false     // 输入框是否聚焦
+    recordManager: null
   },
 
   observers: {
@@ -77,16 +76,6 @@ Component({
       });
       
       this.setData({ recordManager });
-    },
-
-    // 处理输入框聚焦
-    handleFocus() {
-      this.setData({ inputFocus: true });
-    },
-
-    // 处理输入框失焦
-    handleBlur() {
-      this.setData({ inputFocus: false });
     },
 
     // 处理输入事件

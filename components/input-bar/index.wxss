@@ -48,7 +48,7 @@
   background: rgba(149, 157, 174, 1);
 }
 
-.voice-btn .icon-voice {
+.voice-btn .font_family {
   font-size: 32rpx;
   color: #061429;
 }
@@ -68,7 +68,7 @@
   position: relative;
 }
 
-.input-box.focus {
+.input-box:focus-within {
   background: rgba(41, 55, 79, 1);
   border-color: #4BD13C;
   box-shadow: 0 0 16rpx rgba(43, 179, 25, 0.3);
@@ -97,12 +97,12 @@
 /* 取消录音状态样式 */
 .input-box.recording-cancel {
   background: rgba(225, 51, 51, 0.2);
-  border-color:var(--color-accent, #E13333);
+  border-color:var(--color-accent);
   box-shadow: 0 0 16rpx rgba(225, 51, 51, 0.3);
 }
 
 .input-box.recording-cancel .wave {
-  background:var(--color-accent, #E13333);
+  background:var(--color-accent);
   animation: cancel-wave-animation 0.6s infinite ease-in-out;
 }
 
@@ -199,7 +199,7 @@
   box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.2);
 }
 
-.send-btn .icon-question {
+.send-btn .font_family {
   font-size: 36rpx;
   color: #FFFFFF;
   margin-top: 2rpx;

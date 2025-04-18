@@ -13,7 +13,7 @@
     </view>
     
     <!-- 输入框 -->
-    <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}} {{inputFocus ? 'focus' : ''}}">
+    <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}}">
       <input class="input-field" 
         value="{{inputValue}}"
         placeholder="输入你的问题......"
@@ -25,8 +25,6 @@
         confirm-hold="{{false}}"
         bindinput="handleInput"
         bindconfirm="handleSend"
-        bindfocus="handleFocus"
-        bindblur="handleBlur"
         focus="{{inputFocus}}"
         hidden="{{isRecording}}"
       />
