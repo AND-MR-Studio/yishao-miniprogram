@@ -70,19 +70,10 @@ Component({
 
       if (visible) {
         this.showDialog();
-        // 当对话框显示时，如果已有 soupId 则加载对话记录
-        if (this.properties.soupId || dialogService.getCurrentSoupId()) {
-          console.log('对话框显示，开始加载对话记录');
-          // 等待一帧再加载，确保属性已经更新
-          wx.nextTick(() => {
-            this.loadDialogMessages();
-          });
-        } else {
-          console.log('对话框显示，但没有 soupId，仅加载初始化消息');
-          // 如果没有 soupId，则只加载初始化消息
-          const initialMessages = dialogService.getInitialSystemMessages();
-          this.setData({ messages: initialMessages });
-        }
+        // 当对话框显示时加载对话记录
+        wx.nextTick(() => {
+          this.loadDialogMessages();
+        });
       } else {
         this.hideDialog();
       }
@@ -90,8 +81,6 @@ Component({
     'soupId': function(soupId) {
       // 当soupId变化且对话框可见时，重新加载对话记录
       if (soupId && this.data.visible && !this.data.isAnimating) {
-        console.log('soupId 变化，重新加载对话记录:', soupId);
-        // 等待一帧再加载，确保属性已经更新
         wx.nextTick(() => {
           this.loadDialogMessages();
         });
@@ -161,26 +150,17 @@ Component({
       }
     },
 
-
-
     handleClose() {
       this.triggerEvent('close');
     },
 
     // 加载对话记录
     async loadDialogMessages() {
-      console.log('尝试加载对话记录，当前属性:', this.properties);
-
-      // 从 dialogService 获取当前汤面ID
-      const serviceSoupId = dialogService.getCurrentSoupId();
-
       // 优先使用组件属性中的 soupId，如果没有则使用 dialogService 中的
-      const soupId = this.properties.soupId || serviceSoupId;
-
-      console.log('最终使用的 soupId:', soupId, '组件属性 soupId:', this.properties.soupId, 'dialogService soupId:', serviceSoupId);
+      const soupId = this.properties.soupId || dialogService.getCurrentSoupId();
 
       if (!soupId) {
-        console.error('加载对话记录失败: 缺少soupId');
+        console.log('缺少 soupId，仅加载初始化消息');
         // 加载初始化消息
         const initialMessages = dialogService.getInitialSystemMessages();
         this.setData({
@@ -194,12 +174,11 @@ Component({
       this.setData({ loading: true });
 
       try {
-        console.log('开始加载对话记录:', soupId);
+        // 确保服务层也知道当前的 soupId
+        dialogService.setCurrentSoupId(soupId);
 
         // 从服务器获取对话记录
         const messages = await dialogService.getDialogMessages(soupId);
-
-        console.log(`成功加载 ${messages.length} 条对话记录`);
 
         // 更新到页面
         this.setData({
@@ -245,28 +224,29 @@ Component({
       const { value } = e.detail;
       if (!value || !value.trim() || this.data.isAnimating) return;
 
-      // 创建用户消息对象
-      const userMessage = {
-        id: `msg_${Date.now()}`,
-        type: 'user',
-        content: value.trim(),
-        status: 'sending',
-        timestamp: Date.now()
-      };
-
-      // 添加用户消息
-      const messages = [...this.data.messages, userMessage];
-      this.setData({ messages });
-
       // 设置当前汤面ID
       const soupId = this.properties.soupId || '';
       dialogService.setCurrentSoupId(soupId);
+
+      // 使用服务层处理用户输入
+      const { userMessage } = dialogService.handleUserInput(value.trim());
+
+      // 添加状态属性
+      const userMessageWithStatus = {
+        ...userMessage,
+        status: 'sending'
+      };
+
+      // 添加用户消息
+      const messages = [...this.data.messages, userMessageWithStatus];
+      this.setData({ messages });
 
       try {
         // 发送消息到服务器并获取回复
         const reply = await dialogService.sendMessage({
           message: userMessage.content,
-          soupId
+          soupId,
+          messageId: userMessage.id // 传递用户消息 ID
         });
 
         // 更新用户消息状态
@@ -282,14 +262,13 @@ Component({
           // 不使用打字机效果时，直接添加完整回复
           const finalMessages = [...messages, replyMessage];
           this.setData({ messages: finalMessages });
-          // 不再保存对话记录到本地，而是依赖服务器存储
           return;
         }
 
         // 使用打字机效果
         const updatedMessages = [...messages, {
           id: replyMessage.id,
-          type: 'normal',
+          role: 'agent',
           content: '',
           status: 'typing',
           timestamp: replyMessage.timestamp
@@ -312,8 +291,6 @@ Component({
           messages: finalMessages,
           animatingMessageIndex: -1
         });
-
-        // 不再保存对话记录到本地，而是依赖服务器存储
       } catch (error) {
         console.error('发送消息失败:', error);
         this.updateMessageStatus(userMessage.id, 'error');
@@ -334,8 +311,6 @@ Component({
         this.setData({ messages });
       }
     },
-
-
 
     handleMessagesChange(e) {
       const { messages } = e.detail;

@@ -42,7 +42,7 @@ function initDialogRoutes(app) {
     // 1. 发送消息
     app.post('/api/dialog/send', async (req, res) => {
         try {
-            const { userId, soupId, message, timestamp } = req.body;
+            const { soupId, message, messageId, timestamp } = req.body;
 
             if (!soupId || !message) {
                 return res.status(400).json({
@@ -59,11 +59,13 @@ function initDialogRoutes(app) {
                 };
             }
 
-            // 创建新消息
+            // 使用传入的消息 ID 或生成新的
+            const messageGroupId = messageId || `msg_${Date.now()}`;
+
+            // 创建用户消息
             const newMessage = {
-                id: `msg_${Date.now()}`,
-                userId: userId || 'anonymous',
-                type: 'user',
+                id: messageGroupId,
+                role: 'user',
                 content: message,
                 timestamp: timestamp || Date.now()
             };
@@ -71,10 +73,10 @@ function initDialogRoutes(app) {
             // 添加用户消息
             dialogsData[soupId].messages.push(newMessage);
 
-            // 创建回复消息
+            // 创建代理回复消息
             const replyMessage = {
-                id: `msg_${Date.now() + 1}`,
-                type: 'normal',
+                id: messageGroupId,
+                role: 'agent',
                 content: 'test_reply', // 固定回复文本
                 timestamp: Date.now() + 1
             };
@@ -104,7 +106,7 @@ function initDialogRoutes(app) {
     // 2. 保存对话记录
     app.post('/api/dialog/save', async (req, res) => {
         try {
-            const { userId, soupId, messages } = req.body;
+            const { soupId, messages } = req.body;
 
             if (!soupId || !messages || !Array.isArray(messages)) {
                 return res.status(400).json({
@@ -138,7 +140,7 @@ function initDialogRoutes(app) {
     });
 
     // 3. 获取所有对话记录
-    app.get('/api/dialog/list', async (req, res) => {
+    app.get('/api/dialog/list', async (_, res) => {
         try {
             // 收集所有对话记录
             const allDialogs = {};
