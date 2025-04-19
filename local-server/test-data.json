@@ -1,0 +1,19 @@
+{
+  "userId": "test_user",
+  "soupId": "test_soup_007",
+  "message": "这是一条测试消息",
+  "messageHistory": [
+    {
+      "id": "msg_1",
+      "type": "user",
+      "content": "历史消息1",
+      "timestamp": 1745035000000
+    },
+    {
+      "id": "msg_2",
+      "type": "normal",
+      "content": "历史回复1",
+      "timestamp": 1745035000001
+    }
+  ]
+}

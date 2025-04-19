@@ -32,7 +32,7 @@ function checkSession() {
       // 获取登录时间戳
       const loginTimestamp = wx.getStorageSync('loginTimestamp');
       const currentTime = new Date().getTime();
-      
+
       // 如果没有登录时间戳或者登录已过期
       if (!loginTimestamp || (currentTime - loginTimestamp > SESSION_EXPIRE_TIME)) {
         // 使用微信的checkSession API检查登录态
@@ -70,19 +70,19 @@ function updateUserInfo(info) {
         reject(new Error('无效的用户信息'));
         return;
       }
-      
+
       // 获取当前用户信息
       let userInfo = getUserInfo() || {};
-      
+
       // 更新头像或昵称
       if (info.avatarUrl) {
         userInfo.avatarUrl = info.avatarUrl;
       }
-      
+
       if (info.nickName) {
         userInfo.nickName = info.nickName;
       }
-      
+
       // 使用全局应用实例的更新方法
       const app = getApp();
       if (app && app.updateUserInfo) {
@@ -93,7 +93,7 @@ function updateUserInfo(info) {
         // 更新登录时间戳
         wx.setStorageSync('loginTimestamp', new Date().getTime());
       }
-      
+
       resolve(userInfo);
     } catch (error) {
       console.error('更新用户信息失败:', error);
@@ -125,7 +125,7 @@ function clearLoginInfo() {
 }
 
 /**
- * 获取微信用户openId（需要后端支持）
+ * 获取微信用户openId（通过后端接口）
  * @returns {Promise<string>} 用户openId
  */
 function getOpenId() {
@@ -133,29 +133,38 @@ function getOpenId() {
     wx.login({
       success: (res) => {
         if (res.code) {
-          // 这里应该发送code到后端换取openId
-          // 此处为示例，实际应根据项目后端接口实现
           console.log('获取到code:', res.code);
-          
-          // 模拟请求
-          setTimeout(() => {
-            const mockOpenId = 'mock_open_id_' + Math.random().toString(36).substring(2);
-            resolve(mockOpenId);
-          }, 300);
-          
-          // 实际项目代码应类似：
-          // wx.request({
-          //   url: 'https://your-api.com/login',
-          //   method: 'POST',
-          //   data: { code: res.code },
-          //   success: (res) => resolve(res.data.openid),
-          //   fail: reject
-          // });
+
+          // 发送code到后端换取openId
+          wx.request({
+            url: getApiBaseUrl() + '/api/user/login',
+            method: 'POST',
+            data: {
+              code: res.code,
+              userInfo: getUserInfo() || {}
+            },
+            success: (res) => {
+              if (res.data && res.data.success && res.data.data && res.data.data.openid) {
+                console.log('登录成功，获取到openid:', res.data.data.openid);
+                resolve(res.data.data.openid);
+              } else {
+                console.error('登录失败，服务器返回:', res.data);
+                reject(new Error('登录失败，无法获取openid'));
+              }
+            },
+            fail: (err) => {
+              console.error('请求失败:', err);
+              reject(new Error('网络请求失败，请检查网络连接'));
+            }
+          });
         } else {
           reject(new Error('登录失败，获取code失败'));
         }
       },
-      fail: reject
+      fail: (err) => {
+        console.error('wx.login失败:', err);
+        reject(err);
+      }
     });
   });
 }
@@ -166,12 +175,13 @@ function getOpenId() {
  * @returns {Promise<Object>} 完整的用户信息对象
  */
 function wechatLogin(userInfo = {}) {
+  // 直接调用实际的登录函数
   return simulateLogin(userInfo);
 }
 
 /**
  * 更新用户完整资料（同时更新头像和昵称）
- * @param {string} avatarUrl - 用户头像地址 
+ * @param {string} avatarUrl - 用户头像地址
  * @param {string} nickName - 用户昵称
  * @returns {Promise<Object>} 更新后的用户信息
  */
@@ -180,32 +190,51 @@ function updateUserProfile(avatarUrl, nickName) {
     try {
       // 获取当前用户信息
       let userInfo = getUserInfo() || {};
-      
+
       // 如果用户信息不存在，创建一个空对象
       if (!userInfo) {
         userInfo = {};
       }
-      
-      // 更新头像和昵称
-      if (avatarUrl) {
-        userInfo.avatarUrl = avatarUrl;
-      }
-      
-      if (nickName) {
-        userInfo.nickName = nickName;
-      }
-      
+
       // 确保至少有一个字段更新
       if (!avatarUrl && !nickName) {
         reject(new Error('未提供任何更新信息'));
         return;
       }
-      
+
+      // 更新头像和昵称
+      if (avatarUrl) {
+        userInfo.avatarUrl = avatarUrl;
+      }
+
+      if (nickName) {
+        userInfo.nickName = nickName;
+      }
+
       // 确保有登录时间
       if (!userInfo.loginTime) {
         userInfo.loginTime = new Date().getTime();
       }
-      
+
+      // 如果有openId，则将更新发送到后端
+      if (userInfo.openId) {
+        wx.request({
+          url: getApiBaseUrl() + '/api/user/update',
+          method: 'POST',
+          data: {
+            openid: userInfo.openId,
+            avatarUrl: avatarUrl,
+            nickName: nickName
+          },
+          success: (res) => {
+            console.log('用户信息更新成功，服务器返回:', res.data);
+          },
+          fail: (err) => {
+            console.error('用户信息更新失败:', err);
+          }
+        });
+      }
+
       // 使用全局应用实例的更新方法
       const app = getApp();
       if (app && app.updateUserInfo) {
@@ -216,13 +245,13 @@ function updateUserProfile(avatarUrl, nickName) {
         // 更新登录时间戳
         wx.setStorageSync('loginTimestamp', new Date().getTime());
       }
-      
+
       // 更新成功提示
       wx.showToast({
         title: '资料已更新',
         icon: 'success'
       });
-      
+
       resolve(userInfo);
     } catch (error) {
       console.error('更新用户资料失败:', error);
@@ -245,24 +274,24 @@ function handleLoginSuccess(userInfo, showSuccessToast = true, showAvatarHint = 
         reject(new Error('无效的用户信息'));
         return;
       }
-      
+
       // 确保有必要的字段
       if (!userInfo.avatarUrl) {
         userInfo.avatarUrl = DEFAULT_AVATAR_URL;
       }
-      
+
       if (!userInfo.nickName) {
         userInfo.nickName = '微信用户' + Math.floor(Math.random() * 10000);
       }
-      
+
       if (!userInfo.loginTime) {
         userInfo.loginTime = new Date().getTime();
       }
-      
+
       if (!userInfo.openId) {
         userInfo.openId = 'openid_' + Math.random().toString(36).substring(2);
       }
-      
+
       // 使用全局应用实例的更新方法
       const app = getApp();
       if (app && app.updateUserInfo) {
@@ -272,7 +301,7 @@ function handleLoginSuccess(userInfo, showSuccessToast = true, showAvatarHint = 
         wx.setStorageSync(USER_INFO_KEY, userInfo);
         wx.setStorageSync('loginTimestamp', new Date().getTime());
       }
-      
+
       // 登录成功提示
       if (showSuccessToast) {
         wx.showToast({
@@ -293,7 +322,7 @@ function handleLoginSuccess(userInfo, showSuccessToast = true, showAvatarHint = 
           }
         });
       }
-      
+
       resolve(userInfo);
     } catch (error) {
       console.error('登录处理失败:', error);
@@ -303,7 +332,7 @@ function handleLoginSuccess(userInfo, showSuccessToast = true, showAvatarHint = 
 }
 
 /**
- * 模拟登录流程
+ * 实际微信登录流程
  * @param {Object} userInfoParams 可选的用户信息参数
  * @param {boolean} showSuccessToast 是否显示登录成功提示
  * @param {boolean} showAvatarHint 是否显示设置头像提示
@@ -316,35 +345,64 @@ function simulateLogin(userInfoParams = {}, showSuccessToast = true, showAvatarH
       title: '登录中...',
       mask: true
     });
-    
+
     // 获取登录凭证
     wx.login({
       success: (loginRes) => {
         if (loginRes.code) {
-          // 获取到code，模拟服务端处理
-          setTimeout(() => {
-            wx.hideLoading();
-            
-            // 构建用户信息
-            const userInfo = {
-              avatarUrl: userInfoParams.avatarUrl || DEFAULT_AVATAR_URL,
-              nickName: userInfoParams.nickName || ('微信用户' + Math.floor(Math.random() * 10000)),
-              openId: 'openid_' + Math.random().toString(36).substring(2),
-              loginTime: new Date().getTime()
-            };
-            
-            // 合并传入的其他参数
-            Object.keys(userInfoParams).forEach(key => {
-              if (!['avatarUrl', 'nickName'].includes(key)) {
-                userInfo[key] = userInfoParams[key];
+          // 获取到code，发送到后端获取openid
+          wx.request({
+            url: getApiBaseUrl() + '/api/user/login',
+            method: 'POST',
+            data: {
+              code: loginRes.code,
+              userInfo: {
+                avatarUrl: userInfoParams.avatarUrl || DEFAULT_AVATAR_URL,
+                nickName: userInfoParams.nickName || ''
               }
-            });
-            
-            // 处理登录成功
-            handleLoginSuccess(userInfo, showSuccessToast, showAvatarHint)
-              .then(resolve)
-              .catch(reject);
-          }, 500);
+            },
+            success: (res) => {
+              wx.hideLoading();
+
+              if (res.data && res.data.success && res.data.data) {
+                // 构建用户信息
+                const userInfo = {
+                  avatarUrl: res.data.data.userInfo.avatarUrl || userInfoParams.avatarUrl || DEFAULT_AVATAR_URL,
+                  nickName: res.data.data.userInfo.nickName || userInfoParams.nickName || ('微信用户' + Math.floor(Math.random() * 10000)),
+                  openId: res.data.data.openid,
+                  loginTime: new Date().getTime()
+                };
+
+                // 合并传入的其他参数
+                Object.keys(userInfoParams).forEach(key => {
+                  if (!['avatarUrl', 'nickName'].includes(key)) {
+                    userInfo[key] = userInfoParams[key];
+                  }
+                });
+
+                // 处理登录成功
+                handleLoginSuccess(userInfo, showSuccessToast, showAvatarHint)
+                  .then(resolve)
+                  .catch(reject);
+              } else {
+                console.error('登录失败，服务器返回:', res.data);
+                wx.showToast({
+                  title: '登录失败，请重试',
+                  icon: 'none'
+                });
+                reject(new Error('登录失败，服务器返回错误'));
+              }
+            },
+            fail: (err) => {
+              wx.hideLoading();
+              console.error('请求失败:', err);
+              wx.showToast({
+                title: '登录失败，请检查网络',
+                icon: 'none'
+              });
+              reject(new Error('网络请求失败'));
+            }
+          });
         } else {
           wx.hideLoading();
           const error = new Error('登录失败，获取code失败');
@@ -399,10 +457,10 @@ function handleAvatarChoose(e) {
       resolve(getUserInfo() || {});
       return;
     }
-    
+
     // 获取当前用户信息
     const userInfo = getUserInfo();
-    
+
     // 如果未登录，则先登录
     if (!userInfo) {
       // 创建带有头像的用户信息
@@ -410,12 +468,46 @@ function handleAvatarChoose(e) {
         .then(resolve)
         .catch(reject);
     } else {
-      // 已登录，只更新头像
+      // 已登录，更新头像
+      // 如果有openId，则将头像更新发送到后端
+      if (userInfo.openId) {
+        wx.request({
+          url: getApiBaseUrl() + '/api/user/update',
+          method: 'POST',
+          data: {
+            openid: userInfo.openId,
+            avatarUrl: avatarUrl
+          },
+          success: (res) => {
+            console.log('头像更新成功，服务器返回:', res.data);
+          },
+          fail: (err) => {
+            console.error('头像更新失败:', err);
+          }
+        });
+      }
+
+      // 更新本地存储
       updateUserInfo({ avatarUrl })
         .then(resolve)
         .catch(reject);
     }
   });
+}
+
+/**
+ * 获取API基础URL，根据环境自动切换
+ * @returns {string} API基础URL
+ */
+function getApiBaseUrl() {
+  // 判断当前环境
+  const envVersion = __wxConfig.envVersion;
+
+  // 根据环境返回不同的基础URL
+  switch (envVersion) {
+    case 'develop': // 开发版
+      return 'http://localhost:8081';
+  }
 }
 
 // 导出工具方法
@@ -431,5 +523,6 @@ module.exports = {
   handleAvatarChoose,
   handleLoginSuccess,
   simulateLogin,
-  DEFAULT_AVATAR_URL
+  DEFAULT_AVATAR_URL,
+  getApiBaseUrl
 };

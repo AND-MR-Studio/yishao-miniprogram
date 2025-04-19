@@ -11,7 +11,7 @@ const BASE_URLS = {
 };
 
 // 当前环境
-const currentEnv = 'production'; // 可以根据需要切换环境
+const currentEnv = 'development'; // 可以根据需要切换环境
 
 /**
  * 获取指定服务的基础URL

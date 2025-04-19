@@ -331,6 +331,59 @@ class DialogService {
             });
         });
     }
+
+    /**
+     * 从服务器获取对话记录
+     * @param {string} soupId 汤面ID
+     * @returns {Promise<Array>} 消息数组Promise
+     */
+    async fetchDialogMessagesFromServer(soupId) {
+        if (!soupId) {
+            throw new Error('获取对话记录失败: 缺少汤面ID');
+        }
+
+        try {
+            console.log('从服务器获取对话记录:', soupId);
+            const response = await request({
+                url: `/api/dialog/${soupId}`,
+                method: 'GET'
+            });
+
+            // 检查响应格式
+            const data = response.data || {};
+            const messages = data.messages || [];
+
+            console.log(`从服务器获取到 ${messages.length} 条对话记录`);
+            return messages;
+        } catch (error) {
+            console.error('从服务器获取对话记录失败:', error);
+            // 如果服务器请求失败，返回空数组
+            return [];
+        }
+    }
+
+    /**
+     * 加载对话记录（只从服务器获取）
+     * @param {string} soupId 汤面ID
+     * @returns {Promise<Array>} 消息数组Promise，包含系统初始消息
+     */
+    async getDialogMessages(soupId) {
+        if (!soupId) {
+            throw new Error('获取对话记录失败: 缺少汤面ID');
+        }
+
+        try {
+            // 从服务器获取对话记录
+            const serverMessages = await this.fetchDialogMessagesFromServer(soupId);
+
+            // 合并系统初始消息并返回
+            return this.combineWithInitialMessages(serverMessages);
+        } catch (error) {
+            console.error('获取对话记录失败:', error);
+            // 出错时返回只包含系统初始消息的数组
+            return this.getInitialSystemMessages();
+        }
+    }
 }
 
 // 导出单例实例

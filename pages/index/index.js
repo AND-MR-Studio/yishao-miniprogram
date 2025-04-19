@@ -100,10 +100,16 @@ Page({
         // 记录日志，便于调试
         console.log('切换到喝汤状态，当前汤面ID:', currentSoupId);
 
-        // 先设置 soupId，再设置 visible，确保能正确加载对话历史
+        // 先设置 soupId，等待下一帧后再设置 visible，确保能正确加载对话历史
         dialog.setData({
-          soupId: currentSoupId || '',
-          visible: true
+          soupId: currentSoupId || ''
+        });
+
+        // 等待下一帧，确保 soupId 已经被正确设置
+        wx.nextTick(() => {
+          dialog.setData({
+            visible: true
+          });
         });
       }
     });

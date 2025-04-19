@@ -69,17 +69,38 @@ Component({
       if (this.data.isAnimating) return;
 
       if (visible) {
-        this.showDialogAsync();
-        // 当对话框显示时，加载初始化消息
-        this.loadInitialMessages();
+        this.showDialog();
+        // 当对话框显示时，如果已有 soupId 则加载对话记录
+        if (this.properties.soupId || dialogService.getCurrentSoupId()) {
+          console.log('对话框显示，开始加载对话记录');
+          // 等待一帧再加载，确保属性已经更新
+          wx.nextTick(() => {
+            this.loadDialogMessages();
+          });
+        } else {
+          console.log('对话框显示，但没有 soupId，仅加载初始化消息');
+          // 如果没有 soupId，则只加载初始化消息
+          const initialMessages = dialogService.getInitialSystemMessages();
+          this.setData({ messages: initialMessages });
+        }
       } else {
-        this.hideDialogAsync();
+        this.hideDialog();
+      }
+    },
+    'soupId': function(soupId) {
+      // 当soupId变化且对话框可见时，重新加载对话记录
+      if (soupId && this.data.visible && !this.data.isAnimating) {
+        console.log('soupId 变化，重新加载对话记录:', soupId);
+        // 等待一帧再加载，确保属性已经更新
+        wx.nextTick(() => {
+          this.loadDialogMessages();
+        });
       }
     }
   },
 
   methods: {
-    async showDialogAsync() {
+    async showDialog() {
       if (this.data.isAnimating) return;
       this.setData({ isAnimating: true });
 
@@ -115,7 +136,7 @@ Component({
       }
     },
 
-    async hideDialogAsync() {
+    async hideDialog() {
       if (this.data.isAnimating || !this.data.isFullyVisible) return;
       this.setData({ isAnimating: true });
 
@@ -146,13 +167,77 @@ Component({
       this.triggerEvent('close');
     },
 
-    // 加载初始化消息
-    loadInitialMessages() {
-      // 从 dialogService 获取初始化消息
-      const initialMessages = dialogService.getInitialSystemMessages();
+    // 加载对话记录
+    async loadDialogMessages() {
+      console.log('尝试加载对话记录，当前属性:', this.properties);
 
-      // 直接渲染到页面，不进行存储
-      this.setData({ messages: initialMessages });
+      // 从 dialogService 获取当前汤面ID
+      const serviceSoupId = dialogService.getCurrentSoupId();
+
+      // 优先使用组件属性中的 soupId，如果没有则使用 dialogService 中的
+      const soupId = this.properties.soupId || serviceSoupId;
+
+      console.log('最终使用的 soupId:', soupId, '组件属性 soupId:', this.properties.soupId, 'dialogService soupId:', serviceSoupId);
+
+      if (!soupId) {
+        console.error('加载对话记录失败: 缺少soupId');
+        // 加载初始化消息
+        const initialMessages = dialogService.getInitialSystemMessages();
+        this.setData({
+          messages: initialMessages,
+          loading: false
+        });
+        return;
+      }
+
+      // 设置加载状态
+      this.setData({ loading: true });
+
+      try {
+        console.log('开始加载对话记录:', soupId);
+
+        // 从服务器获取对话记录
+        const messages = await dialogService.getDialogMessages(soupId);
+
+        console.log(`成功加载 ${messages.length} 条对话记录`);
+
+        // 更新到页面
+        this.setData({
+          messages: messages,
+          loading: false
+        });
+
+        // 滚动到底部
+        this.scrollToBottom();
+      } catch (error) {
+        console.error('加载对话记录失败:', error);
+
+        // 出错时加载初始化消息
+        const initialMessages = dialogService.getInitialSystemMessages();
+        this.setData({
+          messages: initialMessages,
+          loading: false
+        });
+      }
+    },
+
+    // 滚动到底部
+    scrollToBottom() {
+      wx.nextTick(() => {
+        wx.createSelectorQuery()
+          .in(this)
+          .select('#dialogScroll')
+          .node()
+          .exec(res => {
+            if (res && res[0] && res[0].node) {
+              const scrollView = res[0].node;
+              scrollView.scrollIntoView({
+                selector: '.message:last-child',
+                animated: true
+              });
+            }
+          });
+      });
     },
 
     async handleSend(e) {
@@ -197,6 +282,7 @@ Component({
           // 不使用打字机效果时，直接添加完整回复
           const finalMessages = [...messages, replyMessage];
           this.setData({ messages: finalMessages });
+          // 不再保存对话记录到本地，而是依赖服务器存储
           return;
         }
 
@@ -226,6 +312,8 @@ Component({
           messages: finalMessages,
           animatingMessageIndex: -1
         });
+
+        // 不再保存对话记录到本地，而是依赖服务器存储
       } catch (error) {
         console.error('发送消息失败:', error);
         this.updateMessageStatus(userMessage.id, 'error');

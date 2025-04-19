@@ -1,12 +1,13 @@
 // pages/mine/mine.js
-// 引入模拟登录相关函数
+// 引入登录相关函数
 const {
   simulateLogin,
   getUserInfo,
   updateUserInfo,
   clearLoginInfo,
   handleAvatarChoose,
-  DEFAULT_AVATAR_URL
+  DEFAULT_AVATAR_URL,
+  getApiBaseUrl
 } = require('../../utils/login.js');
 
 Page({
@@ -153,11 +154,33 @@ Page({
   async confirmUserInfo() {
     try {
       if (this.data.tempNickName || this.data.tempAvatarUrl) {
+        // 获取当前用户信息
+        const currentUserInfo = getUserInfo();
+
         // 更新用户信息
         const updatedUserInfo = await updateUserInfo({
           nickName: this.data.tempNickName,
           avatarUrl: this.data.tempAvatarUrl
         });
+
+        // 如果有openId，则将用户信息发送到后端
+        if (currentUserInfo && currentUserInfo.openId) {
+          wx.request({
+            url: getApiBaseUrl() + '/api/user/update',
+            method: 'POST',
+            data: {
+              openid: currentUserInfo.openId,
+              avatarUrl: this.data.tempAvatarUrl || currentUserInfo.avatarUrl,
+              nickName: this.data.tempNickName || currentUserInfo.nickName
+            },
+            success: (res) => {
+              console.log('用户信息更新成功，服务器返回:', res.data);
+            },
+            fail: (err) => {
+              console.error('用户信息更新失败:', err);
+            }
+          });
+        }
 
         // 更新页面数据
         this.setData({
@@ -209,7 +232,7 @@ Page({
   handleLogin() {
     return new Promise(async (resolve, reject) => {
       try {
-        // 使用login.js中的simulateLogin函数进行模拟登录，但不显示成功提示
+        // 使用login.js中的simulateLogin函数进行实际微信登录，但不显示成功提示
         const userInfo = await simulateLogin(undefined, false, false);
 
         // 更新页面数据
