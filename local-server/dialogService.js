@@ -207,7 +207,45 @@ function initDialogRoutes(app) {
         }
     });
 
-    // 5. 删除对话记录
+    // 5. 清除所有数据
+    app.delete('/api/dialog/clear-all', async (_, res) => {
+        try {
+            await clearAllData();
+            res.json({
+                success: true,
+                data: {
+                    message: '清除所有数据成功'
+                }
+            });
+        } catch (error) {
+            console.error('清除所有数据失败:', error);
+            res.status(500).json({
+                success: false,
+                error: '服务器内部错误'
+            });
+        }
+    });
+
+    // 6. 清除测试数据
+    app.delete('/api/dialog/clear-test', async (_, res) => {
+        try {
+            await clearTestData();
+            res.json({
+                success: true,
+                data: {
+                    message: '清除测试数据成功'
+                }
+            });
+        } catch (error) {
+            console.error('清除测试数据失败:', error);
+            res.status(500).json({
+                success: false,
+                error: '服务器内部错误'
+            });
+        }
+    });
+
+    // 7. 删除对话记录
     app.delete('/api/dialog/:soupId', async (req, res) => {
         try {
             const { soupId } = req.params;
@@ -241,6 +279,13 @@ function initDialogRoutes(app) {
     });
 }
 
+// 清除所有数据
+async function clearAllData() {
+    dialogsData = {};
+    await saveDialogsData();
+    console.log('已清除所有对话数据');
+}
+
 // 初始化模块
 async function init() {
     await loadDialogsData();
@@ -249,5 +294,7 @@ async function init() {
 
 module.exports = {
     init,
-    initDialogRoutes
+    initDialogRoutes,
+    clearAllData,
+    clearTestData
 };

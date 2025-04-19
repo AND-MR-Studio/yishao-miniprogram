@@ -151,40 +151,50 @@
     ],
     "lastUpdated": 1745036355151
   },
-  "local_1744197889103": {
+  "local_1745033647352": {
     "messages": [
       {
-        "id": "msg_1745047527590",
-        "userId": "anonymous",
-        "type": "user",
+        "id": "msg_1745048072023",
+        "role": "user",
         "content": "1",
-        "timestamp": 1745047527565
+        "timestamp": 1745048072024
       },
       {
-        "id": "msg_1745047527591",
-        "type": "normal",
+        "id": "msg_1745048072023",
+        "role": "agent",
         "content": "test_reply",
-        "timestamp": 1745047527591
+        "timestamp": 1745048072049
       }
     ],
-    "lastUpdated": 1745047527590
+    "lastUpdated": 1745048072048
   },
-  "local_1745033677410": {
+  "local_1744207143672": {
     "messages": [
       {
-        "id": "msg_1745047652429",
-        "userId": "anonymous",
-        "type": "user",
+        "id": "msg_1745048077454",
+        "role": "user",
         "content": "1",
-        "timestamp": 1745047652405
+        "timestamp": 1745048077455
       },
       {
-        "id": "msg_1745047652430",
-        "type": "normal",
+        "id": "msg_1745048077454",
+        "role": "agent",
         "content": "test_reply",
-        "timestamp": 1745047652430
+        "timestamp": 1745048077487
+      },
+      {
+        "id": "msg_1745048146917",
+        "role": "user",
+        "content": "3",
+        "timestamp": 1745048146920
+      },
+      {
+        "id": "msg_1745048146917",
+        "role": "agent",
+        "content": "test_reply",
+        "timestamp": 1745048146931
       }
     ],
-    "lastUpdated": 1745047652429
+    "lastUpdated": 1745048146930
   }
 }
