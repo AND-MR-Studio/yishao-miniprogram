@@ -29,12 +29,20 @@ async function loadDialogsData() {
 async function saveDialogsData() {
     try {
         await fs.writeFile(DIALOGS_FILE, JSON.stringify(dialogsData, null, 2));
-        console.log('对话数据保存成功');
         return true;
     } catch (error) {
         console.error('保存对话数据失败:', error);
         return false;
     }
+}
+
+// 通用响应处理函数
+function sendResponse(res, success, data, statusCode = 200) {
+    return res.status(statusCode).json({
+        success,
+        data: success ? data : undefined,
+        error: !success ? data : undefined
+    });
 }
 
 // 初始化路由
@@ -45,10 +53,7 @@ function initDialogRoutes(app) {
             const { soupId, message, messageId, timestamp } = req.body;
 
             if (!soupId || !message) {
-                return res.status(400).json({
-                    success: false,
-                    error: '缺少必要参数'
-                });
+                return sendResponse(res, false, '缺少必要参数', 400);
             }
 
             // 确保该汤面的对话存在
@@ -89,17 +94,13 @@ function initDialogRoutes(app) {
             await saveDialogsData();
 
             // 返回回复消息
-            res.json({
-                success: true,
+            return sendResponse(res, true, {
                 reply: replyMessage.content,
                 message: replyMessage
             });
         } catch (error) {
             console.error('发送消息失败:', error);
-            res.status(500).json({
-                success: false,
-                error: '服务器内部错误'
-            });
+            return sendResponse(res, false, '服务器内部错误', 500);
         }
     });
 
@@ -109,10 +110,7 @@ function initDialogRoutes(app) {
             const { soupId, messages } = req.body;
 
             if (!soupId || !messages || !Array.isArray(messages)) {
-                return res.status(400).json({
-                    success: false,
-                    error: '缺少必要参数'
-                });
+                return sendResponse(res, false, '缺少必要参数', 400);
             }
 
             // 更新对话数据
@@ -124,18 +122,10 @@ function initDialogRoutes(app) {
             // 保存对话数据
             await saveDialogsData();
 
-            res.json({
-                success: true,
-                data: {
-                    message: '保存成功'
-                }
-            });
+            return sendResponse(res, true, { message: '保存成功' });
         } catch (error) {
             console.error('保存对话记录失败:', error);
-            res.status(500).json({
-                success: false,
-                error: '服务器内部错误'
-            });
+            return sendResponse(res, false, '服务器内部错误', 500);
         }
     });
 
@@ -156,19 +146,13 @@ function initDialogRoutes(app) {
                 }
             }
 
-            res.json({
-                success: true,
-                data: {
-                    dialogs: allDialogs,
-                    total: Object.keys(allDialogs).length
-                }
+            return sendResponse(res, true, {
+                dialogs: allDialogs,
+                total: Object.keys(allDialogs).length
             });
         } catch (error) {
             console.error('获取所有对话记录失败:', error);
-            res.status(500).json({
-                success: false,
-                error: '服务器内部错误'
-            });
+            return sendResponse(res, false, '服务器内部错误', 500);
         }
     });
 
@@ -178,10 +162,7 @@ function initDialogRoutes(app) {
             const { soupId } = req.params;
 
             if (!soupId) {
-                return res.status(400).json({
-                    success: false,
-                    error: '缺少必要参数'
-                });
+                return sendResponse(res, false, '缺少必要参数', 400);
             }
 
             // 获取指定汤面的对话记录
@@ -190,20 +171,14 @@ function initDialogRoutes(app) {
                 lastUpdated: Date.now()
             };
 
-            res.json({
-                success: true,
-                data: {
-                    messages: dialogData.messages,
-                    total: dialogData.messages.length,
-                    lastUpdated: dialogData.lastUpdated
-                }
+            return sendResponse(res, true, {
+                messages: dialogData.messages,
+                total: dialogData.messages.length,
+                lastUpdated: dialogData.lastUpdated
             });
         } catch (error) {
             console.error('获取对话记录失败:', error);
-            res.status(500).json({
-                success: false,
-                error: '服务器内部错误'
-            });
+            return sendResponse(res, false, '服务器内部错误', 500);
         }
     });
 
@@ -213,10 +188,7 @@ function initDialogRoutes(app) {
             const { soupId } = req.params;
 
             if (!soupId) {
-                return res.status(400).json({
-                    success: false,
-                    error: '缺少必要参数'
-                });
+                return sendResponse(res, false, '缺少必要参数', 400);
             }
 
             // 删除指定汤面的对话记录
@@ -225,18 +197,10 @@ function initDialogRoutes(app) {
                 await saveDialogsData();
             }
 
-            res.json({
-                success: true,
-                data: {
-                    message: '删除成功'
-                }
-            });
+            return sendResponse(res, true, { message: '删除成功' });
         } catch (error) {
             console.error('删除对话记录失败:', error);
-            res.status(500).json({
-                success: false,
-                error: '服务器内部错误'
-            });
+            return sendResponse(res, false, '服务器内部错误', 500);
         }
     });
 }

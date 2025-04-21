@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>汤面管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .soup-item {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+        }
+        .soup-content {
+            white-space: pre-line;
+            margin: 10px 0;
+        }
+        .soup-truth {
+            color: #666;
+            font-style: italic;
+        }
+        .action-buttons {
+            margin-top: 10px;
+        }
+        .nav-link.active {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">汤面管理系统</h1>
+
+        <!-- 导航栏 -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+            <div class="container-fluid">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="soup.html">汤面管理</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="dialog.html">对话记录</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <!-- 编辑汤面模态框 -->
+        <div class="modal fade" id="editSoupModal" tabindex="-1" aria-labelledby="editSoupModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editSoupModalLabel">编辑汤面</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editSoupForm">
+                            <input type="hidden" id="editSoupId">
+                            <div class="mb-3">
+                                <label for="editTitle" class="form-label">标题</label>
+                                <input type="text" class="form-control" id="editTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editContent" class="form-label">内容（每行一句）</label>
+                                <textarea class="form-control" id="editContent" rows="4" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editTruth" class="form-label">汤底</label>
+                                <textarea class="form-control" id="editTruth" required></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                        <button type="button" class="btn btn-primary" id="saveEditSoup">保存更改</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 添加新汤面表单 -->
+        <div class="card mb-4">
+            <div class="card-header">
+                添加新汤面
+            </div>
+            <div class="card-body">
+                <form id="addSoupForm">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">标题</label>
+                        <input type="text" class="form-control" id="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="content" class="form-label">内容（每行一句）</label>
+                        <textarea class="form-control" id="content" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="truth" class="form-label">汤底</label>
+                        <textarea class="form-control" id="truth" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">添加</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- 汤面列表工具栏 -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <input type="checkbox" id="selectAllSoups" class="form-check-input me-2">
+                    <label for="selectAllSoups" class="form-check-label">全选</label>
+                </div>
+                <div>
+                    <button id="batchDeleteBtn" class="btn btn-danger btn-sm" disabled>批量删除</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 汤面列表 -->
+        <div id="soupList"></div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API基础URL
+        const API_BASE_URL = 'http://localhost:8080/api/soup';
+
+        // 获取汤面列表
+        async function fetchSoups() {
+            try {
+                // 使用RESTful API端点
+                const response = await fetch(`${API_BASE_URL}`);
+                const data = await response.json();
+                if (data.success) {
+                    // 兼容新旧两种响应格式
+                    const soups = Array.isArray(data.data) ? data.data : data.data?.soups || [];
+                    displaySoups(soups);
+                } else {
+                    alert('获取汤面列表失败：' + data.error);
+                }
+            } catch (err) {
+                console.error('获取汤面列表失败:', err);
+                alert('获取汤面列表失败，请检查网络连接');
+            }
+        }
+
+        // 显示汤面列表
+        function displaySoups(soups) {
+            const soupList = document.getElementById('soupList');
+            soupList.innerHTML = '';
+
+            // 重置全选状态
+            document.getElementById('selectAllSoups').checked = false;
+            updateBatchDeleteButton();
+
+            soups.forEach(soup => {
+                const soupElement = document.createElement('div');
+                soupElement.className = 'soup-item';
+                soupElement.innerHTML = `
+                    <div class="d-flex align-items-start">
+                        <div class="me-3 mt-1">
+                            <input type="checkbox" class="form-check-input soup-checkbox" data-soup-id="${soup.soupId}" onchange="updateBatchDeleteButton()">
+                        </div>
+                        <div class="flex-grow-1">
+                            <h3>${soup.title}</h3>
+                            <div class="soup-content">${soup.contentLines.join('\n')}</div>
+                            <div class="soup-truth">${soup.truth}</div>
+                            <div class="action-buttons">
+                                <button class="btn btn-primary btn-sm me-2" onclick="editSoup('${soup.soupId}')">编辑</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteSoup('${soup.soupId}')">删除</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                soupList.appendChild(soupElement);
+            });
+        }
+
+        // 添加新汤面
+        document.getElementById('addSoupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const truth = document.getElementById('truth').value;
+
+            const newSoup = {
+                title,
+                contentLines: content.split('\n').filter(line => line.trim()),
+                truth
+            };
+
+            try {
+                console.log('准备添加汤面:', newSoup);
+
+                // 使用RESTful API端点
+                const response = await fetch(`${API_BASE_URL}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newSoup)
+                });
+
+                console.log('响应状态:', response.status);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('响应数据:', data);
+
+                if (data.success) {
+                    alert('添加成功！');
+                    document.getElementById('addSoupForm').reset();
+                    fetchSoups();
+                } else {
+                    alert('添加失败：' + data.error);
+                }
+            } catch (err) {
+                console.error('添加汤面失败:', err);
+                alert('添加失败，请检查网络连接和控制台日志');
+            }
+        });
+
+        // 编辑汤面 - 定义为全局函数以便在HTML中调用
+        window.editSoup = async function(soupId) {
+            try {
+                // 使用RESTful API端点
+                const response = await fetch(`${API_BASE_URL}/${soupId}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    const soup = data.data;
+
+                    // 填充表单
+                    document.getElementById('editSoupId').value = soup.soupId;
+                    document.getElementById('editTitle').value = soup.title;
+                    document.getElementById('editContent').value = soup.contentLines.join('\n');
+                    document.getElementById('editTruth').value = soup.truth;
+
+                    // 显示模态框
+                    const editModal = new bootstrap.Modal(document.getElementById('editSoupModal'));
+                    editModal.show();
+                } else {
+                    alert('获取汤面数据失败：' + data.error);
+                }
+            } catch (err) {
+                console.error('获取汤面数据失败:', err);
+                alert('获取汤面数据失败，请检查网络连接');
+            }
+        }
+
+        // 删除汤面 - 定义为全局函数以便在HTML中调用
+        window.deleteSoup = async function(soupId) {
+            if (!confirm('确定要删除这个汤面吗？')) {
+                return;
+            }
+
+            try {
+                // 使用RESTful API端点
+                const response = await fetch(`${API_BASE_URL}/${soupId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('删除成功！');
+                    fetchSoups();
+                } else {
+                    alert('删除失败：' + data.error);
+                }
+            } catch (err) {
+                console.error('删除汤面失败:', err);
+                alert('删除失败，请检查网络连接');
+            }
+        }
+
+        // 保存编辑后的汤面
+        document.getElementById('saveEditSoup').addEventListener('click', async () => {
+            const soupId = document.getElementById('editSoupId').value;
+            const title = document.getElementById('editTitle').value;
+            const content = document.getElementById('editContent').value;
+            const truth = document.getElementById('editTruth').value;
+
+            if (!title || !content || !truth) {
+                alert('请填写所有必填字段');
+                return;
+            }
+
+            const updatedSoup = {
+                title,
+                contentLines: content.split('\n').filter(line => line.trim()),
+                truth
+            };
+
+            try {
+                // 使用RESTful API端点
+                const response = await fetch(`${API_BASE_URL}/${soupId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updatedSoup)
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert('更新成功！');
+                    // 关闭模态框
+                    bootstrap.Modal.getInstance(document.getElementById('editSoupModal')).hide();
+                    // 刷新汤面列表
+                    fetchSoups();
+                } else {
+                    alert('更新失败：' + data.error);
+                }
+            } catch (err) {
+                console.error('更新汤面失败:', err);
+                alert('更新失败，请检查网络连接');
+            }
+        });
+
+        // 更新批量删除按钮状态 - 定义为全局函数以便在HTML中调用
+        window.updateBatchDeleteButton = function() {
+            const checkedBoxes = document.querySelectorAll('.soup-checkbox:checked');
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+            batchDeleteBtn.disabled = checkedBoxes.length === 0;
+        }
+
+        // 全选/取消全选
+        document.getElementById('selectAllSoups').addEventListener('change', function() {
+            const isChecked = this.checked;
+            document.querySelectorAll('.soup-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateBatchDeleteButton();
+        });
+
+        // 批量删除汤面
+        document.getElementById('batchDeleteBtn').addEventListener('click', async function() {
+            const checkedBoxes = document.querySelectorAll('.soup-checkbox:checked');
+            if (checkedBoxes.length === 0) return;
+
+            const soupIds = Array.from(checkedBoxes).map(checkbox => checkbox.dataset.soupId);
+
+            if (!confirm(`确定要删除选中的 ${soupIds.length} 个汤面吗？此操作无法撤销！`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}?ids=${soupIds.join(',')}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(`删除成功！共删除了 ${data.data.deletedCount} 个汤面。`);
+                    fetchSoups(); // 重新加载汤面列表
+                } else {
+                    alert('批量删除失败：' + data.error);
+                }
+            } catch (err) {
+                console.error('批量删除汤面失败:', err);
+                alert('批量删除失败，请检查网络连接');
+            }
+        });
+
+        // 页面加载时获取汤面列表
+        fetchSoups();
+    </script>
+</body>
+</html>

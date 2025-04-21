@@ -58,11 +58,8 @@ initServices().then(() => {
   app.listen(PORT, () => {
     console.log(`本地服务器运行在 http://localhost:${PORT}`);
     console.log(`管理后台:`);
-    console.log(`  - 汤面管理: http://localhost:${PORT}/admin.html`);
-    console.log(`  - 用户管理: http://localhost:${PORT}/user-management.html`);
-    console.log(`API接口:`);
-    console.log(`  - 汤面: http://localhost:${PORT}/api/soup/list`);
-    console.log(`  - 对话: http://localhost:${PORT}/api/dialog/list`);
-    console.log(`  - 用户: http://localhost:${PORT}/api/user/list`);
+    console.log(`  - 汤面管理: http://localhost:${PORT}/soup.html`);
+    console.log(`  - 对话记录: http://localhost:${PORT}/dialog.html`);
+    console.log(`  - 用户管理: http://localhost:${PORT}/user.html`);
   });
 });

@@ -20,13 +20,10 @@ const user_soups_update_url = ysUrl + userBasePath + 'soups/update';
 const user_list_url = ysUrl + userBasePath + 'list';
 const user_delete_url = ysUrl + userBasePath + 'delete';
 
-// 汤面相关接口URL
-const soup_list_url = soupBasePath + 'list';
+// 汤面相关接口URL - 符合RESTful规范
+const soup_base_url = soupBasePath; // 基础URL: /api/soup
 const soup_random_url = soupBasePath + 'random';
-const soup_detail_url = soupBasePath + 'detail/';
-const soup_add_url = soupBasePath + 'add';
-const soup_update_url = soupBasePath + 'update/';
-const soup_delete_url = soupBasePath + 'delete/';
+// 不再需要单独的list、detail、add、update、delete URL
 
 // 对话相关接口URL
 const dialog_send_url = ysUrl + dialogBasePath + 'send';
@@ -59,13 +56,9 @@ module.exports = {
   user_list_url,
   user_delete_url,
 
-  // 汤面相关接口URL
-  soup_list_url,
+  // 汤面相关接口URL - RESTful风格
+  soup_base_url,
   soup_random_url,
-  soup_detail_url,
-  soup_add_url,
-  soup_update_url,
-  soup_delete_url,
 
   // 对话相关接口URL
   dialog_send_url,

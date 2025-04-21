@@ -68,6 +68,15 @@ const saveUserData = async (userId, userData) => {
   }
 };
 
+// 通用响应处理函数
+function sendResponse(res, success, data, statusCode = 200) {
+  return res.status(statusCode).json({
+    success,
+    data: success ? data : undefined,
+    error: !success ? data : undefined
+  });
+}
+
 // 模拟微信登录接口获取 openid
 async function getWechatOpenId(code) {
   try {
@@ -88,10 +97,7 @@ function initUserRoutes(app) {
       const { code, userInfo } = req.body;
 
       if (!code) {
-        return res.status(400).json({
-          success: false,
-          error: '缺少必要参数'
-        });
+        return sendResponse(res, false, '缺少必要参数', 400);
       }
 
       // 调用微信接口获取openid
@@ -116,23 +122,16 @@ function initUserRoutes(app) {
       await saveUserData(openid, userData);
 
       // 返回用户信息
-      res.json({
-        success: true,
-        data: {
-          openid,
-          userInfo: {
-            avatarUrl: userData.avatarUrl,
-            nickName: userData.nickName
-          }
+      return sendResponse(res, true, {
+        openid,
+        userInfo: {
+          avatarUrl: userData.avatarUrl,
+          nickName: userData.nickName
         }
       });
     } catch (err) {
       console.error('登录失败:', err);
-      res.status(500).json({
-        success: false,
-        error: '登录失败',
-        details: err.message
-      });
+      return sendResponse(res, false, '登录失败', 500);
     }
   });
 
@@ -142,10 +141,7 @@ function initUserRoutes(app) {
       const { openid, avatarUrl, nickName } = req.body;
 
       if (!openid) {
-        return res.status(400).json({
-          success: false,
-          error: '缺少必要参数'
-        });
+        return sendResponse(res, false, '缺少必要参数', 400);
       }
 
       const userData = await getUserData(openid);
@@ -155,21 +151,14 @@ function initUserRoutes(app) {
 
       await saveUserData(openid, userData);
 
-      res.json({
-        success: true,
-        data: {
-          userInfo: {
-            avatarUrl: userData.avatarUrl,
-            nickName: userData.nickName
-          }
+      return sendResponse(res, true, {
+        userInfo: {
+          avatarUrl: userData.avatarUrl,
+          nickName: userData.nickName
         }
       });
     } catch (err) {
-      res.status(500).json({
-        success: false,
-        error: '更新用户信息失败',
-        details: err.message
-      });
+      return sendResponse(res, false, '更新用户信息失败', 500);
     }
   });
 
@@ -179,35 +168,25 @@ function initUserRoutes(app) {
       const { openid } = req.query;
 
       if (!openid) {
-        return res.status(400).json({
-          success: false,
-          error: '缺少必要参数'
-        });
+        return sendResponse(res, false, '缺少必要参数', 400);
       }
 
       const userData = await getUserData(openid);
 
-      res.json({
-        success: true,
-        data: {
-          userInfo: {
-            avatarUrl: userData.avatarUrl,
-            nickName: userData.nickName
-          },
-          stats: {
-            totalAnswered: userData.totalAnswered,
-            totalCorrect: userData.totalCorrect,
-            totalViewed: userData.totalViewed,
-            todayViewed: userData.todayViewed
-          }
+      return sendResponse(res, true, {
+        userInfo: {
+          avatarUrl: userData.avatarUrl,
+          nickName: userData.nickName
+        },
+        stats: {
+          totalAnswered: userData.totalAnswered,
+          totalCorrect: userData.totalCorrect,
+          totalViewed: userData.totalViewed,
+          todayViewed: userData.todayViewed
         }
       });
     } catch (err) {
-      res.status(500).json({
-        success: false,
-        error: '获取用户信息失败',
-        details: err.message
-      });
+      return sendResponse(res, false, '获取用户信息失败', 500);
     }
   });
 
@@ -217,27 +196,17 @@ function initUserRoutes(app) {
       const { openid } = req.query;
 
       if (!openid) {
-        return res.status(400).json({
-          success: false,
-          error: '缺少必要参数'
-        });
+        return sendResponse(res, false, '缺少必要参数', 400);
       }
 
       const userData = await getUserData(openid);
 
-      res.json({
-        success: true,
-        data: {
-          answeredSoups: userData.answeredSoups,
-          viewedSoups: userData.viewedSoups
-        }
+      return sendResponse(res, true, {
+        answeredSoups: userData.answeredSoups,
+        viewedSoups: userData.viewedSoups
       });
     } catch (err) {
-      res.status(500).json({
-        success: false,
-        error: '获取用户汤面记录失败',
-        details: err.message
-      });
+      return sendResponse(res, false, '获取用户汤面记录失败', 500);
     }
   });
 
@@ -247,10 +216,7 @@ function initUserRoutes(app) {
       const { openid, soupId, type, data } = req.body;
 
       if (!openid || !soupId || !type) {
-        return res.status(400).json({
-          success: false,
-          error: '缺少必要参数'
-        });
+        return sendResponse(res, false, '缺少必要参数', 400);
       }
 
       const userData = await getUserData(openid);
@@ -292,23 +258,14 @@ function initUserRoutes(app) {
 
       await saveUserData(openid, userData);
 
-      res.json({
-        success: true,
-        data: {
-          message: '更新成功'
-        }
-      });
+      return sendResponse(res, true, { message: '更新成功' });
     } catch (err) {
-      res.status(500).json({
-        success: false,
-        error: '更新用户汤面记录失败',
-        details: err.message
-      });
+      return sendResponse(res, false, '更新用户汤面记录失败', 500);
     }
   });
 
   // 6. 获取所有用户列表
-  app.get('/api/user/list', async (req, res) => {
+  app.get('/api/user/list', async (_, res) => {
     try {
       const data = await fs.readJson(USERS_FILE);
       const users = Object.values(data).map(user => ({
@@ -323,16 +280,9 @@ function initUserRoutes(app) {
         todayViewed: user.todayViewed
       }));
 
-      res.json({
-        success: true,
-        data: users
-      });
+      return sendResponse(res, true, users);
     } catch (err) {
-      res.status(500).json({
-        success: false,
-        error: '获取用户列表失败',
-        details: err.message
-      });
+      return sendResponse(res, false, '获取用户列表失败', 500);
     }
   });
 
@@ -342,36 +292,21 @@ function initUserRoutes(app) {
       const { openid } = req.body;
 
       if (!openid) {
-        return res.status(400).json({
-          success: false,
-          error: '缺少必要参数'
-        });
+        return sendResponse(res, false, '缺少必要参数', 400);
       }
 
       const data = await fs.readJson(USERS_FILE);
 
       if (!data[openid]) {
-        return res.status(404).json({
-          success: false,
-          error: '用户不存在'
-        });
+        return sendResponse(res, false, '用户不存在', 404);
       }
 
       delete data[openid];
       await fs.writeJson(USERS_FILE, data);
 
-      res.json({
-        success: true,
-        data: {
-          message: '删除成功'
-        }
-      });
+      return sendResponse(res, true, { message: '删除成功' });
     } catch (err) {
-      res.status(500).json({
-        success: false,
-        error: '删除用户失败',
-        details: err.message
-      });
+      return sendResponse(res, false, '删除用户失败', 500);
     }
   });
 }
