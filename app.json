@@ -31,8 +31,7 @@
   },
   "style": "v2",
   "usingComponents": {
-    "nav-bar": "/components/nav-bar/index",
-    "dialog": "/components/dialog/index"
+    "nav-bar": "/components/nav-bar/index"
   },
    "lazyCodeLoading": "requiredComponents"
 }

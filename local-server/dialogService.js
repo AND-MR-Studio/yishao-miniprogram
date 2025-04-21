@@ -173,7 +173,7 @@ function initDialogRoutes(app) {
     });
 
     // 4. 获取特定汤面的对话记录
-    app.get('/api/dialog/:soupId', async (req, res) => {
+    app.get('/api/dialog/detail/:soupId', async (req, res) => {
         try {
             const { soupId } = req.params;
 
@@ -208,7 +208,7 @@ function initDialogRoutes(app) {
     });
 
     // 5. 删除对话记录
-    app.delete('/api/dialog/:soupId', async (req, res) => {
+    app.delete('/api/dialog/delete/:soupId', async (req, res) => {
         try {
             const { soupId } = req.params;
 

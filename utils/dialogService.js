@@ -2,7 +2,7 @@
  * 对话服务类
  * 处理用户与系统对话的通信、存储与加载
  */
-const { request } = require('./api');
+const { agentRequest, dialogBasePath } = require('./api');
 
 class DialogService {
     constructor() {
@@ -173,8 +173,8 @@ class DialogService {
 
         try {
             // 发送请求到后端
-            const response = await request({
-                url: '/api/dialog/send',
+            const response = await agentRequest({
+                url: dialogBasePath + 'send',
                 method: 'POST',
                 data: {
                     soupId: soupId,
@@ -221,8 +221,8 @@ class DialogService {
 
         try {
             console.log('从服务器获取对话记录:', soupId);
-            const response = await request({
-                url: `/api/dialog/${soupId}`,
+            const response = await agentRequest({
+                url: `${dialogBasePath}detail/${soupId}`,
                 method: 'GET'
             });
 

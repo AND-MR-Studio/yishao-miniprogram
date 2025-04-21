@@ -1,14 +1,10 @@
 // pages/mine/mine.js
-// 引入登录相关函数
-const {
-  simulateLogin,
-  getUserInfo,
-  updateUserInfo,
-  clearLoginInfo,
-  handleAvatarChoose,
-  DEFAULT_AVATAR_URL,
-  getApiBaseUrl
-} = require('../../utils/login.js');
+// 定义常量
+const USER_INFO_KEY = 'userInfo';
+const DEFAULT_AVATAR_URL = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0';
+
+// 引入API模块
+const api = require('../../utils/api');
 
 Page({
 
@@ -25,9 +21,7 @@ Page({
     },
     isLoggingOut: false,
     // 用户信息设置弹窗
-    showUserInfoModal: false,
-    tempAvatarUrl: '',
-    tempNickName: ''
+    showUserInfoModal: false
   },
 
   /**
@@ -38,12 +32,7 @@ Page({
     this.getRemainingAnswers();
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady() {
 
-  },
 
   /**
    * 生命周期函数--监听页面显示
@@ -63,24 +52,30 @@ Page({
    * 获取用户信息
    */
   getUserInfo() {
-    // 使用login.js中的getUserInfo函数获取用户信息
-    const userInfo = getUserInfo();
-    if (userInfo) {
-      this.setData({
-        userInfo: userInfo,
-        buttonConfig: {
-          type: 'unlight',
-          text: '退出登录'
-        }
-      });
-    } else {
-      this.setData({
-        userInfo: null,
-        buttonConfig: {
-          type: 'light',
-          text: '登录'
-        }
-      });
+    try {
+      // 从本地存储获取用户信息
+      const userInfo = wx.getStorageSync(USER_INFO_KEY);
+      if (userInfo) {
+        this.setData({
+          userInfo: userInfo,
+          buttonConfig: {
+            type: 'unlight',
+            text: '退出登录'
+          }
+        });
+      } else {
+        this.setData({
+          userInfo: null,
+          buttonConfig: {
+            type: 'light',
+            text: '登录'
+          }
+        });
+      }
+      return userInfo;
+    } catch (error) {
+      console.error('获取用户信息失败:', error);
+      return null;
     }
   },
 
@@ -98,44 +93,78 @@ Page({
   /**
    * 处理头像选择
    */
-  async onChooseAvatar(e) {
-    try {
-      // 使用login.js中的handleAvatarChoose函数处理头像选择
-      const updatedUserInfo = await handleAvatarChoose(e);
+  onChooseAvatar(e) {
+    const { avatarUrl } = e.detail;
+    if (!avatarUrl) return;
 
-      // 更新页面数据
-      if (updatedUserInfo) {
+    // 上传头像
+    const config = {
+      url: api.user_update_url,
+      filePath: avatarUrl
+    };
+
+    api.request(config).then(res => {
+      if (res.success && res.data) {
+        // 更新用户信息
+        const updateConfig = {
+          url: api.user_update_url,
+          method: 'POST',
+          data: {
+            "avatarUrl": res.data.url
+          }
+        };
+
+        api.request(updateConfig);
+
+        // 更新本地存储
+        const userInfo = this.getUserInfo() || {};
+        userInfo.avatarUrl = res.data.url;
+        wx.setStorageSync(USER_INFO_KEY, userInfo);
+
+        // 更新页面数据
         this.setData({
-          userInfo: updatedUserInfo,
-          tempAvatarUrl: updatedUserInfo.avatarUrl || this.data.defaultAvatarUrl
+          userInfo: userInfo
         });
       }
-    } catch (error) {
-      wx.showToast({
-        title: error.message || '头像设置失败',
-        icon: 'error'
-      });
-    }
+    });
   },
 
   /**
    * 处理昵称输入
    */
   onInputNickname(e) {
-    this.setData({
-      tempNickName: e.detail.value
-    });
+    const value = e.detail.value;
+
+    // 如果是在昵称输入框完成事件，直接更新昵称
+    if (e.type === 'nicknamereview') {
+      const updateConfig = {
+        url: api.user_update_url,
+        method: 'POST',
+        data: {
+          "nickName": value
+        }
+      };
+
+      api.request(updateConfig);
+
+      // 更新本地存储
+      const userInfo = this.getUserInfo() || {};
+      userInfo.nickName = value;
+      wx.setStorageSync(USER_INFO_KEY, userInfo);
+
+      // 更新页面数据
+      this.setData({
+        userInfo: userInfo
+      });
+    }
   },
 
   /**
    * 打开用户信息设置弹窗
    */
   openUserInfoModal() {
-    const userInfo = getUserInfo() || {};
     this.setData({
-      showUserInfoModal: true,
-      tempAvatarUrl: userInfo.avatarUrl || this.data.defaultAvatarUrl,
-      tempNickName: userInfo.nickName || ''
+      showUserInfoModal: true
     });
   },
 
@@ -151,65 +180,16 @@ Page({
   /**
    * 确认用户信息设置
    */
-  async confirmUserInfo() {
-    try {
-      if (this.data.tempNickName || this.data.tempAvatarUrl) {
-        // 获取当前用户信息
-        const currentUserInfo = getUserInfo();
+  confirmUserInfo() {
+    // 直接关闭弹窗，因为头像和昵称已经在各自的事件中处理了
+    this.closeUserInfoModal();
 
-        // 更新用户信息
-        const updatedUserInfo = await updateUserInfo({
-          nickName: this.data.tempNickName,
-          avatarUrl: this.data.tempAvatarUrl
-        });
-
-        // 如果有openId，则将用户信息发送到后端
-        if (currentUserInfo && currentUserInfo.openId) {
-          wx.request({
-            url: getApiBaseUrl() + '/api/user/update',
-            method: 'POST',
-            data: {
-              openid: currentUserInfo.openId,
-              avatarUrl: this.data.tempAvatarUrl || currentUserInfo.avatarUrl,
-              nickName: this.data.tempNickName || currentUserInfo.nickName
-            },
-            success: (res) => {
-              console.log('用户信息更新成功，服务器返回:', res.data);
-            },
-            fail: (err) => {
-              console.error('用户信息更新失败:', err);
-            }
-          });
-        }
-
-        // 更新页面数据
-        this.setData({
-          userInfo: updatedUserInfo,
-          showUserInfoModal: false
-        });
-
-        // 在用户设置完成后显示登录成功提示
-        wx.showToast({
-          title: '登录成功',
-          icon: 'success',
-          duration: 2000
-        });
-      } else {
-        this.closeUserInfoModal();
-
-        // 即使用户没有设置信息，也显示登录成功提示
-        wx.showToast({
-          title: '登录成功',
-          icon: 'success',
-          duration: 2000
-        });
-      }
-    } catch (error) {
-      wx.showToast({
-        title: error.message || '设置失败',
-        icon: 'error'
-      });
-    }
+    // 显示登录成功提示
+    wx.showToast({
+      title: '登录成功',
+      icon: 'success',
+      duration: 2000
+    });
   },
 
   /**
@@ -229,31 +209,64 @@ Page({
   /**
    * 处理登录
    */
-  handleLogin() {
-    return new Promise(async (resolve, reject) => {
-      try {
-        // 使用login.js中的simulateLogin函数进行实际微信登录，但不显示成功提示
-        const userInfo = await simulateLogin(undefined, false, false);
+  handleLogin(callback) {
+    wx.login({
+      success: res => {
+        // 发送 res.code 到后台换取 openId, sessionKey, unionId
+        const config = {
+          url: api.user_login_url + '?code=' + res.code,
+          method: 'POST',
+          data: {
+            userInfo: {
+              avatarUrl: this.data.defaultAvatarUrl,
+              nickName: ''
+            }
+          }
+        };
 
-        // 更新页面数据
-        this.setData({
-          userInfo: userInfo,
-          buttonConfig: {
-            type: 'unlight',
-            text: '退出登录'
+        api.request(config).then(res => {
+          if (res.success && res.data) {
+            // 构建用户信息
+            const userInfo = {
+              avatarUrl: res.data.userInfo?.avatarUrl || this.data.defaultAvatarUrl,
+              nickName: res.data.userInfo?.nickName || '',
+              openId: res.data.openid,
+              loginTime: new Date().getTime()
+            };
+
+            // 保存到本地存储
+            wx.setStorageSync(USER_INFO_KEY, userInfo);
+            wx.setStorageSync('loginTimestamp', new Date().getTime());
+
+            // 更新页面数据
+            this.setData({
+              userInfo: userInfo,
+              buttonConfig: {
+                type: 'unlight',
+                text: '退出登录'
+              }
+            });
+
+            // 直接显示用户信息设置弹窗
+            this.openUserInfoModal();
+
+            // 如果有回调函数，执行回调
+            if (typeof callback === 'function') {
+              callback(userInfo);
+            }
+          } else {
+            wx.showToast({
+              title: '登录失败，请重试',
+              icon: 'none'
+            });
           }
         });
-
-        // 直接显示用户信息设置弹窗
-        this.openUserInfoModal();
-
-        resolve(userInfo);
-      } catch (error) {
+      },
+      fail: () => {
         wx.showToast({
-          title: error.message || '登录失败',
-          icon: 'error'
+          title: '登录失败，请重试',
+          icon: 'none'
         });
-        reject(error);
       }
     });
   },
@@ -269,9 +282,7 @@ Page({
     }
 
     // 如果正在退出登录，则不再显示弹窗
-    if (this.data.isLoggingOut) {
-      return;
-    }
+    if (this.data.isLoggingOut) return;
 
     // 已登录，执行退出操作
     this.setData({ isLoggingOut: true }); // 设置标志位
@@ -280,69 +291,51 @@ Page({
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          // 使用login.js中的clearLoginInfo函数清除登录信息
-          clearLoginInfo();
-          // 重置数据
-          this.setData({
-            userInfo: null,
-            remainingAnswers: 0,
-            buttonConfig: {
-              type: 'light',
-              text: '登录'
-            }
-          });
-          // 提示用户
-          wx.showToast({
-            title: '已退出登录',
-            icon: 'success',
-            duration: 2000
+          // 调用退出登录接口
+          const config = {
+            url: api.user_login_url + '/logout',
+            method: 'POST'
+          };
+
+          api.request(config).then(() => {
+            this.doLogout();
+          }).catch(() => {
+            // 即使接口调用失败，也清除本地登录信息
+            this.doLogout();
           });
         }
         // 无论是确认还是取消，都重置标志位
         this.setData({ isLoggingOut: false });
       },
-      fail: () => {
-        // 发生错误时也要重置标志位
-        this.setData({ isLoggingOut: false });
-      }
+      fail: () => this.setData({ isLoggingOut: false })
     });
   },
 
   /**
-   * 生命周期函数--监听页面隐藏
+   * 执行退出登录操作
    */
-  onHide() {
+  doLogout() {
+    // 清除本地存储
+    wx.removeStorageSync(USER_INFO_KEY);
+    wx.removeStorageSync('loginTimestamp');
 
+    // 重置数据
+    this.setData({
+      userInfo: null,
+      remainingAnswers: 0,
+      buttonConfig: {
+        type: 'light',
+        text: '登录'
+      }
+    });
+
+    // 提示用户
+    wx.showToast({
+      title: '已退出登录',
+      icon: 'success',
+      duration: 2000
+    });
   },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
-
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {
-
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage() {
-
-  },
-
 
 
   /**
@@ -350,5 +343,7 @@ Page({
    */
   catchTouchMove() {
     return false;
-  }
+  },
+
+
 })

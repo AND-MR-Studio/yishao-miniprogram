@@ -60,7 +60,7 @@
 ### 环境变量
 - **开发环境**
   - 用户服务：`http://localhost:3000`
-  - 汤面服务：`http://localhost:8081/api/soups`
+  - 汤面服务：`http://localhost:8080/api/soups`
 - **生产环境**
   - 用户服务：`http://14.103.193.11:3000`
   - 汤面服务：`http://14.103.193.11:8081/api/soups`

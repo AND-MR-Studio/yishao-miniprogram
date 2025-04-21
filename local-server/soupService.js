@@ -66,7 +66,7 @@ async function saveSoups(soups) {
 // 初始化汤面服务路由
 function initSoupRoutes(app) {
   // 获取所有汤面
-  app.get('/api/soups/list', async (req, res) => {
+  app.get('/api/soup/list', async (req, res) => {
     try {
       const soups = await getAllSoups();
 
@@ -87,7 +87,7 @@ function initSoupRoutes(app) {
   });
 
   // 获取随机汤面
-  app.get('/api/soups/random', async (req, res) => {
+  app.get('/api/soup/random', async (req, res) => {
     try {
       const soups = await getAllSoups();
 
@@ -115,7 +115,7 @@ function initSoupRoutes(app) {
   });
 
   // 获取单个汤面
-  app.get('/api/soups/:soupId', async (req, res) => {
+  app.get('/api/soup/detail/:soupId', async (req, res) => {
     try {
       const soups = await getAllSoups();
       const soup = soups.find(s => s.soupId === req.params.soupId);
@@ -141,7 +141,7 @@ function initSoupRoutes(app) {
   });
 
   // 添加汤面 - 兼容旧API
-  app.post('/api/soups/add', async (req, res) => {
+  app.post('/api/soup/add', async (req, res) => {
     try {
       const { title, contentLines, truth } = req.body;
 
@@ -185,7 +185,7 @@ function initSoupRoutes(app) {
   });
 
   // 添加汤面 - 新API
-  app.post('/api/soups', async (req, res) => {
+  app.post('/api/soup/add', async (req, res) => {
     console.log('收到添加汤面请求 - 新API:', req.body);
     try {
       const { title, contentLines, truth } = req.body;
@@ -230,7 +230,7 @@ function initSoupRoutes(app) {
   });
 
   // 更新汤面
-  app.put('/api/soups/:soupId', async (req, res) => {
+  app.put('/api/soup/update/:soupId', async (req, res) => {
     try {
       const { title, contentLines, truth } = req.body;
 
@@ -290,7 +290,7 @@ function initSoupRoutes(app) {
   });
 
   // 删除汤面
-  app.delete('/api/soups/:soupId', async (req, res) => {
+  app.delete('/api/soup/delete/:soupId', async (req, res) => {
     try {
       const soups = await getAllSoups();
       const index = soups.findIndex(s => s.soupId === req.params.soupId);

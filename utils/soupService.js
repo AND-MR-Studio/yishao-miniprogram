@@ -3,7 +3,7 @@
  * 负责处理汤面数据的加载、获取等操作
  * 优化版：不再缓存所有汤面数据，而是在需要时通过API获取
  */
-const { soupRequest } = require('./api');
+const { soupRequest, soupBasePath } = require('./api');
 
 const soupService = {
     // 当前汤面列表的ID数组（仅存储ID，不存储完整数据）
@@ -69,7 +69,7 @@ const soupService = {
         // 创建加载Promise
         this._loadingPromise = new Promise((resolve) => {
             soupRequest({
-                url: '/list',
+                url: soupBasePath + 'list',
                 method: 'GET'
             }).then(response => {
                 // 检查响应格式
@@ -182,7 +182,7 @@ const soupService = {
         try {
             console.log('从服务器获取汤面数据:', soupId);
             const response = await soupRequest({
-                url: `/${soupId}`,
+                url: `${soupBasePath}detail/${soupId}`,
                 method: 'GET'
             });
 

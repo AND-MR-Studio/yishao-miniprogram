@@ -59,7 +59,7 @@
         <!-- 头像选择 - 居中显示 -->
         <view class="avatar-container-centered">
           <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-            <image class="avatar-preview-centered" src="{{tempAvatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+            <image class="avatar-preview-centered" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
           </button>
         </view>
 
@@ -69,7 +69,7 @@
             type="nickname"
             class="nickname-input-centered"
             placeholder="请输入用户昵称"
-            value="{{tempNickName}}"
+            value="{{userInfo.nickName}}"
             bindinput="onInputNickname"
           />
         </view>

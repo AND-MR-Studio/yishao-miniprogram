@@ -506,7 +506,7 @@ function getApiBaseUrl() {
   // 根据环境返回不同的基础URL
   switch (envVersion) {
     case 'develop': // 开发版
-      return 'http://localhost:8081';
+      return 'http://localhost:8080';
   }
 }
 

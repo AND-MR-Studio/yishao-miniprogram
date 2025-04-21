@@ -1,103 +1,76 @@
-// 后端服务器基础URL配置
-const BASE_URLS = {
-  user: {
-    development: 'http://localhost:8081',
-    production: 'http://14.103.193.11:8081'  // 使用与soup服务相同的服务器地址
-  },
-  soup: {
-    development: 'http://localhost:8081/api/soups',
-    production: 'http://14.103.193.11:8081/api/soups'
-  }
-};
-
-// 当前环境
-const currentEnv = 'development'; // 可以根据需要切换环境
-
 /**
- * 获取指定服务的基础URL
- * @param {string} service - 服务名称 ('user' 或 'soup')
- * @returns {string} 基础URL
+ * API接口定义
  */
-const getBaseUrl = (service) => {
-  return BASE_URLS[service]?.[currentEnv] || BASE_URLS[service]?.development;
-};
+let App = getApp();
+let baseUrl = App.globalData.config.baseUrl;
+let ysUrl = App.globalData.config.ysUrl;
+const { request, soupRequest, agentRequest } = require('./request');
 
-/**
- * 统一请求方法
- * @param {Object} options - 请求配置
- * @param {string} options.url - 请求地址
- * @param {string} [options.method='GET'] - 请求方法
- * @param {Object} [options.data] - 请求数据
- * @param {Object} [options.header] - 请求头
- * @param {string} [options.service='user'] - 服务名称
- * @returns {Promise} 返回Promise对象
- */
-const request = (options) => {
-  return new Promise((resolve, reject) => {
-    // 获取用户token
-    const userInfo = wx.getStorageSync('userInfo') || {};
-    const token = userInfo.token;
+// 基础路径
+const userBasePath = 'user/';
+const soupBasePath = 'soup/';
+const dialogBasePath = 'dialog/';
 
-    // 合并请求头
-    const header = {
-      'Content-Type': 'application/json',
-      ...options.header
-    };
+// 用户相关接口URL
+const user_login_url = ysUrl + userBasePath + 'login';
+const user_update_url = ysUrl + userBasePath + 'update';
+const user_info_url = ysUrl + userBasePath + 'info';
+const user_soups_url = ysUrl + userBasePath + 'soups';
+const user_soups_update_url = ysUrl + userBasePath + 'soups/update';
+const user_list_url = ysUrl + userBasePath + 'list';
+const user_delete_url = ysUrl + userBasePath + 'delete';
 
-    // 如果有token，添加到请求头
-    if (token) {
-      header.Authorization = `Bearer ${token}`;
-    }
+// 汤面相关接口URL
+const soup_list_url = soupBasePath + 'list';
+const soup_random_url = soupBasePath + 'random';
+const soup_detail_url = soupBasePath + 'detail/';
+const soup_add_url = soupBasePath + 'add';
+const soup_update_url = soupBasePath + 'update/';
+const soup_delete_url = soupBasePath + 'delete/';
 
-    // 获取对应服务的基础URL
-    const baseUrl = getBaseUrl(options.service || 'user');
-
-    wx.request({
-      url: `${baseUrl}${options.url}`,
-      method: options.method || 'GET',
-      data: options.data,
-      header: header,
-      success: (res) => {
-        const { data } = res;
-        
-        // 请求成功
-        if (res.statusCode === 200) {
-          resolve(data);
-        }
-        // token过期
-        else if (res.statusCode === 401) {
-          // 清除本地存储的用户信息
-          wx.removeStorageSync('userInfo');
-          // 跳转到登录页或重新登录
-          reject(new Error('登录已过期，请重新登录'));
-        }
-        // 其他错误
-        else {
-          reject(new Error(data.error || '请求失败'));
-        }
-      },
-      fail: (error) => {
-        reject(new Error('网络请求失败'));
-      }
-    });
-  });
-};
-
-/**
- * 汤面服务专用请求方法
- * @param {Object} options - 请求配置
- * @returns {Promise} 返回Promise对象
- */
-const soupRequest = (options) => {
-  return request({
-    ...options,
-    service: 'soup'
-  });
-};
+// 对话相关接口URL
+const dialog_send_url = ysUrl + dialogBasePath + 'send';
+const dialog_save_url = ysUrl + dialogBasePath + 'save';
+const dialog_list_url = ysUrl + dialogBasePath + 'list';
+const dialog_detail_url = ysUrl + dialogBasePath + 'detail/';
+const dialog_delete_url = ysUrl + dialogBasePath + 'delete/';
 
 module.exports = {
+  // 导出请求方法
   request,
   soupRequest,
-  getBaseUrl,
-  currentEnv
-}; 
+  agentRequest,
+
+  // 导出基础URL
+  baseUrl,
+  ysUrl,
+
+  // 导出基础路径
+  userBasePath,
+  soupBasePath,
+  dialogBasePath,
+
+  // 用户相关接口URL
+  user_login_url,
+  user_update_url,
+  user_info_url,
+  user_soups_url,
+  user_soups_update_url,
+  user_list_url,
+  user_delete_url,
+
+  // 汤面相关接口URL
+  soup_list_url,
+  soup_random_url,
+  soup_detail_url,
+  soup_add_url,
+  soup_update_url,
+  soup_delete_url,
+
+  // 对话相关接口URL
+  dialog_send_url,
+  dialog_save_url,
+  dialog_list_url,
+  dialog_detail_url,
+  dialog_delete_url
+};
