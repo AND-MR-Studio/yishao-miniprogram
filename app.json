@@ -2,12 +2,11 @@
   "pages": [
     "pages/index/index",
     "pages/gensoup/gensoup",
-    "pages/mine/mine",
-    "components/soup-display/soup-display"
+    "pages/mine/mine"
   ],
   "window": {
     "navigationStyle": "custom",
-    "navigationBarTitleText": "一勺海龟汤",
+    "navigationBarTitleText": "一勺推理社",
     "navigationBarBackgroundColor": "#061429",
     "enablePullDownRefresh": false,
     "backgroundColor": "#061429",

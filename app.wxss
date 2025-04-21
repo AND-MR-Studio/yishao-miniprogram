@@ -10,9 +10,3 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   box-sizing: border-box;
 }
-
-/* 全局隐藏滚动条样式 */
-.wx-scroll-view {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE and Edge */
-}
