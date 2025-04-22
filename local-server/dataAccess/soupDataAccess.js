@@ -60,8 +60,8 @@ async function initSoupsFile() {
       })
     ];
 
-    // 写入初始数据
-    await fs.writeJson(SOUPS_FILE, initialData);
+    // 写入初始数据，使用格式化选项
+    await fs.writeJson(SOUPS_FILE, initialData, { spaces: 2 });
     console.log('海龟汤数据文件初始化完成');
   } catch (err) {
     console.error('初始化海龟汤数据文件失败:', err);
@@ -140,7 +140,7 @@ async function createSoup(soupData) {
     const newSoup = createSoupObject(soupData);
 
     soups.push(newSoup);
-    await fs.writeJson(SOUPS_FILE, soups);
+    await fs.writeJson(SOUPS_FILE, soups, { spaces: 2 });
     return newSoup;
   } catch (err) {
     console.error('创建海龟汤失败:', err);
@@ -170,7 +170,7 @@ async function updateSoup(soupId, soupData) {
     };
 
     soups[index] = updatedSoup;
-    await fs.writeJson(SOUPS_FILE, soups);
+    await fs.writeJson(SOUPS_FILE, soups, { spaces: 2 });
     return updatedSoup;
   } catch (err) {
     console.error('更新海龟汤失败:', err);
@@ -194,7 +194,7 @@ async function deleteSoup(soupId) {
 
     const deletedSoup = soups[index];
     soups.splice(index, 1);
-    await fs.writeJson(SOUPS_FILE, soups);
+    await fs.writeJson(SOUPS_FILE, soups, { spaces: 2 });
 
     return {
       success: true,
@@ -231,7 +231,7 @@ async function deleteSoups(soupIds) {
       };
     }
 
-    await fs.writeJson(SOUPS_FILE, remainingSoups);
+    await fs.writeJson(SOUPS_FILE, remainingSoups, { spaces: 2 });
 
     return {
       success: true,
