@@ -1,0 +1,79 @@
+<!--components/dialog/index.wxml-->
+<view class="dialog-container {{visible ? 'visible' : 'hidden'}}" animation="{{animationData}}">
+  <view class="page {{isPeekingSoup ? 'peek-soup' : ''}}">
+    <!-- 导航栏 -->
+    <nav-bar
+      showBackButton="{{true}}"
+      bind:back="handleClose"
+    />
+
+    <view class="container" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
+      <!-- 毛玻璃效果遮罩层 -->
+      <view class="frosted-glass"></view>
+
+      <!-- 对话区域 -->
+      <scroll-view
+        class="dialog-content"
+        scroll-y="true"
+        scroll-with-animation="true"
+        scroll-anchoring="true"
+        enhanced="true"
+        bounces="true"
+        show-scrollbar="false"
+        enable-passive="true"
+        enable-flex="true"
+        id="dialogScroll"
+        aria-busy="{{loading}}"
+      >
+        <block wx:if="{{loading && !messages.length}}">
+          <view class="message loading">加载中...</view>
+        </block>
+
+        <block wx:for="{{messages}}" wx:key="index">
+          <!-- 用户消息 -->
+          <view
+            wx:if="{{item.role === 'user'}}"
+            class="message user {{item.status ? item.status : ''}}"
+            aria-label="用户消息: {{item.content}}"
+          >{{item.content}}</view>
+
+          <!-- 系统和代理回复消息 - 正常显示 -->
+          <view
+            wx:if="{{(item.role === 'system' || item.role === 'agent') && index !== animatingMessageIndex}}"
+            class="message response {{item.status ? item.status : ''}}"
+            aria-label="回复消息: {{item.content}}"
+          >> {{item.content}}</view>
+
+          <!-- 系统和代理回复消息 - 打字机动画 -->
+          <view
+            wx:if="{{(item.role === 'system' || item.role === 'agent') && index === animatingMessageIndex}}"
+            class="message response typing-container {{item.status ? item.status : ''}}"
+            aria-live="polite"
+          >
+            <text class="prefix-text">> </text>
+            <view class="typing-content">
+              <block wx:for="{{displayLines}}" wx:for-item="line" wx:for-index="lineIdx" wx:key="lineIdx">
+                <block wx:for="{{line.chars}}" wx:for-item="charObj" wx:for-index="charIdx" wx:key="charIdx">
+                  <text class="char-typing {{charObj.show ? 'show' : ''}} {{charObj.active ? 'active' : ''}}">{{charObj.char}}</text>
+                </block>
+              </block>
+            </view>
+          </view>
+        </block>
+
+        <!-- 用于滚动到底部的锚点 -->
+        <view id="scrollBottom" style="height: 2rpx;"></view>
+      </scroll-view>
+
+      <!-- 输入栏组件 -->
+      <view class="input-bar-wrapper">
+        <input-bar
+          bind:send="handleSend"
+          bind:voiceStart="handleVoiceStart"
+          bind:voiceEnd="handleVoiceEnd"
+          bind:voiceCancel="handleVoiceCancel"
+        />
+      </view>
+    </view>
+  </view>
+</view>

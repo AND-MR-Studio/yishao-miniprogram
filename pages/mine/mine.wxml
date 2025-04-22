@@ -2,22 +2,14 @@
 <view class="page">
   <!-- 导航栏 -->
   <nav-bar title="个人中心" />
-  
+
   <view class="container">
     <!-- 用户信息卡片 -->
     <view class="user-card">
       <view class="avatar-container">
-        <button 
-          class="avatar-wrapper" 
-          open-type="chooseAvatar" 
-          bindchooseavatar="onChooseAvatar"
-        >
-          <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
-          <view class="avatar-hint">{{userInfo ? '点击更换头像' : '点击设置头像'}}</view>
-        </button>
+        <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
       </view>
       <view class="user-info">
-        <!-- 显示昵称（不再使用输入框） -->
         <text class="username">{{userInfo.nickName || '未登录'}}</text>
         <view class="answer-count">
           <text class="count-label">剩余回答次数：</text>
@@ -25,21 +17,9 @@
         </view>
       </view>
     </view>
-    
+
     <!-- 功能列表 -->
     <view class="function-list">
-      <view class="function-item" bindtap="handleViewHistory">
-        <view class="item-icon">
-          <text class="iconfont icon-record"></text>
-        </view>
-        <view class="item-content">
-          <text>我的记录</text>
-        </view>
-        <view class="item-arrow">
-          <text class="iconfont icon-right"></text>
-        </view>
-      </view>
-      
       <view class="function-item">
         <view class="item-icon">
           <text class="iconfont icon-about"></text>
@@ -52,64 +32,59 @@
         </view>
       </view>
     </view>
-    
+
     <!-- 登录/退出按钮 -->
     <view class="logout-container">
-      <!-- 已登录状态下显示退出登录按钮 -->
-      <block wx:if="{{userInfo}}">
-        <button-component 
-          type="{{buttonConfig.type}}" 
-          text="{{buttonConfig.text}}" 
-          width="100%" 
-          height="88rpx"
-          bind:tap="handleLogout"
-        />
-      </block>
-      <!-- 未登录状态下，显示微信登录按钮 -->
-      <block wx:else>
-        <button 
-          class="weui-btn login-btn" 
-          type="primary" 
-          bindtap="handleSimulateLogin"
-        >微信登录</button>
-      </block>
+      <button-component
+        type="{{userInfo ? 'unlight' : 'light'}}"
+        text="{{userInfo ? '退出登录' : '微信一键登录'}}"
+        width="100%"
+        height="88rpx"
+        bind:tap="{{userInfo ? 'handleLogout' : 'handleLogin'}}"
+      />
     </view>
   </view>
 
-  <!-- 汤面列表弹窗 -->
-  <view class="soup-list-modal {{showSoupList ? 'show' : ''}}" catchtouchmove="catchTouchMove">
-    <view class="soup-list-container">
-      <view class="soup-list-header">
-        <text class="soup-list-title">我的汤面记录</text>
-        <view class="soup-list-close" bindtap="closeSoupList">×</view>
+
+
+  <!-- 用户信息设置弹窗 -->
+  <view class="user-info-modal {{showUserInfoModal ? 'show' : ''}}" catchtouchmove="catchTouchMove">
+    <view class="user-info-container">
+      <view class="user-info-header">
+        <text class="user-info-title">设置个人信息</text>
+        <view class="user-info-close" bindtap="closeUserInfoModal">×</view>
       </view>
-      <scroll-view scroll-y class="soup-list-body">
-        <view wx:if="{{userSoupHistory.length === 0}}" class="soup-list-empty">
-          <text>暂无访问记录</text>
+
+      <view class="user-info-body">
+        <!-- 头像选择 - 居中显示 -->
+        <view class="avatar-container-centered">
+          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+            <image class="avatar-preview-centered" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+          </button>
         </view>
-        <view 
-          class="soup-list-item" 
-          wx:for="{{userSoupHistory}}" 
-          wx:key="timestamp" 
-          data-soup-id="{{item.soupId}}"
-          bindtap="handleSoupItemClick"
-        >
-          <text class="soup-item-title">{{item.title}}</text>
-          <text class="soup-item-time">{{item.formattedTime || '最近访问'}}</text>
+
+        <!-- 昵称输入 - 居中显示 -->
+        <view class="nickname-container">
+          <input
+            type="nickname"
+            class="nickname-input-centered"
+            placeholder="请输入用户昵称"
+            value="{{userInfo.nickName}}"
+            bindinput="onInputNickname"
+          />
         </view>
-        <view class="soup-list-divider" wx:if="{{userSoupHistory.length > 0 && soupList.length > 0}}">
-          <text>全部汤面</text>
-        </view>
-        <view 
-          class="soup-list-item" 
-          wx:for="{{soupList}}" 
-          wx:key="soupId" 
-          data-soup-id="{{item.soupId}}"
-          bindtap="handleSoupItemClick"
-        >
-          <text class="soup-item-title">{{item.title}}</text>
-        </view>
-      </scroll-view>
+      </view>
+
+      <view class="user-info-footer">
+        <button-component
+          type="light"
+          text="确认"
+          width="100%"
+          height="88rpx"
+          bind:tap="confirmUserInfo"
+        />
+        <view class="skip-btn" bindtap="skipUserInfo">暂不设置</view>
+      </view>
     </view>
   </view>
 </view>

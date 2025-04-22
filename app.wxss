@@ -4,17 +4,9 @@
 @import "./styles/theme.wxss";
 @import "./styles/animation.wxss";
 
-page {
+.page {
   background-color: var(--color-background);
   color: var(--color-text-primary);
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   box-sizing: border-box;
-}
-
-
-/* 隐藏滚动条但允许滚动 */
-::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  color: transparent;
 }

@@ -1,0 +1,237 @@
+@import "/static/css/iconfont.wxss";
+
+/* 对话组件容器 */
+.dialog-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  transform: translateY(100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dialog-container.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* 页面样式 */
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background-color:hsla(216, 74.50%, 9.20%, 0.29); /* 背景改为半透明 */
+  --dialog-opacity: 1; /* CSS变量控制透明度 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 长按时的透明度控制 */
+.page.peek-soup {
+  --dialog-opacity: 0;
+  background-color: rgba(6, 20, 41, 0); /* 背景完全透明 */
+  pointer-events: none; /* 禁止交互，允许点击穿透到汤面显示区域 */
+}
+
+/* 关闭按钮 */
+.close-button {
+  position: fixed;
+  top: 40rpx;
+  right: 40rpx;
+  width: 60rpx;
+  height: 60rpx;
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1001;
+}
+
+.close-button .icon-close {
+  font-size: 40rpx;
+  color: #ffffff;
+}
+
+/* 容器样式 */
+.container {
+  flex: 1;
+  position: relative;
+  padding-top: 180rpx; /* 调整顶部padding以适应导航栏 */
+  padding-bottom: 150rpx;
+}
+
+/* 毛玻璃效果遮罩层 */
+.frosted-glass {
+  position: fixed;
+  top: 180rpx; /* 导航栏基础高度 + 状态栏高度 */
+  left: 0;
+  right: 0;
+  bottom: 150rpx;
+  background-color: rgba(255, 255, 255, 0);
+  backdrop-filter: blur(15rpx);
+  -webkit-backdrop-filter: blur(15rpx);
+  z-index: 100;
+  pointer-events: none; /* 确保不会影响底层组件的交互 */
+  opacity: var(--dialog-opacity);
+  transition: opacity 0.5s ease, backdrop-filter 0.5s ease;
+}
+
+/* 偷看时毛玻璃效果完全透明 */
+.page.peek-soup .frosted-glass {
+  opacity: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* 对话区域样式 */
+.dialog-content {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 40rpx 0rpx;
+  gap: 10rpx;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 20rpx;
+  opacity: var(--dialog-opacity);
+  transition: opacity 0.5s ease;
+  z-index: 200;
+}
+
+/* 偷看时对话区域完全透明 */
+.page.peek-soup .dialog-content {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 基础消息样式 */
+.message {
+  margin-bottom: 10rpx;
+  width: 100%;
+  padding: 0 40rpx;
+  box-sizing: border-box;
+  white-space: pre-wrap;
+  word-break: break-all;
+  text-align: left;
+  display: block;
+}
+
+/* 回复消息样式（红色） */
+.response {
+  color: var(--color-accent);
+  position: relative;
+}
+
+/* 用户消息样式（白色） */
+.user {
+  color: var(--color-text-primary);
+}
+
+/* 加载消息样式 */
+.loading {
+  color: var(--color-text-secondary);
+  opacity: 0.8;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+  100% { opacity: 0.5; }
+}
+
+/* 打字机容器样式 */
+.typing-container {
+  display: block;
+  text-align: left;
+  width: 100%;
+  padding: 0 40rpx;
+  box-sizing: border-box;
+}
+
+/* 前缀文本样式 */
+.prefix-text {
+  display: inline;
+}
+
+/* 打字机内容区域 */
+.typing-content {
+  display: inline;
+  word-break: break-all;
+  white-space: pre-wrap;
+}
+
+/* 打字机字符基础样式 */
+.char-typing {
+  display: inline-block;
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 160ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+  position: relative;
+}
+
+/* 显示状态 */
+.char-typing.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* 活跃状态 */
+.char-typing.active {
+  opacity: 1;
+}
+
+/* 普通打字机效果 */
+.char-typing.active.effect-normal {
+  transform: scale(1);
+}
+
+/* 活跃状态 - 系统消息打字机 */
+.response-char-typing-active {
+  color: var(--color-accent);
+}
+
+/* 前一个字符状态 */
+.char-typing.prev {
+  opacity: 0.9;
+  transform: scale(1);
+  transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+}
+
+/* 对话组件内部的输入栏样式 */
+.container .input-bar-wrapper {
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom));
+  left: 0;
+  width: 100%;
+  z-index: 1002;
+}
+
+/* 消息状态样式 */
+.message.sending {
+  opacity: 0.7;
+}
+
+.message.error {
+  position: relative;
+}
+
+.message.error::after {
+  content: '发送失败';
+  position: absolute;
+  right: 40rpx;
+  bottom: -30rpx;
+  font-size: 24rpx;
+  color: var(--color-accent);
+}
+
+.message.typing {
+  opacity: 0.8;
+}

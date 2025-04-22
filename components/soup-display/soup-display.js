@@ -19,6 +19,10 @@ Component({
     staticMode: {
       type: Boolean,
       value: false
+    },
+    isPeeking: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -29,18 +33,20 @@ Component({
 
   observers: {
     'soupId'(newSoupId) {
-      if (newSoupId && newSoupId !== this.data.currentSoupId) {
-        this.data.currentSoupId = newSoupId;
+      // 确保 newSoupId 不为 null 或 undefined
+      newSoupId = newSoupId || '';
+
+      if (newSoupId && newSoupId !== this.getCurrentSoupId()) {
         if (this._isAttached && !this._isLoading) {
-          this.loadSoupData();
+          this.loadSoupData(newSoupId);
         }
       }
     },
     'staticMode'(staticMode) {
       if (!this.data.currentSoup) return;
-      
+
       if (staticMode) {
-        this._showCompleteContent();
+        this.showCompleteContent();
       } else if (this.data.autoPlay) {
         this.resetAnimation();
         this.startAnimation();
@@ -50,7 +56,6 @@ Component({
 
   data: {
     currentSoup: null,
-    currentSoupId: '',
     displayLines: [],
     isAnimating: false,
     loading: false
@@ -61,22 +66,21 @@ Component({
       this._isLoading = false;
       this._isAttached = true;
       this._initTypeAnimator();
-      
+
+      // 如果有初始汤面ID，加载数据
       const initialSoupId = this.properties.soupId;
       if (initialSoupId) {
-        this.data.currentSoupId = initialSoupId;
+        wx.nextTick(() => {
+          if (this._isAttached && !this.data.currentSoup) {
+            this.loadSoupData(initialSoupId);
+          }
+        });
       }
-      
-      wx.nextTick(() => {
-        if (!this.data.currentSoup && this._isAttached) {
-          this.loadSoupData();
-        }
-      });
     },
 
     ready() {
       if (this.data.staticMode && this.data.currentSoup) {
-        this._showCompleteContent();
+        this.showCompleteContent();
       }
     },
 
@@ -100,12 +104,12 @@ Component({
 
     _formatSoupContent(soup) {
       if (!soup) return [];
-      
+
       const lines = [];
       if (soup.title) {
         lines.push(soup.title);
       }
-      
+
       if (soup.contentLines && Array.isArray(soup.contentLines)) {
         lines.push(...soup.contentLines.map(line => String(line)));
       }
@@ -116,44 +120,68 @@ Component({
           lines.push(...soup.content.map(line => String(line)));
         }
       }
-      
+
       return lines;
     },
 
-    async loadSoupData() {
+    /**
+     * 获取当前汤面ID
+     * @returns {string} 当前汤面ID
+     */
+    getCurrentSoupId() {
+      // 从当前汤面数据中获取ID
+      if (this.data.currentSoup) {
+        return this.data.currentSoup.soupId || this.data.currentSoup.id || '';
+      }
+      // 如果没有当前汤面数据，使用属性中的soupId
+      const propSoupId = this.properties.soupId;
+      return (propSoupId === null || propSoupId === undefined) ? '' : propSoupId;
+    },
+
+    /**
+     * 加载汤面数据
+     * 根据指定的soupId加载汤面数据
+     * @param {string} soupId 汤面ID，如果不指定则使用当前汤面ID或属性中的soupId
+     */
+    async loadSoupData(soupId) {
       if (!this._isAttached || this._isLoading) return;
-      
+
       this._isLoading = true;
       this.setData({ loading: true });
       this.triggerEvent('loadStart');
 
       try {
-        let targetSoupId = this.data.currentSoupId || this.properties.soupId || '';
-        
-        if (!soupService.isDataLoaded) {
-          await soupService.refreshSoupsAsync();
-        }
-        
-        let soupData = targetSoupId ? soupService.getSoupById(targetSoupId) : null;
-        
-        if (!soupData && soupService.soups && soupService.soups.length > 0) {
-          soupData = soupService.soups[0];
+        // 确保 targetSoupId 不为 null 或 undefined
+        let targetSoupId = '';
+        if (soupId) {
+          targetSoupId = soupId;
+        } else {
+          targetSoupId = this.getCurrentSoupId() || '';
         }
 
-        this.setData({
-          currentSoup: soupData,
-          currentSoupId: soupData.soupId || '',
-          loading: false
-        });
-
-        this.triggerEvent('loadSuccess', { soupData });
-
-        if (this.data.staticMode) {
-          this._showCompleteContent();
-        } else if (this.data.autoPlay) {
-          this.resetAnimation();
-          this.startAnimation();
+        // 只在ID列表未加载时加载
+        if (!soupService.isIdsLoaded) {
+          await soupService.loadSoupIds();
         }
+
+        // 获取汤面数据
+        let soupData = null;
+        if (targetSoupId) {
+          soupData = await soupService.getSoupById(targetSoupId);
+        }
+
+        // 如果没有找到指定ID的汤面，获取随机汤面
+        if (!soupData) {
+          soupData = await soupService.getRandomSoup();
+        }
+
+        // 如果仍然没有数据，显示错误
+        if (!soupData) {
+          throw new Error('无法获取有效的汤面数据');
+        }
+
+        // 使用公开方法更新汤面数据
+        this.updateSoupData(soupData, !this.data.autoPlay);
       } catch (error) {
         console.error('加载汤面失败:', error);
         this.setData({ loading: false });
@@ -164,7 +192,11 @@ Component({
       }
     },
 
-    _showCompleteContent() {
+    /**
+     * 显示完整内容，跳过打字机动画
+     * 公开方法，可以从外部调用
+     */
+    showCompleteContent() {
       if (!this.data.currentSoup || !this.typeAnimator) return;
       this.typeAnimator.showComplete(this.data.currentSoup);
     },
@@ -183,6 +215,30 @@ Component({
     resetAnimation() {
       if (this.typeAnimator) {
         this.typeAnimator.reset();
+      }
+    },
+
+    /**
+     * 更新汤面数据
+     * 公开方法，用于从外部直接更新汤面数据
+     * @param {Object} soupData 汤面数据
+     * @param {boolean} showComplete 是否显示完整内容，默认为true
+     */
+    updateSoupData(soupData, showComplete = true) {
+      if (!soupData) return;
+
+      this.setData({
+        currentSoup: soupData,
+        loading: false
+      });
+
+      this.triggerEvent('loadSuccess', { soupData });
+
+      if (showComplete || this.data.staticMode) {
+        this.showCompleteContent();
+      } else if (this.data.autoPlay) {
+        this.resetAnimation();
+        this.startAnimation();
       }
     }
   }

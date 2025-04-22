@@ -1,8 +1,91 @@
-/**index.wxss**/
 .page {
   width: 100%;
   min-height: 100vh;
   background-color: #061429;
 }
 
+.container {
+  width: 100%;
+  height: 100vh;
+  position: fixed;
+  overflow: hidden;
+}
+
+.bubbles-container {
+  position: relative;
+  width: 100%;
+  height: 60vh; /* 固定气泡区域为60%的视窗高度 */
+  z-index: 10; /* 确保气泡始终在GIF上方 */
+  pointer-events: auto; /* 确保气泡可点击 */
+}
+
+/* 添加摇摆动画关键帧 */
+@keyframes swing {
+  0% { transform: rotate(-5deg); }
+  50% { transform: rotate(5deg); }
+  100% { transform: rotate(-5deg); }
+}
+
+/* 修改果冻动画，保持旋转角度 */
+@keyframes jelly-with-swing {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.12, 0.9); }
+  40% { transform: scale(0.92, 1.08); }
+  50% { transform: scale(1.06, 0.94); }
+  65% { transform: scale(0.97, 1.03); }
+  80% { transform: scale(1.02, 0.99); }
+  100% { transform: scale(1); }
+}
+
+.bottom-animation {
+  position: fixed;
+  bottom: 40rpx;
+  left: 10rpx;
+  width: 100%;
+  height: 500rpx;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  z-index: 5; /* 低于气泡的层级 */
+  overflow: visible !important;
+  pointer-events: auto; /* 允许点击 */
+}
+
+/* 摇摆容器 */
+.swing-container {
+  transform-origin: bottom center;
+  animation: swing 3s ease-in-out infinite;
+  z-index: 6;
+}
+
+/* 果冻容器 */
+.jelly-container {
+  transform-origin: bottom center;
+  z-index: 6;
+}
+
+.jelly-container.jelly-effect {
+  animation: jelly-animation 0.6s var(--transition-ease);
+}
+
+/* 图片样式 */
+.question-pot {
+  width: 900rpx;
+  height: 900rpx;
+  object-fit: contain;
+  pointer-events: auto;
+  z-index: 6;
+}
+
+/* 使用动画容器来处理摇摆 */
+.bottom-animation .question-pot.jelly-effect {
+  animation: jelly-with-swing 0.6s var(--transition-ease);
+  /* 保持父元素的旋转状态 */
+  transform: inherit;
+}
+
+/* 确保果冻动画容器允许溢出 */
+.bottom-animation {
+  overflow: visible !important;
+}
 

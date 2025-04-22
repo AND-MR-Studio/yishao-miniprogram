@@ -42,7 +42,7 @@
   flex-grow: 0;
   bottom: calc(110rpx + env(safe-area-inset-bottom) + 60rpx); /* tabbar高度 + 安全区域 + 间距 */
   left: 0;
-  z-index: 998; 
+  z-index: 998;
 }
 
 /* 强制主页按钮宽度 */
@@ -59,7 +59,7 @@
   bottom: calc(env(safe-area-inset-bottom));
   left: 0;
   width: 100%;
-  z-index: 1002; /* 确保在汤面显示层之上 */
+  z-index: 998; /* 确保在汤面显示层之上 */
   background-color: #061429;
   padding: 20rpx;
   box-sizing: border-box;

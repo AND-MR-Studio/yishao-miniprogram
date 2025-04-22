@@ -1,259 +1,162 @@
 /**
  * 汤面数据服务类
- * 负责处理汤面数据的加载、获取等操作
+ * 提供符合RESTful规范的汤面数据CRUD操作
+ * 遵循简洁设计原则，只提供必要的API接口
  */
+const { soupRequest, soup_base_url, soup_random_url } = require('./api');
+
 const soupService = {
-    // 汤面数据缓存
-    soups: [],  // 改为空数组，完全依赖服务器数据
-
-    // 环境配置
-    ENV: {
-        DEV: 'development',
-        PROD: 'production'
-    },
-    
-    // 当前环境 - 默认为开发环境
-    currentEnv: 'production',
-    
-    // API基础URL配置
-    API_URLS: {
-        development: 'http://localhost:8081/api/soups',
-        production: 'http://14.103.193.11:8081/api/soups'
-    },
-    
-    // 获取当前环境的API基础URL
-    get API_BASE_URL() {
-        return this.API_URLS[this.currentEnv];
-    },
-    
     /**
-     * 切换环境
-     * @param {string} env 环境名称 ('development' 或 'production')
+     * 获取汤面数据
+     * @param {string|string[]|null} [soupId] 汤面ID或ID数组，如果不提供或为空数组则获取所有汤面
+     * @returns {Promise<Object|Array>} 汤面数据或汤面列表
      */
-    switchEnvironment: function(env) {
-        if (this.API_URLS[env]) {
-            this.currentEnv = env;
-            this.isDataLoaded = false; // 切换环境后需要重新加载数据
-            return true;
-        }
-        return false;
-    },
+    async getSoup(soupId) {
+        try {
+            // 如果没有提供参数或提供了空数组，获取所有汤面
+            if (!soupId || (Array.isArray(soupId) && soupId.length === 0)) {
+                const response = await soupRequest({
+                    url: soup_base_url,
+                    method: 'GET'
+                });
+                const data = response.data || response;
+                return Array.isArray(data) ? data : [];
+            }
 
-    // 是否已从服务器加载数据
-    isDataLoaded: false,
-    
-    // 加载状态标志
-    _isLoading: false,
-    
-    // 加载Promise缓存
-    _loadingPromise: null,
+            // 如果是非空数组，获取多个汤面
+            if (Array.isArray(soupId)) {
+                // 使用逗号分隔的ID列表进行查询
+                const response = await soupRequest({
+                    url: `${soup_base_url}?id=${soupId.join(',')}`,
+                    method: 'GET'
+                });
+                const data = response.data || response;
+                return Array.isArray(data) ? data : [];
+            }
 
-    /**
-     * 从服务器加载所有汤面数据 (Promise版本)
-     * @returns {Promise<Array>} 返回包含汤面数据的Promise
-     */
-    loadSoupsAsync: function() {
-        // 如果已经在加载中，返回现有的Promise
-        if (this._isLoading && this._loadingPromise) {
-            return this._loadingPromise;
-        }
-        
-        // 标记为加载中
-        this._isLoading = true;
-        console.log('开始从服务器加载汤面数据');
-        
-        // 创建加载Promise
-        this._loadingPromise = new Promise((resolve) => {
-            wx.request({
-                url: `${this.API_BASE_URL}/list`,
-                method: 'GET',
-                success: (res) => {
-                    if (res.statusCode === 200 && res.data && Array.isArray(res.data)) {
-                        console.log('服务器返回数据:', res.data);
-                        // 更新本地汤面数据，确保每个数据都有id字段
-                        this.soups = res.data.map(soup => ({
-                            ...soup,
-                            id: soup.id || soup._id || soup.soupId // 兼容不同的ID字段
-                        }));
-                        this.isDataLoaded = true;
-                        console.log('更新本地数据成功，当前数据量:', this.soups.length);
-                        console.log('数据示例:', this.soups[0]);
-                    } else {
-                        console.warn('服务器返回非预期数据格式，状态码:', res.statusCode);
-                    }
-                    resolve(this.soups);
-                },
-                fail: (err) => {
-                    console.error('从服务器加载数据失败:', err);
-                    resolve(this.soups);
-                },
-                complete: () => {
-                    // 无论成功或失败，都重置加载状态
-                    this._isLoading = false;
-                    // 清除Promise缓存
-                    setTimeout(() => {
-                        this._loadingPromise = null;
-                    }, 100);
-                }
+            // 如果是单个ID，获取单个汤面
+            const response = await soupRequest({
+                url: `${soup_base_url}/${soupId}`,
+                method: 'GET'
             });
-        });
-        
-        return this._loadingPromise;
+            return response.data || response;
+        } catch (error) {
+            console.error('获取汤面数据失败:', error);
+            return Array.isArray(soupId) ? [] : null;
+        }
     },
 
     /**
-     * 获取指定汤面的索引
+     * 创建新汤面
+     * @param {Object} soupData 汤面数据
+     * @returns {Promise<Object>} 创建的汤面数据
+     */
+    async createSoup(soupData) {
+        if (!soupData) {
+            console.error('创建汤面失败: 缺少汤面数据');
+            return null;
+        }
+
+        try {
+            const response = await soupRequest({
+                url: soup_base_url,
+                method: 'POST',
+                data: soupData
+            });
+            return response.data || response;
+        } catch (error) {
+            console.error('创建汤面失败:', error);
+            return null;
+        }
+    },
+
+    /**
+     * 更新汤面数据
      * @param {string} soupId 汤面ID
-     * @returns {number} 汤面索引，未找到返回-1
+     * @param {Object} soupData 汤面数据
+     * @returns {Promise<Object>} 更新后的汤面数据
      */
-    getSoupIndex: function (soupId) {
-        if (!soupId || !this.soups || !this.soups.length) {
-            console.log('无效的参数或数据:', { soupId, hasData: !!this.soups, dataLength: this.soups?.length });
-            return -1;
+    async updateSoup(soupId, soupData) {
+        if (!soupId || !soupData) {
+            console.error('更新汤面失败: 缺少必要参数');
+            return null;
         }
-        // 尝试多种ID字段匹配
-        const index = this.soups.findIndex(soup => 
-            soup.id === soupId || 
-            soup._id === soupId || 
-            soup.soupId === soupId
-        );
-        console.log('查找汤面索引:', { soupId, index, firstSoup: this.soups[0] });
-        return index;
+
+        try {
+            const response = await soupRequest({
+                url: `${soup_base_url}/${soupId}`,
+                method: 'PUT',
+                data: soupData
+            });
+            return response.data || response;
+        } catch (error) {
+            console.error('更新汤面失败:', error);
+            return null;
+        }
     },
 
     /**
-     * 获取下一个汤面的ID
-     * @param {string} currentSoupId 当前汤面ID
-     * @returns {string} 下一个汤面的ID
-     */
-    getNextSoupId: function (currentSoupId) {
-        // 如果数据未加载或为空，返回空
-        if (!this.isDataLoaded || !this.soups || !this.soups.length) {
-            console.log('数据未加载或为空');
-            return '';
-        }
-        
-        // 如果没有当前ID，返回第一个
-        if (!currentSoupId) {
-            console.log('没有当前ID，返回第一个');
-            return this.soups[0].id;
-        }
-        
-        const currentIndex = this.getSoupIndex(currentSoupId);
-        console.log('当前索引:', currentIndex, '当前ID:', currentSoupId);
-        
-        // 如果找不到当前汤面，返回第一个汤面的ID
-        if (currentIndex === -1) {
-            console.log('找不到当前汤面，返回第一个');
-            return this.soups[0].id;
-        }
-        
-        // 如果是最后一个，返回第一个汤面的ID
-        if (currentIndex === this.soups.length - 1) {
-            console.log('是最后一个，返回第一个');
-            return this.soups[0].id;
-        }
-        
-        // 返回下一个汤面的ID
-        const nextId = this.soups[currentIndex + 1].id;
-        console.log('返回下一个:', nextId);
-        return nextId;
-    },
-
-    /**
-     * 根据ID获取指定的汤面
+     * 删除汤面
      * @param {string} soupId 汤面ID
-     * @returns {Object|null} 汤面数据或null
+     * @returns {Promise<Object>} 删除结果
      */
-    getSoupById: function (soupId) {
-        if (!soupId || !this.soups || !this.soups.length) return null;
-        // 尝试多种ID字段匹配
-        const soup = this.soups.find(soup => 
-            soup.id === soupId || 
-            soup._id === soupId || 
-            soup.soupId === soupId
-        );
-        return soup || null;
-    },
-
-    /**
-     * 获取汤面数据 (Promise版本)
-     * @param {string} soupId 可选的汤面ID
-     * @returns {Promise<Object>} 返回包含汤面数据的Promise
-     */
-    getSoupDataAsync: function(soupId) {
-        return new Promise(async (resolve, reject) => {
-            try {
-                // 如果还没有从服务器加载数据，先加载
-                if (!this.isDataLoaded) {
-                    await this.loadSoupsAsync();
-                }
-
-                // 检查数据是否成功加载
-                if (!this.soups || !this.soups.length) {
-                    reject(new Error('汤面数据为空，无法获取'));
-                    return;
-                }
-
-                let soupData;
-
-                // 如果指定了soupId，则获取指定的汤面
-                if (soupId) {
-                    soupData = this.getSoupById(soupId);
-                }
-
-                // 如果没有指定soupId或找不到指定的汤面，则获取第一个
-                if (!soupData && this.soups.length > 0) {
-                    soupData = this.soups[0];
-                }
-
-                if (!soupData) {
-                    reject(new Error('无法获取有效的汤面数据'));
-                    return;
-                }
-
-                resolve(soupData);
-            } catch (error) {
-                console.error('获取汤面数据失败:', error);
-                reject(error);
-            }
-        });
-    },
-
-    /**
-     * 获取所有汤面数据 (Promise版本)
-     * @returns {Promise<Array>} 返回包含所有汤面数据的Promise
-     */
-    getAllSoupsAsync: function() {
-        return new Promise(async (resolve) => {
-            if (!this.isDataLoaded) {
-                await this.loadSoupsAsync();
-            }
-            resolve([...this.soups]);
-        });
-    },
-
-    /**
-     * 获取汤面总数
-     * @returns {number} 汤面总数
-     */
-    getSoupCount: function () {
-        return this.soups ? this.soups.length : 0;
-    },
-
-    /**
-     * 刷新汤面数据（从服务器重新加载）(Promise版本)
-     * @returns {Promise<Array>} 返回包含新汤面数据的Promise
-     */
-    refreshSoupsAsync: function() {
-        // 如果已经在加载中，返回现有的Promise
-        if (this._isLoading && this._loadingPromise) {
-            return this._loadingPromise;
+    async deleteSoup(soupId) {
+        if (!soupId) {
+            console.error('删除汤面失败: 缺少汤面ID');
+            return null;
         }
-        
-        console.log('刷新汤面数据');
-        this.isDataLoaded = false;
-        return this.loadSoupsAsync();
+
+        try {
+            const response = await soupRequest({
+                url: `${soup_base_url}/${soupId}`,
+                method: 'DELETE'
+            });
+            return response.data || response;
+        } catch (error) {
+            console.error('删除汤面失败:', error);
+            return null;
+        }
+    },
+
+    /**
+     * 获取随机汤面
+     * @returns {Promise<Object>} 随机汤面数据
+     */
+    async getRandomSoup() {
+        try {
+            // 直接使用随机汤面API
+            const response = await soupRequest({
+                url: soup_random_url,
+                method: 'GET'
+            });
+            return response.data || response;
+        } catch (error) {
+            console.error('获取随机汤面失败:', error);
+            return null;
+        }
+    },
+
+    /**
+     * 批量删除汤面
+     * @param {string[]} soupIds 汤面ID数组
+     * @returns {Promise<Object>} 删除结果
+     */
+    async deleteSoups(soupIds) {
+        if (!Array.isArray(soupIds) || soupIds.length === 0) {
+            console.error('批量删除汤面失败: 无效的ID数组');
+            return null;
+        }
+
+        try {
+            const response = await soupRequest({
+                url: `${soup_base_url}?ids=${soupIds.join(',')}`,
+                method: 'DELETE'
+            });
+            return response.data || response;
+        } catch (error) {
+            console.error('批量删除汤面失败:', error);
+            return null;
+        }
     }
 };
 

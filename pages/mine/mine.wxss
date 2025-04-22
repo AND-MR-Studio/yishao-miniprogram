@@ -38,7 +38,6 @@
 
 .avatar-container {
   margin-right: 30rpx;
-  position: relative;
 }
 
 /* 头像按钮样式 */
@@ -50,7 +49,6 @@
   border-radius: 50% !important;
   border: none !important;
   line-height: 1 !important;
-  position: relative;
 }
 
 .avatar-wrapper::after {
@@ -63,18 +61,6 @@
   border-radius: 50%;
   border: 2px solid var(--color-primary);
   box-shadow: var(--glow-primary);
-}
-
-/* 头像提示文字 */
-.avatar-hint {
-  position: absolute;
-  bottom: -30rpx;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 20rpx;
-  color: var(--color-text-hint);
-  white-space: nowrap;
 }
 
 .user-info {
@@ -152,33 +138,16 @@
   font-size: var(--font-size-sm);
 }
 
-/* 登录/退出按钮容器样式 */
+/* 退出登录按钮容器样式 */
 .logout-container {
   padding: 20rpx 40rpx;
   margin-top: 80rpx;
 }
 
-/* 登录按钮样式 */
-.login-btn {
-  width: 100% !important;
-  height: 88rpx !important;
-  line-height: 88rpx !important;
-  font-size: var(--font-size-md) !important;
-  border-radius: var(--radius-md) !important;
-  font-weight: var(--font-weight-medium) !important;
-  background-color: var(--color-primary) !important;
-  border: none !important;
-  color: #ffffff !important;
-  box-shadow: var(--shadow-sm) !important;
-}
 
-/* 按钮按压效果 */
-.login-btn:active {
-  opacity: 0.8;
-}
 
-/* 汤面列表弹窗样式 */
-.soup-list-modal {
+/* 用户信息弹窗样式 */
+.user-info-modal {
   position: fixed;
   top: 0;
   left: 0;
@@ -194,15 +163,14 @@
   transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.soup-list-modal.show {
+.user-info-modal.show {
   opacity: 1;
   visibility: visible;
 }
 
-.soup-list-container {
+.user-info-container {
   width: 90%;
-  max-width: 600rpx;
-  max-height: 70vh;
+  max-width: 650rpx;
   background-color: var(--color-background-light);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
@@ -213,7 +181,7 @@
   animation: scale-in 0.3s ease forwards;
 }
 
-.soup-list-header {
+.user-info-header {
   padding: 30rpx;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
@@ -221,13 +189,13 @@
   align-items: center;
 }
 
-.soup-list-title {
+.user-info-title {
   font-size: var(--font-size-lg);
   color: var(--color-text-primary);
   font-weight: var(--font-weight-medium);
 }
 
-.soup-list-close {
+.user-info-close {
   width: 60rpx;
   height: 60rpx;
   display: flex;
@@ -239,58 +207,82 @@
   border-radius: 50%;
 }
 
-.soup-list-close:active {
+.user-info-close:active {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-.soup-list-body {
-  flex: 1;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.soup-list-item {
+.user-info-body {
   padding: 30rpx;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  transition: background-color 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.soup-list-item:active {
-  background-color: rgba(255, 255, 255, 0.1);
+/* 头像居中样式 */
+.avatar-container-centered {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 40rpx;
+  margin-top: 20rpx;
 }
 
-.soup-item-title {
+.avatar-btn-centered {
+  background: none !important;
+  padding: 0 !important;
+  width: 160rpx !important;
+  height: 160rpx !important;
+  border-radius: 50% !important;
+  border: none !important;
+  line-height: 1 !important;
+}
+
+.avatar-btn-centered::after {
+  border: none;
+}
+
+.avatar-preview-centered {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary);
+  box-shadow: var(--glow-primary);
+}
+
+/* 昵称输入居中样式 */
+.nickname-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20rpx;
+}
+
+.nickname-input-centered {
+  width: 80%;
+  height: 80rpx;
+  background-color: var(--color-background);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0 20rpx;
+  margin-bottom: 16rpx;
   font-size: var(--font-size-md);
   color: var(--color-text-primary);
-}
-
-.soup-item-time {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-hint);
-  margin-top: 8rpx;
-  display: block;
-}
-
-.soup-list-divider {
-  padding: 20rpx 30rpx;
-  color: var(--color-text-hint);
-  font-size: var(--font-size-sm);
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-@keyframes scale-in {
-  from {
-    transform: scale(0.9);
-  }
-  to {
-    transform: scale(1);
-  }
-}
-
-/* 汤面列表空状态 */
-.soup-list-empty {
-  padding: 60rpx 0;
   text-align: center;
+}
+
+.user-info-footer {
+  padding: 20rpx 30rpx 40rpx;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.skip-btn {
+  text-align: center;
+  margin-top: 20rpx;
+  font-size: var(--font-size-sm);
   color: var(--color-text-hint);
-  font-size: var(--font-size-md);
+  padding: 10rpx 0;
+}
+
+.skip-btn:active {
+  opacity: 0.7;
 }
