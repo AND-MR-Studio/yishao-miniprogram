@@ -73,33 +73,10 @@
   transform: translateY(0);
 }
 
-/* 滑动反馈动画 */
-.swipe-feedback-left {
-  animation: swipeLeft 0.3s ease-out;
-}
-
-.swipe-feedback-right {
-  animation: swipeRight 0.3s ease-out;
-}
-
-@keyframes swipeLeft {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(-100rpx);
-    opacity: 0;
-  }
-}
-
-@keyframes swipeRight {
-  0% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  100% {
-    transform: translateX(100rpx);
-    opacity: 0;
-  }
+/* 汤面显示包装器 */
+.soup-display-wrapper {
+  width: 100%;
+  height: auto;
+  position: relative;
+  display: block;
 }

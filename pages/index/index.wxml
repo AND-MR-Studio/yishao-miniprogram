@@ -8,16 +8,18 @@
 
   <view class="container" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd">
     <!-- 汤面显示区域 -->
-    <soup-display
-      id="soupDisplay"
-      soupData="{{currentSoup}}"
-      loading="{{isLoading}}"
-      isPeeking="{{isPeeking}}"
-      staticMode="{{staticMode}}"
-      class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}} {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}}"
-      wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
-      bind:animationComplete="onAnimationComplete"
-    ></soup-display>
+    <view class="soup-display-wrapper swipe-container {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}} {{breathingBlur ? 'breathing-blur' : ''}}" style="filter: blur({{blurAmount}}px);">
+      <soup-display
+        id="soupDisplay"
+        soupData="{{currentSoup}}"
+        loading="{{isLoading}}"
+        isPeeking="{{isPeeking}}"
+        staticMode="{{staticMode}}"
+        class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}}"
+        wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
+        bind:animationComplete="onAnimationComplete"
+      ></soup-display>
+    </view>
 
     <!-- 汤底显示区域 -->
     <soup-truth

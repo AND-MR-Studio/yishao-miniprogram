@@ -11,7 +11,7 @@
   --animation-normal: 600ms;
   --animation-slow: 900ms;
   --animation-ultraslow: 1200ms;
-  
+
   /* 动画延迟时间 */
   --delay-short: 100ms;
   --delay-medium: 300ms;
@@ -26,7 +26,7 @@
   --transition-ease-in: ease-in;
   --transition-ease-out: ease-out;
   --transition-ease-in-out: ease-in-out;
-  
+
   /* Material Design 灵感过渡曲线 */
   --transition-sharp: cubic-bezier(0.4, 0, 0.6, 1);
   --transition-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -123,6 +123,54 @@
   100% { transform: scale(1); box-shadow: inset 0 0 25px rgba(255, 255, 255, 0.8), 0 0 20px rgba(160, 255, 112, 0.8); }
 }
 
+/* 模糊到清晰的过渡动画 - 汤面加载完成效果 */
+@keyframes blurToClear {
+  0% { filter: blur(10px); opacity: 0.5; }
+  100% { filter: blur(0); opacity: 1; }
+}
+
+/* 清晰到模糊的过渡动画 - 汤面加载开始效果 */
+@keyframes clearToBlur {
+  0% { filter: blur(0); opacity: 1; }
+  100% { filter: blur(10px); opacity: 0.5; }
+}
+
+/* 呼吸模糊效果 - 加载中状态 */
+@keyframes breathingBlur {
+  0% { filter: blur(3px); opacity: 0.8; }
+  50% { filter: blur(6px); opacity: 0.6; }
+  100% { filter: blur(3px); opacity: 0.8; }
+}
+
+/* 滑动反馈动画样式 - 左滑 */
+.swipe-feedback-left {
+  animation: blurToClear 0.8s ease-out;
+}
+
+/* 滑动反馈动画样式 - 右滑 */
+.swipe-feedback-right {
+  animation: blurToClear 0.8s ease-out;
+}
+
+/* 呼吸模糊效果样式 - 加载中 */
+.breathing-blur {
+  animation: breathingBlur 2s ease-in-out infinite;
+}
+
+/* 滑动容器基础样式 */
+.swipe-container {
+  transition: filter 0.1s ease-out;
+}
+
+/* 确保滑动反馈动画不影响文字容器 */
+.swipe-feedback-left .text-container,
+.swipe-feedback-right .text-container,
+.breathing-blur .text-container,
+.swipe-container .text-container {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
 /* 加载闪烁效果 */
 .blink-animation {
   animation: blink 1.5s infinite;
@@ -189,4 +237,4 @@
   transform: scale(0.95);
   background-color: rgba(74, 78, 87, 0.3);
   border-color: rgba(74, 78, 87, 0.6);
-} 
+}

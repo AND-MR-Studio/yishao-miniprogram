@@ -27,11 +27,14 @@ Page({
     currentSoup: null, // 当前汤面数据
     staticMode: false, // 静态模式（跳过动画）
     isPeeking: false, // 偷看状态
+    breathingBlur: false, // 呈现呼吸模糊效果
 
-    // 滑动相关
+    // 滑动相关 - 由swipeManager管理
     swiping: false, // 是否正在滑动中
     swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
-    swipeFeedback: false // 滑动反馈动画
+    swipeFeedback: false, // 滑动反馈动画
+    swipeStarted: false, // 是否开始滑动
+    blurAmount: 0 // 模糊程度（0-10px）
   },
 
   // ===== 页面属性 =====
@@ -61,9 +64,7 @@ Page({
 
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData, skipAnimation);
-      console.log('加载汤面数据成功:', soupData.soupId || soupData.id);
     } catch (error) {
-      console.error('初始化汤面数据失败:', error);
       this.showErrorToast('加载失败，请重试');
       this.setData({
         isLoading: false,
@@ -162,8 +163,6 @@ Page({
     wx.nextTick(() => {
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
-        console.log('切换到喝汤状态，当前汤面ID:', currentSoupId);
-
         // 先设置 soupId，等待下一帧后再设置 visible，确保能正确加载对话历史
         dialog.setData({ soupId: currentSoupId });
 
@@ -196,7 +195,6 @@ Page({
         truthData: truthData
       });
     } catch (error) {
-      console.error('切换到汤底状态失败:', error);
       this.showErrorToast('无法获取汤底，请重试');
     }
   },
@@ -248,12 +246,20 @@ Page({
    */
   async switchSoup(direction) {
     if (this.data.isLoading) return;
-    this.setData({ isLoading: true });
+
+    // 设置加载状态，并启用呼吸模糊效果
+    this.setData({
+      isLoading: true,
+      breathingBlur: true // 启用呼吸模糊效果
+      // swipeFeedback已经在handleSwipe中设置
+    });
 
     try {
       // 获取当前汤面ID并根据方向获取汤面数据
       const currentSoupId = this.getCurrentSoupId();
       const isNext = direction === 'next';
+
+      // 从服务器获取汤面数据
       const soupData = await soupService.getAdjacentSoup(currentSoupId, isNext);
 
       if (!soupData) {
@@ -271,17 +277,22 @@ Page({
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData, skipAnimation);
 
-      // 设置页面状态和滑动反馈
-      this.setData({
-        pageState: PAGE_STATE.VIEWING,
-        swipeFeedback: false
+      // 等待一帧，确保汤面数据已经加载完成
+      wx.nextTick(() => {
+        // 设置页面状态，关闭呼吸模糊效果
+        this.setData({
+          pageState: PAGE_STATE.VIEWING,
+          swipeFeedback: false,  // 关闭滑动反馈动画
+          breathingBlur: false   // 关闭呼吸模糊效果
+        });
       });
-
-      console.log(`切换到${isNext ? '下' : '上'}一个汤面，当前汤面ID:`, soupId);
     } catch (error) {
-      console.error(`切换${direction === 'next' ? '下' : '上'}一个汤面失败:`, error);
       this.showErrorToast('切换失败，请重试');
-      this.setData({ isLoading: false, swipeFeedback: false });
+      this.setData({
+        isLoading: false,
+        swipeFeedback: false,
+        breathingBlur: false // 关闭呼吸模糊效果
+      });
     }
   },
 
@@ -303,9 +314,7 @@ Page({
 
     try {
       await soupService.viewSoup(soupId);
-      console.log('增加汤面阅读数成功:', soupId);
     } catch (error) {
-      console.error('增加汤面阅读数失败:', error);
       // 阅读数增加失败不影响用户体验，不显示错误提示
     }
   },
@@ -353,22 +362,35 @@ Page({
     // 创建滑动管理器
     this.swipeManager = createSwipeManager({
       threshold: 50,
+      maxBlur: 10, // 最大模糊程度，默认10px
+      maxDistance: 100, // 最大滑动距离，默认100px
+      enableBlurEffect: true, // 启用模糊特效
       setData: this.setData.bind(this),
 
-      // 滑动回调
+      // 滑动方向回调
       onSwipeLeft: this.handleSwipe.bind(this, 'next'),
       onSwipeRight: this.handleSwipe.bind(this, 'previous')
     });
   },
 
+
+
   /**
-   * 处理滑动事件
+   * 处理滑动方向回调（滑动距离足够时触发）
    * @param {string} direction 滑动方向
    */
   handleSwipe(direction) {
     if (this.canSwitchSoup()) {
-      this.setData({ swipeFeedback: true });
-      this.switchSoup(direction);
+      // 滑动结束时，设置滑动反馈动画
+      this.setData({
+        swipeFeedback: true,
+        swipeDirection: direction === 'next' ? SWIPE_DIRECTION.LEFT : SWIPE_DIRECTION.RIGHT
+      });
+
+      // 等待一帧，确保滑动反馈动画先应用
+      wx.nextTick(() => {
+        this.switchSoup(direction);
+      });
     }
   },
 

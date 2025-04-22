@@ -10,11 +10,11 @@
     "truth": "这是一个测试用的汤底",
     "soupType": 0,
     "creatorId": "admin",
-    "viewCount": 80,
+    "viewCount": 230,
     "likeCount": 0,
     "publishTime": "2025-04-22T03:41:41.100Z",
     "publishIp": "127.0.0.1",
-    "updateTime": "2025-04-22T06:40:02.137Z",
+    "updateTime": "2025-04-22T07:46:24.152Z",
     "updateIp": "::1"
   },
   {
@@ -28,11 +28,30 @@
     "truth": "这是另一个测试用的汤底",
     "soupType": 1,
     "creatorId": "admin",
-    "viewCount": 37,
+    "viewCount": 136,
     "likeCount": 2,
     "publishTime": "2025-04-22T03:41:41.100Z",
     "publishIp": "127.0.0.1",
-    "updateTime": "2025-04-22T06:40:01.562Z",
+    "updateTime": "2025-04-22T07:46:17.700Z",
+    "updateIp": "::1"
+  },
+  {
+    "soupId": "local_1745306274186",
+    "title": "本地测试海龟汤3",
+    "contentLines": [
+      "testtesttest",
+      "testtest",
+      "test",
+      "testtesttest"
+    ],
+    "truth": "testtest",
+    "soupType": 0,
+    "creatorId": "admin",
+    "viewCount": 38,
+    "likeCount": 0,
+    "publishTime": "2025-04-22T07:17:54.186Z",
+    "publishIp": "::1",
+    "updateTime": "2025-04-22T07:46:03.466Z",
     "updateIp": "::1"
   }
 ]

@@ -46,7 +46,6 @@ const soupService = {
             });
             return response.success ? response.data : null;
         } catch (error) {
-            console.error('获取海龟汤数据失败:', error);
             return Array.isArray(soupId) ? [] : null;
         }
     },
@@ -71,7 +70,6 @@ const soupService = {
 
             return response.success ? response.data : [];
         } catch (error) {
-            console.error('获取海龟汤列表失败:', error);
             return [];
         }
     },
@@ -87,7 +85,6 @@ const soupService = {
      */
     async createSoup(soupData) {
         if (!soupData) {
-            console.error('创建海龟汤失败: 缺少海龟汤数据');
             return null;
         }
 
