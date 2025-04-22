@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>汤面管理</title>
+    <title>海龟汤管理</title>
     <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .soup-item {
@@ -20,6 +20,12 @@
             color: #666;
             font-style: italic;
         }
+        .soup-stats {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            color: #666;
+        }
         .action-buttons {
             margin-top: 10px;
         }
@@ -30,207 +36,322 @@
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="mb-4">汤面管理系统</h1>
+        <h1 class="mb-4">海龟汤管理</h1>
 
-        <!-- 导航栏 -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-            <div class="container-fluid">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="soup.html">汤面管理</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="dialog.html">对话记录</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" id="allSoupsTab">所有海龟汤</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" id="presetSoupsTab">预制汤</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" id="diySoupsTab">DIY汤</a>
+            </li>
+        </ul>
 
-        <!-- 编辑汤面模态框 -->
-        <div class="modal fade" id="editSoupModal" tabindex="-1" aria-labelledby="editSoupModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="editSoupModalLabel">编辑汤面</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="editSoupForm">
-                            <input type="hidden" id="editSoupId">
-                            <div class="mb-3">
-                                <label for="editTitle" class="form-label">标题</label>
-                                <input type="text" class="form-control" id="editTitle" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="editContent" class="form-label">内容（每行一句）</label>
-                                <textarea class="form-control" id="editContent" rows="4" required></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="editTruth" class="form-label">汤底</label>
-                                <textarea class="form-control" id="editTruth" required></textarea>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                        <button type="button" class="btn btn-primary" id="saveEditSoup">保存更改</button>
-                    </div>
+        <div class="mb-4">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSoupModal">添加海龟汤</button>
+            <button class="btn btn-danger ms-2" id="batchDeleteBtn" disabled>批量删除</button>
+        </div>
+
+        <div id="soupList" class="mb-4">
+            <!-- 海龟汤列表将通过JavaScript动态加载 -->
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">加载中...</span>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- 添加新汤面表单 -->
-        <div class="card mb-4">
-            <div class="card-header">
-                添加新汤面
-            </div>
-            <div class="card-body">
-                <form id="addSoupForm">
-                    <div class="mb-3">
-                        <label for="title" class="form-label">标题</label>
-                        <input type="text" class="form-control" id="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="content" class="form-label">内容（每行一句）</label>
-                        <textarea class="form-control" id="content" rows="4" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="truth" class="form-label">汤底</label>
-                        <textarea class="form-control" id="truth" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">添加</button>
-                </form>
+    <!-- 添加海龟汤模态框 -->
+    <div class="modal fade" id="addSoupModal" tabindex="-1" aria-labelledby="addSoupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addSoupModalLabel">添加海龟汤</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSoupForm">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">标题</label>
+                            <input type="text" class="form-control" id="title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="content" class="form-label">内容</label>
+                            <textarea class="form-control" id="content" rows="5" placeholder="每行一句，将自动分割为内容行" required></textarea>
+                            <div class="form-text">每行一句话，将自动分割为内容行数组</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="truth" class="form-label">汤底</label>
+                            <textarea class="form-control" id="truth" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">海龟汤类型</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="soupType" id="typePreset" value="0" checked>
+                                <label class="form-check-label" for="typePreset">预制汤</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="soupType" id="typeDIY" value="1">
+                                <label class="form-check-label" for="typeDIY">DIY汤</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitAddSoup">保存</button>
+                </div>
             </div>
         </div>
+    </div>
 
-        <!-- 汤面列表工具栏 -->
-        <div class="card mb-4">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
-                    <input type="checkbox" id="selectAllSoups" class="form-check-input me-2">
-                    <label for="selectAllSoups" class="form-check-label">全选</label>
+    <!-- 编辑海龟汤模态框 -->
+    <div class="modal fade" id="editSoupModal" tabindex="-1" aria-labelledby="editSoupModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editSoupModalLabel">编辑海龟汤</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div>
-                    <button id="batchDeleteBtn" class="btn btn-danger btn-sm" disabled>批量删除</button>
+                <div class="modal-body">
+                    <form id="editSoupForm">
+                        <input type="hidden" id="editSoupId">
+                        <div class="mb-3">
+                            <label for="editTitle" class="form-label">标题</label>
+                            <input type="text" class="form-control" id="editTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editContent" class="form-label">内容</label>
+                            <textarea class="form-control" id="editContent" rows="5" required></textarea>
+                            <div class="form-text">每行一句话，将自动分割为内容行数组</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editTruth" class="form-label">汤底</label>
+                            <textarea class="form-control" id="editTruth" rows="3" required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">海龟汤类型</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="editSoupType" id="editTypePreset" value="0">
+                                <label class="form-check-label" for="editTypePreset">预制汤</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="editSoupType" id="editTypeDIY" value="1">
+                                <label class="form-check-label" for="editTypeDIY">DIY汤</label>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editViewCount" class="form-label">阅读数</label>
+                                    <input type="number" class="form-control" id="editViewCount" min="0">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="editLikeCount" class="form-label">点赞数</label>
+                                    <input type="number" class="form-control" id="editLikeCount" min="0">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitEditSoup">保存</button>
                 </div>
             </div>
         </div>
-
-        <!-- 汤面列表 -->
-        <div id="soupList"></div>
     </div>
 
     <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         // API基础URL
-        const API_BASE_URL = 'http://localhost:8080/api/soup';
+        const API_BASE_URL = '/api/soup';
 
-        // 获取汤面列表
-        async function fetchSoups() {
-            try {
-                // 使用RESTful API端点
-                const response = await fetch(`${API_BASE_URL}`);
-                const data = await response.json();
-                if (data.success) {
-                    // 兼容新旧两种响应格式
-                    const soups = Array.isArray(data.data) ? data.data : data.data?.soups || [];
-                    displaySoups(soups);
-                } else {
-                    alert('获取汤面列表失败：' + data.error);
-                }
-            } catch (err) {
-                console.error('获取汤面列表失败:', err);
-                alert('获取汤面列表失败，请检查网络连接');
+        // 当前选中的标签
+        let currentTab = 'all';
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载海龟汤列表
+            loadSoups();
+
+            // 标签切换事件
+            document.getElementById('allSoupsTab').addEventListener('click', function(e) {
+                e.preventDefault();
+                setActiveTab('all');
+                loadSoups();
+            });
+
+            document.getElementById('presetSoupsTab').addEventListener('click', function(e) {
+                e.preventDefault();
+                setActiveTab('preset');
+                loadSoups(0);
+            });
+
+            document.getElementById('diySoupsTab').addEventListener('click', function(e) {
+                e.preventDefault();
+                setActiveTab('diy');
+                loadSoups(1);
+            });
+
+            // 添加海龟汤表单提交
+            document.getElementById('submitAddSoup').addEventListener('click', addSoup);
+
+            // 编辑海龟汤表单提交
+            document.getElementById('submitEditSoup').addEventListener('click', updateSoup);
+
+            // 批量删除按钮
+            document.getElementById('batchDeleteBtn').addEventListener('click', batchDeleteSoups);
+        });
+
+        // 设置活动标签
+        function setActiveTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.nav-link').forEach(link => link.classList.remove('active'));
+
+            if (tab === 'all') {
+                document.getElementById('allSoupsTab').classList.add('active');
+            } else if (tab === 'preset') {
+                document.getElementById('presetSoupsTab').classList.add('active');
+            } else if (tab === 'diy') {
+                document.getElementById('diySoupsTab').classList.add('active');
             }
         }
 
-        // 显示汤面列表
-        function displaySoups(soups) {
+        // 加载海龟汤列表
+        async function loadSoups(soupType) {
             const soupList = document.getElementById('soupList');
-            soupList.innerHTML = '';
-
-            // 重置全选状态
-            document.getElementById('selectAllSoups').checked = false;
-            updateBatchDeleteButton();
-
-            soups.forEach(soup => {
-                const soupElement = document.createElement('div');
-                soupElement.className = 'soup-item';
-                soupElement.innerHTML = `
-                    <div class="d-flex align-items-start">
-                        <div class="me-3 mt-1">
-                            <input type="checkbox" class="form-check-input soup-checkbox" data-soup-id="${soup.soupId}" onchange="updateBatchDeleteButton()">
-                        </div>
-                        <div class="flex-grow-1">
-                            <h3>${soup.title}</h3>
-                            <div class="soup-content">${soup.contentLines.join('\n')}</div>
-                            <div class="soup-truth">${soup.truth}</div>
-                            <div class="action-buttons">
-                                <button class="btn btn-primary btn-sm me-2" onclick="editSoup('${soup.soupId}')">编辑</button>
-                                <button class="btn btn-danger btn-sm" onclick="deleteSoup('${soup.soupId}')">删除</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                soupList.appendChild(soupElement);
-            });
-        }
-
-        // 添加新汤面
-        document.getElementById('addSoupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const title = document.getElementById('title').value;
-            const content = document.getElementById('content').value;
-            const truth = document.getElementById('truth').value;
-
-            const newSoup = {
-                title,
-                contentLines: content.split('\n').filter(line => line.trim()),
-                truth
-            };
+            soupList.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">加载中...</span></div></div>';
 
             try {
-                console.log('准备添加汤面:', newSoup);
+                // 构建URL
+                let url = API_BASE_URL;
+                if (soupType !== undefined) {
+                    url += `?type=${soupType}`;
+                    console.log(`按类型加载海龟汤: ${soupType}`);
+                }
 
-                // 使用RESTful API端点
-                const response = await fetch(`${API_BASE_URL}`, {
+                // 发送请求
+                console.log(`请求URL: ${url}`);
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '加载失败');
+                }
+
+                const soups = data.data;
+                console.log(`获取到 ${soups.length} 个海龟汤`);
+
+                // 清空列表
+                soupList.innerHTML = '';
+
+                if (soups.length === 0) {
+                    soupList.innerHTML = '<div class="alert alert-info">没有找到海龟汤</div>';
+                    return;
+                }
+
+                // 渲染海龟汤列表
+                soups.forEach(soup => {
+                    const soupElement = document.createElement('div');
+                    soupElement.className = 'soup-item';
+                    soupElement.innerHTML = `
+                        <div class="d-flex align-items-start">
+                            <div class="me-3 mt-1">
+                                <input type="checkbox" class="form-check-input soup-checkbox" data-soup-id="${soup.soupId}" onchange="updateBatchDeleteButton()">
+                            </div>
+                            <div class="flex-grow-1">
+                                <h3>${soup.title}</h3>
+                                <div class="soup-content">${Array.isArray(soup.contentLines) ? soup.contentLines.join('\n') : soup.contentLines}</div>
+                                <div class="soup-truth">${soup.truth}</div>
+                                <div class="soup-stats">
+                                    <span>类型: ${soup.soupType === 0 ? '预制汤' : 'DIY汤'}</span>
+                                    <span>阅读: ${soup.viewCount || 0}</span>
+                                    <span>点赞: ${soup.likeCount || 0}</span>
+                                    <span>发布时间: ${formatDate(soup.publishTime || soup.createTime)}</span>
+                                </div>
+                                <div class="action-buttons">
+                                    <button class="btn btn-primary btn-sm me-2" onclick="editSoup('${soup.soupId}')">编辑</button>
+                                    <button class="btn btn-danger btn-sm" onclick="deleteSoup('${soup.soupId}')">删除</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    soupList.appendChild(soupElement);
+                });
+
+                // 更新批量删除按钮状态
+                updateBatchDeleteButton();
+
+            } catch (err) {
+                console.error('加载海龟汤失败:', err);
+                soupList.innerHTML = `<div class="alert alert-danger">加载失败: ${err.message}</div>`;
+            }
+        }
+
+        // 添加海龟汤
+        async function addSoup() {
+            try {
+                const title = document.getElementById('title').value.trim();
+                const content = document.getElementById('content').value.trim();
+                const truth = document.getElementById('truth').value.trim();
+                const soupType = parseInt(document.querySelector('input[name="soupType"]:checked').value);
+
+                if (!title || !content || !truth) {
+                    alert('请填写完整信息');
+                    return;
+                }
+
+                // 将内容按行分割
+                const contentLines = content.split('\n').filter(line => line.trim());
+
+                const soupData = {
+                    title,
+                    contentLines,
+                    truth,
+                    soupType
+                };
+
+                const response = await fetch(API_BASE_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(newSoup)
+                    body: JSON.stringify(soupData)
                 });
 
-                console.log('响应状态:', response.status);
-
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
                 const data = await response.json();
-                console.log('响应数据:', data);
 
-                if (data.success) {
-                    alert('添加成功！');
-                    document.getElementById('addSoupForm').reset();
-                    fetchSoups();
-                } else {
-                    alert('添加失败：' + data.error);
+                if (!data.success) {
+                    throw new Error(data.error || '添加失败');
                 }
-            } catch (err) {
-                console.error('添加汤面失败:', err);
-                alert('添加失败，请检查网络连接和控制台日志');
-            }
-        });
 
-        // 编辑汤面 - 定义为全局函数以便在HTML中调用
-        window.editSoup = async function(soupId) {
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addSoupModal'));
+                modal.hide();
+
+                // 重置表单
+                document.getElementById('addSoupForm').reset();
+
+                // 重新加载列表
+                loadSoups();
+
+                alert('添加成功');
+
+            } catch (err) {
+                console.error('添加海龟汤失败:', err);
+                alert('添加失败: ' + err.message);
+            }
+        }
+
+        // 编辑海龟汤 - 打开编辑模态框
+        async function editSoup(soupId) {
             try {
                 // 使用RESTful API端点
                 const response = await fetch(`${API_BASE_URL}/${soupId}`);
@@ -242,137 +363,186 @@
                     // 填充表单
                     document.getElementById('editSoupId').value = soup.soupId;
                     document.getElementById('editTitle').value = soup.title;
-                    document.getElementById('editContent').value = soup.contentLines.join('\n');
+                    document.getElementById('editContent').value = Array.isArray(soup.contentLines) ? soup.contentLines.join('\n') : soup.contentLines;
                     document.getElementById('editTruth').value = soup.truth;
+
+                    // 设置海龟汤类型
+                    if (soup.soupType === 0) {
+                        document.getElementById('editTypePreset').checked = true;
+                    } else {
+                        document.getElementById('editTypeDIY').checked = true;
+                    }
+
+                    // 设置阅读数和点赞数
+                    document.getElementById('editViewCount').value = soup.viewCount || 0;
+                    document.getElementById('editLikeCount').value = soup.likeCount || 0;
 
                     // 显示模态框
                     const editModal = new bootstrap.Modal(document.getElementById('editSoupModal'));
                     editModal.show();
                 } else {
-                    alert('获取汤面数据失败：' + data.error);
+                    alert('获取海龟汤数据失败：' + data.error);
                 }
             } catch (err) {
-                console.error('获取汤面数据失败:', err);
-                alert('获取汤面数据失败，请检查网络连接');
+                console.error('获取海龟汤数据失败:', err);
+                alert('获取海龟汤数据失败，请检查网络连接');
             }
         }
 
-        // 删除汤面 - 定义为全局函数以便在HTML中调用
-        window.deleteSoup = async function(soupId) {
-            if (!confirm('确定要删除这个汤面吗？')) {
-                return;
-            }
-
+        // 更新海龟汤
+        async function updateSoup() {
             try {
-                // 使用RESTful API端点
-                const response = await fetch(`${API_BASE_URL}/${soupId}`, {
-                    method: 'DELETE'
-                });
+                const soupId = document.getElementById('editSoupId').value;
+                const title = document.getElementById('editTitle').value.trim();
+                const content = document.getElementById('editContent').value.trim();
+                const truth = document.getElementById('editTruth').value.trim();
+                const soupType = parseInt(document.querySelector('input[name="editSoupType"]:checked').value);
+                const viewCount = parseInt(document.getElementById('editViewCount').value);
+                const likeCount = parseInt(document.getElementById('editLikeCount').value);
 
-                const data = await response.json();
-                if (data.success) {
-                    alert('删除成功！');
-                    fetchSoups();
-                } else {
-                    alert('删除失败：' + data.error);
+                if (!title || !content || !truth) {
+                    alert('请填写完整信息');
+                    return;
                 }
-            } catch (err) {
-                console.error('删除汤面失败:', err);
-                alert('删除失败，请检查网络连接');
-            }
-        }
 
-        // 保存编辑后的汤面
-        document.getElementById('saveEditSoup').addEventListener('click', async () => {
-            const soupId = document.getElementById('editSoupId').value;
-            const title = document.getElementById('editTitle').value;
-            const content = document.getElementById('editContent').value;
-            const truth = document.getElementById('editTruth').value;
+                // 将内容按行分割
+                const contentLines = content.split('\n').filter(line => line.trim());
 
-            if (!title || !content || !truth) {
-                alert('请填写所有必填字段');
-                return;
-            }
+                const soupData = {
+                    title,
+                    contentLines,
+                    truth,
+                    soupType,
+                    viewCount,
+                    likeCount
+                };
 
-            const updatedSoup = {
-                title,
-                contentLines: content.split('\n').filter(line => line.trim()),
-                truth
-            };
-
-            try {
-                // 使用RESTful API端点
                 const response = await fetch(`${API_BASE_URL}/${soupId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(updatedSoup)
+                    body: JSON.stringify(soupData)
                 });
 
                 const data = await response.json();
-                if (data.success) {
-                    alert('更新成功！');
-                    // 关闭模态框
-                    bootstrap.Modal.getInstance(document.getElementById('editSoupModal')).hide();
-                    // 刷新汤面列表
-                    fetchSoups();
-                } else {
-                    alert('更新失败：' + data.error);
-                }
-            } catch (err) {
-                console.error('更新汤面失败:', err);
-                alert('更新失败，请检查网络连接');
-            }
-        });
 
-        // 更新批量删除按钮状态 - 定义为全局函数以便在HTML中调用
-        window.updateBatchDeleteButton = function() {
-            const checkedBoxes = document.querySelectorAll('.soup-checkbox:checked');
-            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
-            batchDeleteBtn.disabled = checkedBoxes.length === 0;
+                if (!data.success) {
+                    throw new Error(data.error || '更新失败');
+                }
+
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editSoupModal'));
+                modal.hide();
+
+                // 重新加载列表
+                loadSoups();
+
+                alert('更新成功');
+
+            } catch (err) {
+                console.error('更新海龟汤失败:', err);
+                alert('更新失败: ' + err.message);
+            }
         }
 
-        // 全选/取消全选
-        document.getElementById('selectAllSoups').addEventListener('change', function() {
-            const isChecked = this.checked;
-            document.querySelectorAll('.soup-checkbox').forEach(checkbox => {
-                checkbox.checked = isChecked;
-            });
-            updateBatchDeleteButton();
-        });
-
-        // 批量删除汤面
-        document.getElementById('batchDeleteBtn').addEventListener('click', async function() {
-            const checkedBoxes = document.querySelectorAll('.soup-checkbox:checked');
-            if (checkedBoxes.length === 0) return;
-
-            const soupIds = Array.from(checkedBoxes).map(checkbox => checkbox.dataset.soupId);
-
-            if (!confirm(`确定要删除选中的 ${soupIds.length} 个汤面吗？此操作无法撤销！`)) {
+        // 删除海龟汤
+        async function deleteSoup(soupId) {
+            if (!confirm('确定要删除这个海龟汤吗？此操作不可恢复！')) {
                 return;
             }
 
             try {
+                const response = await fetch(`${API_BASE_URL}/${soupId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '删除失败');
+                }
+
+                // 重新加载列表
+                loadSoups();
+
+                alert('删除成功');
+
+            } catch (err) {
+                console.error('删除海龟汤失败:', err);
+                alert('删除失败: ' + err.message);
+            }
+        }
+
+        // 批量删除海龟汤
+        async function batchDeleteSoups() {
+            const checkboxes = document.querySelectorAll('.soup-checkbox:checked');
+
+            if (checkboxes.length === 0) {
+                alert('请选择要删除的海龟汤');
+                return;
+            }
+
+            if (!confirm(`确定要删除选中的 ${checkboxes.length} 个海龟汤吗？此操作不可恢复！`)) {
+                return;
+            }
+
+            try {
+                const soupIds = Array.from(checkboxes).map(checkbox => checkbox.dataset.soupId);
+
                 const response = await fetch(`${API_BASE_URL}?ids=${soupIds.join(',')}`, {
                     method: 'DELETE'
                 });
 
                 const data = await response.json();
-                if (data.success) {
-                    alert(`删除成功！共删除了 ${data.data.deletedCount} 个汤面。`);
-                    fetchSoups(); // 重新加载汤面列表
-                } else {
-                    alert('批量删除失败：' + data.error);
-                }
-            } catch (err) {
-                console.error('批量删除汤面失败:', err);
-                alert('批量删除失败，请检查网络连接');
-            }
-        });
 
-        // 页面加载时获取汤面列表
-        fetchSoups();
+                if (!data.success) {
+                    throw new Error(data.error || '批量删除失败');
+                }
+
+                // 重新加载列表
+                loadSoups();
+
+                alert(`成功删除 ${data.data.deletedCount} 个海龟汤`);
+
+            } catch (err) {
+                console.error('批量删除海龟汤失败:', err);
+                alert('批量删除失败: ' + err.message);
+            }
+        }
+
+        // 更新批量删除按钮状态
+        function updateBatchDeleteButton() {
+            const checkboxes = document.querySelectorAll('.soup-checkbox:checked');
+            const batchDeleteBtn = document.getElementById('batchDeleteBtn');
+
+            batchDeleteBtn.disabled = checkboxes.length === 0;
+
+            if (checkboxes.length > 0) {
+                batchDeleteBtn.textContent = `批量删除 (${checkboxes.length})`;
+            } else {
+                batchDeleteBtn.textContent = '批量删除';
+            }
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            if (!dateString) return '';
+
+            const date = new Date(dateString);
+
+            if (isNaN(date.getTime())) {
+                return dateString;
+            }
+
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
     </script>
 </body>
 </html>

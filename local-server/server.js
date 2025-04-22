@@ -7,7 +7,7 @@ const fs_extra = require('fs-extra');
 // 导入服务模块
 const dialogService = require('./dialogService');
 const userService = require('./userService');
-const soupService = require('./soupService');
+const soupService = require('./services/soupService');
 
 const app = express();
 const PORT = 8080;
@@ -58,7 +58,7 @@ initServices().then(() => {
   app.listen(PORT, () => {
     console.log(`本地服务器运行在 http://localhost:${PORT}`);
     console.log(`管理后台:`);
-    console.log(`  - 汤面管理: http://localhost:${PORT}/soup.html`);
+    console.log(`  - 海龟汤管理: http://localhost:${PORT}/soup.html`);
     console.log(`  - 对话记录: http://localhost:${PORT}/dialog.html`);
     console.log(`  - 用户管理: http://localhost:${PORT}/user.html`);
   });

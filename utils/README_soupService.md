@@ -1,100 +1,101 @@
-# 汤面服务（soupService）
+# 海龟汤服务（soupService）
 
 ## 功能说明
-汤面服务是小程序的核心数据服务，负责处理汤面数据的获取和管理逻辑。现已实现前后端分离，后端服务部署在远程服务器上。
+海龟汤服务是小程序的核心数据服务，负责处理海龟汤数据的获取和管理逻辑。采用RESTful API设计，提供简洁易用的接口，实现前后端分离。
 
 ## 服务器配置
 
 ### 后端服务器
-- 服务器地址：http://71.137.1.230:8081
-- API基础路径：/api/soups
-- 管理后台：http://71.137.1.230:8081/admin.html
+- 本地开发环境：http://localhost:8080
+- API基础路径：/api/soup
+- 本地管理页面：http://localhost:8080/html/admin.html
 
 ### 启动服务
-1. **启动后端服务**
+1. **启动本地开发服务**
    ```bash
    # 进入服务器目录
-   cd /path/to/server
-   
+   cd local-server
+
    # 启动Node.js服务器
    node server.js
    ```
 
-## 当前实现
+## 数据结构
 
-### 数据结构
+### 海龟汤数据结构
 ```javascript
 {
-    soupId: string,       // 汤面唯一标识
-    title: string,        // 汤面标题
-    contentLines: string[]  // 汤面内容行数组，
-    truth: string         // 汤底内容（只有在回答正确后才会显示）
+    soupId: string,         // 海龟汤唯一标识
+    title: string,          // 海龟汤标题
+    contentLines: string[], // 海龟汤内容行数组
+    truth: string,          // 汤底内容（只有在回答正确后才会显示）
+    createTime: string,     // 创建时间（ISO格式）
+    updateTime: string      // 更新时间（ISO格式）
 }
 ```
 
-### 核心方法 (Promise风格)
+## RESTful API接口
 
-#### 获取汤面数据
+### 前端接口（utils/soupService.js）
+
+#### 获取海龟汤数据
 ```javascript
-// 使用Promise风格API获取汤面数据
-async function loadSoup() {
-  try {
-    // 不指定soupId则返回第一个汤面
-    const soupData = await soupService.getSoupDataAsync('default_001');
-    console.log('获取成功:', soupData);
-  } catch (error) {
-    console.error('获取失败:', error);
-  }
-}
+// 获取所有海龟汤
+const allSoups = await soupService.getSoup();
+
+// 获取指定ID的海龟汤
+const soup = await soupService.getSoup('soup_001');
+
+// 获取多个指定ID的海龟汤
+const soups = await soupService.getSoup(['soup_001', 'soup_002']);
 ```
 
-#### 刷新数据
+#### 获取随机海龟汤
 ```javascript
-// 刷新所有汤面数据
-async function refreshAllSoups() {
-  try {
-    const soups = await soupService.refreshSoupsAsync();
-    console.log('刷新成功，获取到', soups.length, '个汤面');
-  } catch (error) {
-    console.error('刷新失败:', error);
-  }
-}
+// 获取随机海龟汤
+const randomSoup = await soupService.getRandomSoup();
 ```
 
-#### 导航汤面
+#### 创建海龟汤
 ```javascript
-// 获取下一个汤面ID
-const nextSoupId = soupService.getNextSoupId('default_001');
-
-// 根据ID获取特定汤面
-const soup = soupService.getSoupById('default_002');
+// 创建新海龟汤
+const newSoup = await soupService.createSoup({
+  title: '新海龟汤标题',
+  contentLines: ['第一行', '第二行', '第三行'],
+  truth: '汤底内容'
+});
 ```
 
-#### 汤面集合操作
+#### 更新海龟汤
 ```javascript
-// 获取汤面总数
-const count = soupService.getSoupCount();
-
-// 获取所有汤面数据
-async function getAllSoups() {
-  const allSoups = await soupService.getAllSoupsAsync();
-  console.log('获取所有汤面:', allSoups.length);
-}
+// 更新海龟汤
+const updatedSoup = await soupService.updateSoup('soup_001', {
+  title: '更新后的标题',
+  contentLines: ['更新的第一行', '更新的第二行']
+});
 ```
 
-#### 辅助方法
+#### 删除海龟汤
 ```javascript
-// 获取指定汤面的索引
-const index = soupService.getSoupIndex('default_001');
+// 删除单个海龟汤
+const result = await soupService.deleteSoup('soup_001');
+
+// 批量删除海龟汤
+const batchResult = await soupService.deleteSoups(['soup_001', 'soup_002']);
 ```
 
 ### 错误处理
-所有异步API都使用了Promise，支持try/catch错误处理:
+所有API都返回Promise，支持try/catch错误处理:
 ```javascript
 async function loadSoupWithErrorHandling() {
   try {
-    const soupData = await soupService.getSoupDataAsync('invalid_id');
-    // 成功处理
+    const soupData = await soupService.getSoup('invalid_id');
+    if (soupData) {
+      // 成功处理
+      console.log('海龟汤数据:', soupData);
+    } else {
+      console.warn('未找到海龟汤');
+    }
   } catch (error) {
     // 错误处理
     console.error('加载失败:', error);
@@ -105,189 +106,174 @@ async function loadSoupWithErrorHandling() {
 }
 ```
 
-## 后端 TODO
+## 后端API接口（local-server/soupService.js）
 
-### API 需求
-1. 获取汤面列表
-   ```
-   GET /api/v1/soups
-   响应格式：
-   {
-     "success": true,
-     "data": {
-       "soups": [
-         {
-           "soupId": string,
-           "title": string,
-           "contentLines": string[],
-           "createTime": string,
-           "updateTime": string,
-           "isAnswered": boolean,    // 当前用户是否回答过
-           "isCorrect": boolean,     // 当前用户是否回答正确
-           "isViewed": boolean       // 当前用户是否查看过
-         }
-       ],
-       "total": number
-     }
-   }
-   ```
+### 接口概览
 
-2. 获取单个汤面
-   ```
-   GET /api/v1/soups/:soupId
-   响应格式：
-   {
-     "success": true,
-     "data": {
-       "soupId": string,
-       "title": string,
-       "contentLines": string[],
-       "createTime": string,
-       "updateTime": string,
-       "isAnswered": boolean,    // 当前用户是否回答过
-       "isCorrect": boolean,     // 当前用户是否回答正确
-       "isViewed": boolean,      // 当前用户是否查看过
-       "viewTime": string        // 首次查看时间
-     }
-   }
-   ```
+| 方法   | 路径                  | 描述                   |
+|--------|----------------------|----------------------|
+| GET    | /api/soup            | 获取所有海龟汤或指定ID的海龟汤 |
+| GET    | /api/soup/:soupId    | 获取指定ID的海龟汤        |
+| GET    | /api/soup/random     | 获取随机海龟汤            |
+| POST   | /api/soup            | 创建新海龟汤              |
+| PUT    | /api/soup/:soupId    | 更新指定ID的海龟汤        |
+| DELETE | /api/soup/:soupId    | 删除指定ID的海龟汤        |
+| DELETE | /api/soup?ids=id1,id2| 批量删除多个海龟汤        |
 
-3. 获取随机汤面
-   ```
-   GET /api/v1/soups/random
-   响应格式：同获取单个汤面
-   ```
+### 详细接口说明
 
-4. 提交汤面回答
-   ```
-   POST /api/v1/soups/:soupId/answer
-   请求体：
-   {
-     "answer": string,    // 用户的回答内容
-   }
-   响应格式：
-   {
-     "success": true,
-     "data": {
-       "isCorrect": boolean,     // 回答是否正确
-       "correctAnswer": string,   // 正确答案
-       "explanation": string,     // 解释说明（可选）
-       "score": number           // 获得的分数（可选）
-     }
-   }
-   ```
+#### 1. 获取海龟汤列表或指定海龟汤
+```
+GET /api/soup
+GET /api/soup?id=soup_001
+GET /api/soup?id=soup_001,soup_002
 
-5. 获取用户汤面回答状态
-   ```
-   GET /api/v1/soups/status
-   响应格式：
-   {
-     "success": true,
-     "data": {
-       "answeredSoups": [
-         {
-           "soupId": string,
-           "isCorrect": boolean,
-           "answerTime": string,
-         }
-       ],
-       "totalAnswered": number,
-       "totalCorrect": number,
-     }
-   }
-   ```
+响应格式：
+{
+  "success": true,
+  "data": [
+    {
+      "soupId": "soup_001",
+      "title": "海龟汤标题",
+      "contentLines": ["第一行", "第二行"],
+      "truth": "汤底内容",
+      "createTime": "2023-04-21T08:00:00.000Z",
+      "updateTime": "2023-04-21T08:00:00.000Z"
+    },
+    ...
+  ]
+}
+```
 
-6. 标记汤面为已查看
-   ```
-   POST /api/v1/soups/:soupId/view
-   请求体：
-   {
-     "deviceInfo": string,    // 设备信息（可选）
-     "viewDuration": number   // 查看时长（毫秒，可选）
-   }
-   响应格式：
-   {
-     "success": true,
-     "data": {
-       "viewTime": string,    // 查看时间
-       "isFirstView": boolean // 是否首次查看
-     }
-   }
-   ```
+#### 2. 获取单个海龟汤
+```
+GET /api/soup/:soupId
 
-7. 获取用户汤面查看状态
-   ```
-   GET /api/v1/soups/view-status
-   响应格式：
-   {
-     "success": true,
-     "data": {
-       "viewedSoups": [
-         {
-           "soupId": string,
-           "firstViewTime": string,  // 首次查看时间
-           "lastViewTime": string,   // 最后查看时间
-           "viewCount": number       // 查看次数
-         }
-       ],
-       "totalViewed": number,      // 总查看数
-       "todayViewed": number       // 今日查看数
-     }
-   }
-   ```
+响应格式：
+{
+  "success": true,
+  "data": {
+    "soupId": "soup_001",
+    "title": "海龟汤标题",
+    "contentLines": ["第一行", "第二行"],
+    "truth": "汤底内容",
+    "createTime": "2023-04-21T08:00:00.000Z",
+    "updateTime": "2023-04-21T08:00:00.000Z"
+  }
+}
+```
 
-### 未来计划
+#### 3. 获取随机海龟汤
+```
+GET /api/soup/random
+
+响应格式：同获取单个海龟汤
+```
+
+#### 4. 创建新海龟汤
+```
+POST /api/soup
+请求体：
+{
+  "title": "新海龟汤标题",
+  "contentLines": ["第一行", "第二行", "第三行"],
+  "truth": "汤底内容"
+}
+
+响应格式：
+{
+  "success": true,
+  "data": {
+    "soupId": "generated_id",
+    "title": "新海龟汤标题",
+    "contentLines": ["第一行", "第二行", "第三行"],
+    "truth": "汤底内容",
+    "createTime": "2023-04-21T08:00:00.000Z",
+    "updateTime": "2023-04-21T08:00:00.000Z"
+  }
+}
+```
+
+#### 5. 更新海龟汤
+```
+PUT /api/soup/:soupId
+请求体：
+{
+  "title": "更新后的标题",
+  "contentLines": ["更新的第一行", "更新的第二行"],
+  "truth": "更新的汤底内容"
+}
+
+响应格式：
+{
+  "success": true,
+  "data": {
+    "soupId": "soup_001",
+    "title": "更新后的标题",
+    "contentLines": ["更新的第一行", "更新的第二行"],
+    "truth": "更新的汤底内容",
+    "createTime": "2023-04-21T08:00:00.000Z",
+    "updateTime": "2023-04-21T09:00:00.000Z"
+  }
+}
+```
+
+#### 6. 删除海龟汤
+```
+DELETE /api/soup/:soupId
+
+响应格式：
+{
+  "success": true,
+  "data": {
+    "message": "删除成功",
+    "deletedSoup": {
+      "soupId": "soup_001",
+      "title": "海龟汤标题",
+      ...
+    }
+  }
+}
+```
+
+#### 7. 批量删除海龟汤
+```
+DELETE /api/soup?ids=soup_001,soup_002
+
+响应格式：
+{
+  "success": true,
+  "data": {
+    "message": "成功删除 2 个海龟汤",
+    "deletedCount": 2
+  }
+}
+```
+
+## 最佳实践
+
+### 前端使用建议
+1. **使用异步API**：所有API都返回Promise，建议搭配async/await使用
+2. **错误处理**：使用try/catch处理异步操作中可能的错误
+3. **批量操作**：需要获取多个海龟汤时，优先使用ID数组而不是多次调用单个获取方法
+4. **随机获取**：使用`getRandomSoup()`获取随机海龟汤，而不是自行实现随机逻辑
+
+### 后端实现说明
+1. **RESTful设计**：API遵循RESTful设计规范，使用HTTP方法表达操作语义
+2. **统一响应格式**：所有API返回统一的响应格式，包含success字段和data/error字段
+3. **错误处理**：所有API都有完善的错误处理，返回合适的HTTP状态码和错误信息
+4. **数据验证**：所有写操作都有输入验证，确保数据完整性
+
+## 未来计划
+- [ ] 添加用户相关功能（回答记录、查看历史等）
 - [ ] 实现本地数据缓存
 - [ ] 添加数据版本控制
 - [ ] 实现增量更新机制
-- [ ] 定义错误码规范
-- [ ] 实现网络错误重试机制
-- [ ] 添加本地缓存兜底策略
-- [ ] 实现数据预加载
-- [ ] 添加请求队列管理
-- [ ] 优化缓存策略
-- [ ] 添加请求签名机制
-- [ ] 实现数据加密传输
-- [ ] 添加防刷机制
-
-## 最佳实践
-1. **使用异步API**：优先使用Promise风格的API，搭配async/await使用
-2. **错误处理**：使用try/catch处理异步操作中可能的错误
-3. **集合操作**：使用`getAllSoupsAsync()`获取汤面列表，避免直接访问`soups`属性
-4. **导航操作**：使用`getNextSoupId`进行汤面导航，确保顺序一致性
+- [ ] 优化错误处理和重试机制
+- [ ] 添加数据预加载功能
 
 ## 注意事项
-- 用户状态：
-  - 需要维护用户的回答历史
-  - 回答状态需要与用户账号绑定
-  - 支持多设备同步回答状态
-  - 需要记录用户查看历史
-  - 支持查看次数统计和时长分析
-
-## 服务初始化
-```javascript
-// 使用Promise风格初始化
-async function initService() {
-  try {
-    const soups = await soupService.loadSoupsAsync();
-    console.log('汤面数据加载完成：', soups.length);
-  } catch (error) {
-    console.error('汤面数据加载失败:', error);
-  }
-}
-
-// 切换生产环境
-soupService.switchEnvironment('production');
-```
-
-## 环境配置
-```javascript
-// 切换到开发环境
-soupService.switchEnvironment('development');
-
-// 切换到生产环境
-soupService.switchEnvironment('production');
-
-// 获取当前环境的API基础URL
-const apiUrl = soupService.API_BASE_URL;
-```
+- 本地开发环境下，数据存储在`local-server/soups.json`文件中
+- 所有时间字段均使用ISO格式字符串
+- 海龟汤ID在创建时自动生成，格式为`local_时间戳`
+- 批量操作时注意控制数据量，避免请求过大
