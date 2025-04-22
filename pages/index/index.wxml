@@ -1,4 +1,4 @@
-<!--pages/index.wxml-->
+<!--pages/index.wxml - 海龟汤首页-->
 <view class="page">
   <!-- 导航栏 -->
   <nav-bar
@@ -6,13 +6,17 @@
     bind:close="onSettingClose"
   />
 
-  <view class="container">
+  <view class="container" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd">
     <!-- 汤面显示区域 -->
     <soup-display
       id="soupDisplay"
+      soupData="{{currentSoup}}"
+      loading="{{isLoading}}"
       isPeeking="{{isPeeking}}"
-      class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}}"
+      staticMode="{{staticMode}}"
+      class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}} {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}}"
       wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
+      bind:animationComplete="onAnimationComplete"
     ></soup-display>
 
     <!-- 汤底显示区域 -->
@@ -21,9 +25,6 @@
       soupId="{{truthSoupId || ''}}"
       wx:if="{{pageState === 'truth'}}"
     ></soup-truth>
-
-    <!-- 设置卡片已移至nav-bar组件中 -->
-    <!-- 不需要在这里使用setting-card组件 -->
 
     <!-- 按钮区域 -->
     <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
@@ -36,15 +37,11 @@
         class="start-button"
         wx:if="{{showButtons}}">
       </custom-button>
-      <custom-button
-        type="unlight"
-        text="下一个"
-        width="50%"
-        height="80rpx"
-        bind:tap="onNextSoup"
-        class="next-button"
-        wx:if="{{showButtons}}">
-      </custom-button>
+    </view>
+
+    <!-- 滑动提示 -->
+    <view class="swipe-hint {{showButtons ? 'show-hint' : ''}}" wx:if="{{pageState === 'viewing'}}">
+      <text>左右滑动切换汤面</text>
     </view>
   </view>
 
@@ -55,7 +52,6 @@
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
     bind:peekSoup="onPeekSoup"
-    bind:messageStatusChange="onMessageStatusChange"
   ></dialog-component>
 
 </view>

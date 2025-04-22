@@ -230,6 +230,80 @@ const soupService = {
             console.error('增加阅读数失败:', error);
             return null;
         }
+    },
+
+    /**
+     * 获取下一个海龟汤
+     * @param {string} currentSoupId 当前海龟汤ID
+     * @returns {Promise<Object>} 下一个海龟汤数据
+     */
+    async getNextSoup(currentSoupId) {
+        try {
+            // 如果没有当前汤面ID，获取第一个汤面
+            if (!currentSoupId) {
+                const allSoups = await this.getSoup();
+                return Array.isArray(allSoups) && allSoups.length > 0 ? allSoups[0] : null;
+            }
+
+            // 获取所有汤面
+            const allSoups = await this.getSoup();
+            if (!Array.isArray(allSoups) || allSoups.length === 0) {
+                return null;
+            }
+
+            // 找到当前汤面的索引
+            const currentIndex = allSoups.findIndex(soup =>
+                (soup.soupId === currentSoupId || soup.id === currentSoupId));
+
+            // 如果找不到当前汤面，返回第一个汤面
+            if (currentIndex === -1) {
+                return allSoups[0];
+            }
+
+            // 计算下一个汤面的索引，如果已经是最后一个，则返回第一个
+            const nextIndex = (currentIndex + 1) % allSoups.length;
+            return allSoups[nextIndex];
+        } catch (error) {
+            console.error('获取下一个海龟汤失败:', error);
+            return null;
+        }
+    },
+
+    /**
+     * 获取上一个海龟汤
+     * @param {string} currentSoupId 当前海龟汤ID
+     * @returns {Promise<Object>} 上一个海龟汤数据
+     */
+    async getPreviousSoup(currentSoupId) {
+        try {
+            // 如果没有当前汤面ID，获取最后一个汤面
+            if (!currentSoupId) {
+                const allSoups = await this.getSoup();
+                return Array.isArray(allSoups) && allSoups.length > 0 ? allSoups[allSoups.length - 1] : null;
+            }
+
+            // 获取所有汤面
+            const allSoups = await this.getSoup();
+            if (!Array.isArray(allSoups) || allSoups.length === 0) {
+                return null;
+            }
+
+            // 找到当前汤面的索引
+            const currentIndex = allSoups.findIndex(soup =>
+                (soup.soupId === currentSoupId || soup.id === currentSoupId));
+
+            // 如果找不到当前汤面，返回最后一个汤面
+            if (currentIndex === -1) {
+                return allSoups[allSoups.length - 1];
+            }
+
+            // 计算上一个汤面的索引，如果已经是第一个，则返回最后一个
+            const prevIndex = (currentIndex - 1 + allSoups.length) % allSoups.length;
+            return allSoups[prevIndex];
+        } catch (error) {
+            console.error('获取上一个海龟汤失败:', error);
+            return null;
+        }
     }
 };
 

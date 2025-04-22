@@ -29,22 +29,10 @@ const request = (options) => {
       header.Authorization = `Bearer ${token}`;
     }
 
-    // 获取全局应用实例
-    const App = getApp();
-    // 获取对应服务的基础URL
-    let baseUrl;
-
-    // 根据服务类型选择不同的基础URL
-    if (options.service === 'agent') {
-      baseUrl = App.globalData.config.ysUrl;
-    } else if (options.service === 'soup') {
-      baseUrl = App.globalData.config.ysUrl;
-    } else {
-      baseUrl = App.globalData.config.baseUrl;
-    }
-
+    // 直接使用传入的URL，不再拼接基础URL
+    // 因为在api.js中已经拼接好了完整URL
     wx.request({
-      url: `${baseUrl}${options.url}`,
+      url: options.url,
       method: options.method || 'GET',
       data: options.data,
       header: header,
@@ -67,7 +55,7 @@ const request = (options) => {
           reject(new Error(data.error || '请求失败'));
         }
       },
-      fail: (error) => {
+      fail: () => {
         reject(new Error('网络请求失败'));
       }
     });
