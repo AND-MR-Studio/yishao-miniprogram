@@ -11,6 +11,18 @@
   position: relative;
 }
 
+/* 容器样式 - 确保覆盖整个页面并正确处理触摸事件 */
+.container {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  touch-action: pan-x pan-y; /* 允许滑动手势 */
+}
+
 /* 汤面显示区域在对话层后面时的样式 */
 .behind-dialog {
   position: fixed;
@@ -40,7 +52,7 @@
   position: fixed;
   gap: 27rpx;
   width: 100%;
-  bottom: calc(110rpx + env(safe-area-inset-bottom) + 60rpx); /* tabbar高度 + 安全区域 + 间距 */
+  bottom: calc(200rpx + env(safe-area-inset-bottom) + 60rpx); /* tabbar高度 + 安全区域 + 间距 */
   left: 0;
   z-index: 998;
 }

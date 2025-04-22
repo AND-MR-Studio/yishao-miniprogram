@@ -1,11 +1,13 @@
 <!--components/dialog/index.wxml-->
 <view class="dialog-container {{visible ? 'visible' : 'hidden'}}" animation="{{animationData}}">
   <view class="page {{isPeekingSoup ? 'peek-soup' : ''}}">
-    <!-- 导航栏 -->
-    <nav-bar
-      showBackButton="{{true}}"
-      bind:back="handleClose"
-    />
+    <!-- 导航栏 - 增加点击捕获 -->
+    <view class="nav-bar-container" catchtap="handleClose">
+      <nav-bar
+        showBackButton="{{true}}"
+        bind:back="handleClose"
+      />
+    </view>
 
     <view class="container" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
       <!-- 毛玻璃效果遮罩层 -->

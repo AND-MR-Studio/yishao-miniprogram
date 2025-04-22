@@ -8,14 +8,16 @@
   right: 0;
   bottom: 0;
   z-index: 1000;
-  transform: translateY(100%);
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: none; /* 默认不捕获点击事件 */
+  display: none; /* 默认不显示 */
 }
 
 .dialog-container.visible {
-  transform: translateY(0);
   opacity: 1;
+  pointer-events: auto; /* 可见时捕获点击事件 */
+  display: block; /* 可见时显示 */
 }
 
 /* 页面样式 */

@@ -101,15 +101,18 @@ Component({
       }
 
       try {
-        // 初始化动画
-        this.animation.translateY('100%').opacity(0).step({ duration: 0 });
-        this.setData({ animationData: this.animation.export() });
+        // 初始化动画 - 只设置透明度为0
+        this.animation.opacity(0).step({ duration: 0 });
+        this.setData({
+          animationData: this.animation.export(),
+          visible: true // 先设置为可见，但透明度为0
+        });
 
         // 等待下一帧
         await new Promise(resolve => wx.nextTick(resolve));
 
-        // 执行显示动画
-        this.animation.translateY(0).opacity(1).step();
+        // 执行显示动画 - 只改变透明度，实现原地渐变显示
+        this.animation.opacity(1).step();
         this.setData({ animationData: this.animation.export() });
 
         // 等待动画完成
@@ -134,18 +137,25 @@ Component({
       try {
         this.setData({ isFullyVisible: false });
 
-        // 执行隐藏动画
-        this.animation.translateY('100%').opacity(0).step();
+        // 执行隐藏动画 - 只使用透明度动画
+        this.animation.opacity(0).step();
         this.setData({ animationData: this.animation.export() });
 
         // 等待动画完成
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        this.setData({ isAnimating: false });
+        // 完全隐藏元素，确保不会阻挡点击
+        this.setData({
+          isAnimating: false,
+          visible: false
+        });
         this.triggerEvent('close');
       } catch (error) {
         console.error('隐藏对话组件出错:', error);
-        this.setData({ isAnimating: false });
+        this.setData({
+          isAnimating: false,
+          visible: false
+        });
         this.triggerEvent('close');
       }
     },
