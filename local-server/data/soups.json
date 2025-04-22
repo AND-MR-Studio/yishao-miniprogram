@@ -10,11 +10,11 @@
     "truth": "这是一个测试用的汤底",
     "soupType": 0,
     "creatorId": "admin",
-    "viewCount": 47,
+    "viewCount": 80,
     "likeCount": 0,
     "publishTime": "2025-04-22T03:41:41.100Z",
     "publishIp": "127.0.0.1",
-    "updateTime": "2025-04-22T06:00:23.306Z",
+    "updateTime": "2025-04-22T06:40:02.137Z",
     "updateIp": "::1"
   },
   {
@@ -28,11 +28,11 @@
     "truth": "这是另一个测试用的汤底",
     "soupType": 1,
     "creatorId": "admin",
-    "viewCount": 30,
+    "viewCount": 37,
     "likeCount": 2,
     "publishTime": "2025-04-22T03:41:41.100Z",
     "publishIp": "127.0.0.1",
-    "updateTime": "2025-04-22T06:00:20.558Z",
+    "updateTime": "2025-04-22T06:40:01.562Z",
     "updateIp": "::1"
   }
 ]

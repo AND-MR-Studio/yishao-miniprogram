@@ -100,7 +100,6 @@ Component({
     _initTypeAnimator() {
       this.typeAnimator = typeAnimation.createInstance(this, {
         typeSpeed: this.data.typeSpeed,
-        onAnimationComplete: () => this.triggerEvent('animationComplete'),
         formatContent: (content) => this._formatSoupContent(content)
       });
     },

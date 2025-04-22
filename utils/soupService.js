@@ -2,6 +2,13 @@
  * 海龟汤服务 - 前端调用封装
  * 提供符合RESTful规范的海龟汤数据CRUD操作
  * 遵循简洁设计原则，只提供必要的API接口
+ *
+ * 主要功能：
+ * - 获取海龟汤数据（单个、多个或全部）
+ * - 创建、更新、删除海龟汤
+ * - 获取相邻海龟汤（上一个或下一个）
+ * - 获取随机海龟汤
+ * - 增加海龟汤阅读数和点赞数
  */
 const { soupRequest, soup_base_url, soup_by_id_url, soup_random_url, soup_like_url, soup_view_url } = require('./api');
 
@@ -233,75 +240,54 @@ const soupService = {
     },
 
     /**
-     * 获取下一个海龟汤
+     * 获取相邻的海龟汤（上一个或下一个）
      * @param {string} currentSoupId 当前海龟汤ID
-     * @returns {Promise<Object>} 下一个海龟汤数据
+     * @param {boolean} isNext 是否获取下一个，false表示获取上一个
+     * @returns {Promise<Object>} 相邻的海龟汤数据
+     *
+     * @example
+     * // 获取下一个海龟汤
+     * const nextSoup = await soupService.getAdjacentSoup(currentSoupId, true);
+     *
+     * // 获取上一个海龟汤
+     * const prevSoup = await soupService.getAdjacentSoup(currentSoupId, false);
+     *
+     * // 获取第一个海龟汤
+     * const firstSoup = await soupService.getAdjacentSoup(null, true);
+     *
+     * // 获取最后一个海龟汤
+     * const lastSoup = await soupService.getAdjacentSoup(null, false);
      */
-    async getNextSoup(currentSoupId) {
+    async getAdjacentSoup(currentSoupId, isNext = true) {
         try {
-            // 如果没有当前汤面ID，获取第一个汤面
-            if (!currentSoupId) {
-                const allSoups = await this.getSoup();
-                return Array.isArray(allSoups) && allSoups.length > 0 ? allSoups[0] : null;
-            }
-
             // 获取所有汤面
             const allSoups = await this.getSoup();
             if (!Array.isArray(allSoups) || allSoups.length === 0) {
                 return null;
             }
 
-            // 找到当前汤面的索引
-            const currentIndex = allSoups.findIndex(soup =>
-                (soup.soupId === currentSoupId || soup.id === currentSoupId));
-
-            // 如果找不到当前汤面，返回第一个汤面
-            if (currentIndex === -1) {
-                return allSoups[0];
-            }
-
-            // 计算下一个汤面的索引，如果已经是最后一个，则返回第一个
-            const nextIndex = (currentIndex + 1) % allSoups.length;
-            return allSoups[nextIndex];
-        } catch (error) {
-            console.error('获取下一个海龟汤失败:', error);
-            return null;
-        }
-    },
-
-    /**
-     * 获取上一个海龟汤
-     * @param {string} currentSoupId 当前海龟汤ID
-     * @returns {Promise<Object>} 上一个海龟汤数据
-     */
-    async getPreviousSoup(currentSoupId) {
-        try {
-            // 如果没有当前汤面ID，获取最后一个汤面
+            // 如果没有当前汤面ID，根据方向返回第一个或最后一个汤面
             if (!currentSoupId) {
-                const allSoups = await this.getSoup();
-                return Array.isArray(allSoups) && allSoups.length > 0 ? allSoups[allSoups.length - 1] : null;
-            }
-
-            // 获取所有汤面
-            const allSoups = await this.getSoup();
-            if (!Array.isArray(allSoups) || allSoups.length === 0) {
-                return null;
+                return isNext ? allSoups[0] : allSoups[allSoups.length - 1];
             }
 
             // 找到当前汤面的索引
             const currentIndex = allSoups.findIndex(soup =>
                 (soup.soupId === currentSoupId || soup.id === currentSoupId));
 
-            // 如果找不到当前汤面，返回最后一个汤面
+            // 如果找不到当前汤面，根据方向返回第一个或最后一个汤面
             if (currentIndex === -1) {
-                return allSoups[allSoups.length - 1];
+                return isNext ? allSoups[0] : allSoups[allSoups.length - 1];
             }
 
-            // 计算上一个汤面的索引，如果已经是第一个，则返回最后一个
-            const prevIndex = (currentIndex - 1 + allSoups.length) % allSoups.length;
-            return allSoups[prevIndex];
+            // 计算相邻汤面的索引
+            const adjacentIndex = isNext
+                ? (currentIndex + 1) % allSoups.length
+                : (currentIndex - 1 + allSoups.length) % allSoups.length;
+
+            return allSoups[adjacentIndex];
         } catch (error) {
-            console.error('获取上一个海龟汤失败:', error);
+            console.error(`获取${isNext ? '下' : '上'}一个海龟汤失败:`, error);
             return null;
         }
     }
