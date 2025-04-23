@@ -25,7 +25,6 @@ Page({
 
     // 汤面相关
     currentSoup: null, // 当前汤面数据
-    staticMode: false, // 静态模式（跳过动画）
     isPeeking: false, // 偷看状态
     breathingBlur: false, // 呈现呼吸模糊效果
 
@@ -49,9 +48,7 @@ Page({
     // 初始化滑动管理器
     this.initSwipeManager();
 
-    // 获取用户设置
-    const settings = wx.getStorageSync('soupSettings') || {};
-    const skipAnimation = settings.skipAnimation || false;
+    // 不再需要获取用户设置，已移除打字机动画相关功能
 
     try {
       this.setData({ isLoading: true });
@@ -63,7 +60,7 @@ Page({
       }
 
       // 初始化汤面数据和页面状态
-      await this.initSoupData(soupData, skipAnimation);
+      await this.initSoupData(soupData);
     } catch (error) {
       this.showErrorToast('加载失败，请重试');
       this.setData({
@@ -76,9 +73,8 @@ Page({
   /**
    * 初始化汤面数据和页面状态
    * @param {Object} soupData 汤面数据
-   * @param {boolean} skipAnimation 是否跳过动画
    */
-  async initSoupData(soupData, skipAnimation = false) {
+  async initSoupData(soupData) {
     // 获取汤面ID
     const soupId = soupData.soupId || soupData.id || '';
 
@@ -89,8 +85,7 @@ Page({
     this.setData({
       currentSoup: soupData,
       isLoading: false,
-      showButtons: true,
-      staticMode: skipAnimation
+      showButtons: true
     });
 
     // 增加汤面阅读数
@@ -155,8 +150,7 @@ Page({
     // 更新页面状态
     this.setData({
       pageState: PAGE_STATE.DRINKING,
-      showButtons: false,
-      staticMode: true // 强制静态模式，显示完整内容
+      showButtons: false
     });
 
     // 显示对话框
@@ -266,16 +260,12 @@ Page({
         throw new Error(`无法获取${isNext ? '下' : '上'}一个汤面数据`);
       }
 
-      // 获取用户设置
-      const settings = wx.getStorageSync('soupSettings') || {};
-      const skipAnimation = settings.skipAnimation || false;
-
       // 更新对话组件
       const soupId = soupData.soupId || soupData.id || '';
       this.selectComponent('#dialog')?.setData({ soupId });
 
       // 初始化汤面数据和页面状态
-      await this.initSoupData(soupData, skipAnimation);
+      await this.initSoupData(soupData);
 
       // 等待一帧，确保汤面数据已经加载完成
       wx.nextTick(() => {
@@ -325,19 +315,9 @@ Page({
    * 处理设置变更事件
    * @param {Object} e 事件对象
    */
-  handleSettingChange(e) {
-    const { type, value } = e.detail;
-    if (type === 'skipAnimation') {
-      // 更新页面状态，组件会通过属性变化自动响应
-      this.setData({
-        staticMode: value
-      });
-
-      // 保存设置到本地存储
-      const settings = wx.getStorageSync('soupSettings') || {};
-      settings.skipAnimation = value;
-      wx.setStorageSync('soupSettings', settings);
-    }
+  handleSettingChange() {
+    // 设置变更处理逻辑
+    // 注意：已移除打字机动画相关设置
   },
 
   /**

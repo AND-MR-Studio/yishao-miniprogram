@@ -4,7 +4,7 @@
  */
 const fs = require('fs-extra');
 const path = require('path');
-const { createSoupObject } = require('../models/soupModel');
+const { createSoupObject, SOUP_TAGS } = require('../models/soupModel');
 
 // 数据文件路径
 const SOUPS_FILE = path.join(__dirname, '../data/soups.json');
@@ -40,6 +40,7 @@ async function initSoupsFile() {
         contentLines: ['这是一个', '本地测试海龟汤', '用于开发环境测试'],
         truth: '这是一个测试用的汤底',
         soupType: 0, // 预制汤
+        tag: SOUP_TAGS.ABSURD, // 荒诞
         publishTime: now,
         publishIp: '127.0.0.1',
         updateTime: now,
@@ -51,6 +52,7 @@ async function initSoupsFile() {
         contentLines: ['又一个', '本地测试海龟汤', '开发环境专用'],
         truth: '这是另一个测试用的汤底',
         soupType: 1, // DIY汤
+        tag: SOUP_TAGS.FUNNY, // 搞笑
         viewCount: 5,
         likeCount: 2,
         publishTime: now,
@@ -123,6 +125,21 @@ async function getSoupsByType(soupType) {
     return soups.filter(soup => soup.soupType === soupType);
   } catch (err) {
     console.error('根据类型获取海龟汤失败:', err);
+    return [];
+  }
+}
+
+/**
+ * 根据标签获取海龟汤
+ * @param {string} tag 海龟汤标签
+ * @returns {Promise<Array>} 海龟汤数组
+ */
+async function getSoupsByTag(tag) {
+  try {
+    const soups = await getAllSoups();
+    return soups.filter(soup => soup.tag === tag);
+  } catch (err) {
+    console.error('根据标签获取海龟汤失败:', err);
     return [];
   }
 }
@@ -260,6 +277,7 @@ module.exports = {
   getSoupById,
   getSoupsByIds,
   getSoupsByType,
+  getSoupsByTag,
   createSoup,
   updateSoup,
   deleteSoup,

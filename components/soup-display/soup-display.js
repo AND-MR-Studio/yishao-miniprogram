@@ -15,13 +15,8 @@ Component({
           // 更新当前汤面数据
           this.setData({ currentSoup: newVal });
 
-          // 根据模式显示内容
-          if (this.data.staticMode) {
-            this.showCompleteContent();
-          } else {
-            this.resetAnimation();
-            this.startAnimation();
-          }
+          // 始终显示完整内容，不使用打字机动画
+          this.showCompleteContent();
         }
       }
     },
@@ -30,20 +25,10 @@ Component({
       type: Number,
       value: 60
     },
-    // 静态模式（跳过动画）
+    // 静态模式（跳过动画） - 保留属性但在首页始终使用静态模式
     staticMode: {
       type: Boolean,
-      value: false,
-      observer: function(newVal) {
-        if (!this.data.currentSoup) return;
-
-        if (newVal) {
-          this.showCompleteContent();
-        } else {
-          this.resetAnimation();
-          this.startAnimation();
-        }
-      }
+      value: true
     },
     // 是否偷看状态
     isPeeking: {
@@ -77,7 +62,7 @@ Component({
 
     // 组件就绪
     ready() {
-      if (this.data.staticMode && this.data.currentSoup) {
+      if (this.data.currentSoup) {
         this.showCompleteContent();
       }
     },
@@ -148,13 +133,12 @@ Component({
     },
 
     /**
-     * 开始动画
+     * 开始动画 - 在首页不再使用，但保留方法供其他页面使用
      * @returns {Promise} 动画完成的Promise
      */
     startAnimation() {
-      if (this.data.isAnimating || this.data.staticMode || !this.typeAnimator) return;
-      this.triggerEvent('animationStart');
-      return this.typeAnimator.start(this.data.currentSoup);
+      // 在首页不再使用打字机动画
+      return Promise.resolve();
     },
 
     /**

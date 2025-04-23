@@ -1,9 +1,9 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container {{staticMode ? 'static-mode' : ''}} {{isPeeking ? 'is-peeking' : ''}} {{loading ? 'loading' : ''}}"
+  class="soup-container static-mode {{isPeeking ? 'is-peeking' : ''}} {{loading ? 'loading' : ''}}"
 >
   <!-- 汤面内容区域 -->
-  <block wx:if="{{!loading || staticMode}}">
+  <block wx:if="{{!loading}}">
     <view class="soup-content">
       <block wx:for="{{displayLines}}" wx:key="index">
         <view

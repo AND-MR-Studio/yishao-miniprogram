@@ -23,7 +23,6 @@ Component({
   data: {
     soundOn: true,
     vibrationOn: false,
-    skipAnimation: false, // 跳过动画开关
     fontSize: 'medium', // 当前选中的字体大小
     // 字体大小选项
     fontSizeOptions: [
@@ -90,7 +89,6 @@ Component({
         this.setData({
           soundOn: settings.soundOn ?? true,
           vibrationOn: settings.vibrationOn ?? false,
-          skipAnimation: settings.skipAnimation ?? false,
           fontSize: settings.fontSize || 'medium'
         });
       } catch (e) {
@@ -107,7 +105,6 @@ Component({
         const settings = {
           soundOn: this.data.soundOn,
           vibrationOn: this.data.vibrationOn,
-          skipAnimation: this.data.skipAnimation,
           fontSize: this.data.fontSize
         };
         wx.setStorageSync('soupSettings', settings);

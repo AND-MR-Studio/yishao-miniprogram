@@ -14,7 +14,7 @@
         soupData="{{currentSoup}}"
         loading="{{isLoading}}"
         isPeeking="{{isPeeking}}"
-        staticMode="{{staticMode}}"
+
         class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}}"
         wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"

@@ -9,6 +9,15 @@ const SOUP_TYPES = {
   DIY: 1     // DIY汤
 };
 
+// 海龟汤标签枚举
+const SOUP_TAGS = {
+  ABSURD: '荒诞',    // 荒诞
+  FUNNY: '搞笑',     // 搞笑
+  HORROR: '惊悚',    // 惊悚
+  VARIANT: '变格',   // 变格
+  UNKNOWN: '未知'    // 未知
+};
+
 /**
  * 海龟汤模型结构
  * @typedef {Object} SoupModel
@@ -17,6 +26,7 @@ const SOUP_TYPES = {
  * @property {string[]} contentLines - 内容行数组
  * @property {string} truth - 汤底
  * @property {number} soupType - 类型：0预制汤/1DIY汤
+ * @property {string} tag - 标签：荒诞/搞笑/惊悚/变格/未知
  * @property {string} creatorId - 创建者ID（可选）
  * @property {number} viewCount - 阅读数
  * @property {number} likeCount - 点赞数
@@ -33,13 +43,13 @@ const SOUP_TYPES = {
  */
 function validateSoup(soup) {
   const errors = [];
-  
+
   if (!soup.title) errors.push('标题不能为空');
   if (!soup.contentLines || !Array.isArray(soup.contentLines) || soup.contentLines.length === 0) {
     errors.push('内容不能为空且必须是数组');
   }
   if (!soup.truth) errors.push('汤底不能为空');
-  
+
   return {
     valid: errors.length === 0,
     errors
@@ -53,13 +63,14 @@ function validateSoup(soup) {
  */
 function createSoupObject(data) {
   const now = new Date().toISOString();
-  
+
   return {
     soupId: data.soupId || `local_${Date.now()}`,
     title: data.title || '',
     contentLines: data.contentLines || [],
     truth: data.truth || '',
     soupType: data.soupType !== undefined ? data.soupType : SOUP_TYPES.PRESET,
+    tag: data.tag || SOUP_TAGS.UNKNOWN,
     creatorId: data.creatorId || 'admin',
     viewCount: data.viewCount || 0,
     likeCount: data.likeCount || 0,
@@ -72,6 +83,7 @@ function createSoupObject(data) {
 
 module.exports = {
   SOUP_TYPES,
+  SOUP_TAGS,
   validateSoup,
   createSoupObject
 };

@@ -57,7 +57,7 @@ class DialogService {
         return [
             {
                 role: 'system',
-                content: '欢迎来到一勺海龟汤。'
+                content: '欢迎来到一勺推理社。'
             },
             {
                 role: 'system',

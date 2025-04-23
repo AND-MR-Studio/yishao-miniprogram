@@ -1,7 +1,7 @@
 <!--components/setting-card/setting.wxml-->
 <view class="setting-mask {{show ? 'show' : 'hide'}}" bindtap="closePanel" catchtouchmove="preventTouchMove"></view>
 <!-- 面板容器 - 通过panelDrag工具类处理拖拽手势 -->
-<view class="setting-panel {{show ? 'show' : 'hide'}}" 
+<view class="setting-panel {{show ? 'show' : 'hide'}}"
       style="padding-top: {{statusBarHeight}}rpx; {{panelStyle}}"
       bindtouchstart="handleTouchStart"
       bindtouchmove="handleTouchMove"
@@ -12,32 +12,32 @@
     <view class="close-bar" bindtap="handleDragIndicator">
       <view class="close-indicator"></view>
     </view>
-    
+
     <!-- 问答设置区块 -->
     <view class="setting-section">
       <view class="section-title">问答设置</view>
-      
+
       <view class="setting-item">
         <view class="item-label">放弃当前海龟汤</view>
-        <custom-button 
-          type="confirm" 
-          text="确定" 
+        <custom-button
+          type="confirm"
+          text="确定"
           bind:tap="abandonSoup" />
       </view>
-      
+
       <view class="setting-item">
         <view class="item-label">清理缓存</view>
-        <custom-button 
-          type="confirm" 
-          text="确定" 
+        <custom-button
+          type="confirm"
+          text="确定"
           bind:tap="clearCache" />
       </view>
-      
+
       <view class="setting-item font-size-setting">
         <view class="font-size-label">字体大小</view>
         <view class="font-size-options">
           <block wx:for="{{fontSizeOptions}}" wx:key="value">
-            <custom-button 
+            <custom-button
               type="radio"
               text="{{item.label}}"
               value="{{item.value}}"
@@ -50,15 +50,15 @@
         </view>
       </view>
     </view>
-    
+
     <view class="divider"></view>
-    
+
     <!-- 通用设置区块 -->
     <view class="setting-section">
       <view class="section-title">通用设置</view>
-      
+
       <!-- 使用button组件作为开关 -->
-      <custom-button 
+      <custom-button
         type="switch"
         label="音效"
         checked="{{soundOn}}"
@@ -66,8 +66,8 @@
         bind:change="toggleSwitch"
         class="custom-button-class"
       />
-      
-      <custom-button 
+
+      <custom-button
         type="switch"
         label="震动"
         checked="{{vibrationOn}}"
@@ -76,44 +76,37 @@
         class="custom-button-class"
       />
 
-      <custom-button 
-        type="switch"
-        label="跳过动画"
-        checked="{{skipAnimation}}"
-        dataType="skipAnimation"
-        bind:change="toggleSwitch"
-        class="custom-button-class"
-      />
+      <!-- 已移除跳过动画开关 -->
     </view>
-    
+
     <view class="divider"></view>
-    
+
     <!-- 联系我们区块 -->
     <view class="contact-section">
       <view class="section-title contact-title">联系我们</view>
       <view class="contact-buttons-container">
         <view class="contact-buttons">
-          <custom-button 
-            type="dark" 
-            text="问题反馈" 
-            width="192rpx" 
-            height="88rpx" 
-            bind:tap="contactUs" 
+          <custom-button
+            type="dark"
+            text="问题反馈"
+            width="192rpx"
+            height="88rpx"
+            bind:tap="contactUs"
             class="contact-button-class" />
-          
-          <custom-button 
-            type="dark" 
-            text="Github" 
-            width="192rpx" 
-            height="88rpx" 
-            bind:tap="onAbout" 
+
+          <custom-button
+            type="dark"
+            text="Github"
+            width="192rpx"
+            height="88rpx"
+            bind:tap="onAbout"
             class="contact-button-class" />
         </view>
       </view>
     </view>
-    
+
     <view class="divider"></view>
-    
+
     <!-- 关于信息 -->
     <view class="about-section">
       <view class="studio-logo"></view>
