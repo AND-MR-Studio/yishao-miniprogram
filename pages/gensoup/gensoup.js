@@ -8,7 +8,7 @@ Page({
       { id: 1, left: 0, top: 0, text: '荒诞' },
       { id: 2, left: 0, top: 0, text: '搞笑' },
       { id: 3, left: 0, top: 0, text: '惊悚' },
-      { id: 4, left: 0, top: 0, text: '人物' },
+      { id: 4, left: 0, top: 0, text: '变格' },
       { id: 5, left: 0, top: 0, text: '未知' }
     ],
     existingPositions: [],

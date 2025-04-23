@@ -345,6 +345,8 @@ Page({
       maxBlur: 10, // 最大模糊程度，默认10px
       maxDistance: 100, // 最大滑动距离，默认100px
       enableBlurEffect: true, // 启用模糊特效
+      enableBackgroundEffect: true, // 启用背景效果
+      pageSelector: '.page', // 页面元素选择器
       setData: this.setData.bind(this),
 
       // 滑动方向回调

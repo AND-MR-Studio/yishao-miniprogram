@@ -16,3 +16,5 @@ node_modules/
 
 # wechat private config
 project.private.config.json
+.trae/rules/project_rules.md
+local-server/data/soups.json
