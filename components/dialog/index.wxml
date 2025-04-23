@@ -1,6 +1,6 @@
 <!--components/dialog/index.wxml-->
 <view class="dialog-container {{visible ? 'visible' : 'hidden'}}" animation="{{animationData}}">
-  <view class="page {{isPeekingSoup ? 'peek-soup' : ''}}">
+  <view class="page">
     <!-- 导航栏 - 增加点击捕获 -->
     <view class="nav-bar-container" catchtap="handleClose">
       <nav-bar
@@ -9,7 +9,7 @@
       />
     </view>
 
-    <view class="container" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
+    <view class="container">
       <!-- 毛玻璃效果遮罩层 -->
       <view class="frosted-glass"></view>
 

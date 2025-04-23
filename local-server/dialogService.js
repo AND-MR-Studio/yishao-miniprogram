@@ -93,11 +93,15 @@ function initDialogRoutes(app) {
             // 保存对话数据
             await saveDialogsData();
 
-            // 返回回复消息
-            return sendResponse(res, true, {
+            // 准备响应数据
+            const responseData = {
                 reply: replyMessage.content,
-                message: replyMessage
-            });
+                message: replyMessage,
+                dialogId: soupId // 返回对话 ID
+            };
+
+            // 返回回复消息
+            return sendResponse(res, true, responseData);
         } catch (error) {
             console.error('发送消息失败:', error);
             return sendResponse(res, false, '服务器内部错误', 500);
@@ -171,11 +175,13 @@ function initDialogRoutes(app) {
                 lastUpdated: Date.now()
             };
 
-            return sendResponse(res, true, {
+            const responseData = {
                 messages: dialogData.messages,
                 total: dialogData.messages.length,
                 lastUpdated: dialogData.lastUpdated
-            });
+            };
+
+            return sendResponse(res, true, responseData);
         } catch (error) {
             console.error('获取对话记录失败:', error);
             return sendResponse(res, false, '服务器内部错误', 500);

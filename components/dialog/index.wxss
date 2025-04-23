@@ -30,12 +30,7 @@
   flex-direction: column;
 }
 
-/* 长按时的透明度控制 */
-.page.peek-soup {
-  --dialog-opacity: 0;
-  background-color: rgba(6, 20, 41, 0); /* 背景完全透明 */
-  pointer-events: none; /* 禁止交互，允许点击穿透到汤面显示区域 */
-}
+/* 偷看功能已移除，准备重构 */
 
 /* 关闭按钮 */
 .close-button {
@@ -81,12 +76,7 @@
   transition: opacity 0.5s ease, backdrop-filter 0.5s ease;
 }
 
-/* 偷看时毛玻璃效果完全透明 */
-.page.peek-soup .frosted-glass {
-  opacity: 0;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
+/* 偷看功能已移除，准备重构 */
 
 /* 对话区域样式 */
 .dialog-content {
@@ -107,11 +97,7 @@
   z-index: 200;
 }
 
-/* 偷看时对话区域完全透明 */
-.page.peek-soup .dialog-content {
-  opacity: 0;
-  pointer-events: none;
-}
+/* 偷看功能已移除，准备重构 */
 
 /* 基础消息样式 */
 .message {

@@ -25,7 +25,6 @@ Page({
 
     // 汤面相关
     currentSoup: null, // 当前汤面数据
-    isPeeking: false, // 偷看状态
     breathingBlur: false, // 呈现呼吸模糊效果
 
     // 滑动相关 - 由swipeManager管理
@@ -223,14 +222,7 @@ Page({
     this.switchToDrinking();
   },
 
-  /**
-   * 处理偷看事件
-   * @param {Object} e 事件对象
-   */
-  onPeekSoup(e) {
-    const { isPeeking } = e.detail;
-    this.setData({ isPeeking });
-  },
+  // 偷看功能已移除，准备重构
 
   // ===== 汤面切换相关 =====
   /**

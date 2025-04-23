@@ -2,7 +2,7 @@
  * 对话服务类
  * 处理用户与系统对话的通信、存储与加载
  */
-const { agentRequest, dialogBasePath } = require('./api');
+const { agentRequest, dialogBasePath, dialog_detail_url, dialog_send_url, dialog_save_url } = require('./api');
 
 class DialogService {
     constructor() {
@@ -172,9 +172,11 @@ class DialogService {
         const dialogId = params.dialogId || this.getCurrentDialogId();
 
         try {
-            // 发送请求到后端
+            // 发送请求到后端 - 使用完整URL
+            const url = dialog_send_url;
+
             const response = await agentRequest({
-                url: dialogBasePath + 'send',
+                url: url,
                 method: 'POST',
                 data: {
                     soupId: soupId,
@@ -190,11 +192,34 @@ class DialogService {
                 this.setCurrentDialogId(response.dialogId);
             }
 
+            // 处理不同的响应格式
+            let replyContent = '';
+            let replyId = `msg_${Date.now()}`;
+
+            if (response.success && response.data) {
+                // 标准响应格式
+                replyContent = response.data.reply || response.data.content || 'test_reply';
+                if (response.data.message && response.data.message.id) {
+                    replyId = response.data.message.id;
+                }
+            } else if (response.reply) {
+                // 直接包含 reply 字段
+                replyContent = response.reply;
+                if (response.id) replyId = response.id;
+            } else if (response.message) {
+                // 包含 message 对象
+                replyContent = response.message.content || 'test_reply';
+                if (response.message.id) replyId = response.message.id;
+            } else {
+                // 默认回复
+                replyContent = 'test_reply';
+            }
+
             // 返回回复消息
             return {
-                id: response.id || `msg_${Date.now()}`,
+                id: replyId,
                 role: 'agent',
-                content: response.reply || response.content,
+                content: replyContent,
                 timestamp: Date.now()
             };
         } catch (error) {
@@ -220,17 +245,33 @@ class DialogService {
         }
 
         try {
-            console.log('从服务器获取对话记录:', soupId);
+            // 使用完整URL包含协议和主机名
+            const url = `${dialog_detail_url}${soupId}`;
+
             const response = await agentRequest({
-                url: `${dialogBasePath}detail/${soupId}`,
+                url: url,
                 method: 'GET'
             });
 
             // 检查响应格式
-            const data = response.data || {};
-            const messages = data.messages || [];
+            if (!response || typeof response !== 'object') {
+                console.error('服务器响应格式错误:', response);
+                return [];
+            }
 
-            console.log(`从服务器获取到 ${messages.length} 条对话记录`);
+            // 处理响应数据结构
+            let messages = [];
+            if (response.success && response.data) {
+                messages = response.data.messages || [];
+            } else if (response.data) {
+                // 兼容直接返回数据的情况
+                messages = response.data.messages || [];
+            } else if (Array.isArray(response)) {
+                // 兼容直接返回数组的情况
+                messages = response;
+            }
+
+
             return messages;
         } catch (error) {
             console.error('从服务器获取对话记录失败:', error);

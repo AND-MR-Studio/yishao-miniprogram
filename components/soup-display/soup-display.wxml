@@ -1,6 +1,6 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container static-mode {{isPeeking ? 'is-peeking' : ''}} {{loading ? 'loading' : ''}}"
+  class="soup-container static-mode {{loading ? 'loading' : ''}}"
 >
   <!-- 汤面内容区域 -->
   <block wx:if="{{!loading}}">

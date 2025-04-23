@@ -30,11 +30,7 @@ Component({
       type: Boolean,
       value: true
     },
-    // 是否偷看状态
-    isPeeking: {
-      type: Boolean,
-      value: false
-    },
+    // 偷看功能已移除，准备重构
     // 是否加载中
     loading: {
       type: Boolean,

@@ -13,9 +13,7 @@
         id="soupDisplay"
         soupData="{{currentSoup}}"
         loading="{{isLoading}}"
-        isPeeking="{{isPeeking}}"
-
-        class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}}"
+        class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}}"
         wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"
       ></soup-display>
@@ -53,7 +51,6 @@
     visible="{{pageState === 'drinking'}}"
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
-    bind:peekSoup="onPeekSoup"
   ></dialog-component>
 
 </view>

@@ -55,7 +55,14 @@ const request = (options) => {
           reject(new Error(data.error || '请求失败'));
         }
       },
-      fail: () => {
+      fail: (err) => {
+        console.error('网络请求失败:', err);
+        // 显示错误提示
+        wx.showToast({
+          title: '网络请求失败，请检查网络连接',
+          icon: 'none',
+          duration: 2000
+        });
         reject(new Error('网络请求失败'));
       }
     });

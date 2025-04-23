@@ -92,9 +92,4 @@
   transition: none !important;
 }
 
-/* 偷看模式样式 */
-.soup-container.is-peeking {
-  z-index: 1100;
-  opacity: 1;
-  visibility: visible;
-}
+/* 偷看功能已移除，准备重构 */

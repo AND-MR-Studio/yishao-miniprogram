@@ -79,12 +79,7 @@
   pointer-events: none; /* 防止点击穿透 */
 }
 
-/* 偷看状态样式 - 当用户长按对话区域时显示汤面 */
-.soup-display-component.is-peeking {
-  z-index: 1001 !important; /* 确保在最上层 */
-  opacity: 1 !important;
-  pointer-events: auto !important; /* 允许交互 */
-}
+/* 偷看功能已移除，准备重构 */
 
 /* 按钮容器样式 */
 .button-container {

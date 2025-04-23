@@ -27,7 +27,6 @@ Component({
   data: {
     messages: [],
     keyboardHeight: 0,
-    isPeekingSoup: false,
     animationData: {},
     isFullyVisible: false,
     loading: false,
@@ -360,17 +359,6 @@ Component({
       });
     },
 
-    // 偷看相关功能
-    handleLongPress() {
-      this.setData({ isPeekingSoup: true });
-      this.triggerEvent('peekSoup', { isPeeking: true });
-    },
-
-    handleTouchEnd() {
-      if (this.data.isPeekingSoup) {
-        this.setData({ isPeekingSoup: false });
-        this.triggerEvent('peekSoup', { isPeeking: false });
-      }
-    }
+    // 偷看相关功能已移除，准备重构
   }
 });
