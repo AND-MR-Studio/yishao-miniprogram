@@ -176,7 +176,7 @@ Component({
           messages: initialMessages,
           loading: false
         });
-        return;
+        return Promise.resolve(initialMessages);
       }
 
       // 设置加载状态
@@ -197,6 +197,8 @@ Component({
 
         // 滚动到底部
         this.scrollToBottom();
+
+        return messages;
       } catch (error) {
         console.error('加载对话记录失败:', error);
 
@@ -206,6 +208,8 @@ Component({
           messages: initialMessages,
           loading: false
         });
+
+        return Promise.reject(error);
       }
     },
 

@@ -41,9 +41,18 @@
   </view>
 </block>
 <block wx:elif="{{type === 'light'}}">
-  <view class="btn-container" bindtap="handleTap" wx:if="{{show}}">
-    <view class="btn-light {{animationClass}} {{jellyAnimating ? 'jelly-effect' : ''}}" style="{{animationStyle}}; width: {{width}}; height: {{height}};" bindanimationend="handleAnimationEnd">
-      <text class="btn-text-light">{{text}}</text>
+  <view class="btn-container"
+        bindtap="handleTap"
+        wx:if="{{show}}">
+    <view class="btn-light {{animationClass}} {{jellyAnimating ? 'jelly-effect' : ''}} {{isExpanding ? 'expand-animation' : ''}} {{isPressed ? 'pressed' : ''}}"
+          animation="{{animationData}}"
+          style="{{animationStyle}}; width: {{width}}; height: {{height}}; {{isDragging ? 'left: ' + buttonLeft + 'px; top: ' + buttonTop + 'px;' : ''}}"
+          bindanimationend="handleAnimationEnd"
+          bindtouchstart="handleTouchStart"
+          bindtouchmove="handleTouchMove"
+          bindtouchend="handleTouchEnd"
+          bindtouchcancel="handleTouchCancel">
+      <text class="btn-text-light" wx:if="{{!isPressed}}">{{text}}</text>
     </view>
   </view>
 </block>

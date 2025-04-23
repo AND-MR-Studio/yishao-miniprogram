@@ -219,7 +219,72 @@ Page({
    * 否则切换到喝汤状态
    */
   onStartSoup() {
-    this.switchToDrinking();
+    // 不立即切换状态，而是等待按钮动画完成
+    // 预加载对话记录由按钮组件的preload事件触发
+  },
+
+  /**
+   * 处理按钮预加载事件 - 异步处理
+   */
+  async onButtonPreload() {
+    // 防止重复预加载
+    if (this._isPreloading) return;
+    this._isPreloading = true;
+
+    try {
+      // 获取当前汤面ID
+      const currentSoupId = this.getCurrentSoupId();
+      if (!currentSoupId) {
+        this._isPreloading = false;
+        return;
+      }
+
+      // 设置当前汤面ID到dialogService
+      dialogService.setCurrentSoupId(currentSoupId);
+
+      // 异步预加载对话记录
+      const dialog = this.selectComponent('#dialog');
+      if (dialog) {
+        // 先设置 soupId，但不显示对话框
+        dialog.setData({ soupId: currentSoupId, visible: false });
+
+        // 在单独的微任务中加载对话记录
+        Promise.resolve().then(async () => {
+          try {
+            await dialog.loadDialogMessages();
+
+            // 加载完成后通知按钮
+            const startButton = this.selectComponent('.start-button');
+            if (startButton) {
+              startButton.setLoadingComplete();
+            }
+          } catch (error) {
+            console.error('预加载对话记录失败:', error);
+            // 即使加载失败也通知按钮完成
+            const startButton = this.selectComponent('.start-button');
+            if (startButton) {
+              startButton.setLoadingComplete();
+            }
+          }
+        });
+      }
+    } finally {
+      // 预加载完成后重置标志
+      setTimeout(() => {
+        this._isPreloading = false;
+      }, 500);
+    }
+  },
+
+  /**
+   * 处理按钮展开动画完成事件 - 异步处理
+   */
+  async onButtonExpandEnd() {
+    // 在单独的微任务中切换到喝汤状态
+    // 这样可以减少主线程负担，避免卡顿
+    setTimeout(() => {
+      this.switchToDrinking();
+    }, 0);
   },
 
   // 偷看功能已移除，准备重构

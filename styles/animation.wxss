@@ -75,6 +75,18 @@
   100% { transform: scale(1); }
 }
 
+/* 开始喝汤按钮渐隐动画 */
+@keyframes fade-button {
+  0% {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
 /* 气泡上下浮动动画 */
 @keyframes floating {
   0%, 100% {
@@ -182,6 +194,13 @@
   overflow: visible !important;
 }
 
+/* 开始喝汤按钮渐隐动画类 */
+.expand-animation {
+  animation: fade-button 0.3s var(--transition-ease) forwards;
+  overflow: visible !important;
+  z-index: 999;
+}
+
 /* 确保按钮容器允许溢出 */
 .jelly-effect-container {
   overflow: visible !important;
@@ -225,12 +244,7 @@
   transition: none !important;
 }
 
-/* 按钮点击效果 - 点亮按钮 */
-.btn-light:active {
-  transform: scale(0.95);
-  background-color: rgba(70, 196, 0, 0.8);
-  box-shadow: 0rpx 5rpx 10rpx rgba(4, 244, 77, 0.15);
-}
+/* 按钮点击效果已移至组件内部样式 */
 
 /* 按钮点击效果 - 未点亮按钮 */
 .btn-unlight:active {

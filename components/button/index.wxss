@@ -31,7 +31,31 @@
   background: #5CE821;
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition: all 0.3s ease;
+}
+
+/* 按下状态的按钮样式 - 圆形 */
+.btn-light.pressed {
+  position: fixed !important;
+  width: 120rpx !important;
+  height: 120rpx !important;
+  min-width: 120rpx !important;
+  min-height: 120rpx !important;
+  max-width: 120rpx !important;
+  max-height: 120rpx !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 50% !important;
+  background-color: #5CE821 !important;
+  box-shadow: 0rpx 10rpx 25rpx rgba(4, 244, 77, 0.3) !important;
+  z-index: 1000 !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; /* 弹性过渡效果 */
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  transform-origin: center center !important;
 }
 
 /* 点亮按钮文本 */
