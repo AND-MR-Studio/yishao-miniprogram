@@ -114,7 +114,7 @@ Component({
      */
     getCurrentSoupId() {
       if (this.data.currentSoup) {
-        return this.data.currentSoup.soupId || this.data.currentSoup.id || '';
+        return this.data.currentSoup.soupId || '';
       }
       return '';
     },

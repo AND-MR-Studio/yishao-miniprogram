@@ -4,48 +4,145 @@
   <nav-bar title="个人中心" />
 
   <view class="container">
-    <!-- 用户信息卡片 -->
+    <!-- 用户名片 -->
     <view class="user-card">
-      <view class="avatar-container">
-        <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+      <view class="card-content">
+        <view class="avatar-section">
+          <image class="avatar-large" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+        </view>
+
+        <view class="info-section">
+          <text class="name-value">{{userInfo.nickName ? userInfo.nickName.split('#')[0] : '未登录的侦探'}}</text>
+          <view class="vip-info">
+            <text>侦探ID: {{userInfo ? userInfo.nickName ? userInfo.nickName.split('#')[1] || '未设置' : '未设置' : '未登录'}}</text>
+          </view>
+          <view class="level-info">
+            <view class="level-badge">Lv{{level}}</view>
+            <text class="level-title">{{levelTitle}}</text>
+          </view>
+          <view class="exp-bar-container">
+            <view class="exp-bar" style="width: {{experience / maxExperience * 100}}%;"></view>
+          </view>
+          <text class="exp-text">经验值: {{experience}}/{{maxExperience}}</text>
+          <view class="bottom-info">
+            <view class="answer-count">
+              <text class="answer-label">剩余回答次数：</text>
+              <text class="answer-value">{{remainingAnswers || 0}}</text>
+            </view>
+            <view class="sign-in-btn" bindtap="handleSignIn">
+              <text>签到+10</text>
+            </view>
+          </view>
+        </view>
       </view>
-      <view class="user-info">
-        <text class="username">{{userInfo.nickName || '未登录的侦探'}}</text>
-        <view class="answer-count">
-          <text class="count-label">剩余回答次数：</text>
-          <text class="count-value">{{remainingAnswers || 0}}次</text>
+
+      <!-- 四栏数据 -->
+      <view class="stats-section">
+        <view class="stat-item" bindtap="navigateToUnsolved">
+          <text class="stat-value">{{unsolvedCount || 0}}</text>
+          <text class="stat-label">未解决</text>
+        </view>
+        <view class="stat-item" bindtap="navigateToSolved">
+          <text class="stat-value">{{solvedCount || 0}}</text>
+          <text class="stat-label">已解决</text>
+        </view>
+        <view class="stat-item" bindtap="navigateToCreations">
+          <text class="stat-value">{{creationCount || 0}}</text>
+          <text class="stat-label">创作</text>
+        </view>
+        <view class="stat-item" bindtap="navigateToFavorites">
+          <text class="stat-value">{{favoriteCount || 0}}</text>
+          <text class="stat-label">收藏</text>
         </view>
       </view>
     </view>
 
-    <!-- 功能列表 -->
+    <!-- 更新日志Banner轮播 -->
+    <swiper class="banner-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}" circular="{{true}}">
+      <swiper-item>
+        <view class="update-banner">
+          <view class="banner-content">
+            <view class="banner-title">
+              <text class="banner-title-main">一勺推理社更新日志</text>
+              <text class="banner-title-sub">一勺侦探，前来干饭…不对，探案！</text>
+            </view>
+            <view class="banner-image"></view>
+          </view>
+        </view>
+      </swiper-item>
+      <swiper-item>
+        <view class="update-banner banner-purple">
+          <view class="banner-content">
+            <view class="banner-title">
+              <text class="banner-title-main">侦探社社员招募中</text>
+              <text class="banner-title-sub">加入我们，解锁更多谜题</text>
+            </view>
+            <view class="banner-image"></view>
+          </view>
+        </view>
+      </swiper-item>
+      <swiper-item>
+        <view class="update-banner banner-mix">
+          <view class="banner-content">
+            <view class="banner-title">
+              <text class="banner-title-main">每日谜题挑战</text>
+              <text class="banner-title-sub">提升推理能力，成为顶尖侦探</text>
+            </view>
+            <view class="banner-image"></view>
+          </view>
+        </view>
+      </swiper-item>
+    </swiper>
+
+    <!-- 功能菜单 -->
     <view class="function-list">
-      <view class="function-item">
-        <view class="item-icon">
-          <text class="icon-about"></text>
-        </view>
+      <!-- 我的汤锅 -->
+      <view class="function-item" bindtap="navigateToSoupHistory">
         <view class="item-content">
-          <text>关于我们</text>
+          <text>我的汤锅</text>
         </view>
-        <view class="item-arrow">
-          <text class="icon-right"></text>
+        <view class="item-count">{{totalSoupCount || 0}}个</view>
+        <view class="item-arrow"></view>
+      </view>
+
+      <!-- 我的收藏 -->
+      <view class="function-item" bindtap="navigateToFavorites">
+        <view class="item-content">
+          <text>我的收藏</text>
         </view>
+        <view class="item-count">{{favoriteCount || 0}}个</view>
+        <view class="item-arrow"></view>
+      </view>
+
+      <!-- 我的积分 -->
+      <view class="function-item" bindtap="navigateToPoints">
+        <view class="item-content">
+          <text>我的积分</text>
+        </view>
+        <view class="item-count">{{pointsCount || 0}}分</view>
+        <view class="item-arrow"></view>
+      </view>
+
+      <!-- 个人信息 -->
+      <view class="function-item" bindtap="navigateToUserInfo">
+        <view class="item-content">
+          <text>个人信息</text>
+        </view>
+        <view class="item-arrow"></view>
       </view>
     </view>
 
     <!-- 登录/退出按钮 -->
-    <view class="logout-container">
+    <view class="logout-container" wx:if="{{!userInfo}}">
       <button-component
-        type="{{userInfo ? 'unlight' : 'light'}}"
-        text="{{userInfo ? '退出登录' : '微信一键登录'}}"
+        type="light"
+        text="微信一键登录"
         width="100%"
         height="88rpx"
-        bind:tap="{{userInfo ? 'handleLogout' : 'handleLogin'}}"
+        bind:tap="handleLogin"
       />
     </view>
   </view>
-
-
 
   <!-- 用户信息设置弹窗 - 只在showUserInfoModal为true时显示 -->
   <view class="user-info-modal {{showUserInfoModal ? 'show' : ''}}" catchtouchmove="catchTouchMove" wx:if="{{showUserInfoModal}}">

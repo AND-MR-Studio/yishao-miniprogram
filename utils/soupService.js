@@ -269,8 +269,7 @@ const soupService = {
             }
 
             // 找到当前汤面的索引
-            const currentIndex = allSoups.findIndex(soup =>
-                (soup.soupId === currentSoupId || soup.id === currentSoupId));
+            const currentIndex = allSoups.findIndex(soup => soup.soupId === currentSoupId);
 
             // 如果找不到当前汤面，根据方向返回第一个或最后一个汤面
             if (currentIndex === -1) {

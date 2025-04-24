@@ -1,5 +1,21 @@
 /* components/button/index.wxss */
 
+/* 呼吸动画 */
+@keyframes breathing {
+  0% {
+    transform: scale(1);
+    box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0rpx 12rpx 24rpx rgba(4, 244, 77, 0.25);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+  }
+}
+
 /* 果冻动画容器样式 */
 .jelly-effect-container {
   position: relative;
@@ -32,10 +48,12 @@
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
   transition: all 0.3s ease;
+  /* 应用呼吸动画 */
+  animation: breathing 4s ease-in-out infinite;
 }
 
 /* 按下状态的按钮样式 - 圆形 */
-.btn-light.pressed {
+.btn-light.pressed, .btn-light.expand-animation {
   width: 120rpx !important;
   height: 120rpx !important;
   min-width: 120rpx !important;
@@ -55,6 +73,8 @@
   overflow: hidden !important;
   box-sizing: border-box !important;
   transform-origin: center center !important;
+  /* 停止呼吸动画 */
+  animation: none !important;
 }
 
 /* 点亮按钮文本 */

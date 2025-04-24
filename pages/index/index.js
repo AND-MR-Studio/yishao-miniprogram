@@ -75,7 +75,7 @@ Page({
    */
   async initSoupData(soupData) {
     // 获取汤面ID
-    const soupId = soupData.soupId || soupData.id || '';
+    const soupId = soupData.soupId || '';
 
     // 设置当前汤面ID到dialogService
     dialogService.setCurrentSoupId(soupId);
@@ -243,7 +243,7 @@ Page({
 
         // 显示登录提示
         wx.showModal({
-          title: '侦探大人，想喝碗汤吗？',
+          title: '侦探大人，想喝海龟汤吗？',
           content: '先去「个人中心」登录一下吧～',
           confirmText: '去登录',
           cancelText: '先等等',
@@ -352,7 +352,7 @@ Page({
       }
 
       // 更新对话组件
-      const soupId = soupData.soupId || soupData.id || '';
+      const soupId = soupData.soupId || '';
       this.selectComponent('#dialog')?.setData({ soupId });
 
       // 初始化汤面数据和页面状态
@@ -383,7 +383,7 @@ Page({
    */
   getCurrentSoupId() {
     return this.data.currentSoup ?
-      (this.data.currentSoup.soupId || this.data.currentSoup.id || '') : '';
+      (this.data.currentSoup.soupId || '') : '';
   },
 
   /**
