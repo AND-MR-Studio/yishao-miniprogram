@@ -161,11 +161,14 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+  /* 确保内容不会在隐藏时显示 */
+  pointer-events: none;
 }
 
 .user-info-modal.show {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto; /* 恢复交互 */
 }
 
 .user-info-container {
@@ -221,10 +224,18 @@
 /* 头像居中样式 */
 .avatar-container-centered {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   margin-bottom: 40rpx;
   margin-top: 20rpx;
+}
+
+.avatar-tip {
+  margin-top: 16rpx;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
+  text-align: center;
 }
 
 .avatar-btn-centered {

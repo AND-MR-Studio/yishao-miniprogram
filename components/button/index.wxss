@@ -36,7 +36,6 @@
 
 /* 按下状态的按钮样式 - 圆形 */
 .btn-light.pressed {
-  position: fixed !important;
   width: 120rpx !important;
   height: 120rpx !important;
   min-width: 120rpx !important;
@@ -44,7 +43,7 @@
   max-width: 120rpx !important;
   max-height: 120rpx !important;
   padding: 0 !important;
-  margin: 0 !important;
+  margin: 0 auto !important;
   border-radius: 50% !important;
   background-color: #5CE821 !important;
   box-shadow: 0rpx 10rpx 25rpx rgba(4, 244, 77, 0.3) !important;
@@ -103,7 +102,7 @@
   color:rgb(77, 77, 77);
 }
 
-/* 确定类型按钮 - 完全独立样式 */
+/* 确定类型按钮 - 玻璃拟物感样式 */
 .btn-confirm {
   display: flex;
   flex-direction: column;
@@ -112,15 +111,21 @@
   padding: 0;
   width: 102rpx;
   height: 62rpx;
-  border: 1px solid #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 30rpx;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  background: rgba(182, 182, 182, 0.2);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
 }
 
 .btn-confirm:active {
   transform: scale(0.95);
-  background: #5CE821;
+  background: rgba(89, 255, 150, 0.4);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* 确定按钮文本 */
@@ -130,7 +135,10 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #FFFFFF;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  overflow: visible;
 }
 
 /* 深色按钮样式 */
@@ -185,8 +193,9 @@
 .item-label {
   composes: text-body-md;
   flex: 1;
-  color: #2A2D32;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+  padding-left: 10rpx;
 }
 
 /* Switch 开关样式 */
@@ -195,15 +204,21 @@
   margin: 0;
   width: 51px;
   height: 31px;
-  background: #E9E9EA;
+  background: rgba(233, 233, 234, 0.3);
   border-radius: 100px;
   flex: none;
   align-self: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
 
 .switch.active {
-  background: #5CE821;
+  background: rgba(92, 232, 33, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10rpx rgba(92, 232, 33, 0.2);
 }
 
 /* 开关圆形按钮 */
@@ -213,15 +228,17 @@
   height: 27px;
   left: 2px;
   top: calc(50% - 27px/2);
-  background: #FFFFFF;
-  border: 0.5px solid rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.95);
+  border: 0.5px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.15);
   border-radius: 50%;
-  transition: left 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .switch.active .switch-knob {
   left: calc(50% - 27px/2 + 10px);
+  background: #FFFFFF;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* Radio 单选按钮样式 */
@@ -239,31 +256,34 @@
   box-sizing: border-box;
   width: 48rpx;
   height: 48rpx;
-  background: #F4F4F4;
-  mix-blend-mode: normal;
-  border: 3rpx solid #CACACA;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
   border-radius: 100rpx;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
 }
 
 .radio.active {
-  background: #5CE821;
-  border: none;
+  background: rgba(92, 232, 33, 0.6);
+  border: 2rpx solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 10rpx rgba(92, 232, 33, 0.2);
 }
 
 .radio-inner {
   width: 24rpx;
   height: 24rpx;
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1);
 }
 
 .option-label {
   composes: text-body-sm;
-  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
 }
 
 /* 字体大小选择组合样式 */
@@ -277,7 +297,8 @@
 .font-size-label {
   composes: text-body-md;
   width: 100%;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
 }
 
 .font-size-options {
@@ -296,4 +317,49 @@
 .switch.jelly-animate,
 .radio.jelly-animate {
   animation: jelly-animation 0.6s var(--transition-ease);
+}
+
+/* 加载中动画样式 */
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.loading-dots .dot {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #000000;
+  opacity: 0;
+  animation: dot-animation 1.4s infinite;
+  margin: 0 -4rpx;
+}
+
+.loading-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-animation {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

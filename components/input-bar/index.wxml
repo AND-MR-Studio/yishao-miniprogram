@@ -2,14 +2,11 @@
 <!-- 底部输入区域 -->
 <view class="input-area">
   <view class="input-container">
-    <!-- 语音按钮 -->
-    <view class="voice-btn"
-      catchtouchstart="handleVoiceStart"
-      catchtouchend="handleVoiceEnd"
-      catchtouchmove="handleVoiceMove"
-      catchtouchcancel="handleVoiceCancel"
+    <!-- 语音按钮（临时禁用） -->
+    <view class="voice-btn disabled"
+      bindtap="handleVoiceClick"
       hover-class="voice-btn-hover">
-      <text class="font_family icon-voice"></text>
+      <image class="icon-image" src="/static/images/voice.png" mode="aspectFit"></image>
     </view>
 
     <!-- 输入框 -->
@@ -42,7 +39,7 @@
 
     <!-- 发送按钮 -->
     <view class="send-btn {{hasContent ? 'active' : 'inactive'}}" bindtap="handleSend" hover-class="{{hasContent ? 'send-btn-active-hover' : ''}}">
-      <text class="font_family icon-question"></text>
+      <image class="icon-image" src="/static/images/question.png" mode="aspectFit"></image>
     </view>
   </view>
 </view>

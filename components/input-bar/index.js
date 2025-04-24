@@ -79,6 +79,15 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    // 处理语音按钮点击事件（临时禁用功能）
+    handleVoiceClick() {
+      wx.showToast({
+        title: '语音功能还在疯狂开发中~',
+        icon: 'none',
+        duration: 2000
+      });
+    },
+
     // 重置录音状态
     resetRecordStatus() {
       this.setData({

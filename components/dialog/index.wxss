@@ -1,5 +1,3 @@
-@import "/static/css/iconfont.wxss";
-
 /* 对话组件容器 */
 .dialog-container {
   position: fixed;

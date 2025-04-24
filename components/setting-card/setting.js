@@ -23,13 +23,6 @@ Component({
   data: {
     soundOn: true,
     vibrationOn: false,
-    fontSize: 'medium', // 当前选中的字体大小
-    // 字体大小选项
-    fontSizeOptions: [
-      { label: '小', value: 'small', scaleFactor: 0.85 },
-      { label: '中', value: 'medium', scaleFactor: 1.0 },
-      { label: '大', value: 'large', scaleFactor: 1.2 }
-    ],
     statusBarHeight: 0,
     // 拖拽相关变量 - 供panelDrag工具类使用
     moveDistance: 0,
@@ -88,8 +81,7 @@ Component({
         const settings = wx.getStorageSync('soupSettings') || {};
         this.setData({
           soundOn: settings.soundOn ?? true,
-          vibrationOn: settings.vibrationOn ?? false,
-          fontSize: settings.fontSize || 'medium'
+          vibrationOn: settings.vibrationOn ?? false
         });
       } catch (e) {
         // 读取设置失败
@@ -104,8 +96,7 @@ Component({
       try {
         const settings = {
           soundOn: this.data.soundOn,
-          vibrationOn: this.data.vibrationOn,
-          fontSize: this.data.fontSize
+          vibrationOn: this.data.vibrationOn
         };
         wx.setStorageSync('soupSettings', settings);
       } catch (e) {
@@ -113,53 +104,7 @@ Component({
       }
     },
 
-    // 设置字体大小
-    setFontSize(e) {
-      if (e.detail && e.detail.value) {
-        const option = this.data.fontSizeOptions.find(option => option.value === e.detail.value);
-        if (!option) return;
 
-        this.triggerVibration();
-
-        if (this.data.fontSize !== option.value) {
-          this.setData({ fontSize: option.value }, () => {
-            // 触发事件
-            this.triggerEvent('fontsizechange', {
-              size: option.value,
-              scaleFactor: option.scaleFactor
-            });
-          });
-        }
-      } else {
-        // 兼容原有的点击事件处理方式
-        const index = e.currentTarget.dataset.index;
-        if (index == null || index < 0 || index >= this.data.fontSizeOptions.length) return;
-
-        const option = this.data.fontSizeOptions[index];
-
-        // 触发震动
-        this.triggerVibration();
-
-        // 只有选择不同的值时才更新
-        if (this.data.fontSize !== option.value) {
-          this.setData({ fontSize: option.value });
-
-          // 触发事件，传递字体大小相关信息
-          this.triggerEvent('fontsizechange', {
-            size: option.value,
-            scaleFactor: option.scaleFactor
-          });
-        }
-      }
-    },
-
-    // 获取当前字体大小的缩放因子
-    getCurrentFontScale() {
-      const currentOption = this.data.fontSizeOptions.find(
-        option => option.value === this.data.fontSize
-      );
-      return currentOption ? currentOption.scaleFactor : 1.0;
-    },
 
     // 触发震动反馈
     triggerVibration() {
@@ -305,10 +250,8 @@ Component({
       return false;
     },
 
-    // 阻止事件冒泡
-    stopPropagation() {
-      return false;
-    },
+    // 阻止事件冒泡 - 在微信小程序中，catchtap已经阻止了冒泡，这个函数只是一个空函数
+    stopPropagation() {},
 
     // 处理面板关闭
     handlePanelClose() {

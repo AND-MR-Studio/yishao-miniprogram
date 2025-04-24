@@ -3,10 +3,10 @@
   <view class="nav-bar-content">
     <view class="nav-bar-left">
       <view wx:if="{{showLeft}}" class="nav-icon-wrapper left-icon" bindtap="onClickLeft">
-        <text class="font_family icon-home"></text>
+        <view class="icon-home-green"></view>
       </view>
       <view wx:if="{{showRight}}" class="nav-icon-wrapper right-icon" bindtap="onClickRight">
-        <text class="font_family icon-more"></text>
+        <text class="icon-more-green"></text>
       </view>
     </view>
     <view class="nav-bar-title">

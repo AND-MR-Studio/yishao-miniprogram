@@ -215,12 +215,12 @@ Page({
 
   /**
    * 开始喝汤按钮点击事件
-   * 如果当前在汤底状态，则返回到汤面查看状态
-   * 否则切换到喝汤状态
+   * 按钮点击后会触发preload事件，在那里处理登录检查和预加载
+   * 这里不需要做任何处理，保留方法以便将来扩展
    */
   onStartSoup() {
-    // 不立即切换状态，而是等待按钮动画完成
-    // 预加载对话记录由按钮组件的preload事件触发
+    // 不需要在这里处理，所有逻辑已移至onButtonPreload方法
+    // 按钮点击后会自动触发preload事件
   },
 
   /**
@@ -232,6 +232,33 @@ Page({
     this._isPreloading = true;
 
     try {
+      // 检查用户是否已登录
+      const userInfo = wx.getStorageSync('userInfo');
+      if (!userInfo) {
+        // 未登录状态下，通知按钮重置到原始状态，不进行预加载
+        const startButton = this.selectComponent('.start-button');
+        if (startButton) {
+          startButton.setLoadingComplete(false); // 传入false表示失败，按钮应该重置
+        }
+
+        // 显示登录提示
+        wx.showModal({
+          title: '侦探大人，想喝碗汤吗？',
+          content: '先去「个人中心」登录一下吧～',
+          confirmText: '去登录',
+          cancelText: '先等等',
+          success: (res) => {
+            if (res.confirm) {
+              // 跳转到个人中心页面
+              wx.switchTab({
+                url: '/pages/mine/mine'
+              });
+            }
+          }
+        });
+        return;
+      }
+
       // 获取当前汤面ID
       const currentSoupId = this.getCurrentSoupId();
       if (!currentSoupId) {
@@ -280,6 +307,13 @@ Page({
    * 处理按钮展开动画完成事件 - 异步处理
    */
   async onButtonExpandEnd() {
+    // 再次检查用户是否已登录（以防万一）
+    const userInfo = wx.getStorageSync('userInfo');
+    if (!userInfo) {
+      // 未登录状态下，不切换到喝汤状态
+      return;
+    }
+
     // 在单独的微任务中切换到喝汤状态
     // 这样可以减少主线程负担，避免卡顿
     setTimeout(() => {

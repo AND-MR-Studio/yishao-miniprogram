@@ -17,20 +17,20 @@ Component({
       {
         pagePath: "/pages/gensoup/gensoup",
         text: "煮汤",
-        icon: "icon-soup_UnSelected",
-        selectedIcon: "icon-soup_Selected"
+        icon: "/static/images/soup_unlighting.png",
+        selectedIcon: "/static/images/soup_lighting.png"
       },
       {
         pagePath: "/pages/index/index",
         text: "喝汤",
-        icon: "icon-community_UnSelected",
-        selectedIcon: "icon-community_Selected"
+        icon: "/static/images/dialog_unlighting.png",
+        selectedIcon: "/static/images/dialog_lighting.png"
       },
       {
         pagePath: "/pages/mine/mine",
         text: "我的",
-        icon: "icon-my_UnSelected",
-        selectedIcon: "icon-my_Selected"
+        icon: "/static/images/mine_unlighting.png",
+        selectedIcon: "/static/images/mine_lighting.png"
       }
     ]
   },
@@ -42,7 +42,7 @@ Component({
     switchTab(e) {
       const data = e.currentTarget.dataset;
       const url = data.path;
-      
+
       wx.switchTab({
         url,
         success: () => {
@@ -53,4 +53,4 @@ Component({
       });
     }
   }
-}) 
+})

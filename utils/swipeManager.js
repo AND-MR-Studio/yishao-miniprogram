@@ -130,8 +130,8 @@ function createSwipeManager(options = {}) {
     gradientStyle = `radial-gradient(ellipse at ${x1}% ${y1}%, rgba(76, 0, 255, 0.5) 0%, rgba(25, 0, 112, 0.3) 30%, transparent 70%),
                     radial-gradient(ellipse at ${x2}% ${y2}%, rgba(0, 30, 255, 0.3) 0%, rgba(0, 10, 80, 0.2) 40%, transparent 70%),
                     radial-gradient(ellipse at ${x3}% ${y3}%, rgba(128, 0, 255, 0.2) 0%, rgba(50, 0, 120, 0.1) 30%, transparent 60%),
-                    radial-gradient(ellipse at ${x4}% ${y4}%, rgba(0, 255, 136, 0.2) 0%, rgba(0, 120, 60, 0.1) 20%, transparent 50%),
-                    radial-gradient(circle at ${x5}% ${y5}%, rgba(0, 200, 100, 0.15) 0%, rgba(0, 100, 50, 0.05) 30%, transparent 60%)`;
+                    radial-gradient(ellipse at ${x4}% ${y4}%, rgba(0, 255, 136, 0.25) 0%, rgba(0, 180, 90, 0.15) 30%, transparent 60%),
+                    radial-gradient(ellipse at ${x5}% ${y5}%, rgba(0, 200, 100, 0.2) 0%, rgba(0, 100, 50, 0.1) 40%, transparent 70%)`;
 
     if (gradientStyle) {
       // 使用自定义数据属性来存储渐变样式

@@ -10,7 +10,7 @@
         <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
       </view>
       <view class="user-info">
-        <text class="username">{{userInfo.nickName || '未登录'}}</text>
+        <text class="username">{{userInfo.nickName || '未登录的侦探'}}</text>
         <view class="answer-count">
           <text class="count-label">剩余回答次数：</text>
           <text class="count-value">{{remainingAnswers || 0}}次</text>
@@ -22,13 +22,13 @@
     <view class="function-list">
       <view class="function-item">
         <view class="item-icon">
-          <text class="iconfont icon-about"></text>
+          <text class="icon-about"></text>
         </view>
         <view class="item-content">
           <text>关于我们</text>
         </view>
         <view class="item-arrow">
-          <text class="iconfont icon-right"></text>
+          <text class="icon-right"></text>
         </view>
       </view>
     </view>
@@ -47,11 +47,11 @@
 
 
 
-  <!-- 用户信息设置弹窗 -->
-  <view class="user-info-modal {{showUserInfoModal ? 'show' : ''}}" catchtouchmove="catchTouchMove">
+  <!-- 用户信息设置弹窗 - 只在showUserInfoModal为true时显示 -->
+  <view class="user-info-modal {{showUserInfoModal ? 'show' : ''}}" catchtouchmove="catchTouchMove" wx:if="{{showUserInfoModal}}">
     <view class="user-info-container">
       <view class="user-info-header">
-        <text class="user-info-title">设置个人信息</text>
+        <text class="user-info-title">设置侦探信息</text>
         <view class="user-info-close" bindtap="closeUserInfoModal">×</view>
       </view>
 
@@ -68,9 +68,10 @@
           <input
             type="nickname"
             class="nickname-input-centered"
-            placeholder="请输入用户昵称"
+            placeholder="{{userInfo.nickName ? '' : '请输入侦探代号'}}"
             value="{{userInfo.nickName}}"
             bindinput="onInputNickname"
+            bindnicknamereview="onInputNickname"
           />
         </view>
       </view>
@@ -78,7 +79,7 @@
       <view class="user-info-footer">
         <button-component
           type="light"
-          text="确认"
+          text="确认信息"
           width="100%"
           height="88rpx"
           bind:tap="confirmUserInfo"

@@ -7,14 +7,14 @@
       bindtouchmove="handleTouchMove"
       bindtouchend="handleTouchEnd"
       catchtap="stopPropagation">
-  <view class="setting-container">
+  <view class="setting-container" catchtap="stopPropagation">
     <!-- 添加关闭按钮，增加手势提示效果 -->
     <view class="close-bar" bindtap="handleDragIndicator">
       <view class="close-indicator"></view>
     </view>
 
     <!-- 问答设置区块 -->
-    <view class="setting-section">
+    <view class="setting-section" catchtap="stopPropagation">
       <view class="section-title">问答设置</view>
 
       <view class="setting-item">
@@ -33,28 +33,11 @@
           bind:tap="clearCache" />
       </view>
 
-      <view class="setting-item font-size-setting">
-        <view class="font-size-label">字体大小</view>
-        <view class="font-size-options">
-          <block wx:for="{{fontSizeOptions}}" wx:key="value">
-            <custom-button
-              type="radio"
-              text="{{item.label}}"
-              value="{{item.value}}"
-              active="{{fontSize === item.value}}"
-              groupName="fontSize"
-              bind:radiochange="setFontSize"
-              data-index="{{index}}"
-            />
-          </block>
-        </view>
-      </view>
+
     </view>
 
-    <view class="divider"></view>
-
     <!-- 通用设置区块 -->
-    <view class="setting-section">
+    <view class="setting-section" catchtap="stopPropagation">
       <view class="section-title">通用设置</view>
 
       <!-- 使用button组件作为开关 -->
@@ -79,38 +62,25 @@
       <!-- 已移除跳过动画开关 -->
     </view>
 
-    <view class="divider"></view>
-
     <!-- 联系我们区块 -->
-    <view class="contact-section">
-      <view class="section-title contact-title">联系我们</view>
-      <view class="contact-buttons-container">
-        <view class="contact-buttons">
-          <custom-button
-            type="dark"
-            text="问题反馈"
-            width="192rpx"
-            height="88rpx"
-            bind:tap="contactUs"
-            class="contact-button-class" />
-
-          <custom-button
-            type="dark"
-            text="Github"
-            width="192rpx"
-            height="88rpx"
-            bind:tap="onAbout"
-            class="contact-button-class" />
+    <view class="setting-section" catchtap="stopPropagation">
+      <view class="section-title">联系我们</view>
+      <view class="contact-row">
+        <view class="contact-item">
+          <view class="contact-button" bindtap="contactUs">问题反馈</view>
+        </view>
+        <view class="contact-item">
+          <view class="contact-button" bindtap="onAbout">Github</view>
         </view>
       </view>
     </view>
 
-    <view class="divider"></view>
+    <view class="divider" catchtap="stopPropagation"></view>
 
     <!-- 关于信息 -->
-    <view class="about-section">
-      <view class="studio-logo"></view>
-      <view class="developed">developed © 2025 AND Studio.Designed by Yavin, Coded by Alex.</view>
+    <view class="about-section" catchtap="stopPropagation">
+      <image class="studio-logo" src="/static/images/logo.png" mode="aspectFit"></image>
+      <view class="developed">Copyright © 2025 Hangzhou AND Technology Company.   Developed by Yavin , Alex.</view>
     </view>
   </view>
 </view>

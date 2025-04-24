@@ -1,5 +1,4 @@
 /* components/input-bar/index.wxss */
-@import "/static/css/iconfont.wxss";
 
 /* 底部输入区域 */
 .input-area {
@@ -10,8 +9,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(to bottom, rgba(6, 20, 41, 0.95), rgba(6, 20, 41, 1));
-  box-shadow: 0 -4rpx 12rpx rgba(0, 0, 0, 0.2);
+  /* 玻璃质感背景 - 与tabbar风格一致 */
+  background: linear-gradient(to bottom, rgba(2, 8, 20, 0.85) 0%, rgba(2, 8, 20, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.25);
+  border-top: 1rpx solid rgba(94, 232, 33, 0.1);
   z-index: 1002; /* 提高z-index，确保在顶层显示 */
 }
 
@@ -24,7 +27,8 @@
   align-items: center;
   gap: 24rpx;
   padding: 20rpx;
-  background-color: #061429;
+  /* 移除背景色，让玻璃效果更明显 */
+  background-color: transparent;
 }
 
 /* 语音按钮 */
@@ -36,7 +40,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.1);
+  /* 玻璃效果按钮 */
+  background: rgba(41, 55, 79, 0.3);
+  border: 1rpx solid rgba(94, 232, 33, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
   border-radius: 50%;
   margin-right: 20rpx;
   flex-shrink: 0;
@@ -45,65 +54,79 @@
 
 .voice-btn-hover {
   transform: scale(0.92);
-  background: rgba(149, 157, 174, 1);
+  background: rgba(41, 55, 79, 0.5);
+  border-color: rgba(94, 232, 33, 0.3);
+  box-shadow: 0 0 12rpx rgba(94, 232, 33, 0.2);
 }
 
-.voice-btn .font_family {
-  font-size: 32rpx;
-  color: #061429;
+.voice-btn .icon-image {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+/* 禁用状态的语音按钮 */
+.voice-btn.disabled {
+  opacity: 0.7;
+  position: relative;
 }
 
 /* 输入框 */
 .input-box {
   flex: 1;
   height: 80rpx;
-  background: rgba(41, 55, 79, 0.8);
-  border: 2rpx solid #2BB319;
-  border-radius: 16rpx;
+  /* 新拟态风格输入框 */
+  background: rgba(41, 55, 79, 0.4);
+  border: 1.5rpx solid rgba(94, 232, 33, 0.3);
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
   padding: 0 30rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.1), inset 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+  /* 精致的阴影效果 */
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15),
+              inset 0 2rpx 6rpx rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.3s var(--transition-timing);
   position: relative;
 }
 
 .input-box:focus-within {
-  background: rgba(41, 55, 79, 1);
-  border-color: #4BD13C;
-  box-shadow: 0 0 16rpx rgba(43, 179, 25, 0.3);
+  background: rgba(41, 55, 79, 0.5);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 16rpx rgba(94, 232, 33, 0.25),
+              inset 0 2rpx 6rpx rgba(255, 255, 255, 0.08);
 }
 
 .input-field {
   width: 100%;
   height: 100%;
   font-size: 30rpx;
-  color: #FFFFFF;
+  color: var(--color-text-primary);
   letter-spacing: 0.5rpx;
 }
 
 .input-placeholder {
-  color: rgba(163, 171, 184, 0.7);
+  color: var(--color-text-hint);
   font-size: 30rpx;
 }
 
 /* 录音状态样式 */
 .input-box.recording {
-  background: rgba(43, 179, 25, 0.2);
-  border-color: #5CE821;
-  box-shadow: 0 0 16rpx rgba(43, 179, 25, 0.3);
+  background: rgba(94, 232, 33, 0.15);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 20rpx rgba(94, 232, 33, 0.3);
 }
 
 /* 取消录音状态样式 */
 .input-box.recording-cancel {
-  background: rgba(225, 51, 51, 0.2);
-  border-color:var(--color-accent);
-  box-shadow: 0 0 16rpx rgba(225, 51, 51, 0.3);
+  background: rgba(225, 51, 51, 0.15);
+  border-color: var(--color-accent);
+  box-shadow: 0 0 20rpx rgba(225, 51, 51, 0.3);
 }
 
 .input-box.recording-cancel .wave {
-  background:var(--color-accent);
-  animation: cancel-wave-animation 0.6s infinite ease-in-out;
+  background: var(--color-accent);
+  animation: cancel-wave-animation 0.6s infinite var(--transition-timing);
 }
 
 @keyframes cancel-wave-animation {
@@ -134,10 +157,11 @@
 
 .wave {
   width: 8rpx;
-  background: #2BB319;
+  background: var(--color-primary);
   margin: 0 6rpx;
-  border-radius: 3rpx;
-  animation: wave-animation 1.2s infinite ease-in-out;
+  border-radius: 4rpx;
+  animation: wave-animation 1.2s infinite var(--transition-timing);
+  box-shadow: 0 0 8rpx rgba(94, 232, 33, 0.3);
 }
 
 .wave1 {
@@ -158,14 +182,16 @@
 @keyframes wave-animation {
   0%, 100% {
     transform: scaleY(1);
+    opacity: 0.8;
   }
   50% {
     transform: scaleY(2);
+    opacity: 1;
   }
 }
 
 .recording-text {
-  color: #FFFFFF;
+  color: var(--color-text-primary);
   font-size: 28rpx;
   margin-left: auto;
 }
@@ -179,28 +205,35 @@
   align-items: center;
   flex-shrink: 0;
   border-radius: 50%;
-  transition: all 0.3s ease;
+  transition: all 0.3s var(--transition-timing);
 }
 
 /* 有内容时的发送按钮 */
 .send-btn.active {
-  background: linear-gradient(135deg, #2BB319, #4BD13C);
-  box-shadow: 0 4rpx 20rpx rgba(4, 244, 77, 0.5);
+  /* 玻璃质感按钮 */
+  background: linear-gradient(135deg, rgba(94, 232, 33, 0.8), rgba(75, 209, 60, 0.8));
+  border: 1rpx solid rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4rpx 16rpx rgba(94, 232, 33, 0.3);
 }
 
 .send-btn-active-hover {
   transform: scale(0.92);
-  box-shadow: 0 2rpx 10rpx rgba(4, 244, 77, 0.4);
+  box-shadow: 0 2rpx 10rpx rgba(94, 232, 33, 0.25);
 }
 
 /* 无内容时的发送按钮 */
 .send-btn.inactive {
-  background: rgba(149, 157, 174, 0.8);
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.2);
+  background: rgba(41, 55, 79, 0.4);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
 }
 
-.send-btn .font_family {
-  font-size: 36rpx;
-  color: #FFFFFF;
+.send-btn .icon-image {
+  width: 36rpx;
+  height: 36rpx;
   margin-top: 2rpx;
 }

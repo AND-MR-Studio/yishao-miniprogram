@@ -1,7 +1,7 @@
 // pages/mine/mine.js
 // 定义常量
 const USER_INFO_KEY = 'userInfo';
-const DEFAULT_AVATAR_URL = 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRna42FI242Lcia07jQodd2FJGIYQfG0LAJGFxM4FbnQP6yfMxBgJ0F3YRqJCJ1aPAK2dQagdusBZg/0';
+const DEFAULT_AVATAR_URL = '/static/images/default-avatar.jpg';
 
 // 引入API模块
 const api = require('../../utils/api');
@@ -55,6 +55,7 @@ Page({
     try {
       // 从本地存储获取用户信息
       const userInfo = wx.getStorageSync(USER_INFO_KEY);
+
       if (userInfo) {
         this.setData({
           userInfo: userInfo,
@@ -97,35 +98,30 @@ Page({
     const { avatarUrl } = e.detail;
     if (!avatarUrl) return;
 
-    // 上传头像
+    // 更新本地存储和页面数据
+    const userInfo = this.getUserInfo() || {};
+    userInfo.avatarUrl = avatarUrl;
+    wx.setStorageSync(USER_INFO_KEY, userInfo);
+
+    // 更新页面数据
+    this.setData({
+      userInfo: userInfo
+    });
+
+    // 上传到服务器
     const config = {
       url: api.user_update_url,
-      filePath: avatarUrl
+      method: 'POST',
+      data: {
+        openid: userInfo.openId,
+        avatarUrl: avatarUrl
+      }
     };
 
-    api.request(config).then(res => {
-      if (res.success && res.data) {
-        // 更新用户信息
-        const updateConfig = {
-          url: api.user_update_url,
-          method: 'POST',
-          data: {
-            "avatarUrl": res.data.url
-          }
-        };
-
-        api.request(updateConfig);
-
-        // 更新本地存储
-        const userInfo = this.getUserInfo() || {};
-        userInfo.avatarUrl = res.data.url;
-        wx.setStorageSync(USER_INFO_KEY, userInfo);
-
-        // 更新页面数据
-        this.setData({
-          userInfo: userInfo
-        });
-      }
+    api.request(config).then(() => {
+      // 头像更新成功
+    }).catch(() => {
+      // 头像更新失败，但本地已更新
     });
   },
 
@@ -133,22 +129,18 @@ Page({
    * 处理昵称输入
    */
   onInputNickname(e) {
-    const value = e.detail.value;
+    // 获取昵称值
+    const value = e.detail.value || '';
 
-    // 如果是在昵称输入框完成事件，直接更新昵称
-    if (e.type === 'nicknamereview') {
-      const updateConfig = {
-        url: api.user_update_url,
-        method: 'POST',
-        data: {
-          "nickName": value
-        }
-      };
+    // 如果昵称为空，不进行处理
+    if (!value) return;
 
-      api.request(updateConfig);
+    // 如果是在昵称输入框完成事件，更新昵称
+    if (e.type === 'nicknamereview' || e.type === 'input') {
+      // 获取用户信息
+      const userInfo = this.getUserInfo() || {};
 
       // 更新本地存储
-      const userInfo = this.getUserInfo() || {};
       userInfo.nickName = value;
       wx.setStorageSync(USER_INFO_KEY, userInfo);
 
@@ -156,13 +148,53 @@ Page({
       this.setData({
         userInfo: userInfo
       });
+
+      // 构建更新请求
+      const updateConfig = {
+        url: api.user_update_url,
+        method: 'POST',
+        data: {
+          openid: userInfo.openId,
+          nickName: value
+        }
+      };
+
+      // 发送请求到服务器
+      api.request(updateConfig).then(() => {
+        // 昵称更新成功
+      }).catch(() => {
+        // 昵称更新失败，但本地已更新
+      });
     }
+  },
+
+  /**
+   * 生成随机侦探ID
+   */
+  generateDetectiveId() {
+    // 生成5位随机数字
+    const randomNum = Math.floor(10000 + Math.random() * 90000);
+    return `一勺侦探#${randomNum}`;
   },
 
   /**
    * 打开用户信息设置弹窗
    */
   openUserInfoModal() {
+    // 获取当前用户信息
+    const userInfo = this.data.userInfo;
+
+    // 如果昵称为空，生成随机侦探ID
+    if (!userInfo.nickName) {
+      const detectiveId = this.generateDetectiveId();
+
+      // 更新页面数据，但不立即保存到本地存储
+      // 等用户确认后再保存
+      this.setData({
+        'userInfo.nickName': detectiveId
+      });
+    }
+
     this.setData({
       showUserInfoModal: true
     });
@@ -178,29 +210,86 @@ Page({
   },
 
   /**
-   * 确认用户信息设置
+   * 确认信息设置
    */
   confirmUserInfo() {
-    // 直接关闭弹窗，因为头像和昵称已经在各自的事件中处理了
+    // 获取当前用户信息
+    const userInfo = this.data.userInfo;
+
+    // 如果昵称为空，生成随机侦探ID
+    if (!userInfo.nickName) {
+      userInfo.nickName = this.generateDetectiveId();
+      this.setData({
+        userInfo: userInfo
+      });
+    }
+
+    // 保存到本地存储
+    wx.setStorageSync(USER_INFO_KEY, userInfo);
+
+    // 上传到服务器
+    const updateConfig = {
+      url: api.user_update_url,
+      method: 'POST',
+      data: {
+        openid: userInfo.openId,
+        nickName: userInfo.nickName
+      }
+    };
+
+    api.request(updateConfig).then(() => {
+      // 昵称更新成功
+    });
+
+    // 关闭弹窗
     this.closeUserInfoModal();
 
     // 显示登录成功提示
     wx.showToast({
-      title: '登录成功',
+      title: '侦探信息已设置',
       icon: 'success',
       duration: 2000
     });
   },
 
   /**
-   * 跳过用户信息设置
+   * 使用默认侦探信息
    */
   skipUserInfo() {
+    // 获取当前用户信息
+    const userInfo = this.data.userInfo;
+
+    // 如果昵称为空，生成随机侦探ID
+    if (!userInfo.nickName) {
+      userInfo.nickName = this.generateDetectiveId();
+      this.setData({
+        userInfo: userInfo
+      });
+    }
+
+    // 保存到本地存储
+    wx.setStorageSync(USER_INFO_KEY, userInfo);
+
+    // 上传到服务器
+    const updateConfig = {
+      url: api.user_update_url,
+      method: 'POST',
+      data: {
+        openid: userInfo.openId,
+        nickName: userInfo.nickName
+      }
+    };
+
+    api.request(updateConfig).then(() => {
+      // 昵称更新成功
+    });
+
+    // 关闭弹窗
     this.closeUserInfoModal();
 
-    // 在用户跳过设置后显示登录成功提示
+    // 显示登录成功提示
     wx.showToast({
-      title: '登录成功',
+      title: '侦探信息已设置',
       icon: 'success',
       duration: 2000
     });
@@ -214,11 +303,12 @@ Page({
       success: res => {
         // 发送 res.code 到后台换取 openId, sessionKey, unionId
         const config = {
-          url: api.user_login_url + '?code=' + res.code,
+          url: api.user_login_url,
           method: 'POST',
           data: {
+            code: res.code,
             userInfo: {
-              avatarUrl: this.data.defaultAvatarUrl,
+              avatarUrl: DEFAULT_AVATAR_URL,
               nickName: ''
             }
           }
@@ -228,7 +318,7 @@ Page({
           if (res.success && res.data) {
             // 构建用户信息
             const userInfo = {
-              avatarUrl: res.data.userInfo?.avatarUrl || this.data.defaultAvatarUrl,
+              avatarUrl: res.data.userInfo?.avatarUrl || DEFAULT_AVATAR_URL,
               nickName: res.data.userInfo?.nickName || '',
               openId: res.data.openid,
               loginTime: new Date().getTime()
@@ -291,18 +381,8 @@ Page({
       content: '确定要退出登录吗？',
       success: (res) => {
         if (res.confirm) {
-          // 调用退出登录接口
-          const config = {
-            url: api.user_login_url + '/logout',
-            method: 'POST'
-          };
-
-          api.request(config).then(() => {
-            this.doLogout();
-          }).catch(() => {
-            // 即使接口调用失败，也清除本地登录信息
-            this.doLogout();
-          });
+          // 直接清除本地登录信息，不需要调用后端接口
+          this.doLogout();
         }
         // 无论是确认还是取消，都重置标志位
         this.setData({ isLoggingOut: false });

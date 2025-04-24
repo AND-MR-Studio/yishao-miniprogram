@@ -8,7 +8,7 @@
   width: 100%;
   min-height: 100vh;
   background-color: #020814; /* 更深的蓝黑色背景 */
-  position: relative;
+  position: fixed;
   overflow: hidden; /* 防止渐变光晕溢出 */
   background-image: linear-gradient(to bottom, #030a1c 0%, #020814 100%); /* 增加垂直渐变 */
 }
@@ -18,9 +18,10 @@
   --default-gradient: radial-gradient(ellipse at 20% 30%, rgba(76, 0, 255, 0.5) 0%, rgba(25, 0, 112, 0.3) 30%, transparent 70%),
                      radial-gradient(ellipse at 80% 85%, rgba(0, 30, 255, 0.3) 0%, rgba(0, 10, 80, 0.2) 40%, transparent 70%),
                      radial-gradient(ellipse at 50% 50%, rgba(128, 0, 255, 0.2) 0%, rgba(50, 0, 120, 0.1) 30%, transparent 60%),
-                     /* 添加绿色品牌色点缀 */
-                     radial-gradient(ellipse at 65% 20%, rgba(0, 255, 136, 0.2) 0%, rgba(0, 120, 60, 0.1) 20%, transparent 50%),
-                     radial-gradient(circle at 30% 75%, rgba(0, 200, 100, 0.15) 0%, rgba(0, 100, 50, 0.05) 30%, transparent 60%);
+                     /* 适度增强绿色品牌色 */
+                     radial-gradient(ellipse at 65% 20%, rgba(0, 255, 136, 0.25) 0%, rgba(0, 180, 90, 0.15) 30%, transparent 60%),
+                     radial-gradient(ellipse at 40% 60%, rgba(0, 230, 115, 0.2) 0%, rgba(0, 150, 75, 0.1) 40%, transparent 70%),
+                     radial-gradient(circle at 30% 75%, rgba(0, 200, 100, 0.2) 0%, rgba(0, 100, 50, 0.1) 40%, transparent 70%);
   --dynamic-gradient: var(--default-gradient);
 }
 
@@ -32,11 +33,11 @@
   width: 100%;
   height: 100%;
   background: var(--dynamic-gradient);
-  filter: blur(90px); /* 进一步增大模糊半径，使光晕更加柔和且混合 */
+  filter: blur(90px); /* 增大模糊半径，使光晕更加柔和且混合 */
   z-index: 1;
-  opacity: 0.85; /* 羽量调整不透明度，使颜色更加饱和 */
+  opacity: 0.85; /* 适度调整不透明度，保持高级感 */
   transition: background 0.25s ease-out;
-  mix-blend-mode: lighten; /* 使用lighten混合模式，增强绿紫色调的融合 */
+  mix-blend-mode: lighten; /* 使用lighten混合模式，保持高级感 */
 }
 
 /* 磨砂质感叠加层 */

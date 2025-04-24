@@ -1,5 +1,5 @@
 /* components/nav-bar/index.wxss */
-@import "/static/css/iconfont.wxss";
+@import "/static/css/icon.wxss";
 
 .nav-bar {
   position: fixed;
@@ -23,18 +23,7 @@
   height: 88rpx;
 }
 
-/* 添加紫色光晕效果 */
-.nav-bar::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(ellipse at 50% 0%, rgba(76, 0, 255, 0.15) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: -1;
-}
+/* 移除紫色光晕效果 */
 
 .nav-bar-left {
   display: flex;
@@ -65,26 +54,21 @@
   align-items: center;
   width: 72rpx;
   height: 72rpx;
-  background: rgba(76, 0, 255, 0.15);
+  background: rgba(2, 8, 20, 0.3);
   border-radius: 16rpx;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
-  border: 1rpx solid rgba(128, 0, 255, 0.3);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
 }
 
 .nav-icon-wrapper:active {
   transform: scale(0.95);
-  background: rgba(76, 0, 255, 0.25);
+  background: rgba(2, 8, 20, 0.5);
 }
 
 .left-icon {
   margin-right: 5rpx;
 }
 
-.font_family {
-  font-size: 36rpx;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
-}
