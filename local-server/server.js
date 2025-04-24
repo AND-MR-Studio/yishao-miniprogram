@@ -6,7 +6,7 @@ const fs_extra = require('fs-extra');
 
 // 导入服务模块
 const dialogService = require('./dialogService');
-const userService = require('./userService');
+const userService = require('./services/userService');
 const soupService = require('./services/soupService');
 
 const app = express();
@@ -18,6 +18,9 @@ app.use(bodyParser.json());
 
 // 提供管理页面静态文件
 app.use(express.static(path.join(__dirname, 'html')));
+
+// API文档服务
+app.use('/docs', express.static(path.join(__dirname, 'docs')));
 
 // 初始化汤面服务路由
 soupService.initSoupRoutes(app);

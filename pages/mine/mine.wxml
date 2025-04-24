@@ -5,57 +5,22 @@
 
   <view class="container">
     <!-- 用户名片 -->
-    <view class="user-card">
-      <view class="card-content">
-        <view class="avatar-section">
-          <image class="avatar-large" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
-        </view>
-
-        <view class="info-section">
-          <text class="name-value">{{userInfo.nickName ? userInfo.nickName.split('#')[0] : '未登录的侦探'}}</text>
-          <view class="vip-info">
-            <text>侦探ID: {{userInfo ? userInfo.nickName ? userInfo.nickName.split('#')[1] || '未设置' : '未设置' : '未登录'}}</text>
-          </view>
-          <view class="level-info">
-            <view class="level-badge">Lv{{level}}</view>
-            <text class="level-title">{{levelTitle}}</text>
-          </view>
-          <view class="exp-bar-container">
-            <view class="exp-bar" style="width: {{experience / maxExperience * 100}}%;"></view>
-          </view>
-          <text class="exp-text">经验值: {{experience}}/{{maxExperience}}</text>
-          <view class="bottom-info">
-            <view class="answer-count">
-              <text class="answer-label">剩余回答次数：</text>
-              <text class="answer-value">{{remainingAnswers || 0}}</text>
-            </view>
-            <view class="sign-in-btn" bindtap="handleSignIn">
-              <text>签到+10</text>
-            </view>
-          </view>
-        </view>
-      </view>
-
-      <!-- 四栏数据 -->
-      <view class="stats-section">
-        <view class="stat-item" bindtap="navigateToUnsolved">
-          <text class="stat-value">{{unsolvedCount || 0}}</text>
-          <text class="stat-label">未解决</text>
-        </view>
-        <view class="stat-item" bindtap="navigateToSolved">
-          <text class="stat-value">{{solvedCount || 0}}</text>
-          <text class="stat-label">已解决</text>
-        </view>
-        <view class="stat-item" bindtap="navigateToCreations">
-          <text class="stat-value">{{creationCount || 0}}</text>
-          <text class="stat-label">创作</text>
-        </view>
-        <view class="stat-item" bindtap="navigateToFavorites">
-          <text class="stat-value">{{favoriteCount || 0}}</text>
-          <text class="stat-label">收藏</text>
-        </view>
-      </view>
-    </view>
+    <detective-card
+      id="detective-card"
+      userInfo="{{userInfo}}"
+      defaultAvatarUrl="{{defaultAvatarUrl}}"
+      remainingAnswers="{{remainingAnswers}}"
+      level="{{level}}"
+      levelTitle="{{levelTitle}}"
+      experience="{{experience}}"
+      maxExperience="{{maxExperience}}"
+      unsolvedCount="{{unsolvedCount}}"
+      solvedCount="{{solvedCount}}"
+      creationCount="{{creationCount}}"
+      favoriteCount="{{favoriteCount}}"
+      bind:signin="handleSignIn"
+      bind:navigate="handleNavigate">
+    </detective-card>
 
     <!-- 更新日志Banner轮播 -->
     <swiper class="banner-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}" circular="{{true}}">
@@ -96,51 +61,34 @@
 
     <!-- 功能菜单 -->
     <view class="function-list">
-      <!-- 我的汤锅 -->
-      <view class="function-item" bindtap="navigateToSoupHistory">
+      <!-- 帮助与反馈 -->
+      <view class="function-item" bindtap="navigateToHelp">
         <view class="item-content">
-          <text>我的汤锅</text>
+          <text>帮助与反馈</text>
         </view>
-        <view class="item-count">{{totalSoupCount || 0}}个</view>
         <view class="item-arrow"></view>
       </view>
 
-      <!-- 我的收藏 -->
-      <view class="function-item" bindtap="navigateToFavorites">
+      <!-- 关于一勺推理社 -->
+      <view class="function-item" bindtap="navigateToAbout">
         <view class="item-content">
-          <text>我的收藏</text>
-        </view>
-        <view class="item-count">{{favoriteCount || 0}}个</view>
-        <view class="item-arrow"></view>
-      </view>
-
-      <!-- 我的积分 -->
-      <view class="function-item" bindtap="navigateToPoints">
-        <view class="item-content">
-          <text>我的积分</text>
-        </view>
-        <view class="item-count">{{pointsCount || 0}}分</view>
-        <view class="item-arrow"></view>
-      </view>
-
-      <!-- 个人信息 -->
-      <view class="function-item" bindtap="navigateToUserInfo">
-        <view class="item-content">
-          <text>个人信息</text>
+          <text>关于一勺推理社</text>
         </view>
         <view class="item-arrow"></view>
       </view>
     </view>
 
     <!-- 登录/退出按钮 -->
-    <view class="logout-container" wx:if="{{!userInfo}}">
-      <button-component
-        type="light"
-        text="微信一键登录"
-        width="100%"
-        height="88rpx"
-        bind:tap="handleLogin"
-      />
+    <view class="logout-container">
+      <view class="login-button-wrapper">
+        <button-component
+          type="{{userInfo ? 'unlight' : 'light'}}"
+          text="{{userInfo ? '退出登录' : '微信一键登录'}}"
+          width="500rpx"
+          height="70rpx"
+          bind:tap="{{userInfo ? 'handleLogout' : 'handleLogin'}}"
+        />
+      </view>
     </view>
   </view>
 

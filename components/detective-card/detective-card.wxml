@@ -1,0 +1,54 @@
+<!--components/detective-card/detective-card.wxml-->
+<view class="user-card">
+  <!-- 顶部卡片区域：头像、昵称和ID -->
+  <view class="card-content">
+    <view class="avatar-section">
+      <image class="avatar-large" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+    </view>
+
+    <view class="info-section">
+      <view class="name-badge-row">
+        <text class="name-value">{{userInfo.nickName ? userInfo.nickName.split('#')[0] : '未登录的侦探'}}</text>
+        <view class="level-badge">[{{levelTitle}}]</view>
+      </view>
+      <view class="detective-id">
+        <text>探员ID: {{userInfo ? userInfo.nickName ? userInfo.nickName.split('#')[1] || '未设置' : '未设置' : '未登录'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分隔线 -->
+  <view class="card-divider"></view>
+
+  <!-- 底部区域：剩余回答次数和签到 -->
+  <view class="bottom-section">
+    <view class="brain-icon"></view>
+    <view class="answer-count">
+      <text class="answer-label">剩余回答次数: </text>
+      <text class="answer-value">{{remainingAnswers || 0}}</text>
+    </view>
+    <view class="sign-in-btn" bindtap="handleSignIn">
+      <text>签到+10</text>
+    </view>
+  </view>
+
+  <!-- 四栏数据 -->
+  <view class="stats-section">
+    <view class="stat-item" bindtap="navigateToUnsolved">
+      <text class="stat-value">{{unsolvedCount || 0}}</text>
+      <text class="stat-label">未解决</text>
+    </view>
+    <view class="stat-item" bindtap="navigateToSolved">
+      <text class="stat-value">{{solvedCount || 0}}</text>
+      <text class="stat-label">已解决</text>
+    </view>
+    <view class="stat-item" bindtap="navigateToCreations">
+      <text class="stat-value">{{creationCount || 0}}</text>
+      <text class="stat-label">创作</text>
+    </view>
+    <view class="stat-item" bindtap="navigateToFavorites">
+      <text class="stat-value">{{favoriteCount || 0}}</text>
+      <text class="stat-label">收藏</text>
+    </view>
+  </view>
+</view>

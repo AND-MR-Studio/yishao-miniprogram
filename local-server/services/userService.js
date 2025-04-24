@@ -1,6 +1,11 @@
-const fs = require('fs-extra');
-const path = require('path');
+/**
+ * 用户服务层
+ * 负责用户相关的业务逻辑
+ */
+
 const { v4: uuidv4 } = require('uuid');
+const userDataAccess = require('../dataAccess/userDataAccess');
+const userModel = require('../models/userModel');
 
 // 微信小程序配置
 const WECHAT_CONFIG = {
@@ -8,95 +13,11 @@ const WECHAT_CONFIG = {
   appSecret: 'd6727b9bd3775bfb20a8c61076478d98' // 替换为你的小程序 AppSecret
 };
 
-// 常量定义
-const DEFAULT_AVATAR_URL = '/static/images/default-avatar.jpg';
-const LEVEL_TITLES = ['见习侦探', '初级侦探', '中级侦探', '高级侦探', '特级侦探', '神探'];
-const MAX_DAILY_ANSWERS = 10; // 每日最大回答次数
-const DAILY_SIGN_IN_POINTS = 10; // 每日签到积分
-const DAILY_SIGN_IN_EXPERIENCE = 20; // 每日签到经验值
-
-// 数据文件路径
-const USERS_FILE = path.join(__dirname, 'users.json');
-
-// 确保数据文件存在
-const initUserFile = async () => {
-  try {
-    await fs.ensureFile(USERS_FILE);
-    const exists = await fs.pathExists(USERS_FILE);
-    if (exists) {
-      const data = await fs.readFile(USERS_FILE, 'utf8');
-      if (!data) {
-        await fs.writeJson(USERS_FILE, {});
-      }
-    }
-  } catch (err) {
-    console.error('初始化用户数据文件失败:', err);
-  }
-};
-
-// 读取用户数据
-const getUserData = async (userId) => {
-  try {
-    await initUserFile();
-    const data = await fs.readJson(USERS_FILE);
-    return data[userId] || {
-      userId,
-      avatarUrl: DEFAULT_AVATAR_URL,
-      nickName: '',
-      openid: '',
-      answeredSoups: [],
-      viewedSoups: [],
-      totalAnswered: 0,
-      totalCorrect: 0,
-      totalViewed: 0,
-      todayViewed: 0,
-      // 新增字段
-      level: 1,
-      experience: 0,
-      maxExperience: 1000,
-      remainingAnswers: MAX_DAILY_ANSWERS,
-      points: 0,
-      lastSignInDate: null,
-      signInCount: 0,
-      unsolvedCount: 0,
-      solvedCount: 0,
-      creationCount: 0,
-      favoriteCount: 0,
-      createTime: new Date().toISOString(),
-      updateTime: new Date().toISOString()
-    };
-  } catch (err) {
-    console.error('读取用户数据失败:', err);
-    return null;
-  }
-};
-
-// 保存用户数据
-const saveUserData = async (userId, userData) => {
-  try {
-    const allUsers = await fs.readJson(USERS_FILE);
-    allUsers[userId] = {
-      ...userData,
-      updateTime: new Date().toISOString()
-    };
-    await fs.writeJson(USERS_FILE, allUsers);
-    return true;
-  } catch (err) {
-    console.error('保存用户数据失败:', err);
-    return false;
-  }
-};
-
-// 通用响应处理函数
-function sendResponse(res, success, data, statusCode = 200) {
-  return res.status(statusCode).json({
-    success,
-    data: success ? data : undefined,
-    error: !success ? data : undefined
-  });
-}
-
-// 模拟微信登录接口获取 openid
+/**
+ * 模拟微信登录接口获取 openid
+ * @param {string} code - 微信登录code
+ * @returns {string} - openid
+ */
 async function getWechatOpenId(code) {
   try {
     // 在本地服务中，我们模拟返回一个固定的openid
@@ -108,55 +29,15 @@ async function getWechatOpenId(code) {
   }
 }
 
-// 生成随机侦探ID
-function generateDetectiveId() {
-  // 生成5位随机数字
-  const randomNum = Math.floor(10000 + Math.random() * 90000);
-  return `一勺侦探#${randomNum}`;
-}
-
-// 获取等级信息
-function getLevelInfo(experience = 0) {
-  // 根据经验值计算等级
-  let level = 1;
-  let maxExperience = 1000;
-  let levelTitle = LEVEL_TITLES[0];
-
-  // 根据经验值动态计算等级
-  if (experience >= 900) {
-    level = 6;
-    maxExperience = 2000;
-    levelTitle = LEVEL_TITLES[5];
-  } else if (experience >= 700) {
-    level = 5;
-    maxExperience = 1000;
-    levelTitle = LEVEL_TITLES[4];
-  } else if (experience >= 500) {
-    level = 4;
-    maxExperience = 800;
-    levelTitle = LEVEL_TITLES[3];
-  } else if (experience >= 300) {
-    level = 3;
-    maxExperience = 600;
-    levelTitle = LEVEL_TITLES[2];
-  } else if (experience >= 100) {
-    level = 2;
-    maxExperience = 400;
-    levelTitle = LEVEL_TITLES[1];
-  }
-
-  return {
-    level,
-    levelTitle,
-    experience,
-    maxExperience
-  };
-}
-
-// 增加经验值
+/**
+ * 增加经验值
+ * @param {Object} userData - 用户数据
+ * @param {number} amount - 增加的经验值
+ * @returns {Object} - 更新后的等级信息
+ */
 function addExperience(userData, amount) {
   if (!userData) return null;
-
+  
   let { level, experience, maxExperience } = userData;
   experience = (experience || 0) + amount;
   let levelUp = false;
@@ -174,9 +55,9 @@ function addExperience(userData, amount) {
   userData.level = level;
   userData.experience = experience;
   userData.maxExperience = maxExperience;
-
+  
   // 获取等级标题
-  const levelInfo = getLevelInfo(experience);
+  const levelInfo = userModel.getLevelInfo(experience);
   userData.levelTitle = levelInfo.levelTitle;
 
   return {
@@ -189,44 +70,52 @@ function addExperience(userData, amount) {
   };
 }
 
-// 重置每日回答次数
+/**
+ * 重置每日回答次数
+ * @param {Object} userData - 用户数据
+ * @returns {Object} - 更新后的用户数据
+ */
 function resetDailyAnswers(userData) {
   if (!userData) return userData;
-
+  
   const today = new Date().toISOString().split('T')[0];
   const lastReset = userData.lastAnswerReset || '2000-01-01';
-
+  
   if (today !== lastReset) {
-    userData.remainingAnswers = MAX_DAILY_ANSWERS;
+    userData.remainingAnswers = userModel.MAX_DAILY_ANSWERS;
     userData.lastAnswerReset = today;
   }
-
+  
   return userData;
 }
 
-// 处理用户签到
+/**
+ * 处理用户签到
+ * @param {string} userId - 用户ID
+ * @returns {Object} - 签到结果
+ */
 async function handleSignIn(userId) {
-  const userData = await getUserData(userId);
+  const userData = await userDataAccess.getUserData(userId);
   if (!userData) return { success: false, message: '用户不存在' };
-
+  
   const today = new Date().toISOString().split('T')[0];
-
+  
   // 检查是否已经签到
   if (userData.lastSignInDate === today) {
     return { success: false, message: '今日已签到' };
   }
-
+  
   // 更新签到信息
   userData.lastSignInDate = today;
   userData.signInCount = (userData.signInCount || 0) + 1;
-  userData.points = (userData.points || 0) + DAILY_SIGN_IN_POINTS;
-
+  userData.points = (userData.points || 0) + userModel.DAILY_SIGN_IN_POINTS;
+  
   // 增加经验值
-  const expResult = addExperience(userData, DAILY_SIGN_IN_EXPERIENCE);
-
+  const expResult = addExperience(userData, userModel.DAILY_SIGN_IN_EXPERIENCE);
+  
   // 保存用户数据
-  await saveUserData(userId, userData);
-
+  await userDataAccess.saveUserData(userId, userData);
+  
   return {
     success: true,
     message: '签到成功',
@@ -240,7 +129,26 @@ async function handleSignIn(userId) {
   };
 }
 
-// 初始化用户服务路由
+/**
+ * 通用响应处理函数
+ * @param {Object} res - Express响应对象
+ * @param {boolean} success - 是否成功
+ * @param {*} data - 响应数据
+ * @param {number} statusCode - HTTP状态码
+ * @returns {Object} - Express响应
+ */
+function sendResponse(res, success, data, statusCode = 200) {
+  return res.status(statusCode).json({
+    success,
+    data: success ? data : undefined,
+    error: !success ? data : undefined
+  });
+}
+
+/**
+ * 初始化用户服务路由
+ * @param {Object} app - Express应用实例
+ */
 function initUserRoutes(app) {
   // 1. 用户登录/注册
   app.post('/api/user/login', async (req, res) => {
@@ -255,7 +163,7 @@ function initUserRoutes(app) {
       const openid = await getWechatOpenId(code);
 
       // 获取或创建用户数据
-      let userData = await getUserData(openid);
+      let userData = await userDataAccess.getUserData(openid);
 
       // 更新用户信息
       if (userInfo) {
@@ -267,28 +175,28 @@ function initUserRoutes(app) {
       if (!userData.createTime) {
         userData.createTime = new Date().toISOString();
         userData.openid = openid;
-
+        
         // 生成随机侦探ID
         if (!userData.nickName) {
-          userData.nickName = generateDetectiveId();
+          userData.nickName = userModel.generateDetectiveId();
         }
-
+        
         // 初始化等级和经验值
         userData.level = 1;
         userData.experience = 0;
         userData.maxExperience = 1000;
         userData.points = 0;
-        userData.remainingAnswers = MAX_DAILY_ANSWERS;
+        userData.remainingAnswers = userModel.MAX_DAILY_ANSWERS;
       }
-
+      
       // 重置每日回答次数
       userData = resetDailyAnswers(userData);
 
       // 保存用户数据
-      await saveUserData(openid, userData);
-
+      await userDataAccess.saveUserData(openid, userData);
+      
       // 获取等级信息
-      const levelInfo = getLevelInfo(userData.experience);
+      const levelInfo = userModel.getLevelInfo(userData.experience);
 
       // 返回用户信息
       return sendResponse(res, true, {
@@ -305,7 +213,7 @@ function initUserRoutes(app) {
         },
         answers: {
           remainingAnswers: userData.remainingAnswers,
-          maxDailyAnswers: MAX_DAILY_ANSWERS
+          maxDailyAnswers: userModel.MAX_DAILY_ANSWERS
         },
         points: {
           total: userData.points,
@@ -328,12 +236,12 @@ function initUserRoutes(app) {
         return sendResponse(res, false, '缺少必要参数', 400);
       }
 
-      const userData = await getUserData(openid);
+      const userData = await userDataAccess.getUserData(openid);
 
       if (avatarUrl) userData.avatarUrl = avatarUrl;
       if (nickName) userData.nickName = nickName;
 
-      await saveUserData(openid, userData);
+      await userDataAccess.saveUserData(openid, userData);
 
       return sendResponse(res, true, {
         userInfo: {
@@ -355,14 +263,14 @@ function initUserRoutes(app) {
         return sendResponse(res, false, '缺少必要参数', 400);
       }
 
-      let userData = await getUserData(openid);
-
+      let userData = await userDataAccess.getUserData(openid);
+      
       // 重置每日回答次数
       userData = resetDailyAnswers(userData);
-      await saveUserData(openid, userData);
-
+      await userDataAccess.saveUserData(openid, userData);
+      
       // 获取等级信息
-      const levelInfo = getLevelInfo(userData.experience);
+      const levelInfo = userModel.getLevelInfo(userData.experience);
 
       return sendResponse(res, true, {
         userInfo: {
@@ -387,7 +295,7 @@ function initUserRoutes(app) {
         },
         answers: {
           remainingAnswers: userData.remainingAnswers || 0,
-          maxDailyAnswers: MAX_DAILY_ANSWERS
+          maxDailyAnswers: userModel.MAX_DAILY_ANSWERS
         },
         points: {
           total: userData.points || 0,
@@ -410,7 +318,7 @@ function initUserRoutes(app) {
         return sendResponse(res, false, '缺少必要参数', 400);
       }
 
-      const userData = await getUserData(openid);
+      const userData = await userDataAccess.getUserData(openid);
 
       return sendResponse(res, true, {
         answeredSoups: userData.answeredSoups,
@@ -430,7 +338,7 @@ function initUserRoutes(app) {
         return sendResponse(res, false, '缺少必要参数', 400);
       }
 
-      const userData = await getUserData(openid);
+      const userData = await userDataAccess.getUserData(openid);
 
       if (type === 'answer') {
         // 更新回答记录
@@ -467,7 +375,7 @@ function initUserRoutes(app) {
         }
       }
 
-      await saveUserData(openid, userData);
+      await userDataAccess.saveUserData(openid, userData);
 
       return sendResponse(res, true, { message: '更新成功' });
     } catch (err) {
@@ -478,7 +386,7 @@ function initUserRoutes(app) {
   // 6. 获取所有用户列表
   app.get('/api/user/list', async (_, res) => {
     try {
-      const data = await fs.readJson(USERS_FILE);
+      const data = await userDataAccess.getAllUsers();
       const users = Object.values(data).map(user => ({
         openid: user.openid,
         nickName: user.nickName,
@@ -488,7 +396,11 @@ function initUserRoutes(app) {
         totalAnswered: user.totalAnswered,
         totalCorrect: user.totalCorrect,
         totalViewed: user.totalViewed,
-        todayViewed: user.todayViewed
+        todayViewed: user.todayViewed,
+        level: user.level,
+        experience: user.experience,
+        points: user.points,
+        signInCount: user.signInCount
       }));
 
       return sendResponse(res, true, users);
@@ -507,7 +419,7 @@ function initUserRoutes(app) {
       }
 
       const result = await handleSignIn(openid);
-
+      
       if (!result.success) {
         return sendResponse(res, false, result.message, 400);
       }
@@ -528,14 +440,11 @@ function initUserRoutes(app) {
         return sendResponse(res, false, '缺少必要参数', 400);
       }
 
-      const data = await fs.readJson(USERS_FILE);
+      const success = await userDataAccess.deleteUserData(openid);
 
-      if (!data[openid]) {
+      if (!success) {
         return sendResponse(res, false, '用户不存在', 404);
       }
-
-      delete data[openid];
-      await fs.writeJson(USERS_FILE, data);
 
       return sendResponse(res, true, { message: '删除成功' });
     } catch (err) {
@@ -546,25 +455,13 @@ function initUserRoutes(app) {
 
 // 初始化模块
 async function init() {
-  await initUserFile();
+  await userDataAccess.init();
   console.log('用户服务初始化完成');
 }
 
 module.exports = {
-  // 初始化函数
   init,
   initUserRoutes,
-
-  // 常量
-  DEFAULT_AVATAR_URL,
-  LEVEL_TITLES,
-  MAX_DAILY_ANSWERS,
-  DAILY_SIGN_IN_POINTS,
-  DAILY_SIGN_IN_EXPERIENCE,
-
-  // 辅助函数
-  generateDetectiveId,
-  getLevelInfo,
   addExperience,
   resetDailyAnswers,
   handleSignIn

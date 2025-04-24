@@ -1,6 +1,7 @@
 {
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
-    "button-component": "/components/button/index"
+    "button-component": "/components/button/index",
+    "detective-card": "/components/detective-card/detective-card"
   }
 }
