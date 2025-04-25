@@ -5,6 +5,7 @@
 // ===== 导入依赖 =====
 const soupService = require('../../utils/soupService');
 const dialogService = require('../../utils/dialogService');
+const userService = require('../../utils/userService');
 const { createSwipeManager, SWIPE_DIRECTION } = require('../../utils/swipeManager');
 
 // ===== 常量定义 =====
@@ -135,7 +136,7 @@ Page({
    * 切换到喝汤（对话）状态
    * 设置当前汤面ID并显示对话组件
    */
-  switchToDrinking() {
+  async switchToDrinking() {
     // 如果已经在喝汤状态，不再重复切换
     if (this.data.pageState === PAGE_STATE.DRINKING) return;
 
@@ -145,6 +146,46 @@ Page({
 
     // 设置当前汤面ID到dialogService
     dialogService.setCurrentSoupId(currentSoupId);
+
+    // 获取当前对话ID和用户ID
+    const dialogId = dialogService.getCurrentDialogId();
+    const userId = userService.getUserId();
+
+    // 检查是否获取到用户ID
+    if (!userId) {
+      console.error('获取用户ID失败，尝试刷新用户信息');
+
+      try {
+        // 尝试刷新用户信息
+        await userService.refreshUserInfo();
+
+        // 重新获取用户ID
+        const refreshedUserId = userService.getUserId();
+
+        if (!refreshedUserId) {
+          throw new Error('刷新用户信息后仍无法获取用户ID');
+        }
+
+        // 成功获取用户ID，继续执行
+        console.log('成功刷新用户信息，获取到用户ID:', refreshedUserId);
+      } catch (error) {
+        console.error('刷新用户信息失败:', error);
+
+        // 显示提示并跳转到个人中心页面
+        wx.showModal({
+          title: '提示',
+          content: '无法获取用户信息，请重新登录',
+          showCancel: false,
+          success: () => {
+            wx.switchTab({
+              url: '/pages/mine/mine'
+            });
+          }
+        });
+
+        return;
+      }
+    }
 
     // 更新页面状态
     this.setData({
@@ -156,10 +197,14 @@ Page({
     wx.nextTick(() => {
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
-        // 先设置 soupId，等待下一帧后再设置 visible，确保能正确加载对话历史
-        dialog.setData({ soupId: currentSoupId });
+        // 先设置 soupId、dialogId 和 userId，等待下一帧后再设置 visible，确保能正确加载对话历史
+        dialog.setData({
+          soupId: currentSoupId,
+          dialogId: dialogId,
+          userId: userId
+        });
 
-        // 等待下一帧，确保 soupId 已经被正确设置
+        // 等待下一帧，确保 soupId、dialogId 和 userId 已经被正确设置
         wx.nextTick(() => {
           dialog.setData({ visible: true });
         });
@@ -228,8 +273,12 @@ Page({
    */
   async onButtonPreload() {
     // 防止重复预加载
-    if (this._isPreloading) return;
+    if (this._isPreloading) {
+      console.log('已经在预加载中，忽略重复调用');
+      return;
+    }
     this._isPreloading = true;
+    console.log('开始预加载对话记录');
 
     try {
       // 检查用户是否已登录（使用token判断）
@@ -266,34 +315,92 @@ Page({
         return;
       }
 
+      // 获取用户ID
+      const userId = userService.getUserId();
+
+      if (!userId) {
+        console.error('获取用户ID失败，尝试刷新用户信息');
+
+        try {
+          // 尝试刷新用户信息
+          await userService.refreshUserInfo();
+
+          // 重新获取用户ID
+          const refreshedUserId = userService.getUserId();
+
+          if (!refreshedUserId) {
+            throw new Error('刷新用户信息后仍无法获取用户ID');
+          }
+
+          // 成功获取用户ID，继续执行
+          console.log('成功刷新用户信息，获取到用户ID:', refreshedUserId);
+        } catch (error) {
+          console.error('刷新用户信息失败:', error);
+
+          // 显示提示并跳转到个人中心页面
+          wx.showModal({
+            title: '提示',
+            content: '无法获取用户信息，请重新登录',
+            showCancel: false,
+            success: () => {
+              // 跳转到个人中心页面
+              wx.switchTab({
+                url: '/pages/mine/mine'
+              });
+            }
+          });
+
+          // 通知按钮重置
+          const startButton = this.selectComponent('.start-button');
+          if (startButton) {
+            startButton.setLoadingComplete(false);
+          }
+
+          this._isPreloading = false;
+          return;
+        }
+      }
+
       // 设置当前汤面ID到dialogService
       dialogService.setCurrentSoupId(currentSoupId);
 
       // 异步预加载对话记录
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
-        // 先设置 soupId，但不显示对话框
-        dialog.setData({ soupId: currentSoupId, visible: false });
+        try {
+          // 根据用户ID和汤面ID获取或创建对话
+          const dialogData = await dialogService.getUserDialog(userId, currentSoupId);
 
-        // 在单独的微任务中加载对话记录
-        Promise.resolve().then(async () => {
-          try {
-            await dialog.loadDialogMessages();
-
-            // 加载完成后通知按钮
-            const startButton = this.selectComponent('.start-button');
-            if (startButton) {
-              startButton.setLoadingComplete();
-            }
-          } catch (error) {
-            console.error('预加载对话记录失败:', error);
-            // 即使加载失败也通知按钮完成
-            const startButton = this.selectComponent('.start-button');
-            if (startButton) {
-              startButton.setLoadingComplete();
-            }
+          // 如果没有对话ID，则创建新对话
+          let finalDialogData = dialogData;
+          if (!dialogData.dialogId) {
+            finalDialogData = await dialogService.createDialog(userId, currentSoupId);
           }
-        });
+
+          // 设置对话ID和汤面ID到对话组件
+          dialog.setData({
+            soupId: currentSoupId,
+            dialogId: finalDialogData.dialogId,
+            userId: userId,
+            visible: false
+          });
+
+          // 加载对话记录
+          await dialog.loadDialogMessages();
+
+          // 加载完成后通知按钮
+          const startButton = this.selectComponent('.start-button');
+          if (startButton) {
+            startButton.setLoadingComplete();
+          }
+        } catch (error) {
+          console.error('预加载对话记录失败:', error);
+          // 即使加载失败也通知按钮完成
+          const startButton = this.selectComponent('.start-button');
+          if (startButton) {
+            startButton.setLoadingComplete();
+          }
+        }
       }
     } finally {
       // 预加载完成后重置标志
@@ -317,6 +424,8 @@ Page({
     // 在单独的微任务中切换到喝汤状态
     // 这样可以减少主线程负担，避免卡顿
     setTimeout(() => {
+      // 设置标志，表示对话记录已经预加载，避免重复加载
+      this._dialogPreloaded = true;
       this.switchToDrinking();
     }, 0);
   },

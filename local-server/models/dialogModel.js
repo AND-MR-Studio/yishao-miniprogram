@@ -25,7 +25,7 @@ const MESSAGE_ROLES = {
  * 对话数据模型结构
  * @typedef {Object} DialogData
  * @property {string} dialogId - 对话唯一标识符
- * @property {string} soupId - 关联的汤面ID
+ * @property {string} soupId - 关联的汤面ID（每个用户的每个soupId只对应一个dialogId）
  * @property {string} userId - 对话所属的用户ID
  * @property {Array<DialogMessage>} messages - 消息列表
  * @property {number} lastUpdated - 最后更新时间戳

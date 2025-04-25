@@ -110,6 +110,7 @@ async function getDialogsBySoupId(soupId) {
 
 /**
  * 根据用户ID和汤面ID获取对话数据
+ * 注意：一个用户的一个soupId只对应一个dialogId，这是业务上的唯一性约束
  * @param {string} userId 用户ID
  * @param {string} soupId 汤面ID
  * @returns {Promise<Object|null>} 对话数据或null

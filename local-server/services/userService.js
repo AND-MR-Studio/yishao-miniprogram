@@ -229,9 +229,6 @@ function initUserRoutes(app) {
         userData.createTime = new Date().toISOString();
         userData.openid = openid; // 仍然存储 openid，但不对外暴露
 
-        // 生成用户ID
-        userData.userId = `wxUser_${openid.substring(0, 8)}`;
-
         if (!userData.nickName) {
           userData.nickName = userModel.generateDetectiveId();
         }
@@ -241,11 +238,6 @@ function initUserRoutes(app) {
         userData.maxExperience = 1000;
         userData.points = 0;
         userData.remainingAnswers = userModel.MAX_DAILY_ANSWERS;
-      }
-
-      // 确保所有用户都有userId
-      if (!userData.userId) {
-        userData.userId = `wxUser_${openid.substring(0, 8)}`;
       }
 
       // 生成或更新 token
@@ -266,6 +258,7 @@ function initUserRoutes(app) {
       // 返回用户信息和 token，不返回 openid
       return sendResponse(res, true, {
         token: userData.token, // 返回 token
+        userId: userData.userId, // 返回 userId
         userInfo: {
           avatarUrl: userData.avatarUrl,
           nickName: userData.nickName
@@ -398,10 +391,11 @@ function initUserRoutes(app) {
 
       // 返回信息（不需要再返回 openid）
       return sendResponse(res, true, {
-         userInfo: {
-           avatarUrl: userData.avatarUrl,
-           nickName: userData.nickName
-         },
+        userId: userData.userId, // 返回 userId
+        userInfo: {
+          avatarUrl: userData.avatarUrl,
+          nickName: userData.nickName
+        },
         stats: {
           totalAnswered: userData.totalAnswered,
           totalCorrect: userData.totalCorrect,

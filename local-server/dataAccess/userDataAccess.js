@@ -41,14 +41,18 @@ async function getUserData(openid) {
 
     // 使用openid作为键获取用户数据
     // 如果用户不存在，创建一个新的用户对象
-    // 注意：createDefaultUser不应该使用openid作为userId
     const userData = data[openid];
     if (userData) {
+      // 确保现有用户数据始终有一个一致的userId
+      if (!userData.userId) {
+        userData.userId = `wxUser_${openid.substring(0, 8)}`;
+      }
       return userData;
     } else {
       // 创建新用户，确保userId和openid正确设置
       const newUser = createDefaultUser();
       newUser.openid = openid;
+      // 为新用户生成一个基于openid的固定userId
       newUser.userId = `wxUser_${openid.substring(0, 8)}`;
       return newUser;
     }
@@ -77,8 +81,15 @@ async function saveUserData(openid, userData) {
     // 确保userData中包含正确的openid
     userData.openid = openid;
 
+    // 检查是否已存在该openid的用户数据
+    const existingUser = allUsers[openid];
+
+    // 如果已存在用户数据且有userId，保留原有userId
+    if (existingUser && existingUser.userId) {
+      userData.userId = existingUser.userId;
+    }
     // 确保userData中有userId
-    if (!userData.userId) {
+    else if (!userData.userId) {
       userData.userId = `wxUser_${openid.substring(0, 8)}`;
     }
 

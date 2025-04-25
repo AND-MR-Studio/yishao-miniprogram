@@ -110,9 +110,22 @@ Page({
    * 更新等级信息
    */
   updateLevelInfo() {
-    // 使用userService获取等级信息
-    const levelInfo = userService.getLevelInfo(this.data.experience);
-    this.setData(levelInfo);
+    // 获取用户信息
+    const userInfo = this.data.userInfo;
+
+    // 如果用户已登录，使用用户信息中的等级信息
+    if (userInfo && userInfo.level && userInfo.levelTitle) {
+      this.setData({
+        level: userInfo.level,
+        levelTitle: userInfo.levelTitle,
+        experience: userInfo.experience || 0,
+        maxExperience: userInfo.maxExperience || 1000
+      });
+    } else {
+      // 未登录或没有等级信息，使用userService获取等级信息
+      const levelInfo = userService.getLevelInfo(this.data.experience);
+      this.setData(levelInfo);
+    }
   },
 
   /**

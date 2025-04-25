@@ -146,6 +146,7 @@ async function getUserDialogs(userId) {
 
 /**
  * 获取用户特定汤面的对话数据
+ * 注意：一个用户的一个soupId只对应一个dialogId，这是业务上的唯一性约束
  * @param {string} userId 用户ID
  * @param {string} soupId 汤面ID
  * @returns {Promise<Object>} 对话数据
@@ -194,6 +195,7 @@ async function getUserDialog(userId, soupId) {
 
 /**
  * 创建新对话
+ * 注意：一个用户的一个soupId只对应一个dialogId，如果已存在则返回现有对话
  * @param {string} userId 用户ID
  * @param {string} soupId 汤面ID
  * @returns {Promise<Object>} 创建的对话数据

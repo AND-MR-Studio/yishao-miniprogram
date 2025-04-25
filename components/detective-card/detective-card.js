@@ -57,12 +57,64 @@ Component({
    * 组件的初始数据
    */
   data: {
+    // 解析后的侦探名称和ID
+    detectiveName: '',
+    detectiveId: '',
+    // 完整的昵称（包含ID部分）
+    fullNickname: '',
+    // 是否已登录
+    isLoggedIn: false
+  },
+
+  /**
+   * 数据监听器
+   */
+  observers: {
+    'userInfo': function(userInfo) {
+      // 当userInfo变化时，解析侦探ID
+      this.parseDetectiveInfo(userInfo);
+    }
+  },
+
+  /**
+   * 组件生命周期
+   */
+  lifetimes: {
+    attached() {
+      // 组件挂载时，初始化侦探信息
+      this.parseDetectiveInfo(this.properties.userInfo);
+    }
   },
 
   /**
    * 组件的方法列表
    */
   methods: {
+    /**
+     * 解析侦探信息
+     * @param {Object} userInfo - 用户信息
+     */
+    parseDetectiveInfo(userInfo) {
+      // 检查是否已登录
+      const isLoggedIn = userInfo && userService.checkLoginStatus(false);
+
+      // 保存完整的昵称
+      const fullNickname = userInfo?.nickName || '';
+
+      // 解析侦探名称和ID
+      const { name, id } = userService.parseDetectiveId(fullNickname);
+
+      // 更新组件数据
+      this.setData({
+        detectiveName: name,
+        detectiveId: id,
+        fullNickname: fullNickname,
+        isLoggedIn: isLoggedIn,
+        // 未登录状态下，显示"未知侦探"，否则使用后端返回的等级称号
+        levelTitle: isLoggedIn ? (userInfo?.levelTitle || this.properties.levelTitle) : '未知侦探'
+      });
+    },
+
     /**
      * 处理签到
      */
