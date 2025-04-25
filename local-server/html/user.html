@@ -35,6 +35,17 @@
             margin-top: 20px;
             text-align: right;
         }
+        .tag {
+            margin-right: 5px;
+        }
+        .level-info {
+            display: flex;
+            align-items: center;
+        }
+        .level-progress {
+            margin-left: 10px;
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -52,7 +63,7 @@
             <div class="search-box">
                 <el-input
                     v-model="searchQuery"
-                    placeholder="搜索用户昵称/OpenID"
+                    placeholder="搜索用户昵称/用户ID"
                     clearable
                     @clear="handleSearch"
                     style="width: 300px;">
@@ -72,25 +83,61 @@
                     width="150">
                 </el-table-column>
                 <el-table-column
-                    prop="openid"
-                    label="OpenID"
-                    width="280">
+                    prop="userId"
+                    label="用户ID"
+                    width="200">
                 </el-table-column>
                 <el-table-column
                     prop="createTime"
                     label="注册时间"
-                    width="180">
+                    width="150">
                     <template slot-scope="scope">
                         {{ formatDate(scope.row.createTime) }}
                     </template>
                 </el-table-column>
                 <el-table-column
-                    label="统计数据"
-                    width="280">
+                    label="等级信息"
+                    width="200">
+                    <template slot-scope="scope">
+                        <div class="level-info">
+                            <el-tag type="success">Lv.{{ scope.row.level || 1 }}</el-tag>
+                            <span style="margin-left: 5px;">{{ scope.row.levelTitle || '初级侦探' }}</span>
+                        </div>
+                        <el-progress
+                            class="level-progress"
+                            :percentage="calculateLevelProgress(scope.row)"
+                            :format="format => `${scope.row.experience || 0}/${scope.row.maxExperience || 1000}`"
+                            :stroke-width="10">
+                        </el-progress>
+                    </template>
+                </el-table-column>
+                <!-- 修改表格列，移除签到按钮和签到状态显示 -->
+                <el-table-column
+                    label="积分信息"
+                    width="150">
+                    <template slot-scope="scope">
+                        <div>积分: {{ scope.row.points || 0 }}</div>
+                        <div>签到: {{ scope.row.signInCount || 0 }}次</div>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                    label="答题统计"
+                    width="180">
                     <template slot-scope="scope">
                         <div>总答题: {{ scope.row.totalAnswered || 0 }}</div>
                         <div>正确率: {{ calculateAccuracy(scope.row) }}%</div>
                         <div>浏览量: {{ scope.row.totalViewed || 0 }}</div>
+                        <div>今日剩余: {{ scope.row.remainingAnswers || 0 }}次</div>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                    label="内容统计"
+                    width="150">
+                    <template slot-scope="scope">
+                        <div>未解: {{ scope.row.unsolvedCount || 0 }}</div>
+                        <div>已解: {{ scope.row.solvedCount || 0 }}</div>
+                        <div>创作: {{ scope.row.creationCount || 0 }}</div>
+                        <div>收藏: {{ scope.row.favoriteCount || 0 }}</div>
                     </template>
                 </el-table-column>
                 <el-table-column
@@ -130,6 +177,24 @@
                     <el-form-item label="头像">
                         <el-input v-model="editForm.avatarUrl"></el-input>
                     </el-form-item>
+                    <el-form-item label="等级">
+                        <el-input-number v-model="editForm.level" :min="1" :max="100"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="经验值">
+                        <el-input-number v-model="editForm.experience" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="经验上限">
+                        <el-input-number v-model="editForm.maxExperience" :min="1000" :step="200"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="积分">
+                        <el-input-number v-model="editForm.points" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="签到次数">
+                        <el-input-number v-model="editForm.signInCount" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="剩余答题次数">
+                        <el-input-number v-model="editForm.remainingAnswers" :min="0" :max="20"></el-input-number>
+                    </el-form-item>
                 </el-form>
                 <span slot="footer" class="dialog-footer">
                     <el-button @click="dialogVisible = false">取 消</el-button>
@@ -153,10 +218,17 @@
                 pageSize: 10,
                 total: 0,
                 dialogVisible: false,
+                today: new Date().toISOString().split('T')[0],
                 editForm: {
-                    openid: '',
+                    userId: '',
                     nickName: '',
-                    avatarUrl: ''
+                    avatarUrl: '',
+                    level: 1,
+                    experience: 0,
+                    maxExperience: 1000,
+                    points: 0,
+                    signInCount: 0,
+                    remainingAnswers: 0
                 }
             },
             computed: {
@@ -168,7 +240,7 @@
                     if (this.searchQuery) {
                         result = result.filter(user =>
                             user.nickName?.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-                            user.openid?.toLowerCase().includes(this.searchQuery.toLowerCase())
+                            user.userId?.toLowerCase().includes(this.searchQuery.toLowerCase())
                         );
                     }
 
@@ -177,14 +249,31 @@
                 }
             },
             methods: {
+                // 修改请求方法，移除token验证
+                async request(url, method = 'GET', data = null) {
+                    try {
+                        const response = await axios({
+                            url,
+                            method,
+                            data
+                        });
+
+                        return response.data;
+                    } catch (error) {
+                        console.error('请求失败:', error);
+                        throw error;
+                    }
+                },
+
+                // 修改获取用户列表方法
                 async fetchUsers() {
                     this.loading = true;
                     try {
-                        const response = await axios.get('/api/user/list');
-                        if (response.data.success) {
-                            this.users = response.data.data;
+                        const response = await this.request('/api/user/list');
+                        if (response.success) {
+                            this.users = response.data;
                         } else {
-                            this.$message.error(response.data.error || '获取用户列表失败');
+                            this.$message.error(response.error || '获取用户列表失败');
                         }
                     } catch (error) {
                         this.$message.error('获取用户列表失败：' + error.message);
@@ -192,6 +281,23 @@
                         this.loading = false;
                     }
                 },
+
+                // 修改保存用户信息方法
+                async handleSave() {
+                    try {
+                        const response = await this.request('/api/user/update', 'POST', this.editForm);
+                        if (response.success) {
+                            this.$message.success('更新成功');
+                            this.dialogVisible = false;
+                            this.fetchUsers();
+                        } else {
+                            this.$message.error(response.error || '更新失败');
+                        }
+                    } catch (error) {
+                        this.$message.error('更新失败：' + error.message);
+                    }
+                },
+
                 formatDate(date) {
                     if (!date) return '';
                     return new Date(date).toLocaleString('zh-CN');
@@ -200,64 +306,90 @@
                     if (!user.totalAnswered) return 0;
                     return Math.round((user.totalCorrect || 0) / user.totalAnswered * 100);
                 },
+                calculateLevelProgress(user) {
+                    const exp = user.experience || 0;
+                    const maxExp = user.maxExperience || 1000;
+                    return Math.min(Math.round(exp / maxExp * 100), 100);
+                },
                 handleSearch() {
                     this.currentPage = 1;
                 },
-                handleSizeChange(val) {
-                    this.pageSize = val;
+                handleSizeChange(size) {
+                    this.pageSize = size;
                     this.currentPage = 1;
                 },
-                handleCurrentChange(val) {
-                    this.currentPage = val;
+                handleCurrentChange(page) {
+                    this.currentPage = page;
                 },
                 handleEdit(row) {
-                    this.editForm = { ...row };
+                    this.editForm = {
+                        userId: row.userId,
+                        nickName: row.nickName,
+                        avatarUrl: row.avatarUrl,
+                        level: row.level || 1,
+                        experience: row.experience || 0,
+                        maxExperience: row.maxExperience || 1000,
+                        points: row.points || 0,
+                        signInCount: row.signInCount || 0,
+                        remainingAnswers: row.remainingAnswers || 0
+                    };
                     this.dialogVisible = true;
                 },
                 async handleSave() {
                     try {
-                        const response = await axios.post('/api/user/update', this.editForm);
-                        if (response.data.success) {
-                            this.$message.success('保存成功');
+                        const response = await this.request('/api/user/admin-update', 'POST', this.editForm);
+                        if (response.success) {
+                            this.$message.success('更新成功');
                             this.dialogVisible = false;
-                            await this.fetchUsers();
+                            this.fetchUsers();
                         } else {
-                            this.$message.error(response.data.error || '保存失败');
+                            this.$message.error(response.error || '更新失败');
                         }
                     } catch (error) {
-                        this.$message.error('保存失败：' + error.message);
+                        this.$message.error('更新失败：' + error.message);
                     }
                 },
                 async handleDelete(row) {
                     try {
-                        await this.$confirm('确认删除该用户吗？此操作不可恢复', '提示', {
+                        // 使用await等待确认对话框的结果
+                        await this.$confirm('确定要删除该用户吗？', '提示', {
+                            confirmButtonText: '确定',
+                            cancelButtonText: '取消',
                             type: 'warning'
                         });
 
-                        const response = await axios.post('/api/user/delete', {
-                            openid: row.openid
+                        // 如果用户点击了确定，代码会继续执行到这里
+                        // 如果用户点击了取消，会抛出异常并被catch捕获
+                        const response = await this.request('/api/user/delete', 'POST', {
+                            userId: row.userId
                         });
 
-                        if (response.data.success) {
+                        if (response.success) {
                             this.$message.success('删除成功');
-                            await this.fetchUsers();
+                            this.fetchUsers();
                         } else {
-                            this.$message.error(response.data.error || '删除失败');
+                            this.$message.error(response.error || '删除失败');
                         }
                     } catch (error) {
-                        if (error !== 'cancel') {
+                        // 如果是用户取消操作，显示取消信息
+                        if (error === 'cancel') {
+                            this.$message.info('已取消删除');
+                        } else {
+                            // 其他错误
                             this.$message.error('删除失败：' + error.message);
                         }
                     }
                 },
+
                 refreshData() {
                     this.fetchUsers();
                 },
                 openApiDocs() {
-                    window.open('/docs/userAPI.md', '_blank');
+                    window.open('/docs', '_blank');
                 }
             },
             mounted() {
+                // 直接获取用户列表，移除token检查
                 this.fetchUsers();
             }
         });

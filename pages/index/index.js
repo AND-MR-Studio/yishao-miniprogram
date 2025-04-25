@@ -232,9 +232,9 @@ Page({
     this._isPreloading = true;
 
     try {
-      // 检查用户是否已登录
-      const userInfo = wx.getStorageSync('userInfo');
-      if (!userInfo) {
+      // 检查用户是否已登录（使用token判断）
+      const token = wx.getStorageSync('token');
+      if (!token) {
         // 未登录状态下，通知按钮重置到原始状态，不进行预加载
         const startButton = this.selectComponent('.start-button');
         if (startButton) {
@@ -308,8 +308,8 @@ Page({
    */
   async onButtonExpandEnd() {
     // 再次检查用户是否已登录（以防万一）
-    const userInfo = wx.getStorageSync('userInfo');
-    if (!userInfo) {
+    const token = wx.getStorageSync('token');
+    if (!token) {
       // 未登录状态下，不切换到喝汤状态
       return;
     }

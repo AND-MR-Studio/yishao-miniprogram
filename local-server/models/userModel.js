@@ -11,12 +11,12 @@ const DAILY_SIGN_IN_EXPERIENCE = 20; // 每日签到经验值
 
 /**
  * 创建默认用户对象
- * @param {string} userId - 用户ID
  * @returns {Object} - 默认用户对象
  */
-function createDefaultUser(userId) {
+function createDefaultUser() {
   return {
-    userId,
+    // userId和openid将在调用时设置
+    userId: '',
     avatarUrl: DEFAULT_AVATAR_URL,
     nickName: '',
     openid: '',
@@ -106,7 +106,7 @@ module.exports = {
   MAX_DAILY_ANSWERS,
   DAILY_SIGN_IN_POINTS,
   DAILY_SIGN_IN_EXPERIENCE,
-  
+
   // 函数
   createDefaultUser,
   generateDetectiveId,

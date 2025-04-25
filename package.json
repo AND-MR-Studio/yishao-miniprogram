@@ -22,6 +22,7 @@
   "homepage": "https://github.com/AND-MR-Studio/yishao-miniprogram#readme",
   "dependencies": {
     "@babel/runtime": "^7.27.0",
+    "axios": "^1.6.7",
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",

@@ -5,7 +5,7 @@ const path = require('path');
 const fs_extra = require('fs-extra');
 
 // 导入服务模块
-const dialogService = require('./dialogService');
+const dialogService = require('./services/dialogService');
 const userService = require('./services/userService');
 const soupService = require('./services/soupService');
 
@@ -58,8 +58,10 @@ async function initServices() {
 
 // 启动服务器
 initServices().then(() => {
-  app.listen(PORT, () => {
+  // 监听所有网络接口，而不仅仅是 localhost
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`本地服务器运行在 http://localhost:${PORT}`);
+    console.log(`局域网访问地址: http://192.168.31.233:${PORT}`);
     console.log(`管理后台:`);
     console.log(`  - 海龟汤管理: http://localhost:${PORT}/soup.html`);
     console.log(`  - 对话记录: http://localhost:${PORT}/dialog.html`);

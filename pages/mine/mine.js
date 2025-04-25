@@ -36,7 +36,8 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad() {
-    this.refreshPageData();
+    // 页面加载时不主动刷新数据，等待onShow处理
+    // 这样可以避免onLoad和onShow重复刷新
   },
 
   /**
@@ -48,7 +49,9 @@ Page({
         selected: 2
       });
     }
-    // 每次显示页面时更新数据
+
+    // 每次显示页面时刷新数据
+    // 由于onLoad不再刷新，这里是唯一的刷新点
     this.refreshPageData();
   },
 
@@ -180,22 +183,43 @@ Page({
   confirmUserInfo() {
     const userInfo = this.data.userInfo;
 
+    // 防止重复调用
+    if (this._isSettingUserInfo) return;
+    this._isSettingUserInfo = true;
+
     // 使用userService设置用户信息
     userService.setUserInfo(userInfo)
       .then(() => {
         // 更新成功，关闭弹窗
         this.closeUserInfoModal();
 
-        // 显示提示
+        // 显示成功提示
         wx.showToast({
           title: '侦探信息已设置',
           icon: 'success',
           duration: 2000
         });
       })
-      .catch(() => {
-        // 更新失败，但本地可能已更新
+      .catch((error) => {
+        console.error('设置用户信息失败:', error);
+
+        // 如果是未登录错误，提示用户登录
+        if (error.includes && error.includes('未登录')) {
+          wx.showToast({
+            title: '请先登录',
+            icon: 'none',
+            duration: 2000
+          });
+        }
+
+        // 关闭弹窗
         this.closeUserInfoModal();
+      })
+      .finally(() => {
+        // 重置标志
+        setTimeout(() => {
+          this._isSettingUserInfo = false;
+        }, 500);
       });
   },
 
@@ -210,22 +234,35 @@ Page({
    * 处理登录
    */
   handleLogin() {
-    // 使用userService登录
-    userService.login((userInfo) => {
-      // 更新页面数据
-      this.setData({
-        userInfo,
-        buttonConfig: {
-          type: 'unlight',
-          text: '退出登录'
-        }
-      });
-
-      // 显示用户信息设置弹窗
-      this.openUserInfoModal();
-    }).catch(() => {
-      // 登录失败，不需要处理，userService已经显示了提示
+    // 显示加载中提示
+    wx.showLoading({
+      title: '登录中...',
+      mask: true
     });
+
+    // 使用userService登录，不使用回调方式，统一使用Promise
+    userService.login()
+      .then(userInfo => {
+        // 隐藏加载提示
+        wx.hideLoading();
+
+        // 更新页面数据
+        this.setData({
+          userInfo,
+          buttonConfig: {
+            type: 'unlight',
+            text: '退出登录'
+          }
+        });
+
+        // 显示用户信息设置弹窗
+        this.openUserInfoModal();
+      })
+      .catch(() => {
+        // 隐藏加载提示
+        wx.hideLoading();
+        // 登录失败，不需要处理，userService已经显示了提示
+      });
   },
 
   /**

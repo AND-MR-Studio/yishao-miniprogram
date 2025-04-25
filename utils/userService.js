@@ -24,8 +24,9 @@ function getUserInfo() {
  * 获取剩余回答次数
  */
 function getRemainingAnswers() {
-  // 假设从本地存储或者调用API获取剩余次数
-  return wx.getStorageSync('remainingAnswers') || 0;
+  // 从用户信息中获取剩余回答次数
+  const userInfo = getUserInfo();
+  return userInfo?.remainingAnswers || 0;
 }
 
 /**
@@ -42,12 +43,11 @@ function updateAvatar(avatarUrl, userInfo) {
   userInfo.avatarUrl = avatarUrl;
   wx.setStorageSync(USER_INFO_KEY, userInfo);
 
-  // 上传到服务器
+  // 上传到服务器，token会通过request.js自动添加到请求头
   const config = {
     url: api.user_update_url,
     method: 'POST',
     data: {
-      openid: userInfo.openId,
       avatarUrl: avatarUrl
     }
   };
@@ -69,12 +69,11 @@ function updateNickname(nickName, userInfo) {
   userInfo.nickName = nickName;
   wx.setStorageSync(USER_INFO_KEY, userInfo);
 
-  // 上传到服务器
+  // 上传到服务器，token会通过request.js自动添加到请求头
   const config = {
     url: api.user_update_url,
     method: 'POST',
     data: {
-      openid: userInfo.openId,
       nickName: nickName
     }
   };
@@ -115,13 +114,52 @@ function parseDetectiveId(nickname) {
   };
 }
 
+// 登录状态标志
+let isLoggingIn = false;
+
 /**
  * 登录
- * @param {Function} callback - 登录成功回调
  * @returns {Promise} - 登录结果
  */
-function login(callback) {
+function login() {
+  // 如果已经在登录中，直接返回一个等待的Promise
+  if (isLoggingIn) {
+    return new Promise((resolve, reject) => {
+      // 每100ms检查一次登录状态
+      const checkLoginStatus = () => {
+        const token = wx.getStorageSync('token');
+        const userInfo = wx.getStorageSync(USER_INFO_KEY);
+
+        if (token && userInfo) {
+          // 登录成功，返回用户信息
+          resolve(userInfo);
+        } else if (!isLoggingIn) {
+          // 登录已完成但失败
+          reject('登录失败');
+        } else {
+          // 继续等待
+          setTimeout(checkLoginStatus, 100);
+        }
+      };
+
+      checkLoginStatus();
+    });
+  }
+
+  // 设置登录标志
+  isLoggingIn = true;
+
   return new Promise((resolve, reject) => {
+    // 检查是否已经登录
+    const token = wx.getStorageSync('token');
+    const userInfo = wx.getStorageSync(USER_INFO_KEY);
+
+    if (token && userInfo) {
+      isLoggingIn = false;
+      return resolve(userInfo);
+    }
+
+    // 未登录，执行登录流程
     wx.login({
       success: res => {
         // 发送 res.code 到后台换取 openId, sessionKey, unionId
@@ -139,29 +177,41 @@ function login(callback) {
 
         api.request(config).then(res => {
           if (res.success && res.data) {
-            // 构建用户信息
+            // 构建用户信息 (不保存 openid)
             const userInfo = {
               avatarUrl: res.data.userInfo?.avatarUrl || DEFAULT_AVATAR_URL,
               nickName: res.data.userInfo?.nickName || '',
-              openId: res.data.openid,
-              loginTime: new Date().getTime()
+              loginTime: new Date().getTime(),
+              // 保存等级信息
+              level: res.data.level?.level || 1,
+              levelTitle: res.data.level?.levelTitle || '见习侦探',
+              experience: res.data.level?.experience || 0,
+              maxExperience: res.data.level?.maxExperience || 1000,
+              // 保存回答次数信息
+              remainingAnswers: res.data.answers?.remainingAnswers || 0,
+              // 保存积分信息
+              points: res.data.points?.total || 0,
+              signInCount: res.data.points?.signInCount || 0,
+              lastSignInDate: res.data.points?.lastSignInDate || null
             };
 
-            // 保存到本地存储
+            // 单独保存 token 到本地存储
+            if (res.data.token) {
+              wx.setStorageSync('token', res.data.token);
+            }
+
+            // 保存用户信息到本地存储
             wx.setStorageSync(USER_INFO_KEY, userInfo);
             wx.setStorageSync('loginTimestamp', new Date().getTime());
 
-            // 如果有回调函数，执行回调
-            if (typeof callback === 'function') {
-              callback(userInfo);
-            }
-
+            isLoggingIn = false;
             resolve(userInfo);
           } else {
             wx.showToast({
               title: '登录失败，请重试',
               icon: 'none'
             });
+            isLoggingIn = false;
             reject('登录失败');
           }
         }).catch(err => {
@@ -169,6 +219,7 @@ function login(callback) {
             title: '登录失败，请重试',
             icon: 'none'
           });
+          isLoggingIn = false;
           reject(err);
         });
       },
@@ -177,6 +228,7 @@ function login(callback) {
           title: '登录失败，请重试',
           icon: 'none'
         });
+        isLoggingIn = false;
         reject(err);
       }
     });
@@ -191,6 +243,7 @@ function logout() {
   // 清除本地存储
   wx.removeStorageSync(USER_INFO_KEY);
   wx.removeStorageSync('loginTimestamp');
+  wx.removeStorageSync('token'); // 清除token
 
   // 提示用户
   wx.showToast({
@@ -211,8 +264,9 @@ function logout() {
  * @returns {boolean} - 是否已登录
  */
 function checkLoginStatus(showToast = true) {
-  const userInfo = getUserInfo();
-  if (!userInfo) {
+  // 只检查token，不触发登录流程
+  const token = wx.getStorageSync('token');
+  if (!token) {
     if (showToast) {
       wx.showToast({
         title: '请先登录',
@@ -309,13 +363,19 @@ function setUserInfo(userInfo) {
   // 保存到本地存储
   wx.setStorageSync(USER_INFO_KEY, userInfo);
 
-  // 上传到服务器
+  // 检查用户是否已登录（检查token是否存在）
+  const token = wx.getStorageSync('token');
+  if (!token) {
+    return Promise.reject('用户未登录，请先登录');
+  }
+
+  // 上传到服务器，token会通过request.js自动添加到请求头
   const config = {
     url: api.user_update_url,
     method: 'POST',
     data: {
-      openid: userInfo.openId,
-      nickName: userInfo.nickName
+      nickName: userInfo.nickName,
+      avatarUrl: userInfo.avatarUrl
     }
   };
 

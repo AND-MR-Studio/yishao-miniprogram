@@ -14,9 +14,8 @@
  */
 const request = (options) => {
   return new Promise((resolve, reject) => {
-    // 获取用户token
-    const userInfo = wx.getStorageSync('userInfo') || {};
-    const token = userInfo.token;
+    // 直接从本地存储获取 token
+    const token = wx.getStorageSync('token');
 
     // 合并请求头
     const header = {
@@ -45,8 +44,11 @@ const request = (options) => {
         }
         // token过期
         else if (res.statusCode === 401) {
-          // 清除本地存储的用户信息
+          // 清除本地存储的用户信息和token
           wx.removeStorageSync('userInfo');
+          wx.removeStorageSync('token');
+          wx.removeStorageSync('loginTimestamp');
+
           // 跳转到登录页或重新登录
           reject(new Error('登录已过期，请重新登录'));
         }
@@ -57,13 +59,24 @@ const request = (options) => {
       },
       fail: (err) => {
         console.error('网络请求失败:', err);
+
+        // 根据错误类型提供更具体的错误信息
+        let errorMsg = '网络请求失败';
+
+        if (err.errMsg && err.errMsg.includes('ERR_CONNECTION_REFUSED')) {
+          errorMsg = '无法连接到服务器，请确保服务器已启动';
+        } else if (err.errMsg && err.errMsg.includes('timeout')) {
+          errorMsg = '请求超时，请检查网络连接';
+        }
+
         // 显示错误提示
         wx.showToast({
-          title: '网络请求失败，请检查网络连接',
+          title: errorMsg,
           icon: 'none',
-          duration: 2000
+          duration: 3000
         });
-        reject(new Error('网络请求失败'));
+
+        reject(new Error(errorMsg));
       }
     });
   });

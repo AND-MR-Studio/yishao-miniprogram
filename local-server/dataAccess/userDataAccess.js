@@ -31,14 +31,27 @@ async function initUserFile() {
 
 /**
  * 读取用户数据
- * @param {string} userId - 用户ID
+ * @param {string} openid - 用户的openid
  * @returns {Object} - 用户数据
  */
-async function getUserData(userId) {
+async function getUserData(openid) {
   try {
     await initUserFile();
     const data = await fs.readJson(USERS_FILE);
-    return data[userId] || createDefaultUser(userId);
+
+    // 使用openid作为键获取用户数据
+    // 如果用户不存在，创建一个新的用户对象
+    // 注意：createDefaultUser不应该使用openid作为userId
+    const userData = data[openid];
+    if (userData) {
+      return userData;
+    } else {
+      // 创建新用户，确保userId和openid正确设置
+      const newUser = createDefaultUser();
+      newUser.openid = openid;
+      newUser.userId = `wxUser_${openid.substring(0, 8)}`;
+      return newUser;
+    }
   } catch (err) {
     console.error('读取用户数据失败:', err);
     return null;
@@ -47,19 +60,35 @@ async function getUserData(userId) {
 
 /**
  * 保存用户数据
- * @param {string} userId - 用户ID
+ * @param {string} openid - 用户的openid
  * @param {Object} userData - 用户数据
  * @returns {boolean} - 是否保存成功
  */
-async function saveUserData(userId, userData) {
+async function saveUserData(openid, userData) {
   try {
+    if (!openid) {
+      console.error('保存用户数据失败: openid参数为空');
+      return false;
+    }
+
     await initUserFile();
     const allUsers = await fs.readJson(USERS_FILE);
-    allUsers[userId] = {
-      ...userData,
-      updateTime: new Date().toISOString()
-    };
-    await fs.writeJson(USERS_FILE, allUsers);
+
+    // 确保userData中包含正确的openid
+    userData.openid = openid;
+
+    // 确保userData中有userId
+    if (!userData.userId) {
+      userData.userId = `wxUser_${openid.substring(0, 8)}`;
+    }
+
+    // 更新时间戳
+    userData.updateTime = new Date().toISOString();
+
+    // 使用openid作为键保存用户数据
+    allUsers[openid] = userData;
+
+    await fs.writeJson(USERS_FILE, allUsers, { spaces: 2 });
     return true;
   } catch (err) {
     console.error('保存用户数据失败:', err);
@@ -83,17 +112,26 @@ async function getAllUsers() {
 
 /**
  * 删除用户数据
- * @param {string} userId - 用户ID
+ * @param {string} openid - 用户的openid
  * @returns {boolean} - 是否删除成功
  */
-async function deleteUserData(userId) {
+async function deleteUserData(openid) {
   try {
-    await initUserFile();
-    const allUsers = await fs.readJson(USERS_FILE);
-    if (!allUsers[userId]) {
+    if (!openid) {
       return false;
     }
-    delete allUsers[userId];
+
+    await initUserFile();
+    const allUsers = await fs.readJson(USERS_FILE);
+
+    if (!allUsers[openid]) {
+      return false;
+    }
+
+    // 删除用户
+    delete allUsers[openid];
+
+    // 保存更新后的用户数据
     await fs.writeJson(USERS_FILE, allUsers);
     return true;
   } catch (err) {
@@ -108,10 +146,26 @@ async function init() {
   console.log('用户数据访问层初始化完成');
 }
 
+/**
+ * 根据 token 获取用户数据
+ * @param {string} token - 用户 token
+ * @returns {Object|null} - 用户数据或 null
+ */
+async function getUserByToken(token) {
+  const users = await getAllUsers();
+  for (const openid in users) {
+    if (users[openid].token === token) {
+      return users[openid];
+    }
+  }
+  return null; // 没有找到匹配的 token
+}
+
 module.exports = {
   init,
   getUserData,
   saveUserData,
   getAllUsers,
-  deleteUserData
+  deleteUserData,
+  getUserByToken // 导出新方法
 };

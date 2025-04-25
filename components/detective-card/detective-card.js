@@ -68,7 +68,9 @@ Component({
      */
     handleSignIn() {
       // 检查登录状态
-      if (!userService.checkLoginStatus()) return;
+      if (!userService.checkLoginStatus()) {
+        return;
+      }
 
       // 触发签到事件
       this.triggerEvent('signin');
