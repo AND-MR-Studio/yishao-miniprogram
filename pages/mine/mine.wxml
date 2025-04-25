@@ -114,9 +114,12 @@
             type="nickname"
             class="nickname-input-centered"
             placeholder="{{userInfo.nickName ? '' : '请输入侦探代号'}}"
+            placeholder-style="text-align: center;"
             value="{{userInfo.nickName}}"
             bindinput="onInputNickname"
             bindnicknamereview="onInputNickname"
+            style="text-align: center;"
+            adjust-position="false"
           />
         </view>
       </view>
