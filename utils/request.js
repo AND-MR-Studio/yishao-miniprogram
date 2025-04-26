@@ -106,8 +106,122 @@ const agentRequest = (options) => {
   });
 };
 
+/**
+ * 对话服务专用请求方法
+ * @param {Object} options - 请求配置
+ * @returns {Promise} 返回Promise对象
+ */
+const dialogRequest = (options) => {
+  return request({
+    ...options,
+    service: 'dialog'
+  });
+};
+
+/**
+ * 用户服务专用请求方法
+ * @param {Object} options - 请求配置
+ * @returns {Promise} 返回Promise对象
+ */
+const userRequest = (options) => {
+  return request({
+    ...options,
+    service: 'user'
+  });
+};
+
+/**
+ * 开放请求方法（不需要身份验证）
+ * @param {Object} options - 请求配置
+ * @returns {Promise} 返回Promise对象
+ */
+const requestOpen = (options) => {
+  return new Promise((resolve, reject) => {
+    // 合并请求头
+    const header = {
+      'Content-Type': 'application/json',
+      ...options.header
+    };
+
+    // 直接使用传入的URL
+    wx.request({
+      url: options.url,
+      method: options.method || 'GET',
+      data: options.data,
+      header: header,
+      success: (res) => {
+        const { data } = res;
+
+        // 请求成功
+        if (res.statusCode === 200) {
+          resolve(data);
+        }
+        // 其他错误
+        else {
+          reject(new Error(data.error || '请求失败'));
+        }
+      },
+      fail: (err) => {
+        console.error('网络请求失败:', err);
+        reject(new Error('网络请求失败'));
+      }
+    });
+  });
+};
+
+/**
+ * 上传文件
+ * @param {Object} options - 上传配置
+ * @param {string} options.url - 上传地址
+ * @param {string} options.filePath - 文件路径
+ * @param {string} options.name - 文件对应的 key
+ * @param {Object} [options.formData] - 附加的表单数据
+ * @returns {Promise} 返回Promise对象
+ */
+const uploadFile = (options) => {
+  return new Promise((resolve, reject) => {
+    // 从本地存储获取 token
+    const token = wx.getStorageSync('token');
+
+    // 合并请求头
+    const header = {
+      ...options.header
+    };
+
+    // 如果有token，添加到请求头
+    if (token) {
+      header.Authorization = `Bearer ${token}`;
+    }
+
+    wx.uploadFile({
+      url: options.url,
+      filePath: options.filePath,
+      name: options.name,
+      formData: options.formData,
+      header: header,
+      success: (res) => {
+        if (res.statusCode === 200) {
+          // 将返回的JSON字符串转换为对象
+          const data = JSON.parse(res.data);
+          resolve(data);
+        } else {
+          reject(new Error('上传失败'));
+        }
+      },
+      fail: (err) => {
+        console.error('上传文件失败:', err);
+        reject(new Error('上传文件失败'));
+      }
+    });
+  });
+};
+
 module.exports = {
   request,
+  requestOpen,
   soupRequest,
-  agentRequest
+  dialogRequest,
+  userRequest,
+  agentRequest,
+  uploadFile
 };

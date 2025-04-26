@@ -2,7 +2,7 @@
   "oZjgI7FbA60VpUAEys_nQSbb16h4": {
     "userId": "wxUser_oZjgI7Fb",
     "avatarUrl": "/static/images/default-avatar.jpg",
-    "nickName": "一勺侦探#31605",
+    "nickName": "一勺侦探#85528",
     "openid": "oZjgI7FbA60VpUAEys_nQSbb16h4",
     "answeredSoups": [],
     "viewedSoups": [],
@@ -21,11 +21,11 @@
     "solvedCount": 0,
     "creationCount": 0,
     "favoriteCount": 0,
-    "createTime": "2025-04-25T05:37:36.436Z",
-    "updateTime": "2025-04-25T05:37:37.855Z",
-    "token": "2b77866057906ef5df043af85826f7ac42e09a6d223921caea4978310127675c",
-    "tokenExpireTime": 1746164256438,
-    "lastLoginTime": "2025-04-25T05:37:36.438Z",
+    "createTime": "2025-04-25T07:51:24.458Z",
+    "updateTime": "2025-04-25T08:19:15.978Z",
+    "token": "3f1b9144a134adbc88beea29e55b40bce97f6aa47450c9a797d936804d903e1b",
+    "tokenExpireTime": 1746173954558,
+    "lastLoginTime": "2025-04-25T08:19:14.558Z",
     "lastAnswerReset": "2025-04-25"
   }
 }

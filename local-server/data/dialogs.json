@@ -1,46 +1,24 @@
 {
-  "dialog_1745306274187": {
-    "dialogId": "dialog_1745306274187",
+  "dialog_1745568111563": {
+    "dialogId": "dialog_1745568111563",
     "soupId": "local_001",
     "userId": "wxUser_oZjgI7Fb",
     "messages": [
       {
-        "messageId": "msg_1745306274188_wxUser_oZjgI7Fb",
+        "messageId": "msg_1745568114149",
         "userId": "wxUser_oZjgI7Fb",
         "role": "user",
-        "content": "这是一条测试消息",
-        "timestamp": 1745306274188
+        "content": "1",
+        "timestamp": 1745568114151
       },
       {
-        "messageId": "msg_1745306274188_wxUser_oZjgI7Fb",
+        "messageId": "msg_1745568114149",
         "userId": "system",
         "role": "agent",
-        "content": "这是一条回复消息",
-        "timestamp": 1745306274189
+        "content": "test_reply",
+        "timestamp": 1745568114182
       }
     ],
-    "lastUpdated": 1745306274189
-  },
-  "dialog_1745306274190": {
-    "dialogId": "dialog_1745306274190",
-    "soupId": "local_002",
-    "userId": "wxUser_oZjgI7Fb",
-    "messages": [
-      {
-        "messageId": "msg_1745306274191_wxUser_oZjgI7Fb",
-        "userId": "wxUser_oZjgI7Fb",
-        "role": "user",
-        "content": "这是另一条测试消息",
-        "timestamp": 1745306274191
-      },
-      {
-        "messageId": "msg_1745306274191_wxUser_oZjgI7Fb",
-        "userId": "system",
-        "role": "agent",
-        "content": "这是另一条回复消息",
-        "timestamp": 1745306274192
-      }
-    ],
-    "lastUpdated": 1745306274192
+    "lastUpdated": 1745568114182
   }
 }

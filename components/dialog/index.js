@@ -12,6 +12,14 @@ Component({
       type: String,
       value: ''
     },
+    dialogId: {
+      type: String,
+      value: ''
+    },
+    userId: {
+      type: String,
+      value: ''
+    },
     // 是否启用打字机效果
     enableTyping: {
       type: Boolean,
@@ -32,7 +40,8 @@ Component({
     loading: false,
     isAnimating: false,
     displayLines: [],
-    animatingMessageIndex: -1 // 当前正在执行动画的消息索引
+    animatingMessageIndex: -1, // 当前正在执行动画的消息索引
+    _previousDialogId: '' // 用于跟踪dialogId变化，避免重复加载
   },
 
   lifetimes: {
@@ -69,20 +78,27 @@ Component({
 
       if (visible) {
         this.showDialog();
-        // 当对话框显示时加载对话记录
-        wx.nextTick(() => {
-          this.loadDialogMessages();
-        });
+        // 注意：不再在这里加载对话记录，避免重复加载
+        // 对话记录已经在 onButtonPreload 中预加载
       } else {
         this.hideDialog();
       }
     },
     'soupId': function(soupId) {
       // 当soupId变化且对话框可见时，重新加载对话记录
-      if (soupId && this.data.visible && !this.data.isAnimating) {
+      // 但只有在没有dialogId的情况下才加载，避免重复加载
+      if (soupId && this.data.visible && !this.data.isAnimating && !this.properties.dialogId) {
         wx.nextTick(() => {
           this.loadDialogMessages();
         });
+      }
+    },
+    'dialogId': function(dialogId) {
+      // 当dialogId变化且对话框可见时，重新加载对话记录
+      // 但只有在之前没有dialogId的情况下才加载，避免重复加载
+      if (dialogId && this.data.visible && !this.data.isAnimating && !this.data._previousDialogId) {
+        this.data._previousDialogId = dialogId;
+        // 不再在这里加载对话记录，避免重复加载
       }
     }
   },
@@ -165,11 +181,12 @@ Component({
 
     // 加载对话记录
     async loadDialogMessages() {
-      // 优先使用组件属性中的 soupId，如果没有则使用 dialogService 中的
+      // 优先使用组件属性中的 dialogId，如果没有则使用 dialogService 中的
+      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
       const soupId = this.properties.soupId || dialogService.getCurrentSoupId();
 
-      if (!soupId) {
-        console.log('缺少 soupId，仅加载初始化消息');
+      if (!dialogId) {
+        console.log('缺少 dialogId，仅加载初始化消息');
         // 加载初始化消息
         const initialMessages = dialogService.getInitialSystemMessages();
         this.setData({
@@ -183,11 +200,14 @@ Component({
       this.setData({ loading: true });
 
       try {
-        // 确保服务层也知道当前的 soupId
-        dialogService.setCurrentSoupId(soupId);
+        // 确保服务层也知道当前的 dialogId 和 soupId
+        dialogService.setCurrentDialogId(dialogId);
+        if (soupId) {
+          dialogService.setCurrentSoupId(soupId);
+        }
 
         // 从服务器获取对话记录
-        const messages = await dialogService.getDialogMessages(soupId);
+        const messages = await dialogService.getDialogMessages(dialogId);
 
         // 更新到页面
         this.setData({
@@ -237,9 +257,33 @@ Component({
       const { value } = e.detail;
       if (!value || !value.trim() || this.data.isAnimating) return;
 
-      // 设置当前汤面ID
+      // 获取必要参数
       const soupId = this.properties.soupId || '';
+      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
+      const userId = this.properties.userId || '';
+
+      // 检查必要参数
+      if (!dialogId) {
+        console.error('发送消息失败: 缺少对话ID');
+        wx.showToast({
+          title: '发送失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      if (!userId) {
+        console.error('发送消息失败: 缺少用户ID');
+        wx.showToast({
+          title: '发送失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      // 设置当前汤面ID和对话ID
       dialogService.setCurrentSoupId(soupId);
+      dialogService.setCurrentDialogId(dialogId);
 
       // 使用服务层处理用户输入
       const { userMessage } = dialogService.handleUserInput(value.trim());
@@ -258,7 +302,8 @@ Component({
         // 发送消息到服务器并获取回复
         const reply = await dialogService.sendMessage({
           message: userMessage.content,
-          soupId,
+          userId: userId,
+          dialogId: dialogId,
           messageId: userMessage.id // 传递用户消息 ID
         });
 

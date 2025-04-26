@@ -3,16 +3,17 @@
   <!-- 顶部卡片区域：头像、昵称和ID -->
   <view class="card-content">
     <view class="avatar-section">
-      <image class="avatar-large" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+      <image class="avatar-large" src="{{detectiveInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
     </view>
 
     <view class="info-section">
       <view class="name-badge-row">
-        <text class="name-value">{{userInfo.nickName ? userInfo.nickName.split('#')[0] : '未登录的侦探'}}</text>
+        <!-- 显示昵称 -->
+        <text class="name-value">{{isLoggedIn ? nickName : '未登录的侦探'}}</text>
         <view class="level-badge">[{{levelTitle}}]</view>
       </view>
       <view class="detective-id">
-        <text>探员ID: {{userInfo ? userInfo.nickName ? userInfo.nickName.split('#')[1] || '未设置' : '未设置' : '未登录'}}</text>
+        <text>探员代号: {{isLoggedIn ? detectiveId : '未登录'}}</text>
       </view>
     </view>
   </view>

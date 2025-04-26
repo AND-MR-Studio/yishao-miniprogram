@@ -18,3 +18,4 @@ node_modules/
 project.private.config.json
 .trae/rules/project_rules.md
 local-server/data/soups.json
+local-server/

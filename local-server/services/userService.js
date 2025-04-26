@@ -224,18 +224,10 @@ function initUserRoutes(app) {
         userData.nickName = userInfo.nickName || userData.nickName;
       }
 
-      // 如果是新用户，初始化数据
+      // 无论是否是新用户，都确保有侦探ID和昵称
+      // 设置创建时间（如果是新用户）
       if (!userData.createTime) {
         userData.createTime = new Date().toISOString();
-        userData.openid = openid; // 仍然存储 openid，但不对外暴露
-
-        // 生成用户ID
-        userData.userId = `wxUser_${openid.substring(0, 8)}`;
-
-        if (!userData.nickName) {
-          userData.nickName = userModel.generateDetectiveId();
-        }
-
         userData.level = 1;
         userData.experience = 0;
         userData.maxExperience = 1000;
@@ -243,9 +235,25 @@ function initUserRoutes(app) {
         userData.remainingAnswers = userModel.MAX_DAILY_ANSWERS;
       }
 
-      // 确保所有用户都有userId
-      if (!userData.userId) {
-        userData.userId = `wxUser_${openid.substring(0, 8)}`;
+      // 确保存储openid（但不对外暴露）
+      userData.openid = openid;
+
+      // 确保有侦探ID
+      if (!userData.detectiveId) {
+        // 获取所有用户数据，计算当前用户数量
+        const allUsers = await userDataAccess.getAllUsers();
+        const userCount = Object.keys(allUsers).length;
+
+        // 生成侦探ID（纯数字部分）
+        userData.detectiveId = userModel.generateDetectiveId(userCount);
+        console.log(`为用户 ${userData.userId} 生成侦探ID: ${userData.detectiveId}`);
+      }
+
+      // 确保有昵称
+      if (!userData.nickName) {
+        // 使用默认的"一勺侦探#xxxxx"格式
+        userData.nickName = userModel.getFullnickName(userData.detectiveId);
+        console.log(`为用户 ${userData.userId} 生成默认昵称: ${userData.nickName}`);
       }
 
       // 生成或更新 token
@@ -266,9 +274,11 @@ function initUserRoutes(app) {
       // 返回用户信息和 token，不返回 openid
       return sendResponse(res, true, {
         token: userData.token, // 返回 token
+        userId: userData.userId, // 返回 userId
         userInfo: {
           avatarUrl: userData.avatarUrl,
-          nickName: userData.nickName
+          nickName: userData.nickName,
+          detectiveId: userData.detectiveId || '' // 返回侦探ID
         },
         level: {
           level: userData.level,
@@ -306,8 +316,51 @@ function initUserRoutes(app) {
       // 更新用户数据中的字段
       Object.keys(updateData).forEach(key => {
         // 只更新允许的字段，避免更新敏感字段如 token、openid 等
-        if (['avatarUrl', 'nickName'].includes(key) && updateData[key]) {
+        if (['avatarUrl'].includes(key) && updateData[key]) {
           userData[key] = updateData[key];
+        }
+        // 特殊处理昵称字段，允许为空
+        if (key === 'nickName') {
+          // 如果昵称为空，使用默认的"一勺侦探#xxxxx"格式
+          if (!updateData[key] || updateData[key].trim() === '') {
+            // 确保用户有detectiveId
+            if (!userData.detectiveId) {
+              // 如果没有detectiveId，生成一个新的
+              // 注意：这里我们不能使用await，因为我们在forEach回调中
+              // 所以我们使用同步方式生成一个临时ID
+              userData.detectiveId = userModel.generateDetectiveId(0); // 临时使用0
+              userData.nickName = userModel.getFullnickName(userData.detectiveId);
+              console.log(`更新时为用户 ${userData.userId} 生成临时侦探ID: ${userData.detectiveId} 和昵称: ${userData.nickName}`);
+
+              // 在下一个事件循环中异步更新为正确的ID
+              setTimeout(async () => {
+                try {
+                  const users = await userDataAccess.getAllUsers();
+                  const userCount = Object.keys(users || {}).length;
+                  const correctId = userModel.generateDetectiveId(userCount);
+
+                  // 获取最新的用户数据
+                  const latestUserData = await userDataAccess.getUserData(openid);
+                  latestUserData.detectiveId = correctId;
+                  latestUserData.nickName = userModel.getFullnickName(correctId);
+
+                  // 保存更新后的用户数据
+                  userDataAccess.saveUserData(openid, latestUserData);
+                  console.log(`异步更新用户 ${latestUserData.userId} 的侦探ID为: ${correctId}`);
+                } catch (err) {
+                  console.error('异步更新侦探ID失败:', err);
+                }
+              }, 0);
+            } else {
+              // 如果有detectiveId，使用它生成默认昵称
+              userData.nickName = userModel.getFullnickName(userData.detectiveId);
+              console.log(`更新时为用户 ${userData.userId} 使用现有侦探ID生成昵称: ${userData.nickName}`);
+            }
+          } else {
+            // 用户提供了自定义昵称，直接使用
+            userData.nickName = updateData[key];
+            console.log(`用户 ${userData.userId} 设置自定义昵称: ${userData.nickName}`);
+          }
         }
       });
 
@@ -398,10 +451,12 @@ function initUserRoutes(app) {
 
       // 返回信息（不需要再返回 openid）
       return sendResponse(res, true, {
-         userInfo: {
-           avatarUrl: userData.avatarUrl,
-           nickName: userData.nickName
-         },
+        userId: userData.userId, // 返回 userId
+        userInfo: {
+          avatarUrl: userData.avatarUrl,
+          nickName: userData.nickName,
+          detectiveId: userData.detectiveId || '' // 返回侦探ID
+        },
         stats: {
           totalAnswered: userData.totalAnswered,
           totalCorrect: userData.totalCorrect,
