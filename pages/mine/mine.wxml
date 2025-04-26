@@ -7,17 +7,8 @@
     <!-- 用户名片 -->
     <detective-card
       id="detective-card"
-      userInfo="{{userInfo}}"
+      detectiveInfo="{{detectiveInfo}}"
       defaultAvatarUrl="{{defaultAvatarUrl}}"
-      remainingAnswers="{{remainingAnswers}}"
-      level="{{level}}"
-      levelTitle="{{levelTitle}}"
-      experience="{{experience}}"
-      maxExperience="{{maxExperience}}"
-      unsolvedCount="{{unsolvedCount}}"
-      solvedCount="{{solvedCount}}"
-      creationCount="{{creationCount}}"
-      favoriteCount="{{favoriteCount}}"
       bind:signin="handleSignIn"
       bind:navigate="handleNavigate">
     </detective-card>
@@ -113,13 +104,14 @@
           <input
             type="nickname"
             class="nickname-input-centered"
-            placeholder="{{userInfo.nickName ? '' : '请输入侦探代号'}}"
+            placeholder="请输入昵称（六字以内）"
             placeholder-style="text-align: center;"
             value="{{userInfo.nickName}}"
             bindinput="onInputNickname"
             bindnicknamereview="onInputNickname"
             style="text-align: center;"
             adjust-position="false"
+            maxlength="6"
           />
         </view>
       </view>

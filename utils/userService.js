@@ -8,15 +8,46 @@ const LEVEL_TITLES = ['见习侦探', '初级侦探', '中级侦探', '高级侦
 
 /**
  * 获取用户信息
+ * @param {boolean} forceRefresh - 是否强制从后端刷新
+ * @returns {Promise|Object} - 如果forceRefresh为true，返回Promise，否则返回本地存储的用户信息
  */
-function getUserInfo() {
+function getUserInfo(forceRefresh = false) {
   try {
-    // 从本地存储获取用户信息
+    // 检查登录状态
+    const token = wx.getStorageSync('token');
+    if (!token) {
+      return forceRefresh ? Promise.reject('未登录') : null;
+    }
+
+    // 从本地存储获取基本登录信息
     const userInfo = wx.getStorageSync(USER_INFO_KEY);
+
+    // 如果强制刷新，从后端获取最新用户信息
+    if (forceRefresh) {
+      return new Promise((resolve, reject) => {
+        // 调用后端接口获取用户信息
+        const config = {
+          url: api.user_info_url,
+          method: 'GET'
+        };
+
+        api.request(config).then(res => {
+          if (res.success && res.data) {
+            resolve(res.data);
+          } else {
+            reject('获取用户信息失败');
+          }
+        }).catch(err => {
+          reject(err);
+        });
+      });
+    }
+
+    // 否则返回本地存储的基本登录信息
     return userInfo || null;
   } catch (error) {
     console.error('获取用户信息失败:', error);
-    return null;
+    return forceRefresh ? Promise.reject(error) : null;
   }
 }
 
@@ -45,23 +76,15 @@ function refreshUserInfo() {
     // 使用通用 request 方法，避免依赖可能不存在的 userRequest
     api.request(config).then(res => {
       if (res.success && res.data) {
-        // 构建用户信息对象，只使用服务器返回的userId
+        // 构建包含完整用户信息的对象
         const userInfo = {
-          userId: res.data.userId, // 只使用服务器返回的userId
-          avatarUrl: res.data.userInfo?.avatarUrl || DEFAULT_AVATAR_URL,
-          nickName: res.data.userInfo?.nickName || '',
+          userId: res.data.userId,
+          isLoggedIn: true,
           loginTime: new Date().getTime(),
-          // 保存等级信息
-          level: res.data.level?.level || 1,
-          levelTitle: res.data.level?.levelTitle || '见习侦探',
-          experience: res.data.level?.experience || 0,
-          maxExperience: res.data.level?.maxExperience || 1000,
-          // 保存回答次数信息
-          remainingAnswers: res.data.answers?.remainingAnswers || 0,
-          // 保存积分信息
-          points: res.data.points?.total || 0,
-          signInCount: res.data.points?.signInCount || 0,
-          lastSignInDate: res.data.points?.lastSignInDate || null
+          // 保存昵称和头像
+          nickName: res.data.userInfo?.nickName || '',
+          avatarUrl: res.data.userInfo?.avatarUrl || DEFAULT_AVATAR_URL,
+          detectiveId: res.data.userInfo?.detectiveId || ''
         };
 
         // 保存到本地存储
@@ -169,36 +192,13 @@ function updateNickname(nickName, userInfo) {
 }
 
 /**
- * 生成随机侦探ID
- * @returns {string} - 随机侦探ID
+ * 获取侦探ID
+ * 从用户信息中获取侦探ID
+ * @returns {string} - 侦探ID
  */
-function generateDetectiveId() {
-  // 生成5位随机数字
-  const randomNum = Math.floor(10000 + Math.random() * 90000);
-  return `一勺侦探#${randomNum}`;
-}
-
-/**
- * 解析侦探ID
- * 将昵称中的ID部分提取出来
- * @param {string} nickname - 昵称
- * @returns {Object} - 解析结果
- */
-function parseDetectiveId(nickname) {
-  if (!nickname) return { name: '未登录的侦探', id: '未登录' };
-
-  const parts = nickname.split('#');
-  if (parts.length > 1) {
-    return {
-      name: parts[0],
-      id: parts[1]
-    };
-  }
-
-  return {
-    name: nickname,
-    id: '未设置'
-  };
+function getDetectiveId() {
+  const userInfo = getUserInfo();
+  return userInfo?.detectiveId || '';
 }
 
 // 登录状态标志
@@ -264,33 +264,27 @@ function login() {
 
         api.request(config).then(res => {
           if (res.success && res.data) {
-            // 构建用户信息 (不保存 openid)
-            const userInfo = {
-              userId: res.data.userId, // 使用服务器返回的固定userId，不再生成临时ID
-              avatarUrl: res.data.userInfo?.avatarUrl || DEFAULT_AVATAR_URL,
-              nickName: res.data.userInfo?.nickName || '',
-              loginTime: new Date().getTime(),
-              // 保存等级信息
-              level: res.data.level?.level || 1,
-              levelTitle: res.data.level?.levelTitle || '见习侦探',
-              experience: res.data.level?.experience || 0,
-              maxExperience: res.data.level?.maxExperience || 1000,
-              // 保存回答次数信息
-              remainingAnswers: res.data.answers?.remainingAnswers || 0,
-              // 保存积分信息
-              points: res.data.points?.total || 0,
-              signInCount: res.data.points?.signInCount || 0,
-              lastSignInDate: res.data.points?.lastSignInDate || null
-            };
-
             // 单独保存 token 到本地存储
             if (res.data.token) {
               wx.setStorageSync('token', res.data.token);
             }
 
+            // 保存登录时间戳
+            wx.setStorageSync('loginTimestamp', new Date().getTime());
+
+            // 构建包含完整用户信息的对象
+            const userInfo = {
+              userId: res.data.userId,
+              isLoggedIn: true,
+              loginTime: new Date().getTime(),
+              // 保存昵称和头像
+              nickName: res.data.userInfo?.nickName || '',
+              avatarUrl: res.data.userInfo?.avatarUrl || DEFAULT_AVATAR_URL,
+              detectiveId: res.data.userInfo?.detectiveId || ''
+            };
+
             // 保存用户信息到本地存储
             wx.setStorageSync(USER_INFO_KEY, userInfo);
-            wx.setStorageSync('loginTimestamp', new Date().getTime());
 
             isLoggingIn = false;
             resolve(userInfo);
@@ -333,6 +327,14 @@ function logout() {
   wx.removeStorageSync('loginTimestamp');
   wx.removeStorageSync('token'); // 清除token
 
+  // 清除任何可能的缓存数据
+  const app = getApp();
+  if (app && app.globalData) {
+    if (app.globalData.userInfo) {
+      app.globalData.userInfo = null;
+    }
+  }
+
   // 提示用户
   wx.showToast({
     title: '已退出登录',
@@ -368,71 +370,91 @@ function checkLoginStatus(showToast = true) {
 }
 
 /**
- * 获取等级信息
- * @param {number} experience - 经验值
- * @returns {Object} - 等级信息
+ * 显示升级提示
+ * @param {string} levelTitle - 新的等级称号
  */
-function getLevelInfo(experience = 350) {
-  // 根据经验值计算等级
-  let level = 1;
-  let maxExperience = 1000;
-
-  // 根据经验值动态计算等级
-  if (experience >= 900) {
-    level = 6;
-    maxExperience = 2000;
-  } else if (experience >= 700) {
-    level = 5;
-    maxExperience = 1000;
-  } else if (experience >= 500) {
-    level = 4;
-    maxExperience = 800;
-  } else if (experience >= 300) {
-    level = 3;
-    maxExperience = 600;
-  } else if (experience >= 100) {
-    level = 2;
-    maxExperience = 400;
-  }
-
-  return {
-    level,
-    levelTitle: LEVEL_TITLES[level - 1],
-    experience,
-    maxExperience
-  };
+function showLevelUpNotification(levelTitle) {
+  wx.showToast({
+    title: `恭喜升级为${levelTitle}！`,
+    icon: 'success',
+    duration: 2000
+  });
 }
 
 /**
- * 增加经验值
- * @param {number} currentExperience - 当前经验值
- * @param {number} currentLevel - 当前等级
- * @param {number} currentMaxExperience - 当前最大经验值
- * @param {number} amount - 增加的经验值
- * @returns {Object} - 更新后的等级信息
+ * 获取完整的用户信息（包括等级、经验值等）
+ * @returns {Promise<Object>} 完整的用户信息
  */
-function addExperience(currentExperience, currentLevel, currentMaxExperience, amount) {
-  let experience = currentExperience + amount;
-  let level = currentLevel;
-  let maxExperience = currentMaxExperience;
-  let levelUp = false;
+function getCompleteUserInfo() {
+  return new Promise((resolve) => {
+    // 检查登录状态
+    if (!checkLoginStatus(false)) {
+      return resolve(null);
+    }
 
-  // 如果经验值超过最大值，升级
-  if (experience >= maxExperience) {
-    const overflow = experience - maxExperience;
-    level = level + 1;
-    maxExperience = maxExperience + 200; // 每升一级增加200经验上限
-    experience = overflow;
-    levelUp = true;
-  }
+    // 显示加载中提示
+    wx.showLoading({
+      title: '加载中...',
+      mask: false
+    });
 
-  return {
-    level,
-    levelTitle: LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)],
-    experience,
-    maxExperience,
-    levelUp
-  };
+    // 使用api模块中定义的用户信息URL和请求方法
+    const config = {
+      url: api.user_info_url,
+      method: 'GET'
+    };
+
+    // 使用userRequest方法发起请求
+    api.userRequest(config)
+      .then(res => {
+        wx.hideLoading();
+
+        if (res.success) {
+          // 使用后端返回的最新用户信息
+          const userInfo = res.data;
+
+          if (!userInfo || !userInfo.userInfo) {
+            console.error('后端返回的用户信息格式不正确:', userInfo);
+            resolve(null);
+            return;
+          }
+
+          // 更新本地存储
+          const localUserInfo = getUserInfo();
+          if (localUserInfo) {
+            localUserInfo.nickName = userInfo.userInfo?.nickName || '';
+            localUserInfo.detectiveId = userInfo.userInfo?.detectiveId || '';
+            localUserInfo.avatarUrl = userInfo.userInfo?.avatarUrl || '';
+            wx.setStorageSync(USER_INFO_KEY, localUserInfo);
+          }
+
+          // 返回完整的用户信息
+          resolve({
+            nickName: userInfo.userInfo?.nickName || '',
+            detectiveId: userInfo.userInfo?.detectiveId || '',
+            avatarUrl: userInfo.userInfo?.avatarUrl || '',
+            levelTitle: userInfo.level?.levelTitle || '',
+            level: userInfo.level?.level || 1,
+            experience: userInfo.level?.experience || 0,
+            maxExperience: userInfo.level?.maxExperience || 1000,
+            remainingAnswers: userInfo.remainingAnswers || 0,
+            unsolvedCount: userInfo.stats?.unsolvedCount || 0,
+            solvedCount: userInfo.stats?.solvedCount || 0,
+            creationCount: userInfo.stats?.creationCount || 0,
+            favoriteCount: userInfo.stats?.favoriteCount || 0,
+            isLoggedIn: true
+          });
+        } else {
+          console.error('获取用户信息失败:', res.error || '未知错误');
+          resolve(null);
+        }
+      })
+      .catch(error => {
+        wx.hideLoading();
+        console.error('获取用户信息请求失败:', error);
+        resolve(null);
+      });
+  });
 }
 
 /**
@@ -482,10 +504,12 @@ module.exports = {
   updateNickname,
   generateDetectiveId,
   parseDetectiveId,
+  getDetectiveId,
+  getFullnickName,
   login,
   logout,
   checkLoginStatus,
-  getLevelInfo,
-  addExperience,
+  showLevelUpNotification,
+  getCompleteUserInfo,
   setUserInfo
 };

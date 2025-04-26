@@ -11,7 +11,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  position: relative;
+  position: fixed;
   padding: 0;
   margin: 0;
 }
@@ -33,7 +33,7 @@
   width: 100%;
   box-sizing: border-box;
   /* 顶部位置留出导航栏高度 */
-  padding: calc(200rpx + env(safe-area-inset-top)) 20rpx calc(110rpx + env(safe-area-inset-bottom)) 20rpx;
+  padding: calc(120rpx + env(safe-area-inset-top)) 20rpx calc(110rpx + env(safe-area-inset-bottom)) 20rpx;
   /* 底部留出 tabbar 高度 */
   position: relative;
   display: flex;

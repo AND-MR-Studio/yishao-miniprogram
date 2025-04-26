@@ -19,6 +19,7 @@ function createDefaultUser() {
     userId: '',
     avatarUrl: DEFAULT_AVATAR_URL,
     nickName: '',
+    detectiveId: '', // 新增字段：侦探ID，从00000开始递增
     openid: '',
     answeredSoups: [],
     viewedSoups: [],
@@ -48,13 +49,22 @@ function createDefaultUser() {
 }
 
 /**
- * 生成随机侦探ID
- * @returns {string} - 随机侦探ID
+ * 生成侦探ID
+ * @param {number} userCount - 当前用户数量，用于生成从00000开始的递增ID
+ * @returns {string} - 侦探ID（纯数字部分）
  */
-function generateDetectiveId() {
-  // 生成5位随机数字
-  const randomNum = Math.floor(10000 + Math.random() * 90000);
-  return `一勺侦探#${randomNum}`;
+function generateDetectiveId(userCount = 0) {
+  // 生成5位数字ID，从00000开始
+  return userCount.toString().padStart(5, '0');
+}
+
+/**
+ * 获取完整的侦探显示名称
+ * @param {string} detectiveId - 侦探ID（纯数字部分）
+ * @returns {string} - 完整的侦探显示名称
+ */
+function getFullnickName(detectiveId) {
+  return `一勺侦探#${detectiveId}`;
 }
 
 /**
@@ -110,5 +120,6 @@ module.exports = {
   // 函数
   createDefaultUser,
   generateDetectiveId,
+  getFullnickName,
   getLevelInfo
 };

@@ -6,50 +6,17 @@ Component({
    * 组件的属性列表
    */
   properties: {
-    userInfo: {
+    // 用户信息对象，包含所有需要显示的数据
+    detectiveInfo: {
       type: Object,
-      value: null
+      value: null,
+      observer: function(newVal) {
+        this.updateCardDisplay(newVal);
+      }
     },
     defaultAvatarUrl: {
       type: String,
       value: ''
-    },
-    remainingAnswers: {
-      type: Number,
-      value: 0
-    },
-    level: {
-      type: Number,
-      value: 1
-    },
-    levelTitle: {
-      type: String,
-      value: '见习侦探'
-    },
-    experience: {
-      type: Number,
-      value: 0
-    },
-    maxExperience: {
-      type: Number,
-      value: 1000
-    },
-    // 四栏数据
-    unsolvedCount: {
-      type: Number,
-      value: 0
-    },
-    solvedCount: {
-      type: Number,
-      value: 0
-    },
-    creationCount: {
-      type: Number,
-      value: 0
-    },
-    favoriteCount: {
-      type: Number,
-      value: 0
     }
   },
 
@@ -58,22 +25,26 @@ Component({
    */
   data: {
     // 解析后的侦探名称和ID
-    detectiveName: '',
+    nickName: '',
     detectiveId: '',
-    // 完整的昵称（包含ID部分）
-    fullNickname: '',
     // 是否已登录
-    isLoggedIn: false
+    isLoggedIn: false,
+    // 等级称号
+    levelTitle: '',
+    // 剩余回答次数
+    remainingAnswers: 0,
+    // 四栏数据
+    unsolvedCount: 0,
+    solvedCount: 0,
+    creationCount: 0,
+    favoriteCount: 0
   },
 
   /**
    * 数据监听器
    */
   observers: {
-    'userInfo': function(userInfo) {
-      // 当userInfo变化时，解析侦探ID
-      this.parseDetectiveInfo(userInfo);
-    }
+    // 移除userInfo的观察者，避免实时更新
   },
 
   /**
@@ -81,8 +52,10 @@ Component({
    */
   lifetimes: {
     attached() {
-      // 组件挂载时，初始化侦探信息
-      this.parseDetectiveInfo(this.properties.userInfo);
+      // 组件挂载时，如果有传入detectiveInfo则更新显示
+      if (this.properties.detectiveInfo) {
+        this.updateCardDisplay(this.properties.detectiveInfo);
+      }
     }
   },
 
@@ -91,27 +64,40 @@ Component({
    */
   methods: {
     /**
-     * 解析侦探信息
-     * @param {Object} userInfo - 用户信息
+     * 更新卡片显示
+     * @param {Object} detectiveInfo - 侦探信息
      */
-    parseDetectiveInfo(userInfo) {
-      // 检查是否已登录
-      const isLoggedIn = userInfo && userService.checkLoginStatus(false);
+    updateCardDisplay(detectiveInfo) {
+      // 检查是否有有效的侦探信息
+      const isLoggedIn = detectiveInfo && detectiveInfo.isLoggedIn;
 
-      // 保存完整的昵称
-      const fullNickname = userInfo?.nickName || '';
+      // 如果未登录或没有侦探信息，显示未登录状态
+      if (!isLoggedIn || !detectiveInfo) {
+        this.setData({
+          nickName: '未登录的侦探',
+          detectiveId: '未知',
+          isLoggedIn: false,
+          levelTitle: '未知侦探',
+          remainingAnswers: 0,
+          unsolvedCount: 0,
+          solvedCount: 0,
+          creationCount: 0,
+          favoriteCount: 0
+        });
+        return;
+      }
 
-      // 解析侦探名称和ID
-      const { name, id } = userService.parseDetectiveId(fullNickname);
-
-      // 更新组件数据
+      // 已登录，更新组件数据
       this.setData({
-        detectiveName: name,
-        detectiveId: id,
-        fullNickname: fullNickname,
-        isLoggedIn: isLoggedIn,
-        // 未登录状态下，显示"未知侦探"，否则使用后端返回的等级称号
-        levelTitle: isLoggedIn ? (userInfo?.levelTitle || this.properties.levelTitle) : '未知侦探'
+        nickName: detectiveInfo.nickName || '',
+        detectiveId: detectiveInfo.detectiveId || '',
+        isLoggedIn: true,
+        levelTitle: detectiveInfo.levelTitle || '见习侦探',
+        remainingAnswers: detectiveInfo.remainingAnswers || 0,
+        unsolvedCount: detectiveInfo.unsolvedCount || 0,
+        solvedCount: detectiveInfo.solvedCount || 0,
+        creationCount: detectiveInfo.creationCount || 0,
+        favoriteCount: detectiveInfo.favoriteCount || 0
       });
     },
 
@@ -120,44 +106,13 @@ Component({
      */
     handleSignIn() {
       // 检查登录状态
-      if (!userService.checkLoginStatus()) {
+      if (!this.data.isLoggedIn) {
+        userService.checkLoginStatus(); // 显示登录提示
         return;
       }
 
       // 触发签到事件
       this.triggerEvent('signin');
-    },
-
-    /**
-     * 增加经验值
-     * @param {number} amount - 增加的经验值
-     */
-    addExperience(amount) {
-      // 获取当前等级信息
-      const { level, experience, maxExperience } = this.data;
-
-      // 使用userService增加经验值
-      const newLevelInfo = userService.addExperience(experience, level, maxExperience, amount);
-
-      // 更新组件数据
-      this.setData({
-        level: newLevelInfo.level,
-        levelTitle: newLevelInfo.levelTitle,
-        experience: newLevelInfo.experience,
-        maxExperience: newLevelInfo.maxExperience
-      });
-
-      // 如果升级了，显示提示
-      if (newLevelInfo.levelUp) {
-        wx.showToast({
-          title: '恭喜升级！',
-          icon: 'success',
-          duration: 2000
-        });
-      }
-
-      // 触发经验值更新事件
-      this.triggerEvent('experiencechange', newLevelInfo);
     },
 
     /**
