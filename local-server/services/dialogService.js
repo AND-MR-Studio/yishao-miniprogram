@@ -399,7 +399,7 @@ function sendResponse(res, success, data, statusCode = 200) {
  */
 function initDialogRoutes(app) {
   // 1. 创建新对话
-  app.post('/api/dialog/create', async (req, res) => {
+  app.post('/yishao-api/dialog/create', async (req, res) => {
     try {
       const { userId, soupId } = req.body;
 
@@ -416,7 +416,7 @@ function initDialogRoutes(app) {
   });
 
   // 2. 发送消息
-  app.post('/api/dialog/:dialogId/send', async (req, res) => {
+  app.post('/yishao-api/dialog/:dialogId/send', async (req, res) => {
     try {
       const { dialogId } = req.params;
       const { userId, message, messageId, timestamp } = req.body;
@@ -434,7 +434,7 @@ function initDialogRoutes(app) {
   });
 
   // 3. 保存对话记录
-  app.post('/api/dialog/:dialogId/save', async (req, res) => {
+  app.post('/yishao-api/dialog/:dialogId/save', async (req, res) => {
     try {
       const { dialogId } = req.params;
       const { userId, messages } = req.body;
@@ -452,7 +452,7 @@ function initDialogRoutes(app) {
   });
 
   // 4. 获取所有对话记录
-  app.get('/api/dialog/list', async (_, res) => {
+  app.get('/yishao-api/dialog/list', async (_, res) => {
     try {
       const result = await getAllDialogs();
       return sendResponse(res, true, result);
@@ -463,7 +463,7 @@ function initDialogRoutes(app) {
   });
 
   // 5. 获取特定对话记录
-  app.get('/api/dialog/:dialogId', async (req, res) => {
+  app.get('/yishao-api/dialog/:dialogId', async (req, res) => {
     try {
       const { dialogId } = req.params;
 
@@ -485,7 +485,7 @@ function initDialogRoutes(app) {
   });
 
   // 6. 获取用户的所有对话记录
-  app.get('/api/dialog/user/:userId', async (req, res) => {
+  app.get('/yishao-api/dialog/user/:userId', async (req, res) => {
     try {
       const { userId } = req.params;
 
@@ -502,7 +502,7 @@ function initDialogRoutes(app) {
   });
 
   // 7. 获取与特定汤面相关的对话
-  app.get('/api/dialog/soup/:soupId', async (req, res) => {
+  app.get('/yishao-api/dialog/soup/:soupId', async (req, res) => {
     try {
       const { soupId } = req.params;
 
@@ -519,7 +519,7 @@ function initDialogRoutes(app) {
   });
 
   // 8. 获取用户特定汤面的对话记录
-  app.get('/api/dialog/user/:userId/soup/:soupId', async (req, res) => {
+  app.get('/yishao-api/dialog/user/:userId/soup/:soupId', async (req, res) => {
     try {
       const { userId, soupId } = req.params;
 
@@ -536,7 +536,7 @@ function initDialogRoutes(app) {
   });
 
   // 9. 删除对话记录
-  app.delete('/api/dialog/:dialogId', async (req, res) => {
+  app.delete('/yishao-api/dialog/:dialogId', async (req, res) => {
     try {
       const { dialogId } = req.params;
 

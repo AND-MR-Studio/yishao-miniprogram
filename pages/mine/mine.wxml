@@ -9,8 +9,10 @@
       id="detective-card"
       detectiveInfo="{{detectiveInfo}}"
       defaultAvatarUrl="{{defaultAvatarUrl}}"
+      hasSignedIn="{{hasSignedIn}}"
       bind:signin="handleSignIn"
-      bind:navigate="handleNavigate">
+      bind:navigate="handleNavigate"
+      bind:editprofile="openUserInfoModal">
     </detective-card>
 
     <!-- 更新日志Banner轮播 -->
@@ -103,15 +105,14 @@
         <view class="nickname-container">
           <input
             type="nickname"
-            class="nickname-input-centered"
-            placeholder="请输入昵称（六字以内）"
+            class="nickname-input-centered nickname-input-text"
+            placeholder="请输入昵称"
             placeholder-style="text-align: center;"
             value="{{userInfo.nickName}}"
             bindinput="onInputNickname"
             bindnicknamereview="onInputNickname"
-            style="text-align: center;"
             adjust-position="false"
-            maxlength="6"
+            maxlength="10"
           />
         </view>
       </view>

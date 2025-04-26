@@ -175,7 +175,14 @@
                         <el-input v-model="editForm.nickName"></el-input>
                     </el-form-item>
                     <el-form-item label="头像">
-                        <el-input v-model="editForm.avatarUrl"></el-input>
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <img :src="editForm.avatarUrl || '../static/images/default-avatar.jpg'"
+                                 style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
+                        </div>
+                        <el-input v-model="editForm.avatarUrl" placeholder="头像URL"></el-input>
+                        <div style="margin-top: 5px; color: #909399; font-size: 12px;">
+                            输入头像图片的URL地址，用户头像上传应在小程序端进行
+                        </div>
                     </el-form-item>
                     <el-form-item label="等级">
                         <el-input-number v-model="editForm.level" :min="1" :max="100"></el-input-number>
@@ -269,7 +276,7 @@
                 async fetchUsers() {
                     this.loading = true;
                     try {
-                        const response = await this.request('/api/user/list');
+                        const response = await this.request('/yishao-api/user/list');
                         if (response.success) {
                             this.users = response.data;
                         } else {
@@ -285,7 +292,7 @@
                 // 修改保存用户信息方法
                 async handleSave() {
                     try {
-                        const response = await this.request('/api/user/update', 'POST', this.editForm);
+                        const response = await this.request('/yishao-api/user/update', 'POST', this.editForm);
                         if (response.success) {
                             this.$message.success('更新成功');
                             this.dialogVisible = false;
@@ -337,7 +344,7 @@
                 },
                 async handleSave() {
                     try {
-                        const response = await this.request('/api/user/admin-update', 'POST', this.editForm);
+                        const response = await this.request('/yishao-api/user/admin-update', 'POST', this.editForm);
                         if (response.success) {
                             this.$message.success('更新成功');
                             this.dialogVisible = false;
@@ -349,6 +356,8 @@
                         this.$message.error('更新失败：' + error.message);
                     }
                 },
+
+
                 async handleDelete(row) {
                     try {
                         // 使用await等待确认对话框的结果
@@ -360,7 +369,7 @@
 
                         // 如果用户点击了确定，代码会继续执行到这里
                         // 如果用户点击了取消，会抛出异常并被catch捕获
-                        const response = await this.request('/api/user/delete', 'POST', {
+                        const response = await this.request('/yishao-api/user/delete', 'POST', {
                             userId: row.userId
                         });
 

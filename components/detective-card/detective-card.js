@@ -1,5 +1,5 @@
 // components/detective-card/detective-card.js
-const userService = require('../../utils/userService');
+const api = require('../../utils/api');
 
 Component({
   /**
@@ -16,21 +16,26 @@ Component({
     },
     defaultAvatarUrl: {
       type: String,
-      value: ''
+      value: api.default_avatar_url // 使用api.js中定义的云端默认头像URL
+    },
+    // 是否已经签到
+    hasSignedIn: {
+      type: Boolean,
+      value: false
     }
   },
 
   /**
-   * 组件的初始数据
+   * 组件的初始数据 - 定义未登录状态的默认值
    */
   data: {
     // 解析后的侦探名称和ID
-    nickName: '',
-    detectiveId: '',
+    nickName: '未登录的侦探',
+    detectiveId: '未知',
     // 是否已登录
     isLoggedIn: false,
     // 等级称号
-    levelTitle: '',
+    levelTitle: '未知侦探',
     // 剩余回答次数
     remainingAnswers: 0,
     // 四栏数据
@@ -71,18 +76,19 @@ Component({
       // 检查是否有有效的侦探信息
       const isLoggedIn = detectiveInfo && detectiveInfo.isLoggedIn;
 
-      // 如果未登录或没有侦探信息，显示未登录状态
+      // 如果未登录或没有侦探信息，重置为初始未登录状态
       if (!isLoggedIn || !detectiveInfo) {
+        // 重置为组件初始化时定义的默认值
         this.setData({
-          nickName: '未登录的侦探',
-          detectiveId: '未知',
           isLoggedIn: false,
-          levelTitle: '未知侦探',
-          remainingAnswers: 0,
-          unsolvedCount: 0,
-          solvedCount: 0,
-          creationCount: 0,
-          favoriteCount: 0
+          nickName: this.data.nickName,
+          detectiveId: this.data.detectiveId,
+          levelTitle: this.data.levelTitle,
+          remainingAnswers: this.data.remainingAnswers,
+          unsolvedCount: this.data.unsolvedCount,
+          solvedCount: this.data.solvedCount,
+          creationCount: this.data.creationCount,
+          favoriteCount: this.data.favoriteCount
         });
         return;
       }
@@ -92,7 +98,7 @@ Component({
         nickName: detectiveInfo.nickName || '',
         detectiveId: detectiveInfo.detectiveId || '',
         isLoggedIn: true,
-        levelTitle: detectiveInfo.levelTitle || '见习侦探',
+        levelTitle: detectiveInfo.levelTitle || '',
         remainingAnswers: detectiveInfo.remainingAnswers || 0,
         unsolvedCount: detectiveInfo.unsolvedCount || 0,
         solvedCount: detectiveInfo.solvedCount || 0,
@@ -102,17 +108,24 @@ Component({
     },
 
     /**
+     * 处理编辑资料
+     * 触发编辑事件，由父页面处理弹窗显示和资料编辑逻辑
+     */
+    handleEditProfile() {
+      this.triggerEvent('editprofile');
+    },
+
+    /**
      * 处理签到
+     * 纯粹触发事件，所有业务逻辑由父页面处理
      */
     handleSignIn() {
-      // 检查登录状态
-      if (!this.data.isLoggedIn) {
-        userService.checkLoginStatus(); // 显示登录提示
-        return;
-      }
-
-      // 触发签到事件
-      this.triggerEvent('signin');
+      // 直接触发签到事件，由页面处理所有逻辑
+      // 包括登录检查和已签到提示
+      this.triggerEvent('signin', {
+        isLoggedIn: this.data.isLoggedIn,
+        hasSignedIn: this.properties.hasSignedIn
+      });
     },
 
     /**

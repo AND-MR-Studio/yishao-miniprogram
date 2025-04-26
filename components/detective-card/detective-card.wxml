@@ -9,11 +9,15 @@
     <view class="info-section">
       <view class="name-badge-row">
         <!-- 显示昵称 -->
-        <text class="name-value">{{isLoggedIn ? nickName : '未登录的侦探'}}</text>
+        <text class="name-value">{{nickName}}</text>
         <view class="level-badge">[{{levelTitle}}]</view>
       </view>
       <view class="detective-id">
-        <text>探员代号: {{isLoggedIn ? detectiveId : '未登录'}}</text>
+        <text>探员代号: {{detectiveId}}</text>
+      </view>
+      <!-- 编辑资料按钮 -->
+      <view wx:if="{{isLoggedIn}}" class="edit-profile" bindtap="handleEditProfile">
+        <text class="edit-text">编辑资料</text>
       </view>
     </view>
   </view>
@@ -28,8 +32,8 @@
       <text class="answer-label">剩余回答次数: </text>
       <text class="answer-value">{{remainingAnswers || 0}}</text>
     </view>
-    <view class="sign-in-btn" bindtap="handleSignIn">
-      <text>签到+10</text>
+    <view class="sign-in-btn {{hasSignedIn ? 'disabled' : ''}}" bindtap="handleSignIn">
+      <text>{{hasSignedIn ? '已签到' : '签到+10'}}</text>
     </view>
   </view>
 

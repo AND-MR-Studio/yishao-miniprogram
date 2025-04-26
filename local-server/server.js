@@ -19,6 +19,9 @@ app.use(bodyParser.json());
 // 提供管理页面静态文件
 app.use(express.static(path.join(__dirname, 'html')));
 
+// 提供静态资源文件（如图片等）
+app.use('/static', express.static(path.join(__dirname, '..', 'static')));
+
 // API文档服务
 app.use('/docs', express.static(path.join(__dirname, 'docs')));
 

@@ -3,6 +3,7 @@
  */
 
 // 常量定义
+// 使用本地路径，与前端保持一致
 const DEFAULT_AVATAR_URL = '/static/images/default-avatar.jpg';
 const LEVEL_TITLES = ['见习侦探', '初级侦探', '中级侦探', '高级侦探', '特级侦探', '神探'];
 const MAX_DAILY_ANSWERS = 10; // 每日最大回答次数

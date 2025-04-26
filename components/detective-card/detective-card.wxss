@@ -29,6 +29,12 @@
   margin-right: 30rpx;
   position: relative;
   flex-shrink: 0;
+  width: 160rpx !important;
+  height: 160rpx !important;
+  border-radius: 50% !important;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .avatar-section::after {
@@ -38,18 +44,20 @@
   left: -3rpx;
   right: -3rpx;
   bottom: -3rpx;
-  border-radius: 50%;
+  border-radius: 50% !important;
   background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(128, 0, 255, 0.5));
   z-index: -1;
   opacity: 0.7;
 }
 
 .avatar-large {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 50%;
+  width: 140rpx !important;
+  height: 140rpx !important;
+  border-radius: 50% !important;
   border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 15rpx rgba(0, 0, 0, 0.2);
+  object-fit: cover;
+  margin: 10rpx; /* 确保头像在容器中居中 */
 }
 
 .info-section {
@@ -68,7 +76,7 @@
 }
 
 .name-value {
-  font-size: 40rpx;
+  font-size: 36rpx;
   color: #FFFFFF;
   font-weight: bold;
   letter-spacing: 0.5px;
@@ -87,6 +95,25 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 8rpx;
+}
+
+/* 编辑资料按钮 */
+.edit-profile {
+  display: flex;
+  align-items: center;
+  margin-top: 4rpx;
+}
+
+.edit-text {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.5px;
+  text-decoration: underline;
+}
+
+.edit-text:active {
+  opacity: 0.7;
 }
 
 /* 分隔线 */
@@ -162,6 +189,18 @@
   opacity: 0.8;
 }
 
+/* 禁用状态的签到按钮 */
+.sign-in-btn.disabled {
+  background-color: rgba(128, 128, 128, 0.6); /* 灰色 */
+  color: rgba(255, 255, 255, 0.7);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sign-in-btn.disabled:active {
+  opacity: 1; /* 禁用状态下不改变透明度 */
+}
+
 /* 四栏数据样式 */
 :host {
   --color-primary: rgba(92, 232, 33, 0.9);
@@ -171,7 +210,7 @@
 .stats-section {
   display: flex;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 30rpx 0;
+  padding: 10rpx 0;
   width: 100%;
 }
 

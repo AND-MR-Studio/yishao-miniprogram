@@ -6,19 +6,19 @@ const config = {
   'develop': {
     //请求的地址
     baseUrl: 'http://14.103.193.11:8080',
-    ysUrl: 'http://14.103.193.11:8080/api/'
+    ysUrl: 'http://14.103.193.11:8080/yishao-api/'
   },
   //体验版
   'trial': {
     //请求的地址
     baseUrl: 'http://14.103.193.11:8080',
-    ysUrl: 'http://14.103.193.11:8080/api/'
+    ysUrl: 'http://14.103.193.11:8080/yishao-api/'
   },
   //正式版
   'release': {
     //请求的地址
     baseUrl: 'http://14.103.193.11:8080',
-    ysUrl: 'http://14.103.193.11:8080/api/'
+    ysUrl: 'http://14.103.193.11:8080/yishao-api/'
   }
 }[wx.getAccountInfoSync().miniProgram.envVersion];
 

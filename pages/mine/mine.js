@@ -1,6 +1,8 @@
 // pages/mine/mine.js
 // 引入用户服务模块
 const userService = require('../../utils/userService');
+// 引入API模块
+const api = require('../../utils/api');
 
 Page({
 
@@ -10,7 +12,7 @@ Page({
   data: {
     userInfo: null,
     detectiveInfo: null, // 完整的侦探信息，用于传递给detective-card组件
-    defaultAvatarUrl: userService.DEFAULT_AVATAR_URL,
+    defaultAvatarUrl: api.default_avatar_url, // 使用api.js中定义的云端默认头像URL
     buttonConfig: {
       type: 'light',
       text: '登录'
@@ -20,7 +22,9 @@ Page({
     showUserInfoModal: false,
     // 统计数据
     totalSoupCount: 0,
-    pointsCount: 0
+    pointsCount: 0,
+    // 是否已签到
+    hasSignedIn: false
   },
 
   /**
@@ -48,17 +52,17 @@ Page({
 
   /**
    * 刷新页面数据
+   * @param {boolean} showLoading - 是否显示加载提示
    */
-  refreshPageData() {
-    this.updateUserInfo();
-    this.updateStatistics();
-  },
+  refreshPageData(showLoading = false) {
+    // 如果需要显示加载提示，则显示
+    if (showLoading) {
+      wx.showLoading({
+        title: '加载中...',
+        mask: false
+      });
+    }
 
-  /**
-   * 更新用户信息
-   * @param {boolean} forceRefresh - 是否强制从后端刷新
-   */
-  updateUserInfo(forceRefresh = true) {
     // 检查登录状态
     if (!userService.checkLoginStatus(false)) {
       // 未登录，显示未登录状态
@@ -70,49 +74,37 @@ Page({
           text: '登录'
         }
       });
+
+      // 更新统计数据
+      this.updateStatistics();
+
+      // 如果显示了加载提示，则隐藏
+      if (showLoading) {
+        wx.hideLoading();
+      }
       return;
     }
 
     // 已登录，从后端获取最新用户信息
-    if (forceRefresh) {
-      // 显示加载中提示
-      wx.showLoading({
-        title: '加载中...',
-        mask: false
-      });
+    // 传入false表示不显示加载提示，因为我们可能已经显示了
+    userService.getCompleteUserInfo(false)
+      .then(detectiveInfo => {
+        if (detectiveInfo) {
+          // 检查用户是否已签到
+          const today = new Date().toISOString().split('T')[0];
+          const lastSignInDate = detectiveInfo.lastSignInDate || '';
+          const hasSignedIn = lastSignInDate === today;
 
-      // 使用新的getCompleteUserInfo方法获取完整的用户信息
-      userService.getCompleteUserInfo()
-        .then(detectiveInfo => {
-          if (!detectiveInfo) {
-            // 获取失败，使用本地存储的基本登录信息
-            const userInfo = userService.getUserInfo();
-            this.setData({
-              userInfo: userInfo,
-              detectiveInfo: null,
-              buttonConfig: {
-                type: userInfo ? 'unlight' : 'light',
-                text: userInfo ? '退出登录' : '登录'
-              }
-            });
-            return;
-          }
-
-          // 使用后端返回的最新用户信息
           this.setData({
-            userInfo: userService.getUserInfo(), // 保留基本用户信息
-            detectiveInfo: detectiveInfo, // 设置完整的侦探信息
+            userInfo: userService.getUserInfo(),
+            detectiveInfo: detectiveInfo,
+            hasSignedIn: hasSignedIn,
             buttonConfig: {
               type: 'unlight',
               text: '退出登录'
             }
           });
-
-          // 隐藏加载提示
-          wx.hideLoading();
-        })
-        .catch(error => {
-          console.error('获取用户信息失败:', error);
+        } else {
           // 获取失败，使用本地存储的基本登录信息
           const userInfo = userService.getUserInfo();
           this.setData({
@@ -123,22 +115,41 @@ Page({
               text: userInfo ? '退出登录' : '登录'
             }
           });
+        }
 
-          // 隐藏加载提示
+        // 更新统计数据
+        this.updateStatistics();
+
+        // 如果显示了加载提示，则隐藏
+        if (showLoading) {
           wx.hideLoading();
+        }
+      })
+      .catch(error => {
+        console.error('获取用户信息失败:', error);
+
+        // 获取失败，使用本地存储的基本登录信息
+        const userInfo = userService.getUserInfo();
+        this.setData({
+          userInfo: userInfo,
+          detectiveInfo: null,
+          buttonConfig: {
+            type: userInfo ? 'unlight' : 'light',
+            text: userInfo ? '退出登录' : '登录'
+          }
         });
-    } else {
-      // 不强制刷新，使用本地存储的基本登录信息
-      const userInfo = userService.getUserInfo();
-      this.setData({
-        userInfo: userInfo,
-        buttonConfig: {
-          type: userInfo ? 'unlight' : 'light',
-          text: userInfo ? '退出登录' : '登录'
+
+        // 更新统计数据
+        this.updateStatistics();
+
+        // 如果显示了加载提示，则隐藏
+        if (showLoading) {
+          wx.hideLoading();
         }
       });
-    }
   },
+
+  // updateUserInfo 方法已被 refreshPageData 方法替代
 
   /**
    * 更新统计数据
@@ -160,14 +171,29 @@ Page({
     if (!avatarUrl) return;
 
     // 使用userService更新头像
-    userService.updateAvatar(avatarUrl, this.data.userInfo)
-      .then(() => {
-        // 头像更新成功，更新页面数据
-        this.updateUserInfo();
+    userService.updateAvatar(avatarUrl)
+      .then(result => {
+        // 更新页面上的头像显示
+        const userInfo = this.data.userInfo || {};
+        userInfo.avatarUrl = result.avatarUrl;
+
+        this.setData({
+          userInfo: userInfo
+        });
+
+        wx.showToast({
+          title: '头像上传成功',
+          icon: 'success',
+          duration: 2000
+        });
       })
-      .catch(() => {
-        // 头像更新失败，但本地可能已更新
-        this.updateUserInfo();
+      .catch(error => {
+        console.error('头像上传失败:', error);
+        wx.showToast({
+          title: '头像上传失败',
+          icon: 'none',
+          duration: 2000
+        });
       });
   },
 
@@ -179,14 +205,14 @@ Page({
 
     // 允许输入框为空，以便显示占位符
     if (e.type === 'nicknamereview' || e.type === 'input') {
-      // 检查昵称长度是否超过6个字符
-      if (value.length > 6) {
-        // 截取前6个字符
-        value = value.substring(0, 6);
+      // 检查昵称长度是否超过10个字符
+      if (value.length > 10) {
+        // 截取前10个字符
+        value = value.substring(0, 10);
 
         // 显示提示
         wx.showToast({
-          title: '昵称最多6个字',
+          title: '昵称最多10个字',
           icon: 'none',
           duration: 2000
         });
@@ -208,18 +234,21 @@ Page({
 
   /**
    * 打开用户信息设置弹窗
+   * @param {boolean} showLoading - 是否显示加载提示
    */
-  openUserInfoModal() {
+  openUserInfoModal(showLoading = true) {
     // 检查登录状态
     if (!userService.checkLoginStatus(false)) {
       return;
     }
 
-    // 显示加载中提示
-    wx.showLoading({
-      title: '加载中...',
-      mask: false
-    });
+    // 如果需要显示加载提示，则显示
+    if (showLoading) {
+      wx.showLoading({
+        title: '加载中...',
+        mask: false
+      });
+    }
 
     // 从后端获取最新用户信息
     userService.getUserInfo(true)
@@ -241,8 +270,10 @@ Page({
           });
         }
 
-        // 隐藏加载提示
-        wx.hideLoading();
+        // 如果显示了加载提示，则隐藏
+        if (showLoading) {
+          wx.hideLoading();
+        }
 
         // 打开弹窗，保留用户的原始昵称
         // 如果用户清空输入框，将显示占位符
@@ -251,8 +282,10 @@ Page({
       .catch(error => {
         console.error('获取用户信息失败:', error);
 
-        // 隐藏加载提示
-        wx.hideLoading();
+        // 如果显示了加载提示，则隐藏
+        if (showLoading) {
+          wx.hideLoading();
+        }
 
         // 即使获取失败，也打开弹窗，使用本地存储的信息
         this.setData({ showUserInfoModal: true });
@@ -290,12 +323,38 @@ Page({
           duration: 2000
         });
 
-        // 刷新页面数据，获取最新的侦探信息
-        this.refreshPageData();
+        // 显示加载中提示
+        wx.showLoading({
+          title: '更新中...',
+          mask: false
+        });
 
-        // 然后刷新页面其他用户信息
+        // 延迟一下再刷新数据，避免后端数据还没更新完成
         setTimeout(() => {
-          this.updateUserInfo();
+          // 直接调用 getCompleteUserInfo 获取最新数据
+          userService.getCompleteUserInfo(false)
+            .then(detectiveInfo => {
+              if (detectiveInfo) {
+                this.setData({
+                  userInfo: userService.getUserInfo(),
+                  detectiveInfo: detectiveInfo,
+                  buttonConfig: {
+                    type: 'unlight',
+                    text: '退出登录'
+                  }
+                });
+              }
+
+              // 更新统计数据
+              this.updateStatistics();
+
+              // 隐藏加载提示
+              wx.hideLoading();
+            })
+            .catch(() => {
+              // 出错时也要隐藏加载提示
+              wx.hideLoading();
+            });
         }, 500);
       })
       .catch((error) => {
@@ -349,12 +408,38 @@ Page({
           duration: 2000
         });
 
-        // 刷新页面数据，获取最新的侦探信息
-        this.refreshPageData();
+        // 显示加载中提示
+        wx.showLoading({
+          title: '更新中...',
+          mask: false
+        });
 
-        // 然后刷新页面其他用户信息
+        // 延迟一下再刷新数据，避免后端数据还没更新完成
         setTimeout(() => {
-          this.updateUserInfo();
+          // 直接调用 getCompleteUserInfo 获取最新数据
+          userService.getCompleteUserInfo(false)
+            .then(detectiveInfo => {
+              if (detectiveInfo) {
+                this.setData({
+                  userInfo: userService.getUserInfo(),
+                  detectiveInfo: detectiveInfo,
+                  buttonConfig: {
+                    type: 'unlight',
+                    text: '退出登录'
+                  }
+                });
+              }
+
+              // 更新统计数据
+              this.updateStatistics();
+
+              // 隐藏加载提示
+              wx.hideLoading();
+            })
+            .catch(() => {
+              // 出错时也要隐藏加载提示
+              wx.hideLoading();
+            });
         }, 500);
       })
       .catch((error) => {
@@ -391,12 +476,16 @@ Page({
     });
 
     // 使用userService登录，不使用回调方式，统一使用Promise
-    userService.login()
-      .then(() => {
+    userService.login(true) // 传入true表示如果后端已有用户数据则跳过弹窗
+      .then(result => {
+        const { skipPopup } = result;
+
         // 登录成功后，从后端获取最新的用户信息
-        return userService.getUserInfo(true);
+        return userService.getUserInfo(true).then(backendUserInfo => {
+          return { backendUserInfo, skipPopup };
+        });
       })
-      .then(userInfo => {
+      .then(({ backendUserInfo, skipPopup }) => {
         // 隐藏加载提示
         wx.hideLoading();
 
@@ -404,12 +493,46 @@ Page({
         const localUserInfo = userService.getUserInfo();
         if (localUserInfo) {
           // 更新昵称和头像
-          localUserInfo.nickName = userInfo.userInfo?.nickName || localUserInfo.nickName;
-          localUserInfo.avatarUrl = userInfo.userInfo?.avatarUrl || localUserInfo.avatarUrl;
-          localUserInfo.detectiveId = userInfo.userInfo?.detectiveId || localUserInfo.detectiveId;
+          localUserInfo.nickName = backendUserInfo.userInfo?.nickName || localUserInfo.nickName;
+          localUserInfo.avatarUrl = backendUserInfo.userInfo?.avatarUrl || localUserInfo.avatarUrl;
+          localUserInfo.detectiveId = backendUserInfo.userInfo?.detectiveId || localUserInfo.detectiveId;
 
           // 保存到本地存储
           wx.setStorageSync(userService.USER_INFO_KEY, localUserInfo);
+
+          // 检查是否是每日首次登录
+          if (localUserInfo.isDailyFirstLogin) {
+            // 调用后端接口增加回答次数
+            api.userRequest({
+              url: api.user_signin_url,
+              method: 'POST',
+              data: {
+                dailyFirstLogin: true
+              }
+            }).then(res => {
+              if (res.success) {
+                console.log('每日首次登录增加回答次数成功');
+
+                // 更新剩余回答次数
+                console.log('每日首次登录回答次数数据:', res.data);
+                if (res.data) {
+                  // 如果返回了回答次数，直接更新
+                  if (res.data.remainingAnswers !== undefined) {
+                    this.setData({
+                      'detectiveInfo.remainingAnswers': res.data.remainingAnswers
+                    });
+                  }
+
+                  // 刷新页面数据以显示更新后的回答次数
+                  this.refreshPageData(false);
+                }
+              } else {
+                console.error('每日首次登录增加回答次数失败:', res.error);
+              }
+            }).catch(error => {
+              console.error('每日首次登录增加回答次数请求失败:', error);
+            });
+          }
         }
 
         // 更新页面数据
@@ -421,8 +544,23 @@ Page({
           }
         });
 
-        // 显示用户信息设置弹窗
-        this.openUserInfoModal();
+        // 检查是否需要显示用户信息设置弹窗
+        if (!skipPopup) {
+          // 如果后端没有用户数据，则显示设置弹窗
+          // 传入false表示不显示加载提示，因为我们已经显示了
+          this.openUserInfoModal(false);
+        } else {
+          // 如果后端已有用户数据，则直接刷新页面数据
+          // 传入false表示不显示加载提示，因为我们已经显示了
+          this.refreshPageData(false);
+
+          // 显示登录成功提示
+          wx.showToast({
+            title: '登录成功',
+            icon: 'success',
+            duration: 2000
+          });
+        }
       })
       .catch(() => {
         // 隐藏加载提示
@@ -457,12 +595,16 @@ Page({
           // 重置页面数据
           this.setData({
             userInfo: null,
+            detectiveInfo: null, // 确保侦探信息也被重置
             remainingAnswers: 0,
+            hasSignedIn: false, // 重置签到状态为未签到
             buttonConfig: {
               type: 'light',
               text: '登录'
             }
           });
+
+          // 不需要再次刷新页面数据，因为我们已经手动设置了所有必要的状态
         }
         this.setData({ isLoggingOut: false });
       },
@@ -532,10 +674,24 @@ Page({
   /**
    * 处理签到 - 由detective-card组件触发
    */
-  handleSignIn() {
+  handleSignIn(e) {
+    // 从组件获取状态信息
+    const { isLoggedIn, hasSignedIn } = e.detail || {};
+
     // 检查登录状态
-    if (!userService.checkLoginStatus()) {
+    if (!isLoggedIn) {
+      // 显示登录提示
+      userService.checkLoginStatus();
       return;
+    }
+
+    // 前端UI提示已签到（但仍然继续处理，让后端做最终检查）
+    if (hasSignedIn) {
+      wx.showToast({
+        title: '今日已签到',
+        icon: 'none',
+        duration: 2000
+      });
     }
 
     // 显示加载中提示
@@ -546,33 +702,37 @@ Page({
 
     // 调用后端签到接口
     const config = {
-      url: 'api/user/signin',
+      url: api.user_signin_url,
       method: 'POST'
     };
 
     // 发送请求
-    wx.request({
-      ...config,
-      header: {
-        'Authorization': `Bearer ${wx.getStorageSync('token')}`
-      },
-      success: (res) => {
+    api.userRequest(config)
+      .then(res => {
         wx.hideLoading();
 
-        if (res.data && res.data.success) {
-          const data = res.data.data;
+        if (res.success && res.data) {
+          const data = res.data;
 
-          // 更新积分
+          // 更新积分和回答次数
           this.setData({
             pointsCount: data.points || this.data.pointsCount
           });
 
           // 显示签到成功提示
           wx.showToast({
-            title: '签到成功，积分+10',
+            title: '签到成功，回答次数+10',
             icon: 'success',
             duration: 2000
           });
+
+          // 更新剩余回答次数
+          console.log('签到成功，回答次数数据:', data);
+          if (data.remainingAnswers !== undefined) {
+            this.setData({
+              'detectiveInfo.remainingAnswers': data.remainingAnswers
+            });
+          }
 
           // 如果升级了，显示升级提示
           if (data.levelUp) {
@@ -580,25 +740,38 @@ Page({
             userService.showLevelUpNotification(data.levelTitle);
           }
 
+          // 更新签到状态
+          this.setData({
+            hasSignedIn: true
+          });
+
           // 刷新页面数据
-          this.refreshPageData();
+          this.refreshPageData(true);
         } else {
+          // 显示错误提示
           wx.showToast({
-            title: res.data?.error || '签到失败',
+            title: res.error || '签到失败',
             icon: 'none',
             duration: 2000
           });
+
+          // 如果是"今日已签到"的错误，更新UI状态
+          if (res.error === '今日已签到') {
+            this.setData({
+              hasSignedIn: true
+            });
+          }
         }
-      },
-      fail: () => {
+      })
+      .catch(error => {
         wx.hideLoading();
+        console.error('签到失败:', error);
         wx.showToast({
           title: '签到失败，请重试',
           icon: 'none',
           duration: 2000
         });
-      }
-    });
+      });
   },
 
   /**
