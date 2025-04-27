@@ -78,6 +78,8 @@
               mode="aspectFill"
               binderror="handleAvatarError"
             ></image>
+            <!-- 点击更换提示 -->
+            <view class="avatar-change-tip">点击更换</view>
           </button>
         </view>
 

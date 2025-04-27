@@ -380,7 +380,7 @@
   width: 160rpx !important;
   height: 160rpx !important;
   border-radius: 50% !important;
-  overflow: hidden;
+  overflow: visible; /* 修改为visible，允许子元素溢出 */
   position: relative;
   box-shadow: 0 0 20rpx rgba(92, 232, 33, 0.3);
   transition: all 0.3s ease;
@@ -403,26 +403,19 @@
   opacity: 0.7;
 }
 
-/* 点击更换提示 */
-.avatar-btn-centered::after {
-  content: '点击更换';
+/* 点击更换提示 - 使用实际元素替代伪元素 */
+.avatar-change-tip {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: rgba(0, 0, 0, 0.6);
+  bottom: 0rpx; /* 调整位置，与头像底部对齐 */
+  left: 10rpx;
+  right: 10rpx;
+  background: rgba(0, 0, 0, 0.7); /* 增加不透明度 */
   color: white;
   font-size: 20rpx;
   padding: 6rpx 0;
   text-align: center;
-  transform: translateY(100%);
-  transition: transform 0.3s ease;
-  z-index: 2;
-  border: none !important;
-}
-
-.avatar-btn-centered:active::after {
-  transform: translateY(0);
+  z-index: 10; /* 提高z-index确保显示在最上层 */
+  border-radius: 0 0 70rpx 70rpx; /* 底部圆角，与头像底部圆角匹配 */
 }
 
 .avatar-preview-centered {
@@ -433,6 +426,8 @@
   transition: all 0.3s ease;
   object-fit: cover;
   margin: 10rpx; /* 确保头像在容器中居中 */
+  overflow: hidden; /* 确保图片内容不溢出圆形边界 */
+  position: relative; /* 确保定位正确 */
 }
 
 .nickname-container {
