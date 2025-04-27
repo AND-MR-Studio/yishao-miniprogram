@@ -2,65 +2,46 @@
 const api = require('./api');
 
 // 定义常量
-const USER_INFO_KEY = 'userInfo';
+const TOKEN_KEY = 'token'; // 使用token作为唯一的本地存储键
 // 使用api.js中定义的云端默认头像URL
 const DEFAULT_AVATAR_URL = api.default_avatar_url;
-const LEVEL_TITLES = ['见习侦探', '初级侦探', '中级侦探', '高级侦探', '特级侦探', '神探'];
 
 /**
  * 获取用户信息
  * @param {boolean} forceRefresh - 是否强制从后端刷新
- * @returns {Promise|Object} - 如果forceRefresh为true，返回Promise，否则返回本地存储的用户信息
+ * @returns {Promise} - 返回Promise，包含用户信息
  */
-function getUserInfo(forceRefresh = false) {
+function getUserInfo(forceRefresh = true) {
   try {
     // 检查登录状态
-    const token = wx.getStorageSync('token');
+    const token = wx.getStorageSync(TOKEN_KEY);
     if (!token) {
-      return forceRefresh ? Promise.reject('未登录') : null;
+      return Promise.reject('未登录');
     }
 
-    // 从本地存储获取基本登录信息
-    const userInfo = wx.getStorageSync(USER_INFO_KEY);
+    // 始终从后端获取最新用户信息
+    return new Promise((resolve, reject) => {
+      // 调用后端接口获取用户信息
+      const config = {
+        url: api.user_info_url,
+        method: 'GET'
+      };
 
-    // 如果强制刷新，从后端获取最新用户信息
-    if (forceRefresh) {
-      return new Promise((resolve, reject) => {
-        // 调用后端接口获取用户信息
-        const config = {
-          url: api.user_info_url,
-          method: 'GET'
-        };
-
-        // 使用userRequest方法，保持一致性
-        api.userRequest(config).then(res => {
-          if (res.success && res.data) {
-            // 只在本地存储最小必要信息
-            const minimalUserInfo = {
-              userId: res.data.userId,
-              isLoggedIn: true,
-              loginTime: new Date().getTime()
-            };
-
-            // 保存到本地存储
-            wx.setStorageSync(USER_INFO_KEY, minimalUserInfo);
-
-            // 返回完整的后端数据
-            resolve(res.data);
-          } else {
-            reject('获取用户信息失败');
-          }
-        }).catch(err => {
-          reject(err);
-        });
+      // 使用userRequest方法，保持一致性
+      api.userRequest(config).then(res => {
+        if (res.success && res.data) {
+          // 返回完整的后端数据，不在本地存储用户信息
+          resolve(res.data);
+        } else {
+          reject('获取用户信息失败');
+        }
+      }).catch(err => {
+        reject(err);
       });
-    }
-
-    // 否则返回本地存储的基本登录信息
-    return userInfo || null;
+    });
   } catch (error) {
     console.error('获取用户信息失败:', error);
-    return forceRefresh ? Promise.reject(error) : null;
+    return Promise.reject(error);
   }
 }
 
@@ -71,35 +52,28 @@ function getUserInfo(forceRefresh = false) {
  */
 function refreshUserInfo() {
   // 直接调用getUserInfo方法，避免代码重复
-  return getUserInfo(true);
+  return getUserInfo();
 }
 
 /**
  * 获取用户ID
- * @returns {string} 用户ID
+ * @returns {Promise<string>} 用户ID
  */
 function getUserId() {
   try {
-    // 从本地存储获取用户信息
-    const userInfo = wx.getStorageSync(USER_INFO_KEY);
-
-    // 如果本地存储中有userId，直接返回
-    if (userInfo && userInfo.userId) {
-      return userInfo.userId;
-    }
-
     // 检查token是否存在
-    const token = wx.getStorageSync('token');
+    const token = wx.getStorageSync(TOKEN_KEY);
     if (!token) {
-      return '';
+      return Promise.resolve('');
     }
 
-    // 如果有token但没有userId，返回空字符串
-    // 调用方可以决定是否需要刷新用户信息
-    return '';
+    // 从服务器获取用户信息，然后返回用户ID
+    return getUserInfo()
+      .then(userInfo => userInfo?.userId || '')
+      .catch(() => '');
   } catch (error) {
     console.error('获取用户ID失败:', error);
-    return '';
+    return Promise.resolve('');
   }
 }
 
@@ -148,32 +122,50 @@ function updateAvatar(avatarUrl) {
   });
 
   return new Promise((resolve, reject) => {
-    // 使用新的头像上传API
-    api.uploadFile({
-      url: api.user_upload_avatar_url,
-      filePath: avatarUrl,
-      name: 'avatar',
-      formData: {}
-    })
-    .then(res => {
-      wx.hideLoading();
+    // 添加延迟，避免微信内部的chooseAvatar冲突
+    setTimeout(() => {
+      // 使用新的头像上传API
+      api.uploadFile({
+        url: api.user_upload_avatar_url,
+        filePath: avatarUrl,
+        name: 'avatar',
+        formData: {
+          // 添加时间戳，确保每次上传的文件名都不同，避免缓存问题
+          timestamp: new Date().getTime()
+        }
+      })
+      .then(res => {
+        wx.hideLoading();
 
-      if (res.success && res.data) {
-        // 更新本地存储的用户信息
-        const userInfo = wx.getStorageSync(USER_INFO_KEY) || {};
-        userInfo.avatarUrl = res.data.avatarUrl;
-        wx.setStorageSync(USER_INFO_KEY, userInfo);
+        if (res.success && res.data) {
+          // 更新本地存储的用户信息
+          const userInfo = wx.getStorageSync(USER_INFO_KEY) || {};
 
-        resolve(res.data);
-      } else {
-        reject(res.error || '上传头像失败');
-      }
-    })
-    .catch(err => {
-      wx.hideLoading();
-      console.error('上传头像失败:', err);
-      reject(err);
-    });
+          // 添加随机参数到URL，避免缓存问题
+          let avatarUrl = res.data.avatarUrl;
+          if (avatarUrl.indexOf('?') === -1) {
+            avatarUrl += '?t=' + new Date().getTime();
+          } else {
+            avatarUrl += '&t=' + new Date().getTime();
+          }
+
+          userInfo.avatarUrl = avatarUrl;
+          wx.setStorageSync(USER_INFO_KEY, userInfo);
+
+          resolve({
+            ...res.data,
+            avatarUrl: avatarUrl
+          });
+        } else {
+          reject(res.error || '上传头像失败');
+        }
+      })
+      .catch(err => {
+        wx.hideLoading();
+        console.error('上传头像失败:', err);
+        reject(err);
+      });
+    }, 300); // 添加300ms延迟，避免微信内部的chooseAvatar冲突
   });
 }
 
@@ -203,23 +195,16 @@ function updateNickname(nickName) {
  * @returns {Promise<string>} - 侦探ID
  */
 function getDetectiveId() {
-  return new Promise((resolve) => {
-    // 检查登录状态
-    const token = wx.getStorageSync('token');
-    if (!token) {
-      resolve('');
-      return;
-    }
+  // 检查登录状态
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
+    return Promise.resolve('');
+  }
 
-    // 从后端获取最新用户信息
-    getUserInfo(true)
-      .then(userInfo => {
-        resolve(userInfo.userInfo?.detectiveId || '');
-      })
-      .catch(() => {
-        resolve('');
-      });
-  });
+  // 从后端获取最新用户信息
+  return getUserInfo()
+    .then(userInfo => userInfo.userInfo?.detectiveId || '')
+    .catch(() => '');
 }
 
 // 登录状态标志
@@ -227,21 +212,26 @@ let isLoggingIn = false;
 
 /**
  * 登录
- * @param {boolean} skipPopup - 是否跳过登录设置弹窗
- * @returns {Promise} - 登录结果
+ * @returns {Promise} - 登录结果，包含用户信息和是否已完成资料设置的标志
  */
-function login(skipPopup = false) {
+function login() {
   // 如果已经在登录中，直接返回一个等待的Promise
   if (isLoggingIn) {
     return new Promise((resolve, reject) => {
       // 每100ms检查一次登录状态
       const checkLoginStatus = () => {
-        const token = wx.getStorageSync('token');
-        const userInfo = wx.getStorageSync(USER_INFO_KEY);
+        const token = wx.getStorageSync(TOKEN_KEY);
 
-        if (token && userInfo) {
-          // 登录成功，返回用户信息
-          resolve({userInfo, skipPopup});
+        if (token) {
+          // 登录成功，获取用户信息
+          getUserInfo()
+            .then(userInfo => {
+              resolve({userInfo});
+            })
+            .catch(() => {
+              // 即使获取用户信息失败，也认为登录成功
+              resolve({userInfo: {isLoggedIn: true}});
+            });
         } else if (!isLoggingIn) {
           // 登录已完成但失败
           reject('登录失败');
@@ -260,13 +250,26 @@ function login(skipPopup = false) {
 
   return new Promise((resolve, reject) => {
     // 检查是否已经登录
-    const token = wx.getStorageSync('token');
-    const userInfo = wx.getStorageSync(USER_INFO_KEY);
+    const token = wx.getStorageSync(TOKEN_KEY);
 
-    if (token && userInfo) {
+    if (token) {
       isLoggingIn = false;
-      // 如果已登录，检查是否需要跳过弹窗
-      return resolve({userInfo, skipPopup: true});
+      // 如果已登录，从后端获取用户信息
+      return getUserInfo()
+        .then(backendUserInfo => {
+          resolve({
+            userInfo: backendUserInfo,
+            hasCompletedSetup: false // 始终返回false，强制显示用户信息设置弹窗
+          });
+        })
+        .catch(err => {
+          console.error('获取用户信息失败:', err);
+          // 即使获取失败，也返回成功，标记为未完成设置
+          resolve({
+            userInfo: {isLoggedIn: true},
+            hasCompletedSetup: false
+          });
+        });
     }
 
     // 未登录，执行登录流程
@@ -292,56 +295,28 @@ function login(skipPopup = false) {
               wx.setStorageSync('token', res.data.token);
             }
 
-            // 从后端获取登录时间戳
-            const currentTime = new Date().getTime();
-            const lastLoginTime = res.data.lastLoginTime ? new Date(res.data.lastLoginTime).getTime() : 0;
-
-            // 检查是否是每日首次登录（使用后端返回的lastLoginTime）
-            let isDailyFirstLogin = false;
-
-            if (lastLoginTime) {
-              const now = new Date();
-              const lastLoginDate = new Date(lastLoginTime);
-
-              // 检查是否是每日首次登录
-              isDailyFirstLogin = lastLoginDate.getDate() !== now.getDate() ||
-                                 lastLoginDate.getMonth() !== now.getMonth() ||
-                                 lastLoginDate.getFullYear() !== now.getFullYear();
-
-              // 如果是每日首次登录，显示提示
-              if (isDailyFirstLogin) {
-                wx.showToast({
-                  title: '每日首次登录，回答次数+10',
-                  icon: 'success',
-                  duration: 2000
-                });
-              }
+            // 如果后端返回了首次登录标志并且是首次登录，显示提示
+            if (res.data.isDailyFirstLogin) {
+              wx.showToast({
+                title: '每日首次登录，回答次数+10',
+                icon: 'success',
+                duration: 2000
+              });
             }
-
-            // 保存登录时间戳（使用后端返回的时间）
-            wx.setStorageSync('loginTimestamp', lastLoginTime || currentTime);
-
-            // 构建最小必要的用户信息对象
-            const minimalUserInfo = {
-              userId: res.data.userId,
-              isLoggedIn: true,
-              loginTime: lastLoginTime || currentTime,
-              isDailyFirstLogin: isDailyFirstLogin
-            };
-
-            // 保存用户信息到本地存储
-            wx.setStorageSync(USER_INFO_KEY, minimalUserInfo);
 
             isLoggingIn = false;
 
-            // 检查用户是否已经设置过信息
-            const hasUserInfo = res.data.userInfo &&
-                               (res.data.userInfo.nickName || res.data.userInfo.detectiveId);
+            // 记录登录信息，帮助调试
+            console.log('登录成功，用户信息:', {
+              userId: res.data.userId,
+              nickName: res.data.userInfo?.nickName,
+              detectiveId: res.data.userInfo?.detectiveId
+            });
 
-            // 如果用户已经设置过信息或者指定跳过弹窗，则跳过弹窗
+            // 返回登录结果，包含用户信息，始终设置hasCompletedSetup为false
             resolve({
               userInfo: res.data,
-              skipPopup: skipPopup || hasUserInfo
+              hasCompletedSetup: false // 始终返回false，强制显示用户信息设置弹窗
             });
           } else {
             wx.showToast({
@@ -378,9 +353,8 @@ function login(skipPopup = false) {
  */
 function logout() {
   // 清除本地存储
-  wx.removeStorageSync(USER_INFO_KEY);
   wx.removeStorageSync('loginTimestamp');
-  wx.removeStorageSync('token'); // 清除token
+  wx.removeStorageSync(TOKEN_KEY); // 清除token
 
   // 清除可能存在的其他用户相关缓存
   try {
@@ -422,7 +396,7 @@ function logout() {
  */
 function checkLoginStatus(showToast = true) {
   // 只检查token，不触发登录流程
-  const token = wx.getStorageSync('token');
+  const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
     if (showToast) {
       wx.showToast({
@@ -438,7 +412,7 @@ function checkLoginStatus(showToast = true) {
 
 /**
  * 显示升级提示
- * @param {string} levelTitle - 新的等级称号
+ * @param {string} levelTitle - 新的等级称号，由后端返回
  */
 function showLevelUpNotification(levelTitle) {
   wx.showToast({
@@ -469,7 +443,7 @@ function getCompleteUserInfo(showLoading = true) {
     }
 
     // 直接使用getUserInfo方法获取最新用户信息
-    getUserInfo(true)
+    getUserInfo()
       .then(userInfo => {
         if (showLoading) {
           wx.hideLoading();
@@ -518,7 +492,7 @@ function setUserInfo(userInfo) {
   if (!userInfo) return Promise.reject('用户信息为空');
 
   // 检查用户是否已登录（检查token是否存在）
-  const token = wx.getStorageSync('token');
+  const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
     return Promise.reject('用户未登录，请先登录');
   }
@@ -536,15 +510,7 @@ function setUserInfo(userInfo) {
 
   return api.userRequest(config).then(res => {
     if (res.success && res.data) {
-      // 更新本地存储的用户ID
-      const localUserInfo = wx.getStorageSync(USER_INFO_KEY) || {};
-      localUserInfo.userId = localUserInfo.userId || res.data.userId;
-      localUserInfo.isLoggedIn = true;
-      localUserInfo.loginTime = localUserInfo.loginTime || new Date().getTime();
-
-      // 保存到本地存储
-      wx.setStorageSync(USER_INFO_KEY, localUserInfo);
-
+      // 直接返回后端数据，不在本地存储用户信息
       return res.data;
     }
     return res;
@@ -552,9 +518,8 @@ function setUserInfo(userInfo) {
 }
 
 module.exports = {
-  USER_INFO_KEY,
+  TOKEN_KEY,
   DEFAULT_AVATAR_URL,
-  LEVEL_TITLES,
   getUserInfo,
   getUserId,
   refreshUserInfo,

@@ -3,7 +3,12 @@
   <!-- 顶部卡片区域：头像、昵称和ID -->
   <view class="card-content">
     <view class="avatar-section">
-      <image class="avatar-large" src="{{detectiveInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+      <image
+        class="avatar-large"
+        src="{{detectiveInfo.avatarUrl || defaultAvatarUrl}}"
+        mode="aspectFill"
+        binderror="handleImageError"
+      ></image>
     </view>
 
     <view class="info-section">

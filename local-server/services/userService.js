@@ -1,7 +1,7 @@
 /**
  * 用户服务层 - 优化版
  * 负责用户相关的业务逻辑
- * 
+ *
  * 主要功能：
  * - 用户登录/注册
  * - 用户信息管理
@@ -33,7 +33,7 @@ const WECHAT_CONFIG = {
 async function getWechatOpenId(code) {
   try {
     const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${WECHAT_CONFIG.appId}&secret=${WECHAT_CONFIG.appSecret}&js_code=${code}&grant_type=authorization_code`;
-    
+
     const response = await axios.get(url);
 
     if (response.data.errcode) {
@@ -114,16 +114,17 @@ function resetDailyAnswers(userData) {
 /**
  * 处理用户签到
  * @param {string} userId - 用户ID
+ * @param {boolean} isDailyFirstLogin - 是否是每日首次登录
  * @returns {Promise<Object>} - 签到结果
  */
-async function handleSignIn(userId) {
+async function handleSignIn(userId, isDailyFirstLogin = false) {
   const userData = await userDataAccess.getUserData(userId);
   if (!userData) return { success: false, message: '用户不存在' };
 
   const today = new Date().toISOString().split('T')[0];
 
-  // 检查是否已经签到
-  if (userData.lastSignInDate === today) {
+  // 检查是否已经签到（如果不是每日首次登录）
+  if (!isDailyFirstLogin && userData.lastSignInDate === today) {
     return { success: false, message: '今日已签到' };
   }
 
@@ -132,11 +133,25 @@ async function handleSignIn(userId) {
   userData.signInCount = (userData.signInCount || 0) + 1;
   userData.points = (userData.points || 0) + userModel.DAILY_SIGN_IN_POINTS;
 
-  // 增加回答次数
-  userData.remainingAnswers = (userData.remainingAnswers || 0) + 10;
+  // 增加回答次数（如果不是每日首次登录，因为首次登录已经增加了）
+  if (!isDailyFirstLogin) {
+    userData.remainingAnswers = (userData.remainingAnswers || 0) + 10;
+  }
 
-  // 增加经验值
-  const expResult = addExperience(userData, userModel.DAILY_SIGN_IN_EXPERIENCE);
+  // 增加经验值（如果不是每日首次登录，因为首次登录已经增加了）
+  let expResult;
+  if (!isDailyFirstLogin) {
+    expResult = addExperience(userData, userModel.DAILY_SIGN_IN_EXPERIENCE);
+  } else {
+    // 如果是每日首次登录，只获取当前等级信息，不再增加经验值
+    expResult = {
+      levelUp: false,
+      level: userData.level,
+      levelTitle: userModel.getLevelInfo(userData.experience).levelTitle,
+      experience: userData.experience,
+      maxExperience: userData.maxExperience
+    };
+  }
 
   // 保存用户数据
   await userDataAccess.saveUserData(userId, userData);
@@ -235,7 +250,7 @@ const avatarStorage = multer.diskStorage({
  */
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-  
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -267,14 +282,14 @@ async function handleAvatarUpload(req) {
 
     const openid = req.openid;
     const userData = await userDataAccess.getUserData(openid);
-    
+
     if (!userData) {
       await fs.remove(req.file.path);
       return { success: false, message: '用户不存在' };
     }
 
     // 删除旧的头像文件（如果存在且不是默认头像）
-    if (userData.avatarUrl && 
+    if (userData.avatarUrl &&
         userData.avatarUrl !== '/static/images/default-avatar.jpg' &&
         userData.avatarUrl.startsWith('/static/images/avatars/')) {
       try {
@@ -293,7 +308,7 @@ async function handleAvatarUpload(req) {
 
     // 更新用户头像URL
     userData.avatarUrl = `/${relativePath}`;
-    
+
     // 保存用户数据
     await userDataAccess.saveUserData(openid, userData);
 
@@ -304,7 +319,7 @@ async function handleAvatarUpload(req) {
     };
   } catch (error) {
     console.error('头像上传处理失败:', error.message);
-    
+
     // 清理临时文件
     if (req.file && req.file.path) {
       try {
@@ -313,7 +328,7 @@ async function handleAvatarUpload(req) {
         console.error('删除临时文件失败:', removeErr.message);
       }
     }
-    
+
     return { success: false, message: '头像上传处理失败' };
   }
 }
@@ -381,6 +396,28 @@ function initUserRoutes(app) {
       // 重置每日回答次数
       userData = resetDailyAnswers(userData);
 
+      // 检查是否是每日首次登录
+      let isDailyFirstLogin = false;
+      const today = new Date().toISOString().split('T')[0];
+      const lastLoginDate = userData.lastLoginDate || '2000-01-01';
+
+      // 如果上次登录日期不是今天，则是每日首次登录
+      if (lastLoginDate !== today) {
+        isDailyFirstLogin = true;
+
+        // 自动增加回答次数
+        userData.remainingAnswers = (userData.remainingAnswers || 0) + 10;
+
+        // 增加经验值
+        const expResult = addExperience(userData, userModel.DAILY_SIGN_IN_EXPERIENCE);
+
+        // 更新最后登录日期
+        userData.lastLoginDate = today;
+
+        // 如果是每日首次登录，显示提示
+        console.log(`用户 ${userData.nickName} (${userData.userId}) 每日首次登录，回答次数+10`);
+      }
+
       // 保存用户数据
       await userDataAccess.saveUserData(openid, userData);
 
@@ -391,6 +428,7 @@ function initUserRoutes(app) {
       return sendResponse(res, true, {
         token: userData.token,
         userId: userData.userId,
+        isDailyFirstLogin: isDailyFirstLogin, // 添加每日首次登录标志
         userInfo: {
           avatarUrl: userData.avatarUrl,
           nickName: userData.nickName,
@@ -428,8 +466,8 @@ function initUserRoutes(app) {
       // 更新用户数据中的字段
       if (updateData.avatarUrl) {
         // 确保头像URL是完整的路径
-        userData.avatarUrl = updateData.avatarUrl.startsWith('/') ? 
-          updateData.avatarUrl : 
+        userData.avatarUrl = updateData.avatarUrl.startsWith('/') ?
+          updateData.avatarUrl :
           '/' + updateData.avatarUrl;
       }
 
@@ -493,7 +531,7 @@ function initUserRoutes(app) {
 
       // 更新用户数据中的字段
       const allowedFields = [
-        'nickName', 'avatarUrl', 'level', 'experience', 
+        'nickName', 'avatarUrl', 'level', 'experience',
         'maxExperience', 'points', 'signInCount', 'remainingAnswers'
       ];
 
@@ -582,7 +620,10 @@ function initUserRoutes(app) {
   app.post('/yishao-api/user/signin', authMiddleware, async (req, res) => {
     try {
       const openid = req.openid;
-      const result = await handleSignIn(openid);
+      // 获取是否是每日首次登录的标志
+      const isDailyFirstLogin = req.body.dailyFirstLogin === true;
+
+      const result = await handleSignIn(openid, isDailyFirstLogin);
 
       if (!result.success) {
         return sendResponse(res, false, result.message, 400);

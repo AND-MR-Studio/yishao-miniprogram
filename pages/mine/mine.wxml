@@ -97,7 +97,12 @@
         <!-- 头像选择 - 居中显示 -->
         <view class="avatar-container-centered">
           <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-            <image class="avatar-preview-centered" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+            <image
+              class="avatar-preview-centered"
+              src="{{userInfo.avatarUrl || defaultAvatarUrl}}"
+              mode="aspectFill"
+              binderror="handleAvatarError"
+            ></image>
           </button>
         </view>
 
@@ -110,9 +115,9 @@
             placeholder-style="text-align: center;"
             value="{{userInfo.nickName}}"
             bindinput="onInputNickname"
-            bindnicknamereview="onInputNickname"
             adjust-position="false"
             maxlength="10"
+            confirm-type="done"
           />
         </view>
       </view>

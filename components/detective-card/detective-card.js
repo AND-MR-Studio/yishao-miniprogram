@@ -16,7 +16,7 @@ Component({
     },
     defaultAvatarUrl: {
       type: String,
-      value: api.default_avatar_url // 使用api.js中定义的云端默认头像URL
+      value: api.default_avatar_url
     },
     // 是否已经签到
     hasSignedIn: {
@@ -81,14 +81,14 @@ Component({
         // 重置为组件初始化时定义的默认值
         this.setData({
           isLoggedIn: false,
-          nickName: this.data.nickName,
-          detectiveId: this.data.detectiveId,
-          levelTitle: this.data.levelTitle,
-          remainingAnswers: this.data.remainingAnswers,
-          unsolvedCount: this.data.unsolvedCount,
-          solvedCount: this.data.solvedCount,
-          creationCount: this.data.creationCount,
-          favoriteCount: this.data.favoriteCount
+          nickName: '未登录的侦探',
+          detectiveId: '未知',
+          levelTitle: '未知侦探',
+          remainingAnswers: 0,
+          unsolvedCount: 0,
+          solvedCount: 0,
+          creationCount: 0,
+          favoriteCount: 0
         });
         return;
       }
@@ -121,10 +121,9 @@ Component({
      */
     handleSignIn() {
       // 直接触发签到事件，由页面处理所有逻辑
-      // 包括登录检查和已签到提示
+      // 只传递登录状态，签到状态由后端决定
       this.triggerEvent('signin', {
-        isLoggedIn: this.data.isLoggedIn,
-        hasSignedIn: this.properties.hasSignedIn
+        isLoggedIn: this.data.isLoggedIn
       });
     },
 
@@ -154,6 +153,28 @@ Component({
      */
     navigateToFavorites() {
       this.triggerEvent('navigate', { page: 'favorites' });
+    },
+
+    /**
+     * 处理头像图片加载错误
+     */
+    handleImageError() {
+      console.error('头像图片加载失败，使用默认头像');
+
+      // 如果detectiveInfo存在，更新其avatarUrl为默认头像
+      if (this.properties.detectiveInfo) {
+        // 创建一个新对象，避免直接修改原对象
+        const updatedInfo = { ...this.properties.detectiveInfo };
+
+        // 添加时间戳参数，避免缓存问题
+        const defaultUrl = this.properties.defaultAvatarUrl + '?t=' + new Date().getTime();
+        updatedInfo.avatarUrl = defaultUrl;
+
+        // 更新组件属性
+        this.setData({
+          'detectiveInfo.avatarUrl': defaultUrl
+        });
+      }
     }
   }
 })

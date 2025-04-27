@@ -52,9 +52,16 @@ const request = (options) => {
           // 跳转到登录页或重新登录
           reject(new Error('登录已过期，请重新登录'));
         }
+        // 处理400错误 - 通常是业务逻辑错误，如"今日已签到"
+        else if (res.statusCode === 400) {
+          // 从响应中获取错误信息
+          const errorMsg = data.error || data.message || '请求参数错误';
+          console.log('400错误，错误信息:', errorMsg);
+          reject(new Error(errorMsg));
+        }
         // 其他错误
         else {
-          reject(new Error(data.error || '请求失败'));
+          reject(new Error(data.error || data.message || '请求失败'));
         }
       },
       fail: (err) => {
@@ -156,9 +163,16 @@ const requestOpen = (options) => {
         if (res.statusCode === 200) {
           resolve(data);
         }
+        // 处理400错误 - 通常是业务逻辑错误
+        else if (res.statusCode === 400) {
+          // 从响应中获取错误信息
+          const errorMsg = data.error || data.message || '请求参数错误';
+          console.log('400错误，错误信息:', errorMsg);
+          reject(new Error(errorMsg));
+        }
         // 其他错误
         else {
-          reject(new Error(data.error || '请求失败'));
+          reject(new Error(data.error || data.message || '请求失败'));
         }
       },
       fail: (err) => {
