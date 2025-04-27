@@ -29,31 +29,30 @@
   margin-right: 30rpx;
   position: relative;
   flex-shrink: 0;
-  width: 160rpx !important;
-  height: 160rpx !important;
-  border-radius: 50% !important;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-.avatar-section::after {
-  content: '';
+.avatar-section-glow {
   position: absolute;
   top: -3rpx;
   left: -3rpx;
   right: -3rpx;
   bottom: -3rpx;
-  border-radius: 50% !important;
+  border-radius: 50%;
   background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(128, 0, 255, 0.5));
   z-index: -1;
   opacity: 0.7;
 }
 
 .avatar-large {
-  width: 140rpx !important;
-  height: 140rpx !important;
-  border-radius: 50% !important;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 15rpx rgba(0, 0, 0, 0.2);
   object-fit: cover;
@@ -229,8 +228,7 @@
   background-color: rgba(92, 232, 33, 0.1);
 }
 
-.stat-item:not(:last-child):after {
-  content: '';
+.stat-item-divider {
   position: absolute;
   right: 0;
   top: 20%;

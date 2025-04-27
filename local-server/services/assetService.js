@@ -23,7 +23,7 @@ const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 限制文件大小为10MB
+    fileSize: 2 * 1024 * 1024 // 限制文件大小为10MB
   }
 });
 
@@ -238,17 +238,81 @@ async function getIcons(category) {
 }
 
 /**
+ * 查找用户的头像资源（内部使用）
+ * @param {string} userId - 用户ID
+ * @returns {Promise<Object|null>} - 原始头像资源对象或null
+ */
+async function findUserAvatar(userId) {
+  if (!userId) return null;
+
+  try {
+    // 获取所有资源
+    const assets = await assetData.getAllAssets();
+
+    // 查找该用户的头像
+    return assets.find(asset =>
+      asset.type === ASSET_TYPES.AVATAR &&
+      asset.userId === userId &&
+      asset.status === 'active'
+    ) || null;
+  } catch (error) {
+    console.error('查找用户头像失败:', error);
+    return null;
+  }
+}
+
+/**
+ * 获取头像资源
+ * @param {string} userId - 用户ID（可选）
+ * @returns {Promise<Array|Object>} - 头像列表或单个头像
+ */
+async function getAvatars(userId) {
+  try {
+    // 获取所有资源
+    const assets = await assetData.getAllAssets();
+
+    // 过滤头像
+    let avatars = assets.filter(asset =>
+      asset.type === ASSET_TYPES.AVATAR &&
+      asset.status === 'active'
+    );
+
+    // 按排序顺序排序
+    avatars.sort((a, b) => a.sortOrder - b.sortOrder);
+
+    // 转换为前端需要的格式，确保URL是绝对路径
+    const formattedAvatars = avatars.map(avatar => ({
+      id: avatar.id,
+      url: toAbsoluteUrl(avatar.url),
+      userId: avatar.userId || ''
+    }));
+
+    // 如果指定了用户ID，返回该用户的头像
+    if (userId) {
+      const userAvatar = formattedAvatars.find(avatar => avatar.userId === userId);
+      return userAvatar || null;
+    }
+
+    return formattedAvatars;
+  } catch (error) {
+    console.error('获取头像失败:', error);
+    throw new Error('获取头像失败');
+  }
+}
+
+/**
  * 上传资源
  * @param {Object} file - 文件对象
  * @param {Object} metadata - 资源元数据
  * @param {string} metadata.type - 资源类型
- * @param {string} metadata.name - 资源名称
- * @param {string} metadata.description - 资源描述
+ * @param {string} metadata.name - 资源名称 (avatar类型可选，会自动生成)
+ * @param {string} metadata.description - 资源描述 (avatar类型不需要)
  * @param {string} metadata.page - 页面标识 (仅banner类型需要)
  * @param {string} metadata.category - 分类 (可选)
  * @param {string} metadata.linkUrl - 链接URL (仅banner类型需要)
  * @param {string} metadata.bgColor - 背景色 (仅banner类型需要)
  * @param {number} metadata.sortOrder - 排序顺序
+ * @param {string} metadata.userId - 用户ID (仅avatar类型需要)
  * @returns {Promise<Object>} - 上传结果
  */
 async function uploadAsset(file, metadata) {
@@ -260,14 +324,16 @@ async function uploadAsset(file, metadata) {
     category = '',
     linkUrl = '',
     bgColor = '',
-    sortOrder = 0
+    sortOrder = 0,
+    userId = ''
   } = metadata;
 
   if (!file) {
     throw new Error('文件不能为空');
   }
 
-  if (!name) {
+  // 对于非头像类型，名称是必需的
+  if (!name && type.toUpperCase() !== 'AVATAR') {
     throw new Error('资源名称不能为空');
   }
 
@@ -281,31 +347,73 @@ async function uploadAsset(file, metadata) {
     throw new Error('Banner资源必须指定页面');
   }
 
+  // Avatar类型的特殊验证
+  if (assetType === 'AVATAR' && !userId) {
+    throw new Error('头像资源必须指定用户ID');
+  }
+
   try {
-    // 生成唯一文件名
-    const fileExt = path.extname(file.originalname).toLowerCase();
-    const fileName = `${uuidv4()}${fileExt}`;
     const typePath = ASSET_TYPES[assetType];
-    const filePath = path.join(ASSET_PATHS[typePath], fileName);
+    const fileExt = path.extname(file.originalname).toLowerCase();
+    let fileName, filePath, relativeUrl, url;
+    let existingAvatar = null;
+    const now = new Date().toISOString();
+
+    // 头像类型特殊处理
+    if (assetType === 'AVATAR' && userId) {
+      // 查找用户现有头像
+      existingAvatar = await findUserAvatar(userId);
+
+      // 格式化头像文件名，使用用户ID作为文件名的一部分
+      // 格式: avatar_userId_timestamp.ext
+      fileName = `avatar_${userId}_${Date.now()}${fileExt}`;
+      filePath = path.join(ASSET_PATHS[typePath], fileName);
+
+      // 如果存在旧头像，删除旧文件
+      if (existingAvatar && existingAvatar.url) {
+        try {
+          const oldFilePath = path.join(process.cwd(), existingAvatar.url.replace(/^\//, ''));
+          if (await existsAsync(oldFilePath)) {
+            await unlinkAsync(oldFilePath);
+            console.log(`删除旧头像文件: ${oldFilePath}`);
+          }
+        } catch (err) {
+          console.error('删除旧头像文件失败:', err);
+          // 继续处理，不中断上传流程
+        }
+      }
+    } else {
+      // 其他类型资源使用UUID作为文件名
+      fileName = `${uuidv4()}${fileExt}`;
+      filePath = path.join(ASSET_PATHS[typePath], fileName);
+    }
 
     // 保存文件
     await writeFileAsync(filePath, file.buffer);
 
     // 生成访问URL（使用相对路径，然后转换为绝对路径）
-    const relativeUrl = `${ASSET_URL_PREFIX}/${typePath}s/${fileName}`;
-    const url = toAbsoluteUrl(relativeUrl);
+    relativeUrl = `${ASSET_URL_PREFIX}/${typePath}s/${fileName}`;
+    url = toAbsoluteUrl(relativeUrl);
     console.log(`生成资源URL: ${url}`);
 
-    // 创建资源对象
-    const id = uuidv4();
-    const now = new Date().toISOString();
+    // 为头像类型自动生成名称
+    let assetName = name;
+    let assetDescription = description;
+
+    if (typePath === ASSET_TYPES.AVATAR) {
+      assetName = `用户头像_${userId}_${now.substring(0, 10)}`;
+      assetDescription = '';
+    }
+
+    // 如果是更新头像，使用现有记录的ID
+    const id = (existingAvatar) ? existingAvatar.id : uuidv4();
 
     // 基础资源对象
     const asset = {
       id,
       type: typePath,
-      name,
-      description,
+      name: assetName,
+      description: assetDescription,
       url,
       originalName: file.originalname,
       fileSize: file.size,
@@ -313,7 +421,7 @@ async function uploadAsset(file, metadata) {
       category,
       sortOrder: parseInt(sortOrder) || 0,
       status: 'active',
-      createTime: now,
+      createTime: existingAvatar ? existingAvatar.createTime : now,
       updateTime: now
     };
 
@@ -322,10 +430,20 @@ async function uploadAsset(file, metadata) {
       asset.page = page;
       asset.linkUrl = linkUrl;
       asset.bgColor = bgColor;
+    } else if (typePath === ASSET_TYPES.AVATAR) {
+      asset.userId = userId;
     }
 
     // 保存资源信息
-    await assetData.addAsset(asset);
+    if (existingAvatar) {
+      // 更新现有头像记录
+      await assetData.updateAsset(existingAvatar.id, asset);
+      console.log(`更新用户 ${userId} 的头像记录`);
+    } else {
+      // 添加新资源记录
+      await assetData.addAsset(asset);
+      console.log(`添加新${typePath}资源记录`);
+    }
 
     return asset;
   } catch (error) {
@@ -356,6 +474,8 @@ async function updateAsset(id, updates) {
     // 根据资源类型添加特定可更新字段
     if (currentAsset.type === ASSET_TYPES.BANNER) {
       allowedFields.push('page', 'linkUrl', 'bgColor');
+    } else if (currentAsset.type === ASSET_TYPES.AVATAR) {
+      allowedFields.push('userId');
     }
 
     // 过滤无效的更新字段
@@ -566,9 +686,9 @@ function initAssetRoutes(app) {
   app.get(assetBasePath + 'type/:type', async (req, res) => {
     try {
       const { type } = req.params;
-      const { page, status = 'active' } = req.query;
+      const { page, status = 'active', userId } = req.query;
 
-      console.log(`收到获取${type}类型资源请求，页面参数: ${page || '所有'}`);
+      console.log(`收到获取${type}类型资源请求，页面参数: ${page || '所有'}, 用户ID: ${userId || '所有'}`);
 
       // 获取所有资源
       const assets = await assetData.getAllAssets();
@@ -582,6 +702,11 @@ function initAssetRoutes(app) {
       // 如果指定了页面参数，进一步筛选
       if (page && type === ASSET_TYPES.BANNER) {
         filteredAssets = filteredAssets.filter(asset => asset.page === page);
+      }
+
+      // 如果指定了用户ID，进一步筛选
+      if (userId && type === ASSET_TYPES.AVATAR) {
+        filteredAssets = filteredAssets.filter(asset => asset.userId === userId);
       }
 
       // 按排序顺序排序
@@ -606,11 +731,55 @@ function initAssetRoutes(app) {
         return sendResponse(res, true, banners);
       }
 
+      // 如果是avatar类型，转换为前端需要的格式
+      if (type === ASSET_TYPES.AVATAR) {
+        const avatars = filteredAssets.map(avatar => ({
+          id: avatar.id,
+          url: toAbsoluteUrl(avatar.url),
+          userId: avatar.userId || ''
+        }));
+
+        // 如果指定了用户ID且找到了头像，返回第一个匹配的头像
+        if (userId && avatars.length > 0) {
+          return sendResponse(res, true, avatars[0]);
+        }
+
+        return sendResponse(res, true, avatars);
+      }
+
       return sendResponse(res, true, filteredAssets);
     } catch (error) {
       console.error(`获取资源类型失败:`, error);
       // 返回空数组而不是错误，这样前端可以显示默认内容
       return sendResponse(res, true, []);
+    }
+  });
+
+  /**
+   * 4. 获取用户头像
+   * GET /yishao-api/asset/avatar/:userId
+   */
+  app.get(assetBasePath + 'avatar/:userId', async (req, res) => {
+    try {
+      const { userId } = req.params;
+
+      if (!userId) {
+        return sendResponse(res, false, '用户ID不能为空', 400);
+      }
+
+      // 获取用户头像
+      const avatar = await getAvatars(userId);
+
+      if (!avatar) {
+        // 如果没有找到用户头像，返回空对象而不是错误
+        return sendResponse(res, true, null);
+      }
+
+      return sendResponse(res, true, avatar);
+    } catch (error) {
+      console.error('获取用户头像失败:', error);
+      // 返回空对象而不是错误，这样前端可以显示默认头像
+      return sendResponse(res, true, null);
     }
   });
 
@@ -705,6 +874,8 @@ module.exports = {
   getAssetById,
   getBanners,
   getIcons,
+  getAvatars,
+  findUserAvatar,
   uploadAsset,
   updateAsset,
   deleteAsset,

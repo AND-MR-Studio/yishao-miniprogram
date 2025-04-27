@@ -1,5 +1,6 @@
 <!--pages/mine/mine.wxml-->
 <view class="page">
+  <view class="page-background"></view>
   <!-- 导航栏 -->
   <nav-bar title="个人中心" />
 
@@ -63,6 +64,7 @@
   <!-- 用户信息设置弹窗 - 只在showUserInfoModal为true时显示 -->
   <view class="user-info-modal {{showUserInfoModal ? 'show' : ''}}" catchtouchmove="catchTouchMove" wx:if="{{showUserInfoModal}}">
     <view class="user-info-container">
+      <view class="user-info-container-border"></view>
       <view class="user-info-header">
         <text class="user-info-title">设置侦探信息</text>
         <view class="user-info-close" bindtap="closeUserInfoModal">×</view>
@@ -71,7 +73,8 @@
       <view class="user-info-body">
         <!-- 头像选择 - 居中显示 -->
         <view class="avatar-container-centered">
-          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
+          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" hover-class="none">
+            <view class="avatar-btn-centered-before"></view>
             <image
               class="avatar-preview-centered"
               src="{{userInfo.avatarUrl || defaultAvatarUrl}}"

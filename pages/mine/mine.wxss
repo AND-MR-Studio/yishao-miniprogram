@@ -16,8 +16,7 @@
   margin: 0;
 }
 
-.page::before {
-  content: '';
+.page-background {
   position: absolute;
   top: 0;
   left: 0;
@@ -112,8 +111,7 @@
   box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
 }
 
-.update-banner::before {
-  content: '';
+.update-banner-gradient {
   position: absolute;
   top: 0;
   left: 0;
@@ -127,7 +125,7 @@
   background-color: rgba(128, 0, 255, 0.7);
 }
 
-.banner-purple::before {
+.banner-purple-gradient {
   background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
 }
 
@@ -135,7 +133,7 @@
   background-color: rgba(128, 0, 255, 0.7);
 }
 
-.banner-mix::before {
+.banner-mix-gradient {
   background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
 }
 
@@ -180,8 +178,7 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.banner-image::before {
-  content: '';
+.banner-image-glow {
   position: absolute;
   top: -10rpx;
   left: -10rpx;
@@ -310,8 +307,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.user-info-container::before {
-  content: '';
+.user-info-container-border {
   position: absolute;
   top: 0;
   left: 0;
@@ -377,9 +373,9 @@
   padding: 0;
   background: none;
   border: none;
-  width: 160rpx !important;
-  height: 160rpx !important;
-  border-radius: 50% !important;
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
   overflow: visible; /* 修改为visible，允许子元素溢出 */
   position: relative;
   box-shadow: 0 0 20rpx rgba(92, 232, 33, 0.3);
@@ -387,17 +383,18 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  line-height: normal; /* 防止按钮内部文本行高影响布局 */
 }
 
 /* 添加绿紫光晕效果 */
-.avatar-btn-centered::before {
+.avatar-btn-centered-before {
   content: '';
   position: absolute;
   top: -5rpx;
   left: -5rpx;
   right: -5rpx;
   bottom: -5rpx;
-  border-radius: 50% !important;
+  border-radius: 50%;
   background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(128, 0, 255, 0.5));
   z-index: -1;
   opacity: 0.7;
@@ -419,9 +416,9 @@
 }
 
 .avatar-preview-centered {
-  width: 140rpx !important;
-  height: 140rpx !important;
-  border-radius: 50% !important;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.2);
   transition: all 0.3s ease;
   object-fit: cover;
@@ -445,7 +442,7 @@
   padding: 0 30rpx;
   color: var(--color-text-primary);
   font-size: 28rpx;
-  text-align: center !important;
+  text-align: center;
   box-sizing: border-box;
   display: flex;
   align-items: center;
@@ -454,7 +451,7 @@
 
 /* 确保输入框中的文本居中显示 - 使用类选择器替代标签选择器 */
 .nickname-input-text {
-  text-align: center !important;
+  text-align: center;
 }
 
 .user-info-footer {

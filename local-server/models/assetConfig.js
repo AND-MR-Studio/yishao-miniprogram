@@ -9,6 +9,7 @@ const ASSET_TYPES = {
   BANNER: 'banner',
   FONT: 'font',
   IMAGE: 'image',
+  AVATAR: 'avatar',
   OTHER: 'other'
 };
 
@@ -21,6 +22,7 @@ const ASSET_PATHS = {
   [ASSET_TYPES.BANNER]: path.join(UPLOAD_DIR, 'banners'),
   [ASSET_TYPES.FONT]: path.join(UPLOAD_DIR, 'fonts'),
   [ASSET_TYPES.IMAGE]: path.join(UPLOAD_DIR, 'images'),
+  [ASSET_TYPES.AVATAR]: path.join(UPLOAD_DIR, 'avatars'),
   [ASSET_TYPES.OTHER]: path.join(UPLOAD_DIR, 'others')
 };
 

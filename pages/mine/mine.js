@@ -169,49 +169,64 @@ Page({
 
   /**
    * 处理头像选择
+   * 增强版本，解决chooseAvatar:fail another chooseAvatar is in progress错误
    */
   onChooseAvatar(e) {
-    // 防止重复调用
-    if (this._isUploadingAvatar) return;
+    // 防止重复调用 - 使用更严格的检查
+    if (this._isUploadingAvatar || this._isChoosingAvatar) {
+      console.log('头像选择或上传操作正在进行中，请稍后再试');
+      return;
+    }
+
+    // 设置两个状态标志，分别跟踪选择和上传过程
+    this._isChoosingAvatar = true;
     this._isUploadingAvatar = true;
 
     const { avatarUrl } = e.detail;
     if (!avatarUrl) {
+      console.log('未获取到头像URL');
+      this._isChoosingAvatar = false;
       this._isUploadingAvatar = false;
       return;
     }
 
-    // 使用userService更新头像
-    userService.updateAvatar(avatarUrl)
-      .then(result => {
-        // 更新页面上的头像显示
-        const userInfo = this.data.userInfo || {};
-        userInfo.avatarUrl = result.avatarUrl;
+    // 添加延迟，确保微信内部的chooseAvatar操作完全结束
+    setTimeout(() => {
+      // 使用userService更新头像
+      userService.updateAvatar(avatarUrl)
+        .then(result => {
+          // 更新页面上的头像显示
+          const userInfo = this.data.userInfo || {};
+          userInfo.avatarUrl = result.avatarUrl;
 
-        this.setData({
-          userInfo: userInfo
-        });
+          this.setData({
+            userInfo: userInfo
+          });
 
-        wx.showToast({
-          title: '头像上传成功',
-          icon: 'success',
-          duration: 2000
+          wx.showToast({
+            title: '头像上传成功',
+            icon: 'success',
+            duration: 2000
+          });
+        })
+        .catch(error => {
+          console.error('头像上传失败:', error);
+          wx.showToast({
+            title: '头像上传失败',
+            icon: 'none',
+            duration: 2000
+          });
+        })
+        .finally(() => {
+          // 延迟重置标志，避免快速连续点击
+          // 使用更长的延迟时间
+          setTimeout(() => {
+            this._isUploadingAvatar = false;
+            // 确保两个状态都被重置
+            this._isChoosingAvatar = false;
+          }, 2000);
         });
-      })
-      .catch(error => {
-        console.error('头像上传失败:', error);
-        wx.showToast({
-          title: '头像上传失败',
-          icon: 'none',
-          duration: 2000
-        });
-      })
-      .finally(() => {
-        // 延迟重置标志，避免快速连续点击
-        setTimeout(() => {
-          this._isUploadingAvatar = false;
-        }, 1000);
-      });
+    }, 500); // 添加500ms延迟，确保微信内部的chooseAvatar操作完全结束
   },
 
   /**

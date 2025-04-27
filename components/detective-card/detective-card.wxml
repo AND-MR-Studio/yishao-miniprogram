@@ -3,6 +3,7 @@
   <!-- 顶部卡片区域：头像、昵称和ID -->
   <view class="card-content">
     <view class="avatar-section">
+      <view class="avatar-section-glow"></view>
       <image
         class="avatar-large"
         src="{{detectiveInfo.avatarUrl || defaultAvatarUrl}}"
@@ -47,14 +48,17 @@
     <view class="stat-item" bindtap="navigateToUnsolved">
       <text class="stat-value">{{unsolvedCount || 0}}</text>
       <text class="stat-label">未解决</text>
+      <view class="stat-item-divider"></view>
     </view>
     <view class="stat-item" bindtap="navigateToSolved">
       <text class="stat-value">{{solvedCount || 0}}</text>
       <text class="stat-label">已解决</text>
+      <view class="stat-item-divider"></view>
     </view>
     <view class="stat-item" bindtap="navigateToCreations">
       <text class="stat-value">{{creationCount || 0}}</text>
       <text class="stat-label">创作</text>
+      <view class="stat-item-divider"></view>
     </view>
     <view class="stat-item" bindtap="navigateToFavorites">
       <text class="stat-value">{{favoriteCount || 0}}</text>

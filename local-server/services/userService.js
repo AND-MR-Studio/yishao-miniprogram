@@ -15,9 +15,7 @@ const userDataAccess = require('../dataAccess/userDataAccess');
 const userModel = require('../models/userModel');
 const axios = require('axios');
 const crypto = require('crypto');
-const fs = require('fs-extra');
-const path = require('path');
-const multer = require('multer');
+
 
 // 微信小程序配置
 const WECHAT_CONFIG = {
@@ -228,110 +226,9 @@ async function authMiddleware(req, res, next) {
   }
 }
 
-/**
- * 配置头像上传存储
- */
-const avatarStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const avatarDir = path.join(__dirname, '../static/images/avatars');
-    fs.ensureDirSync(avatarDir);
-    cb(null, avatarDir);
-  },
-  filename: function (req, file, cb) {
-    // 使用 userId 作为文件名
-    const ext = path.extname(file.originalname);
-    const userData = req.userData; // 从 authMiddleware 中获取用户数据
-    cb(null, `avatar-${userData.userId}${ext}`);
-  }
-});
 
-/**
- * 文件过滤器，只允许图片文件
- */
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
-  if (allowedTypes.includes(file.mimetype)) {
-    cb(null, true);
-  } else {
-    cb(new Error('不支持的文件类型，只允许上传 JPG, PNG, GIF 和 WEBP 格式的图片'), false);
-  }
-};
 
-/**
- * 配置 multer 上传
- */
-const avatarUpload = multer({
-  storage: avatarStorage,
-  fileFilter: fileFilter,
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 限制文件大小为 5MB
-  }
-});
-
-/**
- * 处理头像上传
- * @param {Object} req - Express请求对象
- * @returns {Promise<Object>} - 上传结果
- */
-async function handleAvatarUpload(req) {
-  try {
-    if (!req.file) {
-      return { success: false, message: '没有上传文件' };
-    }
-
-    const openid = req.openid;
-    const userData = await userDataAccess.getUserData(openid);
-
-    if (!userData) {
-      await fs.remove(req.file.path);
-      return { success: false, message: '用户不存在' };
-    }
-
-    // 删除旧的头像文件（如果存在且不是默认头像）
-    if (userData.avatarUrl &&
-        userData.avatarUrl !== '/static/images/default-avatar.jpg' &&
-        userData.avatarUrl.startsWith('/static/images/avatars/')) {
-      try {
-        const oldAvatarPath = path.join(__dirname, '..', userData.avatarUrl);
-        await fs.remove(oldAvatarPath);
-      } catch (err) {
-        console.error('删除旧头像失败:', err.message);
-      }
-    }
-
-    // 构建相对路径
-    const relativePath = path.relative(
-      path.join(__dirname, '../..'),
-      req.file.path
-    ).replace(/\\/g, '/');
-
-    // 更新用户头像URL
-    userData.avatarUrl = `/${relativePath}`;
-
-    // 保存用户数据
-    await userDataAccess.saveUserData(openid, userData);
-
-    return {
-      success: true,
-      message: '头像上传成功',
-      avatarUrl: userData.avatarUrl
-    };
-  } catch (error) {
-    console.error('头像上传处理失败:', error.message);
-
-    // 清理临时文件
-    if (req.file && req.file.path) {
-      try {
-        await fs.remove(req.file.path);
-      } catch (removeErr) {
-        console.error('删除临时文件失败:', removeErr.message);
-      }
-    }
-
-    return { success: false, message: '头像上传处理失败' };
-  }
-}
 
 /**
  * 初始化用户服务路由
@@ -356,8 +253,8 @@ function initUserRoutes(app) {
 
       // 更新用户信息
       if (userInfo) {
-        userData.avatarUrl = userInfo.avatarUrl || userData.avatarUrl;
         userData.nickName = userInfo.nickName || userData.nickName;
+        // 不再从前端更新头像URL，而是从资源服务获取
       }
 
       // 设置新用户的初始数据
@@ -424,13 +321,40 @@ function initUserRoutes(app) {
       // 获取等级信息
       const levelInfo = userModel.getLevelInfo(userData.experience);
 
+      // 尝试从资源服务获取用户头像
+      let avatarUrl = userData.avatarUrl || '/static/images/default-avatar.jpg';
+
+      try {
+        // 调用资源服务获取用户头像
+        const axios = require('axios');
+        const userId = userData.userId;
+
+        if (userId) {
+          const avatarResponse = await axios.get(`http://localhost:8080/yishao-api/asset/avatar/${userId}`);
+
+          if (avatarResponse.data && avatarResponse.data.success && avatarResponse.data.data && avatarResponse.data.data.url) {
+            // 使用资源服务返回的头像URL
+            avatarUrl = avatarResponse.data.data.url;
+
+            // 如果用户数据中的头像URL与资源服务不同，更新用户数据
+            if (userData.avatarUrl !== avatarUrl) {
+              userData.avatarUrl = avatarUrl;
+              await userDataAccess.saveUserData(openid, userData);
+            }
+          }
+        }
+      } catch (avatarError) {
+        console.error('获取用户头像失败:', avatarError.message);
+        // 使用用户数据中的头像URL或默认头像
+      }
+
       // 返回用户信息和token
       return sendResponse(res, true, {
         token: userData.token,
         userId: userData.userId,
         isDailyFirstLogin: isDailyFirstLogin, // 添加每日首次登录标志
         userInfo: {
-          avatarUrl: userData.avatarUrl,
+          avatarUrl: avatarUrl,
           nickName: userData.nickName,
           detectiveId: userData.detectiveId || ''
         },
@@ -463,14 +387,6 @@ function initUserRoutes(app) {
       const userData = req.userData;
       const updateData = req.body;
 
-      // 更新用户数据中的字段
-      if (updateData.avatarUrl) {
-        // 确保头像URL是完整的路径
-        userData.avatarUrl = updateData.avatarUrl.startsWith('/') ?
-          updateData.avatarUrl :
-          '/' + updateData.avatarUrl;
-      }
-
       // 特殊处理昵称字段
       if ('nickName' in updateData) {
         if (!updateData.nickName || updateData.nickName.trim() === '') {
@@ -491,9 +407,30 @@ function initUserRoutes(app) {
       // 保存用户数据
       await userDataAccess.saveUserData(openid, userData);
 
+      // 尝试从资源服务获取用户头像
+      let avatarUrl = userData.avatarUrl || '/static/images/default-avatar.jpg';
+
+      try {
+        // 调用资源服务获取用户头像
+        const axios = require('axios');
+        const userId = userData.userId;
+
+        if (userId) {
+          const avatarResponse = await axios.get(`http://localhost:8080/yishao-api/asset/avatar/${userId}`);
+
+          if (avatarResponse.data && avatarResponse.data.success && avatarResponse.data.data && avatarResponse.data.data.url) {
+            // 使用资源服务返回的头像URL
+            avatarUrl = avatarResponse.data.data.url;
+          }
+        }
+      } catch (avatarError) {
+        console.error('获取用户头像失败:', avatarError.message);
+        // 使用用户数据中的头像URL或默认头像
+      }
+
       return sendResponse(res, true, {
         userInfo: {
-          avatarUrl: userData.avatarUrl,
+          avatarUrl: avatarUrl,
           nickName: userData.nickName
         }
       });
@@ -531,7 +468,7 @@ function initUserRoutes(app) {
 
       // 更新用户数据中的字段
       const allowedFields = [
-        'nickName', 'avatarUrl', 'level', 'experience',
+        'nickName', 'level', 'experience',
         'maxExperience', 'points', 'signInCount', 'remainingAnswers'
       ];
 
@@ -543,12 +480,33 @@ function initUserRoutes(app) {
 
       await userDataAccess.saveUserData(targetOpenid, userData);
 
+      // 尝试从资源服务获取用户头像
+      let avatarUrl = userData.avatarUrl || '/static/images/default-avatar.jpg';
+
+      try {
+        // 调用资源服务获取用户头像
+        const axios = require('axios');
+        const userId = userData.userId;
+
+        if (userId) {
+          const avatarResponse = await axios.get(`http://localhost:8080/yishao-api/asset/avatar/${userId}`);
+
+          if (avatarResponse.data && avatarResponse.data.success && avatarResponse.data.data && avatarResponse.data.data.url) {
+            // 使用资源服务返回的头像URL
+            avatarUrl = avatarResponse.data.data.url;
+          }
+        }
+      } catch (avatarError) {
+        console.error('获取用户头像失败:', avatarError.message);
+        // 使用用户数据中的头像URL或默认头像
+      }
+
       return sendResponse(res, true, {
         message: '更新成功',
         userData: {
           userId: userData.userId,
           nickName: userData.nickName,
-          avatarUrl: userData.avatarUrl,
+          avatarUrl: avatarUrl,
           level: userData.level,
           experience: userData.experience,
           maxExperience: userData.maxExperience,
@@ -576,11 +534,38 @@ function initUserRoutes(app) {
       // 获取等级信息
       const levelInfo = userModel.getLevelInfo(userData.experience);
 
+      // 尝试从资源服务获取用户头像
+      let avatarUrl = userData.avatarUrl || '/static/images/default-avatar.jpg';
+
+      try {
+        // 调用资源服务获取用户头像
+        const axios = require('axios');
+        const userId = userData.userId;
+
+        if (userId) {
+          const avatarResponse = await axios.get(`http://localhost:8080/yishao-api/asset/avatar/${userId}`);
+
+          if (avatarResponse.data && avatarResponse.data.success && avatarResponse.data.data && avatarResponse.data.data.url) {
+            // 使用资源服务返回的头像URL
+            avatarUrl = avatarResponse.data.data.url;
+
+            // 如果用户数据中的头像URL与资源服务不同，更新用户数据
+            if (userData.avatarUrl !== avatarUrl) {
+              userData.avatarUrl = avatarUrl;
+              await userDataAccess.saveUserData(openid, userData);
+            }
+          }
+        }
+      } catch (avatarError) {
+        console.error('获取用户头像失败:', avatarError.message);
+        // 使用用户数据中的头像URL或默认头像
+      }
+
       // 返回用户信息
       return sendResponse(res, true, {
         userId: userData.userId,
         userInfo: {
-          avatarUrl: userData.avatarUrl,
+          avatarUrl: avatarUrl,
           nickName: userData.nickName,
           detectiveId: userData.detectiveId || ''
         },
@@ -700,24 +685,7 @@ function initUserRoutes(app) {
     }
   });
 
-  // 8. 上传用户头像 (需要身份验证)
-  app.post('/yishao-api/user/upload-avatar', authMiddleware, avatarUpload.single('avatar'), async (req, res) => {
-    try {
-      const result = await handleAvatarUpload(req);
 
-      if (!result.success) {
-        return sendResponse(res, false, result.message, 400);
-      }
-
-      return sendResponse(res, true, {
-        avatarUrl: result.avatarUrl,
-        message: result.message
-      });
-    } catch (err) {
-      console.error('上传头像失败:', err.message);
-      return sendResponse(res, false, err.message || '上传头像失败', 500);
-    }
-  });
 }
 
 /**
@@ -739,7 +707,5 @@ module.exports = {
   addExperience,
   resetDailyAnswers,
   handleSignIn,
-  handleAvatarUpload,
-  avatarUpload,
   authMiddleware
 };

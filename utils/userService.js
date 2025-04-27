@@ -3,8 +3,38 @@ const api = require('./api');
 
 // 定义常量
 const TOKEN_KEY = 'token'; // 使用token作为唯一的本地存储键
-// 使用api.js中定义的云端默认头像URL
-const DEFAULT_AVATAR_URL = api.default_avatar_url;
+// 本地默认头像URL，仅作为前端兜底显示
+const DEFAULT_AVATAR_URL = '/static/images/default-avatar.jpg';
+
+/**
+ * 获取用户头像
+ * 从资源服务获取用户头像
+ * @param {string} userId - 用户ID
+ * @returns {Promise<string>} - 返回Promise，包含头像URL
+ */
+async function getUserAvatar(userId) {
+  if (!userId) return Promise.resolve(DEFAULT_AVATAR_URL);
+
+  try {
+    // 调用资源服务获取用户头像
+    const config = {
+      url: api.asset_avatar_url + userId,
+      method: 'GET'
+    };
+
+    // 使用开放请求方法，不需要身份验证
+    const res = await api.assetRequestOpen(config);
+
+    if (res.success && res.data && res.data.url) {
+      return res.data.url;
+    } else {
+      return DEFAULT_AVATAR_URL;
+    }
+  } catch (error) {
+    console.error('获取用户头像失败:', error);
+    return DEFAULT_AVATAR_URL;
+  }
+}
 
 /**
  * 获取用户信息
@@ -47,11 +77,9 @@ function getUserInfo() {
 
 /**
  * 刷新用户信息
- * 保留此方法以保持API兼容性，但实际上与getUserInfo相同
  * @returns {Promise<Object>} 用户信息
  */
 function refreshUserInfo() {
-  // 直接调用getUserInfo方法
   return getUserInfo();
 }
 
@@ -59,21 +87,23 @@ function refreshUserInfo() {
  * 获取用户ID
  * @returns {Promise<string>} 用户ID
  */
-function getUserId() {
+async function getUserId() {
   try {
     // 检查token是否存在
     const token = wx.getStorageSync(TOKEN_KEY);
     if (!token) {
-      return Promise.resolve('');
+      return '';
     }
 
     // 从服务器获取用户信息，然后返回用户ID
-    return getUserInfo()
-      .then(userInfo => userInfo?.userId || '')
-      .catch(() => '');
+    try {
+      const userInfo = await getUserInfo();
+      return userInfo?.userId || '';
+    } catch {
+      return '';
+    }
   } catch (error) {
-    console.error('获取用户ID失败:', error);
-    return Promise.resolve('');
+    return '';
   }
 }
 
@@ -90,20 +120,20 @@ async function getRemainingAnswers() {
     }
 
     // 从后端获取最新用户信息
-    const userInfo = await getUserInfo(true);
+    const userInfo = await getUserInfo();
     return userInfo.answers?.remainingAnswers || 0;
-  } catch (error) {
-    console.error('获取剩余回答次数失败:', error);
+  } catch {
     return 0;
   }
 }
 
 /**
- * 更新用户头像
+ * 上传用户头像图片
+ * 增强版本，解决chooseAvatar:fail another chooseAvatar is in progress错误
  * @param {string} avatarUrl - 头像临时文件路径
- * @returns {Promise} - 更新结果
+ * @returns {Promise} - 上传结果
  */
-function updateAvatar(avatarUrl) {
+async function updateAvatar(avatarUrl) {
   if (!avatarUrl) return Promise.reject('头像URL为空');
 
   // 检查登录状态
@@ -118,48 +148,52 @@ function updateAvatar(avatarUrl) {
     mask: true
   });
 
-  return new Promise((resolve, reject) => {
-    // 添加延迟，避免微信内部的chooseAvatar冲突
-    setTimeout(() => {
-      // 使用新的头像上传API
-      api.uploadFile({
-        url: api.user_upload_avatar_url,
-        filePath: avatarUrl,
-        name: 'avatar',
-        formData: {
-          // 添加时间戳，确保每次上传的文件名都不同，避免缓存问题
-          timestamp: new Date().getTime()
-        }
-      })
-      .then(res => {
-        wx.hideLoading();
+  try {
+    // 获取用户ID
+    const userId = await getUserId();
+    if (!userId) {
+      wx.hideLoading();
+      return Promise.reject('获取用户ID失败');
+    }
 
-        if (res.success && res.data) {
-          // 添加随机参数到URL，避免缓存问题
-          let avatarUrl = res.data.avatarUrl;
-          if (avatarUrl.indexOf('?') === -1) {
-            avatarUrl += '?t=' + new Date().getTime();
-          } else {
-            avatarUrl += '&t=' + new Date().getTime();
-          }
+    // 添加更长的延迟，确保微信内部的chooseAvatar操作完全结束
+    // 从300ms增加到800ms，给微信API更多时间完成内部操作
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-          // 不需要清除缓存，每次都从服务器获取最新数据
+    // 使用资源服务上传头像
+    const result = await api.uploadFile({
+      url: api.asset_upload_url,
+      filePath: avatarUrl,
+      name: 'file',
+      formData: {
+        type: 'avatar',
+        userId: userId,
+        timestamp: new Date().getTime()
+      }
+    });
 
-          resolve({
-            ...res.data,
-            avatarUrl: avatarUrl
-          });
-        } else {
-          reject(res.error || '上传头像失败');
-        }
-      })
-      .catch(err => {
-        wx.hideLoading();
-        console.error('上传头像失败:', err);
-        reject(err);
-      });
-    }, 300); // 添加300ms延迟，避免微信内部的chooseAvatar冲突
-  });
+    wx.hideLoading();
+
+    if (result.success && result.data) {
+      // 刷新用户信息，获取最新数据
+      await refreshUserInfo();
+
+      // 添加额外延迟，确保所有操作完全结束
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      return {
+        success: true,
+        avatarUrl: result.data.url || '',
+        message: '头像上传成功'
+      };
+    } else {
+      return Promise.reject(result.error || '上传头像失败');
+    }
+  } catch (error) {
+    wx.hideLoading();
+    console.error('上传头像失败:', error);
+    return Promise.reject(error);
+  }
 }
 
 /**
@@ -198,8 +232,7 @@ async function getDetectiveId() {
     // 从后端获取最新用户信息
     const userInfo = await getUserInfo();
     return userInfo.userInfo?.detectiveId || '';
-  } catch (error) {
-    console.error('获取侦探ID失败:', error);
+  } catch {
     return '';
   }
 }
@@ -279,7 +312,6 @@ function login() {
           data: {
             code: res.code,
             userInfo: {
-              avatarUrl: DEFAULT_AVATAR_URL,
               nickName: ''
             }
           }
@@ -303,12 +335,7 @@ function login() {
 
             isLoggingIn = false;
 
-            // 记录登录信息，帮助调试
-            console.log('登录成功，用户信息:', {
-              userId: res.data.userId,
-              nickName: res.data.userInfo?.nickName,
-              detectiveId: res.data.userInfo?.detectiveId
-            });
+
 
             // 返回登录结果，包含用户信息，始终设置hasCompletedSetup为false
             resolve({
@@ -323,22 +350,22 @@ function login() {
             isLoggingIn = false;
             reject('登录失败');
           }
-        }).catch(err => {
+        }).catch(() => {
           wx.showToast({
             title: '登录失败，请重试',
             icon: 'none'
           });
           isLoggingIn = false;
-          reject(err);
+          reject('登录失败');
         });
       },
-      fail: (err) => {
+      fail: () => {
         wx.showToast({
           title: '登录失败，请重试',
           icon: 'none'
         });
         isLoggingIn = false;
-        reject(err);
+        reject('登录失败');
       }
     });
   });
@@ -356,12 +383,8 @@ function logout() {
   // 不需要清除缓存，每次都从服务器获取最新数据
 
   // 清除可能存在的其他用户相关缓存
-  try {
-    wx.removeStorageSync('userStats');
-    wx.removeStorageSync('userLevel');
-  } catch (e) {
-    console.error('清除额外缓存失败:', e);
-  }
+  wx.removeStorageSync('userStats');
+  wx.removeStorageSync('userLevel');
 
   // 清除任何可能的缓存数据
   const app = getApp();
@@ -443,11 +466,11 @@ function showLevelUpNotification(levelTitle) {
  * @param {boolean} showLoading - 是否显示加载提示
  * @returns {Promise<Object>} 格式化后的用户信息
  */
-function getFormattedUserInfo(showLoading = false) {
-  return new Promise((resolve) => {
+async function getFormattedUserInfo(showLoading = false) {
+  try {
     // 检查登录状态
     if (!checkLoginStatus(false)) {
-      return resolve(null);
+      return null;
     }
 
     // 显示加载中提示
@@ -459,44 +482,50 @@ function getFormattedUserInfo(showLoading = false) {
     }
 
     // 使用getUserInfo方法获取用户信息
-    getUserInfo()
-      .then(userInfo => {
-        if (showLoading) {
-          wx.hideLoading();
-        }
+    const userInfo = await getUserInfo();
 
-        if (!userInfo || !userInfo.userInfo) {
-          console.error('用户信息格式不正确:', userInfo);
-          resolve(null);
-          return;
-        }
+    if (showLoading) {
+      wx.hideLoading();
+    }
 
-        // 格式化用户信息，只提取UI需要的字段
-        resolve({
-          nickName: userInfo.userInfo?.nickName || '',
-          detectiveId: userInfo.userInfo?.detectiveId || '',
-          avatarUrl: userInfo.userInfo?.avatarUrl || '',
-          levelTitle: userInfo.level?.levelTitle || '',
-          level: userInfo.level?.level || 1,
-          experience: userInfo.level?.experience || 0,
-          maxExperience: userInfo.level?.maxExperience || 1000,
-          remainingAnswers: userInfo.answers?.remainingAnswers || 0,
-          unsolvedCount: userInfo.stats?.unsolvedCount || 0,
-          solvedCount: userInfo.stats?.solvedCount || 0,
-          creationCount: userInfo.stats?.creationCount || 0,
-          favoriteCount: userInfo.stats?.favoriteCount || 0,
-          lastSignInDate: userInfo.points?.lastSignInDate || '',
-          isLoggedIn: true
-        });
-      })
-      .catch(error => {
-        if (showLoading) {
-          wx.hideLoading();
-        }
-        console.error('获取用户信息失败:', error);
-        resolve(null);
-      });
-  });
+    if (!userInfo || !userInfo.userInfo) {
+      return null;
+    }
+
+    // 获取用户ID
+    const userId = userInfo.userId || '';
+
+    // 从资源服务获取用户头像
+    let avatarUrl = '';
+    if (userId) {
+      avatarUrl = await getUserAvatar(userId);
+    } else {
+      avatarUrl = DEFAULT_AVATAR_URL;
+    }
+
+    // 格式化用户信息，只提取UI需要的字段
+    return {
+      nickName: userInfo.userInfo?.nickName || '',
+      detectiveId: userInfo.userInfo?.detectiveId || '',
+      avatarUrl: avatarUrl, // 使用从资源服务获取的头像
+      levelTitle: userInfo.level?.levelTitle || '',
+      level: userInfo.level?.level || 1,
+      experience: userInfo.level?.experience || 0,
+      maxExperience: userInfo.level?.maxExperience || 1000,
+      remainingAnswers: userInfo.answers?.remainingAnswers || 0,
+      unsolvedCount: userInfo.stats?.unsolvedCount || 0,
+      solvedCount: userInfo.stats?.solvedCount || 0,
+      creationCount: userInfo.stats?.creationCount || 0,
+      favoriteCount: userInfo.stats?.favoriteCount || 0,
+      lastSignInDate: userInfo.points?.lastSignInDate || '',
+      isLoggedIn: true
+    };
+  } catch {
+    if (showLoading) {
+      wx.hideLoading();
+    }
+    return null;
+  }
 }
 
 /**
@@ -513,31 +542,23 @@ async function setUserInfo(userInfo) {
     return Promise.reject('用户未登录，请先登录');
   }
 
-  try {
-    // 上传到服务器，token会通过request.js自动添加到请求头
-    // 如果昵称为空，后端会自动生成
-    const config = {
-      url: api.user_update_url,
-      method: 'POST',
-      data: {
-        nickName: userInfo.nickName || '',
-        avatarUrl: userInfo.avatarUrl || DEFAULT_AVATAR_URL
-      }
-    };
-
-    const res = await api.userRequest(config);
-
-    // 不需要清除缓存，每次都从服务器获取最新数据
-
-    if (res.success && res.data) {
-      // 直接返回后端数据，不在本地存储用户信息
-      return res.data;
+  // 上传到服务器，token会通过request.js自动添加到请求头
+  // 如果昵称为空，后端会自动生成
+  const config = {
+    url: api.user_update_url,
+    method: 'POST',
+    data: {
+      nickName: userInfo.nickName || ''
     }
-    return res;
-  } catch (error) {
-    console.error('设置用户信息失败:', error);
-    return Promise.reject(error);
+  };
+
+  const res = await api.userRequest(config);
+
+  if (res.success && res.data) {
+    // 直接返回后端数据
+    return res.data;
   }
+  return res;
 }
 
 module.exports = {
@@ -555,5 +576,6 @@ module.exports = {
   checkLoginStatus,
   showLevelUpNotification,
   getFormattedUserInfo,
-  setUserInfo
+  setUserInfo,
+  getUserAvatar
 };

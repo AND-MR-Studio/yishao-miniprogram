@@ -36,8 +36,7 @@ const user_info_url = ysUrl + userBasePath + 'info';
 const user_signin_url = ysUrl + userBasePath + 'signin';
 // 获取用户列表（管理员接口）
 const user_list_url = ysUrl + userBasePath + 'list';
-// 上传用户头像
-const user_upload_avatar_url = ysUrl + userBasePath + 'upload-avatar';
+
 // 默认头像URL (绝对路径)
 const default_avatar_url = '/static/images/default-avatar.jpg';
 
@@ -49,6 +48,10 @@ const asset_list_url = ysUrl + assetBasePath + 'all';
 const asset_by_id_url = ysUrl + assetBasePath;
 // 获取指定类型的资源
 const asset_by_type_url = ysUrl + assetBasePath + 'type/';
+// 获取用户头像
+const asset_avatar_url = ysUrl + assetBasePath + 'avatar/';
+// 上传资源
+const asset_upload_url = ysUrl + assetBasePath + 'upload';
 
 // ===== 海龟汤服务接口 =====
 // 基础路径，用于获取所有汤面或创建新汤面
@@ -110,7 +113,6 @@ module.exports = {
   user_info_url,
   user_signin_url,
   user_list_url,
-  user_upload_avatar_url,
   default_avatar_url,
 
   // 系统相关接口URL
@@ -118,6 +120,8 @@ module.exports = {
   asset_list_url,
   asset_by_id_url,
   asset_by_type_url,
+  asset_avatar_url,
+  asset_upload_url,
 
   // 汤面相关接口URL
   soup_base_url,

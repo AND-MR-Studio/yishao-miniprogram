@@ -24,6 +24,15 @@
             border-radius: 4px;
             margin-bottom: 10px;
         }
+        .avatar-preview {
+            width: 80px;
+            height: 80px;
+            object-fit: cover;
+            background-color: #f8f9fa;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: block;
+        }
         .asset-type-badge {
             margin-right: 5px;
         }
@@ -47,6 +56,7 @@
                     <button type="button" class="btn btn-outline-primary" data-type="icon">图标</button>
                     <button type="button" class="btn btn-outline-primary" data-type="banner">横幅</button>
                     <button type="button" class="btn btn-outline-primary" data-type="image">图片</button>
+                    <button type="button" class="btn btn-outline-primary" data-type="avatar">头像</button>
                     <button type="button" class="btn btn-outline-primary" data-type="font">字体</button>
                 </div>
             </div>
@@ -89,6 +99,7 @@
                                 <option value="icon">图标</option>
                                 <option value="banner">横幅</option>
                                 <option value="image">图片</option>
+                                <option value="avatar">头像</option>
                                 <option value="font">字体</option>
                             </select>
                         </div>
@@ -125,6 +136,15 @@
                                 <label for="bannerSortOrder" class="form-label">排序顺序</label>
                                 <input type="number" class="form-control" id="bannerSortOrder" min="0" value="0">
                                 <div class="form-text">数字越小排序越靠前，相同页面的Banner按此顺序显示</div>
+                            </div>
+                        </div>
+
+                        <!-- 头像特有字段，默认隐藏 -->
+                        <div id="avatarFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="avatarUserId" class="form-label">用户ID <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="avatarUserId" placeholder="例如: user123456">
+                                <div class="form-text">关联的用户ID，用于识别头像所属用户</div>
                             </div>
                         </div>
                     </form>
@@ -186,6 +206,15 @@
                                 <div class="form-text">数字越小排序越靠前，相同页面的Banner按此顺序显示</div>
                             </div>
                         </div>
+
+                        <!-- 头像特有字段，根据资源类型显示 -->
+                        <div id="editAvatarFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="editAvatarUserId" class="form-label">用户ID <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editAvatarUserId" placeholder="例如: user123456">
+                                <div class="form-text">关联的用户ID，用于识别头像所属用户</div>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -227,11 +256,15 @@
 
             // 资源类型选择变化事件
             document.getElementById('assetType').addEventListener('change', function() {
-                // 如果选择了横幅类型，显示横幅特有字段
+                // 隐藏所有特有字段
+                document.getElementById('bannerFields').style.display = 'none';
+                document.getElementById('avatarFields').style.display = 'none';
+
+                // 根据选择的类型显示对应的特有字段
                 if (this.value === 'banner') {
                     document.getElementById('bannerFields').style.display = 'block';
-                } else {
-                    document.getElementById('bannerFields').style.display = 'none';
+                } else if (this.value === 'avatar') {
+                    document.getElementById('avatarFields').style.display = 'block';
                 }
             });
 
@@ -289,12 +322,15 @@
                     if (asset.type === 'icon') badgeClass = 'bg-primary';
                     if (asset.type === 'banner') badgeClass = 'bg-success';
                     if (asset.type === 'image') badgeClass = 'bg-info';
+                    if (asset.type === 'avatar') badgeClass = 'bg-danger';
                     if (asset.type === 'font') badgeClass = 'bg-warning';
 
-                    // 准备额外的banner信息
-                    let bannerInfo = '';
+                    // 准备额外的资源信息
+                    let extraInfo = '';
+
+                    // Banner特有信息
                     if (asset.type === 'banner') {
-                        bannerInfo = `
+                        extraInfo = `
                             <div class="mt-2 mb-2">
                                 <div class="d-flex justify-content-between">
                                     <small class="text-muted">排序: ${asset.sortOrder || 0}</small>
@@ -306,16 +342,31 @@
                         `;
                     }
 
+                    // Avatar特有信息
+                    if (asset.type === 'avatar') {
+                        extraInfo = `
+                            <div class="mt-2 mb-2">
+                                <small class="text-muted d-block">用户ID: ${asset.userId || '未关联'}</small>
+                            </div>
+                        `;
+                    }
+
+                    // 根据资源类型选择不同的预览样式
+                    let previewClass = 'asset-preview';
+                    if (asset.type === 'avatar') {
+                        previewClass = 'avatar-preview';
+                    }
+
                     assetElement.innerHTML = `
                         <div class="asset-item">
-                            <img src="${asset.url}" alt="${asset.name}" class="asset-preview">
+                            <img src="${asset.url}" alt="${asset.name}" class="${previewClass}">
                             <h5>${asset.name}</h5>
                             <div>
                                 <span class="badge ${badgeClass} asset-type-badge">${asset.type}</span>
                                 ${asset.page ? `<span class="badge bg-light text-dark">${asset.page}</span>` : ''}
                             </div>
                             <p class="text-muted small">${asset.description || ''}</p>
-                            ${bannerInfo}
+                            ${extraInfo}
                             <div class="asset-actions">
                                 <button class="btn btn-sm btn-outline-primary me-2" onclick="editAsset('${asset.id}')">编辑</button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="deleteAsset('${asset.id}')">删除</button>
@@ -352,7 +403,7 @@
                 formData.append('type', type);
                 formData.append('description', description);
 
-                // 如果是横幅类型，添加banner特有信息
+                // 根据资源类型添加特有信息
                 if (type === 'banner') {
                     const page = document.getElementById('bannerPage').value;
                     if (!page) {
@@ -372,6 +423,15 @@
                     // 添加排序顺序
                     const sortOrder = document.getElementById('bannerSortOrder').value;
                     formData.append('sortOrder', sortOrder);
+                }
+                // 头像特有信息
+                else if (type === 'avatar') {
+                    const userId = document.getElementById('avatarUserId').value.trim();
+                    if (!userId) {
+                        alert('请填写用户ID');
+                        return;
+                    }
+                    formData.append('userId', userId);
                 }
 
                 // 发送请求
@@ -424,15 +484,28 @@
                 document.getElementById('editAssetDescription').value = asset.description || '';
                 document.getElementById('editAssetPreview').src = asset.url;
 
-                // 如果是横幅类型，显示横幅特有字段
+                // 隐藏所有特有字段
+                document.getElementById('editBannerFields').style.display = 'none';
+                document.getElementById('editAvatarFields').style.display = 'none';
+
+                // 根据资源类型显示特有字段
                 if (asset.type === 'banner') {
                     document.getElementById('editBannerFields').style.display = 'block';
                     document.getElementById('editBannerPage').value = asset.page || 'index';
                     document.getElementById('editBannerLinkUrl').value = asset.linkUrl || '';
                     document.getElementById('editBannerBgColor').value = asset.bgColor || '';
                     document.getElementById('editBannerSortOrder').value = asset.sortOrder || 0;
+                }
+                // 头像特有字段
+                else if (asset.type === 'avatar') {
+                    document.getElementById('editAvatarFields').style.display = 'block';
+                    document.getElementById('editAvatarUserId').value = asset.userId || '';
+
+                    // 为头像设置圆形预览样式
+                    document.getElementById('editAssetPreview').className = 'avatar-preview';
                 } else {
-                    document.getElementById('editBannerFields').style.display = 'none';
+                    // 其他类型使用默认预览样式
+                    document.getElementById('editAssetPreview').className = 'asset-preview';
                 }
 
                 // 显示模态框
@@ -463,7 +536,8 @@
                     description
                 };
 
-                // 如果显示了横幅特有字段，添加banner特有信息
+                // 根据显示的特有字段添加对应信息
+                // 横幅特有信息
                 if (document.getElementById('editBannerFields').style.display !== 'none') {
                     const page = document.getElementById('editBannerPage').value;
                     if (!page) {
@@ -480,6 +554,15 @@
 
                     // 添加排序顺序
                     updateData.sortOrder = parseInt(document.getElementById('editBannerSortOrder').value) || 0;
+                }
+                // 头像特有信息
+                else if (document.getElementById('editAvatarFields').style.display !== 'none') {
+                    const userId = document.getElementById('editAvatarUserId').value.trim();
+                    if (!userId) {
+                        alert('请填写用户ID');
+                        return;
+                    }
+                    updateData.userId = userId;
                 }
 
                 // 发送请求
