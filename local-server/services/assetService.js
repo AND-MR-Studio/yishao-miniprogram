@@ -1,0 +1,714 @@
+/**
+ * 资源管理服务
+ * 用于管理小程序中的icon、banner、font等资源
+ *
+ * 集成了资源管理的数据访问、业务逻辑和路由处理
+ */
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+const { promisify } = require('util');
+const multer = require('multer');
+const assetData = require('../dataAccess/assetData');
+const { ASSET_TYPES, ASSET_PATHS, SERVER_BASE_URL, ASSET_URL_PREFIX } = require('../models/assetConfig');
+
+// 将fs的回调函数转换为Promise
+const mkdirAsync = promisify(fs.mkdir);
+const writeFileAsync = promisify(fs.writeFile);
+const unlinkAsync = promisify(fs.unlink);
+const existsAsync = promisify(fs.exists);
+
+// 配置文件上传
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 限制文件大小为10MB
+  }
+});
+
+// 确保资源目录存在
+(async () => {
+  for (const dir of Object.values(ASSET_PATHS)) {
+    try {
+      if (!await existsAsync(dir)) {
+        console.log(`创建资源目录: ${dir}`);
+        await mkdirAsync(dir, { recursive: true });
+      } else {
+        console.log(`资源目录已存在: ${dir}`);
+      }
+    } catch (error) {
+      console.error(`创建目录失败: ${dir}`, error);
+    }
+  }
+})();
+
+/**
+ * 将相对路径转换为绝对路径URL
+ * @param {string} url - 资源URL
+ * @returns {string} - 绝对路径URL
+ */
+function toAbsoluteUrl(url) {
+  // 如果URL为空，直接返回
+  if (!url) return url;
+
+  // 如果已经是绝对路径，直接返回
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+
+  // 如果是小程序内部路径，不处理
+  if (url.startsWith('/pages/')) {
+    return url;
+  }
+
+  // 转换为绝对路径
+  return SERVER_BASE_URL + (url.startsWith('/') ? url : '/' + url);
+}
+
+/**
+ * 获取资源列表
+ * @param {string} type - 资源类型
+ * @param {Object} options - 查询选项
+ * @param {number} options.page - 页码
+ * @param {number} options.pageSize - 每页数量
+ * @param {string} options.keyword - 关键词搜索
+ * @param {string} options.sortBy - 排序字段
+ * @param {string} options.sortOrder - 排序方向 (asc/desc)
+ * @returns {Promise<Object>} - 资源列表和总数
+ */
+async function getAssets(type, options = {}) {
+  const {
+    page = 1,
+    pageSize = 20,
+    keyword = '',
+    sortBy = 'createTime',
+    sortOrder = 'desc',
+    status = 'active'
+  } = options;
+
+  try {
+    // 获取所有资源
+    let assets = await assetData.getAllAssets();
+
+    // 过滤资源类型
+    if (type && type !== 'all') {
+      assets = assets.filter(asset => asset.type === type);
+    }
+
+    // 过滤状态
+    if (status) {
+      assets = assets.filter(asset => asset.status === status);
+    }
+
+    // 关键词搜索
+    if (keyword) {
+      const lowerKeyword = keyword.toLowerCase();
+      assets = assets.filter(asset =>
+        asset.name.toLowerCase().includes(lowerKeyword) ||
+        (asset.description && asset.description.toLowerCase().includes(lowerKeyword))
+      );
+    }
+
+    // 排序
+    assets.sort((a, b) => {
+      const aValue = a[sortBy];
+      const bValue = b[sortBy];
+
+      if (sortOrder.toLowerCase() === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
+    });
+
+    // 分页
+    const total = assets.length;
+    const startIndex = (page - 1) * pageSize;
+    const paginatedAssets = assets.slice(startIndex, startIndex + pageSize);
+
+    return {
+      assets: paginatedAssets,
+      pagination: {
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize)
+      }
+    };
+  } catch (error) {
+    console.error('获取资源列表失败:', error);
+    throw new Error('获取资源列表失败');
+  }
+}
+
+/**
+ * 获取单个资源
+ * @param {string} id - 资源ID
+ * @returns {Promise<Object>} - 资源信息
+ */
+async function getAssetById(id) {
+  try {
+    const asset = await assetData.getAssetById(id);
+
+    if (!asset) {
+      throw new Error('资源不存在');
+    }
+
+    return asset;
+  } catch (error) {
+    console.error('获取资源失败:', error);
+    throw new Error('获取资源失败');
+  }
+}
+
+/**
+ * 获取指定页面的banner
+ * @param {string} page - 页面标识
+ * @returns {Promise<Array>} - banner列表
+ */
+async function getBanners(page) {
+  try {
+    // 获取所有资源
+    const assets = await assetData.getAllAssets();
+
+    // 过滤banner
+    const banners = assets.filter(asset =>
+      asset.type === ASSET_TYPES.BANNER &&
+      asset.page === page &&
+      asset.status === 'active'
+    );
+
+    // 按排序顺序排序
+    banners.sort((a, b) => a.sortOrder - b.sortOrder);
+
+    // 转换为前端需要的格式，确保URL是绝对路径
+    return banners.map(banner => ({
+      id: banner.id,
+      title: banner.name,
+      subtitle: banner.description,
+      imageUrl: toAbsoluteUrl(banner.url),
+      linkUrl: toAbsoluteUrl(banner.linkUrl || ''),
+      bgColor: banner.bgColor || '',
+      sortOrder: banner.sortOrder || 0,
+      status: banner.status || 'active',
+      page: banner.page || 'mine'
+    }));
+  } catch (error) {
+    console.error('获取Banner失败:', error);
+    throw new Error('获取Banner失败');
+  }
+}
+
+/**
+ * 获取指定类型的图标
+ * @param {string} category - 图标分类
+ * @returns {Promise<Array>} - 图标列表
+ */
+async function getIcons(category) {
+  try {
+    // 获取所有资源
+    const assets = await assetData.getAllAssets();
+
+    // 过滤图标
+    let icons = assets.filter(asset =>
+      asset.type === ASSET_TYPES.ICON &&
+      asset.status === 'active'
+    );
+
+    // 按分类过滤
+    if (category) {
+      icons = icons.filter(icon => icon.category === category);
+    }
+
+    // 按排序顺序排序
+    icons.sort((a, b) => a.sortOrder - b.sortOrder);
+
+    // 转换为前端需要的格式，确保URL是绝对路径
+    return icons.map(icon => ({
+      id: icon.id,
+      name: icon.name,
+      url: toAbsoluteUrl(icon.url),
+      category: icon.category
+    }));
+  } catch (error) {
+    console.error('获取图标失败:', error);
+    throw new Error('获取图标失败');
+  }
+}
+
+/**
+ * 上传资源
+ * @param {Object} file - 文件对象
+ * @param {Object} metadata - 资源元数据
+ * @param {string} metadata.type - 资源类型
+ * @param {string} metadata.name - 资源名称
+ * @param {string} metadata.description - 资源描述
+ * @param {string} metadata.page - 页面标识 (仅banner类型需要)
+ * @param {string} metadata.category - 分类 (可选)
+ * @param {string} metadata.linkUrl - 链接URL (仅banner类型需要)
+ * @param {string} metadata.bgColor - 背景色 (仅banner类型需要)
+ * @param {number} metadata.sortOrder - 排序顺序
+ * @returns {Promise<Object>} - 上传结果
+ */
+async function uploadAsset(file, metadata) {
+  const {
+    type = ASSET_TYPES.OTHER,
+    name,
+    description = '',
+    page = '',
+    category = '',
+    linkUrl = '',
+    bgColor = '',
+    sortOrder = 0
+  } = metadata;
+
+  if (!file) {
+    throw new Error('文件不能为空');
+  }
+
+  if (!name) {
+    throw new Error('资源名称不能为空');
+  }
+
+  const assetType = type.toUpperCase();
+  if (!ASSET_TYPES[assetType]) {
+    throw new Error('无效的资源类型');
+  }
+
+  // Banner类型的特殊验证
+  if (assetType === 'BANNER' && !page) {
+    throw new Error('Banner资源必须指定页面');
+  }
+
+  try {
+    // 生成唯一文件名
+    const fileExt = path.extname(file.originalname).toLowerCase();
+    const fileName = `${uuidv4()}${fileExt}`;
+    const typePath = ASSET_TYPES[assetType];
+    const filePath = path.join(ASSET_PATHS[typePath], fileName);
+
+    // 保存文件
+    await writeFileAsync(filePath, file.buffer);
+
+    // 生成访问URL（使用相对路径，然后转换为绝对路径）
+    const relativeUrl = `${ASSET_URL_PREFIX}/${typePath}s/${fileName}`;
+    const url = toAbsoluteUrl(relativeUrl);
+    console.log(`生成资源URL: ${url}`);
+
+    // 创建资源对象
+    const id = uuidv4();
+    const now = new Date().toISOString();
+
+    // 基础资源对象
+    const asset = {
+      id,
+      type: typePath,
+      name,
+      description,
+      url,
+      originalName: file.originalname,
+      fileSize: file.size,
+      mimeType: file.mimetype,
+      category,
+      sortOrder: parseInt(sortOrder) || 0,
+      status: 'active',
+      createTime: now,
+      updateTime: now
+    };
+
+    // 根据资源类型添加特定属性
+    if (typePath === ASSET_TYPES.BANNER) {
+      asset.page = page;
+      asset.linkUrl = linkUrl;
+      asset.bgColor = bgColor;
+    }
+
+    // 保存资源信息
+    await assetData.addAsset(asset);
+
+    return asset;
+  } catch (error) {
+    console.error('上传资源失败:', error);
+    throw new Error('上传资源失败: ' + error.message);
+  }
+}
+
+/**
+ * 更新资源信息
+ * @param {string} id - 资源ID
+ * @param {Object} updates - 更新内容
+ * @returns {Promise<Object>} - 更新结果
+ */
+async function updateAsset(id, updates) {
+  try {
+    // 获取当前资源信息
+    const currentAsset = await assetData.getAssetById(id);
+    if (!currentAsset) {
+      throw new Error('资源不存在');
+    }
+
+    // 允许更新的基础字段
+    const allowedFields = [
+      'name', 'description', 'category', 'sortOrder', 'status'
+    ];
+
+    // 根据资源类型添加特定可更新字段
+    if (currentAsset.type === ASSET_TYPES.BANNER) {
+      allowedFields.push('page', 'linkUrl', 'bgColor');
+    }
+
+    // 过滤无效的更新字段
+    const validUpdates = {};
+    allowedFields.forEach(field => {
+      if (updates[field] !== undefined) {
+        validUpdates[field] = updates[field];
+      }
+    });
+
+    if (Object.keys(validUpdates).length === 0) {
+      throw new Error('没有提供有效的更新字段');
+    }
+
+    // Banner类型的特殊验证
+    if (currentAsset.type === ASSET_TYPES.BANNER && validUpdates.page === '') {
+      throw new Error('Banner资源必须指定页面');
+    }
+
+    // 添加更新时间
+    validUpdates.updateTime = new Date().toISOString();
+
+    // 更新资源
+    const updatedAsset = await assetData.updateAsset(id, validUpdates);
+
+    if (!updatedAsset) {
+      throw new Error('资源更新失败');
+    }
+
+    return updatedAsset;
+  } catch (error) {
+    console.error('更新资源失败:', error);
+    throw new Error('更新资源失败: ' + error.message);
+  }
+}
+
+/**
+ * 删除资源
+ * @param {string} id - 资源ID
+ * @returns {Promise<boolean>} - 删除结果
+ */
+async function deleteAsset(id) {
+  try {
+    // 获取资源信息
+    const asset = await assetData.getAssetById(id);
+
+    if (!asset) {
+      throw new Error('资源不存在');
+    }
+
+    // 删除文件
+    if (asset.url) {
+      const filePath = path.join(process.cwd(), asset.url.replace(/^\//, ''));
+      if (await existsAsync(filePath)) {
+        await unlinkAsync(filePath);
+      }
+    }
+
+    // 删除资源记录
+    const result = await assetData.deleteAsset(id);
+
+    return result;
+  } catch (error) {
+    console.error('删除资源失败:', error);
+    throw new Error('删除资源失败: ' + error.message);
+  }
+}
+
+/**
+ * 批量更新资源排序
+ * @param {Array<Object>} items - 资源排序项 [{id, sortOrder}]
+ * @returns {Promise<boolean>} - 更新结果
+ */
+async function updateAssetOrder(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error('无效的排序数据');
+  }
+
+  try {
+    // 批量更新排序
+    await assetData.updateAssetOrder(items);
+
+    return true;
+  } catch (error) {
+    console.error('更新资源排序失败:', error);
+    throw new Error('更新资源排序失败: ' + error.message);
+  }
+}
+
+/**
+ * 通用响应处理函数
+ * @param {Object} res - Express响应对象
+ * @param {boolean} success - 是否成功
+ * @param {*} data - 响应数据
+ * @param {number} statusCode - HTTP状态码
+ * @returns {Object} - Express响应
+ */
+function sendResponse(res, success, data, statusCode = 200) {
+  return res.status(statusCode).json({
+    success,
+    data: success ? data : undefined,
+    error: !success ? data : undefined
+  });
+}
+
+/**
+ * 初始化资源服务
+ * @returns {Promise<void>}
+ */
+async function init() {
+  try {
+    // 确保资源数据目录存在
+    const dataDir = path.join(__dirname, '../data');
+    if (!await existsAsync(dataDir)) {
+      await mkdirAsync(dataDir, { recursive: true });
+    }
+
+    // 确保资源数据文件存在
+    const assetsFilePath = path.join(dataDir, 'assets.json');
+    if (!await existsAsync(assetsFilePath)) {
+      await writeFileAsync(assetsFilePath, JSON.stringify({ assets: [] }, null, 2), 'utf8');
+    }
+
+    console.log('资源服务初始化完成');
+  } catch (error) {
+    console.error('资源服务初始化失败:', error);
+    throw error;
+  }
+}
+
+/**
+ * 初始化资源服务路由
+ * @param {Object} app - Express应用实例
+ */
+function initAssetRoutes(app) {
+  // 资源基础路径
+  const assetBasePath = '/yishao-api/asset/';
+
+  /**
+   * 1. 获取资源列表
+   * GET /yishao-api/asset/list?type=banner&page=1&pageSize=20&keyword=&sortBy=createTime&sortOrder=desc
+   */
+  app.get(assetBasePath + 'list', async (req, res) => {
+    try {
+      const { type, page, pageSize, keyword, sortBy, sortOrder, status } = req.query;
+
+      const options = {
+        page: parseInt(page) || 1,
+        pageSize: parseInt(pageSize) || 20,
+        keyword: keyword || '',
+        sortBy: sortBy || 'createTime',
+        sortOrder: sortOrder || 'desc',
+        status: status || 'active'
+      };
+
+      const result = await getAssets(type, options);
+      return sendResponse(res, true, {
+        assets: result.assets,
+        pagination: result.pagination
+      });
+    } catch (error) {
+      console.error('获取资源列表失败:', error);
+      return sendResponse(res, false, '获取资源列表失败: ' + error.message, 500);
+    }
+  });
+
+  /**
+   * 2. 获取单个资源
+   * GET /yishao-api/asset/:id
+   */
+  app.get(assetBasePath + ':id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const asset = await getAssetById(id);
+
+      if (!asset) {
+        return sendResponse(res, false, '资源不存在', 404);
+      }
+
+      return sendResponse(res, true, asset);
+    } catch (error) {
+      console.error('获取资源失败:', error);
+      return sendResponse(res, false, '获取资源失败: ' + error.message, 500);
+    }
+  });
+
+  /**
+   * 3. 获取资源
+   * GET /yishao-api/asset/:id - 获取单个资源
+   * GET /yishao-api/asset/all - 获取所有资源
+   * GET /yishao-api/asset/type/:type - 获取指定类型的资源
+   */
+  app.get(assetBasePath + 'all', async (_, res) => {
+    try {
+      // 获取所有资源
+      const assets = await assetData.getAllAssets();
+      return sendResponse(res, true, assets);
+    } catch (error) {
+      console.error('获取所有资源失败:', error);
+      return sendResponse(res, false, '获取所有资源失败: ' + error.message, 500);
+    }
+  });
+
+  /**
+   * 获取指定类型的资源
+   * GET /yishao-api/asset/type/:type?page=xxx
+   */
+  app.get(assetBasePath + 'type/:type', async (req, res) => {
+    try {
+      const { type } = req.params;
+      const { page, status = 'active' } = req.query;
+
+      console.log(`收到获取${type}类型资源请求，页面参数: ${page || '所有'}`);
+
+      // 获取所有资源
+      const assets = await assetData.getAllAssets();
+
+      // 筛选指定类型的资源
+      let filteredAssets = assets.filter(asset =>
+        asset.type === type &&
+        asset.status === status
+      );
+
+      // 如果指定了页面参数，进一步筛选
+      if (page && type === ASSET_TYPES.BANNER) {
+        filteredAssets = filteredAssets.filter(asset => asset.page === page);
+      }
+
+      // 按排序顺序排序
+      filteredAssets.sort((a, b) => a.sortOrder - b.sortOrder);
+
+      console.log(`筛选出${type}类型资源数量: ${filteredAssets.length}`);
+
+      // 如果是banner类型，转换为前端需要的格式
+      if (type === ASSET_TYPES.BANNER) {
+        const banners = filteredAssets.map(banner => ({
+          id: banner.id,
+          title: banner.name,
+          subtitle: banner.description,
+          imageUrl: toAbsoluteUrl(banner.url),
+          linkUrl: toAbsoluteUrl(banner.linkUrl || ''),
+          bgColor: banner.bgColor || '',
+          sortOrder: banner.sortOrder || 0,
+          status: banner.status || 'active',
+          page: banner.page || 'index'
+        }));
+
+        return sendResponse(res, true, banners);
+      }
+
+      return sendResponse(res, true, filteredAssets);
+    } catch (error) {
+      console.error(`获取资源类型失败:`, error);
+      // 返回空数组而不是错误，这样前端可以显示默认内容
+      return sendResponse(res, true, []);
+    }
+  });
+
+  /**
+   * 5. 上传资源
+   * POST /yishao-api/asset/upload
+   */
+  app.post(assetBasePath + 'upload', upload.single('file'), async (req, res) => {
+    try {
+      const file = req.file;
+      const metadata = req.body;
+
+      if (!file) {
+        return sendResponse(res, false, '文件不能为空', 400);
+      }
+
+      const result = await uploadAsset(file, metadata);
+      return sendResponse(res, true, result);
+    } catch (error) {
+      console.error('上传资源失败:', error);
+      return sendResponse(res, false, '上传资源失败: ' + error.message, 500);
+    }
+  });
+
+  /**
+   * 6. 更新资源信息
+   * PUT /yishao-api/asset/update/:id
+   */
+  app.put(assetBasePath + 'update/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+
+      const result = await updateAsset(id, updates);
+
+      if (!result) {
+        return sendResponse(res, false, '资源不存在', 404);
+      }
+
+      return sendResponse(res, true, result);
+    } catch (error) {
+      console.error('更新资源失败:', error);
+      return sendResponse(res, false, '更新资源失败: ' + error.message, 500);
+    }
+  });
+
+  /**
+   * 7. 删除资源
+   * DELETE /yishao-api/asset/delete/:id
+   */
+  app.delete(assetBasePath + 'delete/:id', async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const result = await deleteAsset(id);
+
+      if (!result) {
+        return sendResponse(res, false, '资源不存在或删除失败', 404);
+      }
+
+      return sendResponse(res, true, { message: '资源删除成功' });
+    } catch (error) {
+      console.error('删除资源失败:', error);
+      return sendResponse(res, false, '删除资源失败: ' + error.message, 500);
+    }
+  });
+
+  /**
+   * 8. 批量更新资源排序
+   * PUT /yishao-api/asset/order
+   */
+  app.put(assetBasePath + 'order', async (req, res) => {
+    try {
+      const { items } = req.body;
+
+      if (!Array.isArray(items) || items.length === 0) {
+        return sendResponse(res, false, '无效的排序数据', 400);
+      }
+
+      await updateAssetOrder(items);
+      return sendResponse(res, true, { message: '资源排序更新成功' });
+    } catch (error) {
+      console.error('更新资源排序失败:', error);
+      return sendResponse(res, false, '更新资源排序失败: ' + error.message, 500);
+    }
+  });
+}
+
+module.exports = {
+  ASSET_TYPES,
+  getAssets,
+  getAssetById,
+  getBanners,
+  getIcons,
+  uploadAsset,
+  updateAsset,
+  deleteAsset,
+  updateAssetOrder,
+  init,
+  initAssetRoutes
+};

@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资源管理</title>
+    <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .asset-item {
+            border: 1px solid #eee;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        .asset-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .asset-preview {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .asset-type-badge {
+            margin-right: 5px;
+        }
+        .asset-actions {
+            margin-top: 10px;
+        }
+        .filter-bar {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <h1 class="mb-4">资源管理</h1>
+
+        <!-- 过滤和操作栏 -->
+        <div class="row filter-bar">
+            <div class="col-md-6">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary active" data-type="all">全部</button>
+                    <button type="button" class="btn btn-outline-primary" data-type="icon">图标</button>
+                    <button type="button" class="btn btn-outline-primary" data-type="banner">横幅</button>
+                    <button type="button" class="btn btn-outline-primary" data-type="image">图片</button>
+                    <button type="button" class="btn btn-outline-primary" data-type="font">字体</button>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadAssetModal">
+                    上传资源
+                </button>
+            </div>
+        </div>
+
+        <!-- 资源列表 -->
+        <div id="assetList" class="row">
+            <!-- 资源将通过JavaScript动态加载 -->
+            <div class="text-center py-5">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">加载中...</span>
+                </div>
+                <p class="mt-2">正在加载资源...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上传资源模态框 -->
+    <div class="modal fade" id="uploadAssetModal" tabindex="-1" aria-labelledby="uploadAssetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadAssetModalLabel">上传资源</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="uploadAssetForm">
+                        <div class="mb-3">
+                            <label for="assetName" class="form-label">资源名称</label>
+                            <input type="text" class="form-control" id="assetName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assetType" class="form-label">资源类型</label>
+                            <select class="form-select" id="assetType" required>
+                                <option value="icon">图标</option>
+                                <option value="banner">横幅</option>
+                                <option value="image">图片</option>
+                                <option value="font">字体</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assetFile" class="form-label">选择文件</label>
+                            <input class="form-control" type="file" id="assetFile" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="assetDescription" class="form-label">描述 (可选)</label>
+                            <textarea class="form-control" id="assetDescription" rows="2"></textarea>
+                        </div>
+                        <!-- 横幅特有字段，默认隐藏 -->
+                        <div id="bannerFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="bannerPage" class="form-label">页面 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="bannerPage" required>
+                                    <option value="index">首页</option>
+                                    <option value="mine">我的</option>
+                                    <option value="gensoup">煮汤</option>
+                                </select>
+                                <div class="form-text">选择Banner显示的页面</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bannerLinkUrl" class="form-label">链接URL</label>
+                                <input type="text" class="form-control" id="bannerLinkUrl" placeholder="例如: /pages/index/index 或 https://example.com">
+                                <div class="form-text">点击Banner后跳转的链接，可以是小程序内部页面或外部网页</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bannerBgColor" class="form-label">背景色</label>
+                                <input type="text" class="form-control" id="bannerBgColor" placeholder="例如: banner-purple 或 #8A2BE2">
+                                <div class="form-text">Banner的背景色，可以是预定义的类名或CSS颜色值</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bannerSortOrder" class="form-label">排序顺序</label>
+                                <input type="number" class="form-control" id="bannerSortOrder" min="0" value="0">
+                                <div class="form-text">数字越小排序越靠前，相同页面的Banner按此顺序显示</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitUploadAsset">上传</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 编辑资源模态框 -->
+    <div class="modal fade" id="editAssetModal" tabindex="-1" aria-labelledby="editAssetModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editAssetModalLabel">编辑资源</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editAssetForm">
+                        <input type="hidden" id="editAssetId">
+                        <div class="mb-3 text-center">
+                            <img id="editAssetPreview" class="asset-preview" src="" alt="资源预览">
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAssetName" class="form-label">资源名称</label>
+                            <input type="text" class="form-control" id="editAssetName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editAssetDescription" class="form-label">描述</label>
+                            <textarea class="form-control" id="editAssetDescription" rows="2"></textarea>
+                        </div>
+                        <!-- 横幅特有字段，根据资源类型显示 -->
+                        <div id="editBannerFields" style="display: none;">
+                            <div class="mb-3">
+                                <label for="editBannerPage" class="form-label">页面 <span class="text-danger">*</span></label>
+                                <select class="form-select" id="editBannerPage" required>
+                                    <option value="index">首页</option>
+                                    <option value="mine">我的</option>
+                                    <option value="gensoup">煮汤</option>
+                                </select>
+                                <div class="form-text">选择Banner显示的页面</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editBannerLinkUrl" class="form-label">链接URL</label>
+                                <input type="text" class="form-control" id="editBannerLinkUrl" placeholder="例如: /pages/index/index 或 https://example.com">
+                                <div class="form-text">点击Banner后跳转的链接，可以是小程序内部页面或外部网页</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editBannerBgColor" class="form-label">背景色</label>
+                                <input type="text" class="form-control" id="editBannerBgColor" placeholder="例如: banner-purple 或 #8A2BE2">
+                                <div class="form-text">Banner的背景色，可以是预定义的类名或CSS颜色值</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editBannerSortOrder" class="form-label">排序顺序</label>
+                                <input type="number" class="form-control" id="editBannerSortOrder" min="0" value="0">
+                                <div class="form-text">数字越小排序越靠前，相同页面的Banner按此顺序显示</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="submitEditAsset">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // API基础URL
+        const API_BASE_URL = '/yishao-api/asset';
+
+        // 页面加载完成后执行
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载资源列表
+            loadAssets();
+
+            // 资源类型过滤按钮点击事件
+            document.querySelectorAll('.btn-group button').forEach(button => {
+                button.addEventListener('click', function() {
+                    // 移除所有按钮的active类
+                    document.querySelectorAll('.btn-group button').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+
+                    // 添加当前按钮的active类
+                    this.classList.add('active');
+
+                    // 获取资源类型
+                    const assetType = this.getAttribute('data-type');
+
+                    // 加载指定类型的资源
+                    loadAssets(assetType);
+                });
+            });
+
+            // 资源类型选择变化事件
+            document.getElementById('assetType').addEventListener('change', function() {
+                // 如果选择了横幅类型，显示横幅特有字段
+                if (this.value === 'banner') {
+                    document.getElementById('bannerFields').style.display = 'block';
+                } else {
+                    document.getElementById('bannerFields').style.display = 'none';
+                }
+            });
+
+            // 上传资源表单提交
+            document.getElementById('submitUploadAsset').addEventListener('click', uploadAsset);
+
+            // 编辑资源表单提交
+            document.getElementById('submitEditAsset').addEventListener('click', updateAsset);
+        });
+
+        // 加载资源列表
+        async function loadAssets(type = 'all') {
+            const assetList = document.getElementById('assetList');
+            assetList.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">加载中...</span>
+                    </div>
+                    <p class="mt-2">正在加载资源...</p>
+                </div>
+            `;
+
+            try {
+                // 构建URL
+                let url = `${API_BASE_URL}/list`;
+                if (type !== 'all') {
+                    url += `?type=${type}`;
+                }
+
+                // 发送请求
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '加载失败');
+                }
+
+                const assets = data.data?.assets || [];
+
+                // 清空列表
+                assetList.innerHTML = '';
+
+                if (assets.length === 0) {
+                    assetList.innerHTML = '<div class="col-12"><div class="alert alert-info">没有找到资源</div></div>';
+                    return;
+                }
+
+                // 渲染资源列表
+                assets.forEach(asset => {
+                    const assetElement = document.createElement('div');
+                    assetElement.className = 'col-md-4 col-sm-6 mb-4';
+
+                    // 根据资源类型设置徽章颜色
+                    let badgeClass = 'bg-secondary';
+                    if (asset.type === 'icon') badgeClass = 'bg-primary';
+                    if (asset.type === 'banner') badgeClass = 'bg-success';
+                    if (asset.type === 'image') badgeClass = 'bg-info';
+                    if (asset.type === 'font') badgeClass = 'bg-warning';
+
+                    // 准备额外的banner信息
+                    let bannerInfo = '';
+                    if (asset.type === 'banner') {
+                        bannerInfo = `
+                            <div class="mt-2 mb-2">
+                                <div class="d-flex justify-content-between">
+                                    <small class="text-muted">排序: ${asset.sortOrder || 0}</small>
+                                    <small class="text-muted">状态: ${asset.status || 'active'}</small>
+                                </div>
+                                ${asset.linkUrl ? `<small class="text-muted d-block text-truncate">链接: ${asset.linkUrl}</small>` : ''}
+                                ${asset.bgColor ? `<small class="text-muted d-block">背景色: ${asset.bgColor}</small>` : ''}
+                            </div>
+                        `;
+                    }
+
+                    assetElement.innerHTML = `
+                        <div class="asset-item">
+                            <img src="${asset.url}" alt="${asset.name}" class="asset-preview">
+                            <h5>${asset.name}</h5>
+                            <div>
+                                <span class="badge ${badgeClass} asset-type-badge">${asset.type}</span>
+                                ${asset.page ? `<span class="badge bg-light text-dark">${asset.page}</span>` : ''}
+                            </div>
+                            <p class="text-muted small">${asset.description || ''}</p>
+                            ${bannerInfo}
+                            <div class="asset-actions">
+                                <button class="btn btn-sm btn-outline-primary me-2" onclick="editAsset('${asset.id}')">编辑</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteAsset('${asset.id}')">删除</button>
+                            </div>
+                        </div>
+                    `;
+
+                    assetList.appendChild(assetElement);
+                });
+
+            } catch (err) {
+                console.error('加载资源失败:', err);
+                assetList.innerHTML = `<div class="col-12"><div class="alert alert-danger">加载失败: ${err.message}</div></div>`;
+            }
+        }
+
+        // 上传资源
+        async function uploadAsset() {
+            try {
+                const name = document.getElementById('assetName').value.trim();
+                const type = document.getElementById('assetType').value;
+                const description = document.getElementById('assetDescription').value.trim();
+                const fileInput = document.getElementById('assetFile');
+
+                if (!name || !fileInput.files.length) {
+                    alert('请填写资源名称并选择文件');
+                    return;
+                }
+
+                // 创建FormData对象
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('name', name);
+                formData.append('type', type);
+                formData.append('description', description);
+
+                // 如果是横幅类型，添加banner特有信息
+                if (type === 'banner') {
+                    const page = document.getElementById('bannerPage').value;
+                    if (!page) {
+                        alert('请选择Banner显示的页面');
+                        return;
+                    }
+                    formData.append('page', page);
+
+                    // 添加链接URL
+                    const linkUrl = document.getElementById('bannerLinkUrl').value.trim();
+                    formData.append('linkUrl', linkUrl);
+
+                    // 添加背景色
+                    const bgColor = document.getElementById('bannerBgColor').value.trim();
+                    formData.append('bgColor', bgColor);
+
+                    // 添加排序顺序
+                    const sortOrder = document.getElementById('bannerSortOrder').value;
+                    formData.append('sortOrder', sortOrder);
+                }
+
+                // 发送请求
+                const response = await fetch(`${API_BASE_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '上传失败');
+                }
+
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('uploadAssetModal'));
+                modal.hide();
+
+                // 重置表单
+                document.getElementById('uploadAssetForm').reset();
+                document.getElementById('bannerFields').style.display = 'none';
+
+                // 重新加载资源列表
+                loadAssets();
+
+                alert('上传成功');
+
+            } catch (err) {
+                console.error('上传资源失败:', err);
+                alert('上传失败: ' + err.message);
+            }
+        }
+
+        // 编辑资源 - 打开编辑模态框
+        window.editAsset = async function(assetId) {
+            try {
+                // 获取资源信息
+                const response = await fetch(`${API_BASE_URL}/${assetId}`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '获取资源信息失败');
+                }
+
+                const asset = data.data;
+
+                // 填充表单
+                document.getElementById('editAssetId').value = asset.id;
+                document.getElementById('editAssetName').value = asset.name;
+                document.getElementById('editAssetDescription').value = asset.description || '';
+                document.getElementById('editAssetPreview').src = asset.url;
+
+                // 如果是横幅类型，显示横幅特有字段
+                if (asset.type === 'banner') {
+                    document.getElementById('editBannerFields').style.display = 'block';
+                    document.getElementById('editBannerPage').value = asset.page || 'index';
+                    document.getElementById('editBannerLinkUrl').value = asset.linkUrl || '';
+                    document.getElementById('editBannerBgColor').value = asset.bgColor || '';
+                    document.getElementById('editBannerSortOrder').value = asset.sortOrder || 0;
+                } else {
+                    document.getElementById('editBannerFields').style.display = 'none';
+                }
+
+                // 显示模态框
+                const editModal = new bootstrap.Modal(document.getElementById('editAssetModal'));
+                editModal.show();
+
+            } catch (err) {
+                console.error('获取资源信息失败:', err);
+                alert('获取资源信息失败: ' + err.message);
+            }
+        }
+
+        // 更新资源
+        async function updateAsset() {
+            try {
+                const id = document.getElementById('editAssetId').value;
+                const name = document.getElementById('editAssetName').value.trim();
+                const description = document.getElementById('editAssetDescription').value.trim();
+
+                if (!name) {
+                    alert('请填写资源名称');
+                    return;
+                }
+
+                // 创建更新数据
+                const updateData = {
+                    name,
+                    description
+                };
+
+                // 如果显示了横幅特有字段，添加banner特有信息
+                if (document.getElementById('editBannerFields').style.display !== 'none') {
+                    const page = document.getElementById('editBannerPage').value;
+                    if (!page) {
+                        alert('请选择Banner显示的页面');
+                        return;
+                    }
+                    updateData.page = page;
+
+                    // 添加链接URL
+                    updateData.linkUrl = document.getElementById('editBannerLinkUrl').value.trim();
+
+                    // 添加背景色
+                    updateData.bgColor = document.getElementById('editBannerBgColor').value.trim();
+
+                    // 添加排序顺序
+                    updateData.sortOrder = parseInt(document.getElementById('editBannerSortOrder').value) || 0;
+                }
+
+                // 发送请求
+                const response = await fetch(`${API_BASE_URL}/update/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '更新失败');
+                }
+
+                // 关闭模态框
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editAssetModal'));
+                modal.hide();
+
+                // 重新加载资源列表
+                loadAssets();
+
+                alert('更新成功');
+
+            } catch (err) {
+                console.error('更新资源失败:', err);
+                alert('更新失败: ' + err.message);
+            }
+        }
+
+        // 删除资源
+        window.deleteAsset = async function(assetId) {
+            if (!confirm('确定要删除这个资源吗？此操作不可恢复！')) {
+                return;
+            }
+
+            try {
+                // 发送请求
+                const response = await fetch(`${API_BASE_URL}/delete/${assetId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || '删除失败');
+                }
+
+                // 重新加载资源列表
+                loadAssets();
+
+                alert('删除成功');
+
+            } catch (err) {
+                console.error('删除资源失败:', err);
+                alert('删除失败: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>

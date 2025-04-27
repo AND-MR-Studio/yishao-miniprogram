@@ -1,0 +1,40 @@
+{
+  "assets": [
+    {
+      "id": "e5f4b0ef-66b6-49dd-ba73-66ea264356f6",
+      "type": "icon",
+      "name": "icon_home",
+      "description": "",
+      "url": "/uploads/icons/81268c71-f945-41c0-8f70-19ec2135f7a0.png",
+      "originalName": "icon_home.png",
+      "fileSize": 5377,
+      "mimeType": "image/png",
+      "page": "",
+      "category": "",
+      "linkUrl": "",
+      "bgColor": "",
+      "sortOrder": 0,
+      "status": "active",
+      "createTime": "2025-04-27T04:34:45.335Z",
+      "updateTime": "2025-04-27T04:34:45.335Z"
+    },
+    {
+      "id": "ef9cb579-d94e-4fe9-ae0f-fc5abfd58baa",
+      "type": "banner",
+      "name": "banner-test",
+      "description": "",
+      "url": "/uploads/banners/958ca796-b601-4291-90a8-c076afcf382a.png",
+      "originalName": "screenshot-20250108-214303.png",
+      "fileSize": 360457,
+      "mimeType": "image/png",
+      "category": "",
+      "sortOrder": 0,
+      "status": "active",
+      "createTime": "2025-04-27T05:13:10.516Z",
+      "updateTime": "2025-04-27T05:13:10.516Z",
+      "page": "mine",
+      "linkUrl": "",
+      "bgColor": ""
+    }
+  ]
+}
