@@ -8,10 +8,10 @@ const DEFAULT_AVATAR_URL = api.default_avatar_url;
 
 /**
  * 获取用户信息
- * @param {boolean} forceRefresh - 是否强制从后端刷新
+ * 简洁的实现，每次都从服务器获取最新数据
  * @returns {Promise} - 返回Promise，包含用户信息
  */
-function getUserInfo(forceRefresh = true) {
+function getUserInfo() {
   try {
     // 检查登录状态
     const token = wx.getStorageSync(TOKEN_KEY);
@@ -19,7 +19,7 @@ function getUserInfo(forceRefresh = true) {
       return Promise.reject('未登录');
     }
 
-    // 始终从后端获取最新用户信息
+    // 从后端获取最新用户信息
     return new Promise((resolve, reject) => {
       // 调用后端接口获取用户信息
       const config = {
@@ -47,11 +47,11 @@ function getUserInfo(forceRefresh = true) {
 
 /**
  * 刷新用户信息
- * 从后端获取最新的用户信息
+ * 保留此方法以保持API兼容性，但实际上与getUserInfo相同
  * @returns {Promise<Object>} 用户信息
  */
 function refreshUserInfo() {
-  // 直接调用getUserInfo方法，避免代码重复
+  // 直接调用getUserInfo方法
   return getUserInfo();
 }
 
@@ -81,24 +81,21 @@ function getUserId() {
  * 获取剩余回答次数
  * @returns {Promise<number>} 剩余回答次数
  */
-function getRemainingAnswers() {
-  return new Promise((resolve) => {
+async function getRemainingAnswers() {
+  try {
     // 检查登录状态
-    const token = wx.getStorageSync('token');
+    const token = wx.getStorageSync(TOKEN_KEY);
     if (!token) {
-      resolve(0);
-      return;
+      return 0;
     }
 
     // 从后端获取最新用户信息
-    getUserInfo(true)
-      .then(userInfo => {
-        resolve(userInfo.answers?.remainingAnswers || 0);
-      })
-      .catch(() => {
-        resolve(0);
-      });
-  });
+    const userInfo = await getUserInfo(true);
+    return userInfo.answers?.remainingAnswers || 0;
+  } catch (error) {
+    console.error('获取剩余回答次数失败:', error);
+    return 0;
+  }
 }
 
 /**
@@ -110,7 +107,7 @@ function updateAvatar(avatarUrl) {
   if (!avatarUrl) return Promise.reject('头像URL为空');
 
   // 检查登录状态
-  const token = wx.getStorageSync('token');
+  const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
     return Promise.reject('用户未登录，请先登录');
   }
@@ -138,9 +135,6 @@ function updateAvatar(avatarUrl) {
         wx.hideLoading();
 
         if (res.success && res.data) {
-          // 更新本地存储的用户信息
-          const userInfo = wx.getStorageSync(USER_INFO_KEY) || {};
-
           // 添加随机参数到URL，避免缓存问题
           let avatarUrl = res.data.avatarUrl;
           if (avatarUrl.indexOf('?') === -1) {
@@ -149,8 +143,7 @@ function updateAvatar(avatarUrl) {
             avatarUrl += '&t=' + new Date().getTime();
           }
 
-          userInfo.avatarUrl = avatarUrl;
-          wx.setStorageSync(USER_INFO_KEY, userInfo);
+          // 不需要清除缓存，每次都从服务器获取最新数据
 
           resolve({
             ...res.data,
@@ -194,17 +187,21 @@ function updateNickname(nickName) {
  * 从后端获取最新的侦探ID
  * @returns {Promise<string>} - 侦探ID
  */
-function getDetectiveId() {
-  // 检查登录状态
-  const token = wx.getStorageSync(TOKEN_KEY);
-  if (!token) {
-    return Promise.resolve('');
-  }
+async function getDetectiveId() {
+  try {
+    // 检查登录状态
+    const token = wx.getStorageSync(TOKEN_KEY);
+    if (!token) {
+      return '';
+    }
 
-  // 从后端获取最新用户信息
-  return getUserInfo()
-    .then(userInfo => userInfo.userInfo?.detectiveId || '')
-    .catch(() => '');
+    // 从后端获取最新用户信息
+    const userInfo = await getUserInfo();
+    return userInfo.userInfo?.detectiveId || '';
+  } catch (error) {
+    console.error('获取侦探ID失败:', error);
+    return '';
+  }
 }
 
 // 登录状态标志
@@ -356,6 +353,8 @@ function logout() {
   wx.removeStorageSync('loginTimestamp');
   wx.removeStorageSync(TOKEN_KEY); // 清除token
 
+  // 不需要清除缓存，每次都从服务器获取最新数据
+
   // 清除可能存在的其他用户相关缓存
   try {
     wx.removeStorageSync('userStats');
@@ -415,19 +414,36 @@ function checkLoginStatus(showToast = true) {
  * @param {string} levelTitle - 新的等级称号，由后端返回
  */
 function showLevelUpNotification(levelTitle) {
+  // 显示升级提示
   wx.showToast({
     title: `恭喜升级为${levelTitle}！`,
     icon: 'success',
     duration: 2000
   });
+
+  // 播放升级成功的振动反馈
+  wx.vibrateShort({
+    type: 'heavy'
+  });
+
+  // 延迟显示模态框，给用户更明显的升级提示
+  setTimeout(() => {
+    wx.showModal({
+      title: '侦探等级提升',
+      content: `恭喜您升级为"${levelTitle}"！解锁更多推理能力！`,
+      showCancel: false,
+      confirmText: '太棒了'
+    });
+  }, 1000);
 }
 
 /**
- * 获取完整的用户信息（包括等级、经验值等）
+ * 获取用户信息并格式化为UI显示所需的格式
+ * 简洁的实现，只关注必要的功能
  * @param {boolean} showLoading - 是否显示加载提示
- * @returns {Promise<Object>} 完整的用户信息
+ * @returns {Promise<Object>} 格式化后的用户信息
  */
-function getCompleteUserInfo(showLoading = true) {
+function getFormattedUserInfo(showLoading = false) {
   return new Promise((resolve) => {
     // 检查登录状态
     if (!checkLoginStatus(false)) {
@@ -442,7 +458,7 @@ function getCompleteUserInfo(showLoading = true) {
       });
     }
 
-    // 直接使用getUserInfo方法获取最新用户信息
+    // 使用getUserInfo方法获取用户信息
     getUserInfo()
       .then(userInfo => {
         if (showLoading) {
@@ -450,12 +466,12 @@ function getCompleteUserInfo(showLoading = true) {
         }
 
         if (!userInfo || !userInfo.userInfo) {
-          console.error('后端返回的用户信息格式不正确:', userInfo);
+          console.error('用户信息格式不正确:', userInfo);
           resolve(null);
           return;
         }
 
-        // 返回完整的用户信息
+        // 格式化用户信息，只提取UI需要的字段
         resolve({
           nickName: userInfo.userInfo?.nickName || '',
           detectiveId: userInfo.userInfo?.detectiveId || '',
@@ -477,7 +493,7 @@ function getCompleteUserInfo(showLoading = true) {
         if (showLoading) {
           wx.hideLoading();
         }
-        console.error('获取用户信息请求失败:', error);
+        console.error('获取用户信息失败:', error);
         resolve(null);
       });
   });
@@ -488,7 +504,7 @@ function getCompleteUserInfo(showLoading = true) {
  * @param {Object} userInfo - 用户信息
  * @returns {Promise} - 设置结果
  */
-function setUserInfo(userInfo) {
+async function setUserInfo(userInfo) {
   if (!userInfo) return Promise.reject('用户信息为空');
 
   // 检查用户是否已登录（检查token是否存在）
@@ -497,24 +513,31 @@ function setUserInfo(userInfo) {
     return Promise.reject('用户未登录，请先登录');
   }
 
-  // 上传到服务器，token会通过request.js自动添加到请求头
-  // 如果昵称为空，后端会自动生成
-  const config = {
-    url: api.user_update_url,
-    method: 'POST',
-    data: {
-      nickName: userInfo.nickName || '',
-      avatarUrl: userInfo.avatarUrl || DEFAULT_AVATAR_URL
-    }
-  };
+  try {
+    // 上传到服务器，token会通过request.js自动添加到请求头
+    // 如果昵称为空，后端会自动生成
+    const config = {
+      url: api.user_update_url,
+      method: 'POST',
+      data: {
+        nickName: userInfo.nickName || '',
+        avatarUrl: userInfo.avatarUrl || DEFAULT_AVATAR_URL
+      }
+    };
 
-  return api.userRequest(config).then(res => {
+    const res = await api.userRequest(config);
+
+    // 不需要清除缓存，每次都从服务器获取最新数据
+
     if (res.success && res.data) {
       // 直接返回后端数据，不在本地存储用户信息
       return res.data;
     }
     return res;
-  });
+  } catch (error) {
+    console.error('设置用户信息失败:', error);
+    return Promise.reject(error);
+  }
 }
 
 module.exports = {
@@ -531,6 +554,6 @@ module.exports = {
   logout,
   checkLoginStatus,
   showLevelUpNotification,
-  getCompleteUserInfo,
+  getFormattedUserInfo,
   setUserInfo
 };

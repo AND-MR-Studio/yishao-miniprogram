@@ -35,6 +35,10 @@ const user_upload_avatar_url = ysUrl + userBasePath + 'upload-avatar';
 // 默认头像URL (本地)
 const default_avatar_url = '/static/images/default-avatar.jpg';
 
+// ===== 系统服务接口 =====
+// 获取banner数据
+const banner_url = ysUrl + 'static/images/banner';
+
 // ===== 海龟汤服务接口 =====
 // 基础路径，用于获取所有汤面或创建新汤面
 const soup_base_url = ysUrl + soupBasePath;
@@ -95,6 +99,9 @@ module.exports = {
   user_list_url,
   user_upload_avatar_url,
   default_avatar_url,
+
+  // 系统相关接口URL
+  banner_url,
 
   // 汤面相关接口URL
   soup_base_url,

@@ -83,9 +83,9 @@ Page({
         return;
       }
 
-      // 已登录，从后端获取最新用户信息
+      // 已登录，获取用户信息
       try {
-        const detectiveInfo = await userService.getCompleteUserInfo(false);
+        const detectiveInfo = await userService.getFormattedUserInfo(false);
 
         if (detectiveInfo) {
           // 检查用户是否已签到
@@ -130,17 +130,41 @@ Page({
     }
   },
 
-  // updateUserInfo 方法已被 refreshPageData 方法替代
+  // 此处已移除 updateUserInfo 方法，使用 refreshPageData 方法替代
 
   /**
    * 更新统计数据
+   * 从后端获取最新的统计数据
+   * @returns {Promise<void>}
    */
-  updateStatistics() {
+  async updateStatistics() {
+    try {
+      // 检查登录状态
+      if (!userService.checkLoginStatus(false)) {
+        // 未登录时使用默认值
+        this.setData({
+          totalSoupCount: 0,
+          pointsCount: 0
+        });
+        return;
+      }
 
-    this.setData({
-      totalSoupCount: 22,
-      pointsCount: 25
-    });
+      // 从后端获取用户信息和统计数据
+      const userInfo = await userService.getUserInfo();
+
+      // 更新统计数据
+      this.setData({
+        totalSoupCount: userInfo?.stats?.totalSoupCount || 0,
+        pointsCount: userInfo?.points?.points || 0
+      });
+    } catch (error) {
+      console.error('获取统计数据失败:', error);
+      // 出错时使用默认值
+      this.setData({
+        totalSoupCount: 0,
+        pointsCount: 0
+      });
+    }
   },
 
   /**
@@ -250,7 +274,7 @@ Page({
       // 异步获取用户信息
       let detectiveInfo;
       try {
-        detectiveInfo = await userService.getCompleteUserInfo(false);
+        detectiveInfo = await userService.getFormattedUserInfo(false);
       } catch (error) {
         console.log('获取用户信息失败，使用默认值', error);
         // 出错时使用空对象，后续代码会处理默认值
@@ -373,13 +397,14 @@ Page({
   },
 
   /**
-   * 使用默认侦探信息
+   * 跳过用户信息设置
+   * 关闭弹窗并刷新页面数据，但不更新用户信息
    */
   skipUserInfo() {
-    // 关闭弹窗，不更新用户信息
+    // 关闭弹窗
     this.closeUserInfoModal();
 
-    // 刷新页面数据
+    // 刷新页面数据，显示最新的用户信息
     this.refreshPageData(true);
   },
 
@@ -498,128 +523,63 @@ Page({
 
   /**
    * 导航到帮助与反馈页面
+   * 目前显示"功能开发中"提示，未来将导航到帮助页面
    */
   navigateToHelp() {
     this.showFeatureInDevelopment('帮助与反馈', '/pages/help/help', false);
   },
 
   /**
-   * 处理签到 - 由detective-card组件触发
+   * 导航到关于页面
+   * 目前显示"功能开发中"提示，未来将导航到关于页面
    */
-  async handleSignIn(e) {
-    try {
-      // 从组件获取状态信息
-      const { isLoggedIn } = e.detail || {};
+  navigateToAbout() {
+    this.showFeatureInDevelopment('关于一勺推理社', '/pages/about/about', false);
+  },
 
-      // 检查登录状态
-      if (!isLoggedIn) {
-        // 显示登录提示
-        userService.checkLoginStatus();
-        return;
-      }
+  /**
+   * 处理签到结果 - 由detective-card组件触发
+   * @param {Object} e - 事件对象，包含签到结果
+   */
+  handleSignInResult(e) {
+    const { success, data, alreadySignedIn } = e.detail;
 
-      // 显示加载中提示
-      wx.showLoading({
-        title: '签到中...',
-        mask: true
-      });
+    // 更新页面的签到状态
+    if (success) {
+      this.setData({ hasSignedIn: true });
 
-      console.log('开始签到请求，URL:', api.user_signin_url);
-
-      try {
-        // 调用后端签到接口 - 始终发送请求到后端，让后端决定是否可以签到
-        const res = await api.userRequest({
-          url: api.user_signin_url,
-          method: 'POST'
+      // 如果需要，可以在这里更新页面上的其他数据
+      // 例如统计数据等
+      if (data && data.points) {
+        this.setData({
+          pointsCount: data.points.points || this.data.pointsCount
         });
-
-        console.log('签到请求成功，响应数据:', res);
-
-        if (res.success && res.data) {
-          const data = res.data;
-          console.log('签到成功，增加回答次数，数据:', data);
-
-          // 设置已签到状态
-          this.setData({
-            hasSignedIn: true
-          });
-
-          // 显示签到成功提示
-          wx.showToast({
-            title: '签到成功，回答次数+10',
-            icon: 'success',
-            duration: 2000
-          });
-
-          // 如果升级了，显示升级提示
-          if (data.levelUp) {
-            userService.showLevelUpNotification(data.levelTitle);
-          }
-
-          // 等待一小段时间，确保后端数据已更新
-          await new Promise(resolve => setTimeout(resolve, 500));
-
-          // 强制从后端刷新用户信息，确保获取最新的回答次数
-          const userInfo = await userService.getUserInfo(true);
-          console.log('签到后获取的最新用户信息:', userInfo);
-
-          if (userInfo) {
-            // 更新侦探卡片信息
-            const detectiveInfo = await userService.getCompleteUserInfo(false);
-            if (detectiveInfo) {
-              this.setData({
-                detectiveInfo: detectiveInfo,
-                pointsCount: userInfo.points?.points || this.data.pointsCount
-              });
-
-              // 更新detective-card组件
-              const detectiveCard = this.selectComponent('#detective-card');
-              if (detectiveCard) {
-                detectiveCard.updateCardDisplay(detectiveInfo);
-              }
-            }
-          }
-        } else {
-          console.error('签到失败，响应错误:', res.error || '未知错误');
-          // 显示错误提示
-          wx.showToast({
-            title: res.error || '签到失败',
-            icon: 'none',
-            duration: 2000
-          });
-        }
-      } catch (error) {
-        console.error('签到请求失败:', error);
-
-        // 检查错误信息是否包含"今日已签到"
-        const errorMsg = error.toString();
-        if (errorMsg.includes('今日已签到')) {
-          // 如果是"今日已签到"的错误，更新UI状态并显示友好提示
-          this.setData({
-            hasSignedIn: true
-          });
-
-          wx.showToast({
-            title: '今天已经签到过啦~',
-            icon: 'none',
-            duration: 2000
-          });
-        } else {
-          // 其他错误
-          wx.showToast({
-            title: '签到失败，请重试',
-            icon: 'none',
-            duration: 2000
-          });
-        }
       }
-    } finally {
-      wx.hideLoading();
+    }
+
+    // 记录签到结果，可用于分析或调试
+    console.log('签到结果:', success ? '成功' : '失败', alreadySignedIn ? '(已签到)' : '');
+  },
+
+  /**
+   * 处理用户信息刷新 - 由detective-card组件触发
+   * @param {Object} e - 事件对象，包含更新后的用户信息
+   */
+  handleUserInfoRefreshed(e) {
+    const { detectiveInfo } = e.detail;
+
+    // 更新页面数据
+    if (detectiveInfo) {
+      this.setData({ detectiveInfo });
+
+      // 更新统计数据
+      this.updateStatistics();
     }
   },
 
   /**
    * 处理导航事件 - 由detective-card组件触发
+   * @param {Object} e - 事件对象
    */
   handleNavigate(e) {
     const { page } = e.detail;
@@ -640,5 +600,54 @@ Page({
       default:
         break;
     }
+  },
+
+  /**
+   * 导航到未解决页面
+   * TODO: 实现导航到未解决汤面列表页面
+   */
+  navigateToUnsolved() {
+    this.showFeatureInDevelopment('未解决汤面', '/pages/unsolved/unsolved', true);
+  },
+
+  /**
+   * 导航到已解决页面
+   * TODO: 实现导航到已解决汤面列表页面
+   */
+  navigateToSolved() {
+    this.showFeatureInDevelopment('已解决汤面', '/pages/solved/solved', true);
+  },
+
+  /**
+   * 导航到创作页面
+   * TODO: 实现导航到用户创作汤面列表页面
+   */
+  navigateToCreations() {
+    this.showFeatureInDevelopment('我的创作', '/pages/creations/creations', true);
+  },
+
+  /**
+   * 导航到收藏页面
+   * TODO: 实现导航到收藏汤面列表页面
+   */
+  navigateToFavorites() {
+    this.showFeatureInDevelopment('我的收藏', '/pages/favorites/favorites', true);
+  },
+
+  /**
+   * 处理banner点击事件
+   * @param {Object} e - 事件对象
+   */
+  handleBannerTap(e) {
+    const { banner } = e.detail;
+    if (!banner || !banner.linkUrl) return;
+
+    // 简单的页面跳转
+    wx.navigateTo({
+      url: banner.linkUrl,
+      fail: (err) => {
+        console.error('Banner页面跳转失败:', err);
+      }
+    });
   }
 })

@@ -10,47 +10,22 @@
       detectiveInfo="{{detectiveInfo}}"
       defaultAvatarUrl="{{defaultAvatarUrl}}"
       hasSignedIn="{{hasSignedIn}}"
-      bind:signin="handleSignIn"
+      bind:signinresult="handleSignInResult"
+      bind:userinforefreshed="handleUserInfoRefreshed"
       bind:navigate="handleNavigate"
       bind:editprofile="openUserInfoModal">
     </detective-card>
 
-    <!-- 更新日志Banner轮播 -->
-    <swiper class="banner-swiper" indicator-dots="{{true}}" autoplay="{{true}}" interval="{{3000}}" duration="{{500}}" circular="{{true}}">
-      <swiper-item>
-        <view class="update-banner">
-          <view class="banner-content">
-            <view class="banner-title">
-              <text class="banner-title-main">一勺推理社更新日志</text>
-              <text class="banner-title-sub">一勺侦探，前来干饭…不对，探案！</text>
-            </view>
-            <view class="banner-image"></view>
-          </view>
-        </view>
-      </swiper-item>
-      <swiper-item>
-        <view class="update-banner banner-purple">
-          <view class="banner-content">
-            <view class="banner-title">
-              <text class="banner-title-main">侦探社社员招募中</text>
-              <text class="banner-title-sub">加入我们，解锁更多谜题</text>
-            </view>
-            <view class="banner-image"></view>
-          </view>
-        </view>
-      </swiper-item>
-      <swiper-item>
-        <view class="update-banner banner-mix">
-          <view class="banner-content">
-            <view class="banner-title">
-              <text class="banner-title-main">每日谜题挑战</text>
-              <text class="banner-title-sub">提升推理能力，成为顶尖侦探</text>
-            </view>
-            <view class="banner-image"></view>
-          </view>
-        </view>
-      </swiper-item>
-    </swiper>
+    <!-- Banner轮播组件 -->
+    <banner-swiper
+      page="mine"
+      bind:bannertap="handleBannerTap"
+      autoplay="{{true}}"
+      interval="{{3000}}"
+      duration="{{500}}"
+      indicator-dots="{{true}}"
+      circular="{{true}}">
+    </banner-swiper>
 
     <!-- 功能菜单 -->
     <view class="function-list">
