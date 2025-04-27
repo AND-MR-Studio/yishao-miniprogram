@@ -24,10 +24,10 @@
 
     <block wx:else>
       <!-- 显示banner内容 -->
-      <swiper-item wx:for="{{currentBanners}}" wx:key="id" bindtap="handleBannerTap" data-index="{{index}}">
+      <swiper-item wx:for="{{banners}}" wx:key="id" bindtap="handleBannerTap" data-index="{{index}}">
         <!-- 图片banner -->
         <view wx:if="{{item.imageUrl}}" class="image-banner">
-          <image src="{{item.imageUrl}}" mode="aspectFill" class="banner-image-full" binderror="handleImageError" data-index="{{index}}"></image>
+          <image src="{{item.imageUrl}}" mode="aspectFill" class="banner-image-full" binderror="handleImageError" bindload="handleImageLoad" data-index="{{index}}"></image>
         </view>
 
         <!-- 文字banner (默认或图片加载失败时显示) -->

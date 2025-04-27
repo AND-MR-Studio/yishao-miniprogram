@@ -230,6 +230,29 @@ const uploadFile = (options) => {
   });
 };
 
+/**
+ * 资源服务专用请求方法
+ * @param {Object} options - 请求配置
+ * @returns {Promise} 返回Promise对象
+ */
+const assetRequest = (options) => {
+  return request({
+    ...options,
+    service: 'asset'
+  });
+};
+
+/**
+ * 资源服务开放请求方法（不需要身份验证）
+ * @param {Object} options - 请求配置
+ * @returns {Promise} 返回Promise对象
+ */
+const assetRequestOpen = (options) => {
+  return requestOpen({
+    ...options
+  });
+};
+
 module.exports = {
   request,
   requestOpen,
@@ -237,5 +260,7 @@ module.exports = {
   dialogRequest,
   userRequest,
   agentRequest,
+  assetRequest,
+  assetRequestOpen,
   uploadFile
 };

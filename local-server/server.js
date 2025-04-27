@@ -8,6 +8,9 @@ const fs_extra = require('fs-extra');
 const dialogService = require('./services/dialogService');
 const userService = require('./services/userService');
 const soupService = require('./services/soupService');
+const assetService = require('./services/assetService');
+
+// 不再需要单独导入资源路由，已集成到assetService中
 
 const app = express();
 const PORT = 8080;
@@ -22,6 +25,9 @@ app.use(express.static(path.join(__dirname, 'html')));
 // 提供静态资源文件（如图片等）
 app.use('/static', express.static(path.join(__dirname, '..', 'static')));
 
+// 提供上传的文件
+app.use('/uploads', express.static(path.join(__dirname, 'html', 'uploads')));
+
 // API文档服务
 app.use('/docs', express.static(path.join(__dirname, 'docs')));
 
@@ -33,6 +39,9 @@ dialogService.initDialogRoutes(app);
 
 // 初始化用户服务路由
 userService.initUserRoutes(app);
+
+// 初始化资源管理路由
+assetService.initAssetRoutes(app);
 
 // 初始化服务
 async function initServices() {
@@ -52,6 +61,15 @@ async function initServices() {
     // 初始化用户服务
     await userService.init();
 
+    // 初始化资源服务
+    await assetService.init();
+
+    // 确保上传目录存在
+    const uploadsDir = path.join(__dirname, 'html', 'uploads');
+    if (!fs_extra.existsSync(uploadsDir)) {
+      fs_extra.mkdirSync(uploadsDir, { recursive: true });
+    }
+
     console.log('所有服务初始化完成');
   } catch (error) {
     console.error('服务初始化失败:', error);
@@ -69,5 +87,6 @@ initServices().then(() => {
     console.log(`  - 海龟汤管理: http://localhost:${PORT}/soup.html`);
     console.log(`  - 对话记录: http://localhost:${PORT}/dialog.html`);
     console.log(`  - 用户管理: http://localhost:${PORT}/user.html`);
+    console.log(`  - 资源管理: http://localhost:${PORT}/asset.html`);
   });
 });

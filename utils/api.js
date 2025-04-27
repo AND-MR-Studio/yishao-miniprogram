@@ -11,13 +11,19 @@ const {
   soupRequest,
   dialogRequest,
   userRequest,
+  assetRequest,
+  assetRequestOpen,
   uploadFile
 } = require('./request');
+
+// 直接使用字符串常量，避免重复定义
 
 // 基础路径
 const userBasePath = 'user/';
 const soupBasePath = 'soup/';
 const dialogBasePath = 'dialog/';
+// 资源服务基础路径
+const assetBasePath = 'asset/';
 
 // ===== 用户服务接口 =====
 // 用户登录/注册
@@ -32,12 +38,17 @@ const user_signin_url = ysUrl + userBasePath + 'signin';
 const user_list_url = ysUrl + userBasePath + 'list';
 // 上传用户头像
 const user_upload_avatar_url = ysUrl + userBasePath + 'upload-avatar';
-// 默认头像URL (本地)
+// 默认头像URL (绝对路径)
 const default_avatar_url = '/static/images/default-avatar.jpg';
 
 // ===== 系统服务接口 =====
-// 获取banner数据
-const banner_url = ysUrl + 'static/images/banner';
+
+// 获取所有资源
+const asset_list_url = ysUrl + assetBasePath + 'all';
+// 获取单个资源
+const asset_by_id_url = ysUrl + assetBasePath;
+// 获取指定类型的资源
+const asset_by_type_url = ysUrl + assetBasePath + 'type/';
 
 // ===== 海龟汤服务接口 =====
 // 基础路径，用于获取所有汤面或创建新汤面
@@ -80,6 +91,8 @@ module.exports = {
   soupRequest,
   dialogRequest,
   userRequest,
+  assetRequest,
+  assetRequestOpen,
   uploadFile,
 
   // 导出基础URL
@@ -101,7 +114,10 @@ module.exports = {
   default_avatar_url,
 
   // 系统相关接口URL
-  banner_url,
+  assetBasePath,
+  asset_list_url,
+  asset_by_id_url,
+  asset_by_type_url,
 
   // 汤面相关接口URL
   soup_base_url,
