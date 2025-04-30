@@ -10,8 +10,7 @@
   transition: opacity 0.3s ease;
   pointer-events: none; /* 默认不捕获点击事件 */
   display: none; /* 默认不显示 */
-  background-color: hsla(258, 100.00%, 25.50%, 0.03); /* 背景改为半透明 */
-  --dialog-opacity: 1; /* CSS变量控制透明度 */
+  background-color: transparent;
 }
 
 .dialog-container.visible {
@@ -19,38 +18,6 @@
   pointer-events: auto; /* 可见时捕获点击事件 */
   display: flex; /* 可见时显示为flex布局 */
   flex-direction: column;
-}
-
-/* 对话包装器 */
-.dialog-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  padding-top: 180rpx; /* 调整顶部padding以适应导航栏 */
-  padding-bottom: 150rpx;
-}
-
-/* 偷看功能已移除，准备重构 */
-
-/* 关闭按钮 */
-.close-button {
-  position: fixed;
-  top: 40rpx;
-  right: 40rpx;
-  width: 60rpx;
-  height: 60rpx;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1001;
-}
-
-.close-button .icon-close {
-  font-size: 40rpx;
-  color: #ffffff;
 }
 
 /* 导航栏容器 */
@@ -62,7 +29,7 @@
   z-index: 1001;
 }
 
-/* 毛玻璃效果遮罩层 */
+/* 毛玻璃效果背景 */
 .frosted-glass {
   position: fixed;
   top: 0;
@@ -71,57 +38,55 @@
   bottom: 0;
   background-color: rgba(4, 0, 8, 0.21);
   backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
   z-index: 100;
   pointer-events: none; /* 确保不会影响底层组件的交互 */
-  opacity: var(--dialog-opacity);
-  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
+  transition: backdrop-filter 0.6s var(--transition-decelerated),
+              -webkit-backdrop-filter 0.6s var(--transition-decelerated),
+              background-color 0.6s var(--transition-decelerated),
+              opacity 0.6s var(--transition-decelerated);
 }
 
-/* 偷看功能样式 */
+/* 偷看模式样式 */
 .peek-mode .frosted-glass {
   backdrop-filter: blur(0);
   -webkit-backdrop-filter: blur(0);
   background-color: transparent;
   opacity: 0;
-  transition: backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, opacity 0.3s ease;
 }
 
-/* 偷看模式下的对话容器 */
 .dialog-container.peek-mode {
   background-color: transparent;
+  transition: background-color 0.6s var(--transition-decelerated);
 }
 
 /* 对话区域样式 */
 .dialog-content {
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 40rpx 0rpx;
-  gap: 10rpx;
-  width: 190%;
-  flex: 1;
+  padding-top: 180rpx; /* 顶部留出导航栏空间 */
+  padding-bottom: calc(250rpx + env(safe-area-inset-bottom)); /* 底部留出足够空间给input-bar(~120rpx)和tabbar(~110rpx)以及安全区域 */
+  width: 100%;
+  height: 100vh; /* 使用视口高度 */
   position: relative;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  border-radius: 20rpx;
-  opacity: var(--dialog-opacity);
-  transition: opacity 0.3s ease;
   z-index: 200; /* 确保在毛玻璃效果之上 */
 }
 
-/* 偷看功能样式 - 对话内容先模糊后透明 */
+/* 偷看功能样式 - 对话内容先模糊后透明，添加平滑过渡 */
+.dialog-content {
+  transition: opacity 0.6s var(--transition-decelerated),
+              filter 0.6s var(--transition-decelerated);
+}
+
 .peek-mode .dialog-content {
   opacity: 0;
   filter: blur(5px);
-  transition: filter 0.15s ease, opacity 0.25s ease 0.1s;
 }
 
 /* 基础消息样式 */
 .message {
-  margin-bottom: 10rpx;
-  width: 85%;
-  padding: 0 40rpx;
+  margin: 0 auto 30rpx auto;
+  width: 90%;
+  padding: 0rpx 40rpx;
   box-sizing: border-box;
   white-space: pre-wrap;
   word-break: break-all;
@@ -129,13 +94,12 @@
   display: block;
 }
 
-/* 回复消息样式（红色） */
+/* 回复消息样式 */
 .response {
   color: var(--color-primary);
-  position: relative;
 }
 
-/* 用户消息样式（白色） */
+/* 用户消息样式 */
 .user {
   color: var(--color-text-primary);
 }
@@ -153,68 +117,35 @@
   100% { opacity: 0.5; }
 }
 
-/* 打字机容器样式 */
-.typing-container {
-  display: block;
-  text-align: left;
-  width: 100%;
-  padding: 0 40rpx;
-  box-sizing: border-box;
-}
-
-/* 前缀文本样式 */
-.prefix-text {
-  display: inline;
-}
-
-/* 打字机内容区域 */
-.typing-content {
-  display: inline;
-  word-break: break-all;
-  white-space: pre-wrap;
-}
-
-/* 打字机字符基础样式 */
-.char-typing {
-  display: inline-block;
-  opacity: 0;
-  transform: scale(0.9);
-  transition: all 160ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+/* 简化版打字机样式 */
+.typing-simple {
+  /* 只保留打字机特有的样式，其他样式继承自 .message 类 */
   position: relative;
+  /* 确保不会覆盖 .message 类的宽度和边距设置 */
+  width: inherit;
+  margin: inherit;
+  padding: inherit;
 }
 
-/* 显示状态 */
-.char-typing.show {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* 活跃状态 */
-.char-typing.active {
-  opacity: 1;
-}
-
-/* 普通打字机效果 */
-.char-typing.active.effect-normal {
-  transform: scale(1);
-}
-
-/* 活跃状态 - 系统消息打字机 */
-.response-char-typing-active {
+/* 添加打字机光标效果 */
+.typing-simple::after {
+  content: '|';
+  display: inline-block;
   color: var(--color-accent);
+  animation: cursor-blink 0.8s infinite;
+  position: relative;
+  margin-left: 2rpx;
 }
 
-/* 前一个字符状态 */
-.char-typing.prev {
-  opacity: 0.9;
-  transform: scale(1);
-  transition: all 200ms cubic-bezier(0.215, 0.610, 0.355, 1.000);
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 /* 对话组件内部的输入栏样式 */
 .input-bar-wrapper {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom));
+  /* 不需要设置bottom，因为input-bar组件已经设置了正确的位置 */
   left: 0;
   width: 100%;
   z-index: 1002;

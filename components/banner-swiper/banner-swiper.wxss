@@ -74,7 +74,3 @@
   object-fit: cover;
 }
 
-/* 隐藏旧的圆形图片 */
-.banner-image {
-  display: none;
-}

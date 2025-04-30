@@ -1,6 +1,6 @@
 // components/dialog/index.js
 const dialogService = require('../../utils/dialogService');
-const typeAnimation = require('../../utils/typeAnimation');
+const simpleTypeAnimation = require('../../utils/typeAnimation');
 const userService = require('../../utils/userService');
 
 Component({
@@ -40,10 +40,11 @@ Component({
     isFullyVisible: false,
     loading: false,
     isAnimating: false,
-    displayLines: [],
+    typingText: '', // 简化版打字机文本
     animatingMessageIndex: -1, // 当前正在执行动画的消息索引
     _previousDialogId: '', // 用于跟踪dialogId变化，避免重复加载
-    peekMode: false // 是否处于偷看模式
+    peekMode: false, // 是否处于偷看模式
+    scrollToView: 'scrollBottom' // 滚动到底部的视图ID
   },
 
   lifetimes: {
@@ -57,11 +58,18 @@ Component({
         timingFunction: 'ease',
       });
 
-      // 初始化打字机动画实例
-      this.typeAnimator = typeAnimation.createInstance(this, {
+      // 初始化简化版打字机动画实例
+      this.typeAnimator = simpleTypeAnimation.createInstance(this, {
         typeSpeed: this.properties.typeSpeed,
-        onAnimationComplete: () => {
+        batchSize: 1, // 每5个字符触发一次setData，平衡性能和动画效果
+        onComplete: () => {
           this.setData({ isAnimating: false });
+          // 动画完成后确保滚动到底部
+          this.scrollToBottom(true);
+        },
+        onUpdate: () => {
+          // 每次打字机更新时强制滚动到底部，忽略节流
+          this.scrollToBottom(true);
         }
       });
     },
@@ -228,29 +236,38 @@ Component({
       }
     },
 
-    // 滚动到底部
-    scrollToBottom() {
-      wx.nextTick(() => {
-        wx.createSelectorQuery()
-          .in(this)
-          .select('#dialogScroll')
-          .node()
-          .exec(res => {
-            if (res && res[0] && res[0].node) {
-              const scrollView = res[0].node;
-              scrollView.scrollIntoView({
-                selector: '.message:last-child',
-                animated: true
-              });
-            }
-          });
+    // 滚动到底部 - 优化版，减少setData调用
+    scrollToBottom(force = false) {
+      // 使用节流技术，避免短时间内多次触发滚动
+      // 但如果是强制滚动（如打字机效果中），则忽略节流
+      if (this._scrollThrottled && !force) return;
+
+      this._scrollThrottled = true;
+
+      // 使用scroll-into-view属性滚动到底部
+      this.setData({
+        scrollToView: 'scrollBottom'
       });
+
+      // 100ms后重置节流标志（减少延迟，提高响应速度）
+      setTimeout(() => {
+        this._scrollThrottled = false;
+      }, 100);
     },
 
     async handleSend(e) {
       // 处理文本消息
       const { value } = e.detail;
       if (!value || !value.trim() || this.data.isAnimating) return;
+
+      // 验证消息长度不超过50个字
+      if (value.length > 50) {
+        wx.showToast({
+          title: '消息不能超过50个字',
+          icon: 'none'
+        });
+        return;
+      }
 
       // 获取必要参数
       const soupId = this.properties.soupId || '';
@@ -301,7 +318,10 @@ Component({
 
       // 添加用户消息
       const messages = [...this.data.messages, userMessageWithStatus];
-      this.setData({ messages });
+      this.setData({ messages }, () => {
+        // 添加消息后滚动到底部
+        this.scrollToBottom();
+      });
 
       try {
         // 发送消息到服务器并获取回复
@@ -324,7 +344,10 @@ Component({
         if (!this.properties.enableTyping) {
           // 不使用打字机效果时，直接添加完整回复
           const finalMessages = [...messages, replyMessage];
-          this.setData({ messages: finalMessages });
+          this.setData({
+            messages: finalMessages,
+            scrollToView: 'scrollBottom' // 确保滚动到底部
+          });
           return;
         }
 
@@ -337,22 +360,31 @@ Component({
           timestamp: replyMessage.timestamp
         }];
 
+        // 一次性设置所有状态，减少setData调用
         this.setData({
           messages: updatedMessages,
           animatingMessageIndex: updatedMessages.length - 1,
-          isAnimating: true
+          isAnimating: true,
+          typingText: '', // 重置打字机文本
+          scrollToView: 'scrollBottom' // 确保滚动到底部
+        }, () => {
+          // 在状态更新后立即强制滚动到底部
+          wx.nextTick(() => {
+            this.scrollToBottom(true);
+          });
         });
 
-        // 启动打字机动画
+        // 启动简化版打字机动画
         await this.typeAnimator.start(replyMessage.content);
 
-        // 动画完成后更新消息内容
+        // 动画完成后更新消息内容 - 一次性更新所有状态
         const finalMessages = [...updatedMessages];
         finalMessages[finalMessages.length - 1] = replyMessage;
 
         this.setData({
           messages: finalMessages,
-          animatingMessageIndex: -1
+          animatingMessageIndex: -1,
+          typingText: '' // 清空打字机文本
         });
       } catch (error) {
         console.error('发送消息失败:', error);
@@ -371,14 +403,20 @@ Component({
           status: newStatus
         };
 
-        this.setData({ messages });
+        this.setData({
+          messages,
+          scrollToView: 'scrollBottom' // 确保滚动到底部
+        });
       }
     },
 
     handleMessagesChange(e) {
       const { messages } = e.detail;
       if (messages && messages.length) {
-        this.setData({ messages });
+        this.setData({
+          messages,
+          scrollToView: 'scrollBottom' // 确保滚动到底部
+        });
       }
     },
 

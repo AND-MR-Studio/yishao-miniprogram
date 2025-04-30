@@ -280,7 +280,7 @@ async function sendMessage(dialogId, userId, message, messageId, timestamp) {
     // 添加用户消息
     dialogData.messages.push(userMessage);
 
-    // 创建代理回复消息
+    // 创建Agent回复消息
     const replyMessage = createMessageObject({
       messageId: messageGroupId,
       userId: 'system',

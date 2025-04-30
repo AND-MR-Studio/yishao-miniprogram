@@ -1,26 +1,15 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container static-mode {{loading ? 'loading' : ''}}"
+  class="soup-container {{loading ? 'loading' : ''}} {{isPeeking ? 'clear' : 'blurred'}}"
 >
   <!-- 汤面内容区域 -->
   <block wx:if="{{!loading}}">
     <view class="soup-content">
-      <block wx:for="{{displayLines}}" wx:key="index">
-        <view
-          class="text-line-container"
-          aria-label="{{index === 0 ? '汤面标题' : '第' + index + '行'}}"
-        >
-          <text class="text-line">
-            <text
-              wx:for="{{item.chars}}"
-              wx:for-item="char"
-              wx:for-index="charIndex"
-              wx:key="charIndex"
-              class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active' : ''}}"
-            >{{char.char}}</text>
-          </text>
-        </view>
-      </block>
+      <!-- 标题和内容分开显示 -->
+      <view class="title-container" wx:if="{{currentSoup.title}}">
+        <text class="title-text">{{currentSoup.title}}</text>
+      </view>
+      <text class="soup-text">{{displayContent}}</text>
     </view>
 
     <!-- 收藏图标 - 始终创建DOM元素，通过CSS控制显示/隐藏 -->

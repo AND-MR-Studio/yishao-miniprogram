@@ -98,7 +98,7 @@ const soupRequest = (options) => {
 };
 
 /**
- * 一勺代理服务专用请求方法
+ * 一勺Agent服务专用请求方法
  * @param {Object} options - 请求配置
  * @returns {Promise} 返回Promise对象
  */

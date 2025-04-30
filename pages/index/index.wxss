@@ -76,7 +76,7 @@
   height: 100%;
   z-index: 10; /* 低于对话组件的z-index */
   opacity: 0.05;
-  transition: opacity 0.3s ease, z-index 0s;
+  transition: opacity 0.6s var(--transition-decelerated), z-index 0s;
   pointer-events: none; /* 防止点击穿透 */
 }
 
@@ -84,8 +84,9 @@
 .behind-dialog.peeking {
   z-index: 1001; /* 高于对话组件的z-index */
   opacity: 1;
-  transition: opacity 0.25s ease 0.05s, z-index 0s;
+  transition: opacity 0.6s var(--transition-decelerated), z-index 0s;
   pointer-events: none; /* 确保不会影响底层组件的交互 */
+  animation: blurToClear 0.6s var(--transition-decelerated); /* 添加模糊到清晰的动画 */
 }
 
 /* 按钮容器样式 */

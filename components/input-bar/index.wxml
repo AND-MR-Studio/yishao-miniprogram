@@ -13,7 +13,7 @@
     <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}}">
       <input class="input-field"
         value="{{inputValue}}"
-        placeholder="输入你的问题......"
+        placeholder="输入你的问题..."
         placeholder-class="input-placeholder"
         cursor-spacing="20"
         adjust-position="{{true}}"
@@ -24,7 +24,13 @@
         bindconfirm="handleSend"
         focus="{{inputFocus}}"
         hidden="{{isRecording}}"
+        maxlength="50"
       />
+
+      <!-- 字数提示 -->
+      <view class="char-count {{inputValue.length > 45 ? 'char-count-warning' : ''}}" wx:if="{{inputValue.length > 0}}">
+        {{inputValue.length}}/50
+      </view>
 
       <!-- 录音中UI -->
       <view class="recording-ui" wx:if="{{isRecording}}">

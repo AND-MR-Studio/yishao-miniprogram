@@ -12,7 +12,7 @@
   position: fixed;
   box-sizing: border-box;
   will-change: transform;
-  transition: opacity 0.3s ease-out;
+  transition: opacity 0.6s var(--transition-decelerated);
 }
 
 /* 加载中的样式 */
@@ -31,8 +31,38 @@
   min-height: 200px;
   max-height: 335px;
   position: relative;
-  transition: all 0.3s ease-in-out;
+  transition: all 0.6s var(--transition-decelerated);
   will-change: transform, opacity;
+}
+
+/* 标题容器样式 */
+.title-container {
+  width: 100%;
+  margin-bottom: 20rpx;
+  text-align: center;
+}
+
+/* 标题文本样式 */
+.title-text {
+  font-size: 36rpx;
+  font-weight: 700;
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  letter-spacing: 4rpx;
+  white-space: nowrap;
+  display: inline-block;
+}
+
+/* 汤面文本样式 */
+.soup-text {
+  font-size: 28rpx;
+  line-height: 2.5;
+  padding: 50rpx;
+  text-align: center;
+  white-space: pre-wrap;
+  word-break: break-all;
+  width: 100%;
+  letter-spacing: 5rpx;
 }
 
 /* 收藏图标样式 */
@@ -64,62 +94,3 @@
   opacity: 0;
   visibility: hidden;
 }
-
-/* 文本行容器 */
-.text-line-container {
-  width: fit-content;
-  margin-bottom: 40rpx;
-  position: relative;
-  display: flex;
-  align-items: center;
-  min-height: calc(28rpx * 1.8);
-  width: 100%;
-  text-align: center;
-  will-change: transform, opacity;
-  transform: translateZ(0);
-}
-
-/* 文本行基础样式 */
-.text-line {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  position: relative;
-  white-space: normal;
-  word-wrap: break-word;
-  word-break: break-all;
-  transform: translateZ(0);
-  font-size: 28rpx;
-  line-height: 1.8;
-  margin: 0 auto;
-  width: 100%;
-  text-align: center;
-}
-
-/* 第一行样式（标题） */
-.soup-container .text-line-container:nth-child(1) .text-line {
-  font-size: 36rpx;
-  font-weight: 700;
-  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
-               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
-  white-space: nowrap;
-}
-
-/* 标题字符间距 */
-.soup-container .text-line-container:nth-child(1) .char-typing {
-  letter-spacing: 4rpx;
-}
-
-/* 字符间距样式 - 不影响动画效果 */
-.soup-container .char-typing {
-  letter-spacing: 2rpx;
-}
-
-/* 静态模式样式 - 使用全局动画样式中的设置 */
-.soup-container.static-mode .char-typing {
-  opacity: 1 !important;
-  transform: none !important;
-  transition: none !important;
-}
-
-/* 偷看功能已移除，准备重构 */

@@ -100,11 +100,25 @@ Component({
     // 处理输入事件
     handleInput(e) {
       const value = e.detail.value || '';
+
+      // 限制最大长度为50个字符
+      const limitedValue = value.slice(0, 50);
+
       this.setData({
-        inputValue: value,
-        hasContent: value.trim().length > 0
+        inputValue: limitedValue,
+        hasContent: limitedValue.trim().length > 0
       });
-      this.triggerEvent('input', { value });
+
+      this.triggerEvent('input', { value: limitedValue });
+
+      // 如果超出字数限制，显示提示
+      if (value.length > 50) {
+        wx.showToast({
+          title: '最多输入50个字',
+          icon: 'none',
+          duration: 1000
+        });
+      }
     },
 
     // 处理发送事件
@@ -117,6 +131,16 @@ Component({
         });
         return;
       }
+
+      // 检查字数是否超过限制
+      if (value.length > 50) {
+        wx.showToast({
+          title: '消息不能超过50个字',
+          icon: 'none'
+        });
+        return;
+      }
+
       this.triggerEvent('send', { value: value.trim() });
       // 发送后自动清空输入框
       this.clearInput();
