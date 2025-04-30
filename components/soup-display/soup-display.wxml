@@ -23,9 +23,9 @@
       </block>
     </view>
 
-    <!-- 收藏图标 -->
-    <view class="favorite-icon {{isFavorite ? 'active' : ''}}" wx:if="{{isFavorite}}">
-      <text class="heart-text">❤</text>
+    <!-- 收藏图标 - 始终创建DOM元素，通过CSS控制显示/隐藏 -->
+    <view class="favorite-icon {{isFavorite ? 'active' : 'hidden'}}">
+      <text class="heart-text">⭐</text>
     </view>
   </block>
 </view>

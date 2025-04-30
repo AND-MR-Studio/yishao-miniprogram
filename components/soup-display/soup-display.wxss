@@ -37,8 +37,8 @@
 
 /* 收藏图标样式 */
 .favorite-icon {
-  position: absolute;
-  bottom: -60rpx;
+  position: fixed;
+  bottom: -600rpx; /* 固定在页面底部往上一点的位置，在tabbar和开始喝汤按钮之间 */
   left: 50%;
   transform: translateX(-50%);
   width: 60rpx;
@@ -46,7 +46,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10;
+  z-index: 100; /* 提高z-index确保显示在其他元素上方 */
   opacity: 0.9;
   transition: all 0.3s ease;
 }
@@ -54,9 +54,15 @@
 /* 心形文本样式 - 玻璃拟物风格 */
 .heart-text {
   font-size: 48rpx;
-  color: rgba(158, 46, 255, 0.9); /* 绿色 */
+  color: rgba(158, 46, 255, 0.9); /* 紫色 */
   text-shadow: 0 2rpx 8rpx rgba(0, 230, 115, 0.4);
   line-height: 1;
+}
+
+/* 隐藏的收藏图标 */
+.favorite-icon.hidden {
+  opacity: 0;
+  visibility: hidden;
 }
 
 /* 文本行容器 */

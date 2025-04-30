@@ -78,32 +78,45 @@ Component({
       if (this.data.isAnimating) return;
 
       if (visible) {
+        // 显示对话框
         this.showDialog();
-        // 注意：不再在这里加载对话记录，避免重复加载
-        // 对话记录已经在 onButtonPreload 中预加载
+
+        // 如果有dialogId，确保对话记录已加载
+        // 统一在这里处理加载，避免多处触发
+        const dialogId = this.properties.dialogId;
+        if (dialogId && dialogId !== this.data._previousDialogId) {
+          this.data._previousDialogId = dialogId;
+          // 确保在动画开始后加载对话记录
+          wx.nextTick(() => {
+            this.loadDialogMessages();
+          });
+        }
       } else {
+        // 隐藏对话框
         this.hideDialog();
       }
     },
-    'soupId': function(soupId) {
-      // 当soupId变化且对话框可见时，重新加载对话记录
-      // 但只有在没有dialogId的情况下才加载，避免重复加载
-      if (soupId && this.data.visible && !this.data.isAnimating && !this.properties.dialogId) {
-        wx.nextTick(() => {
-          this.loadDialogMessages();
-        });
-      }
-    },
-    'dialogId': function(dialogId) {
-      // 当dialogId变化且对话框可见时，重新加载对话记录
-      if (dialogId && this.data.visible && !this.data.isAnimating) {
-        console.log('dialogId变化，加载对话记录:', dialogId);
-        this.data._previousDialogId = dialogId;
 
-        // 确保在下一帧加载对话记录，避免与其他状态变化冲突
-        wx.nextTick(() => {
-          this.loadDialogMessages();
-        });
+    // 简化soupId和dialogId的观察器
+    // 只在特定条件下触发加载
+    'soupId, dialogId': function(soupId, dialogId) {
+      // 当属性变化且对话框可见且不在动画中时，重新加载对话记录
+      if (this.data.visible && !this.data.isAnimating) {
+        // 如果有dialogId，优先使用dialogId加载
+        if (dialogId && dialogId !== this.data._previousDialogId) {
+          console.log('dialogId变化，加载对话记录:', dialogId);
+          this.data._previousDialogId = dialogId;
+
+          wx.nextTick(() => {
+            this.loadDialogMessages();
+          });
+        }
+        // 如果没有dialogId但有soupId，使用soupId加载初始消息
+        else if (soupId && !dialogId) {
+          wx.nextTick(() => {
+            this.loadDialogMessages();
+          });
+        }
       }
     }
   },
@@ -184,35 +197,44 @@ Component({
       this.triggerEvent('close');
     },
 
-    // 加载对话记录
+    /**
+     * 加载对话记录
+     * 统一处理对话记录的加载逻辑，避免重复加载
+     * @returns {Promise<Array>} 加载的消息数组
+     */
     async loadDialogMessages() {
+      // 防止重复加载
+      if (this.data.loading) {
+        console.log('正在加载对话记录，跳过重复加载');
+        return;
+      }
+
       // 优先使用组件属性中的 dialogId，如果没有则使用 dialogService 中的
       const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
       const soupId = this.properties.soupId || dialogService.getCurrentSoupId();
-
-      if (!dialogId) {
-        console.log('缺少 dialogId，仅加载初始化消息');
-        // 加载初始化消息
-        const initialMessages = dialogService.getInitialSystemMessages();
-        this.setData({
-          messages: initialMessages,
-          loading: false
-        });
-        return Promise.resolve(initialMessages);
-      }
 
       // 设置加载状态
       this.setData({ loading: true });
 
       try {
         // 确保服务层也知道当前的 dialogId 和 soupId
-        dialogService.setCurrentDialogId(dialogId);
         if (soupId) {
           dialogService.setCurrentSoupId(soupId);
         }
 
-        // 从服务器获取对话记录
-        const messages = await dialogService.getDialogMessages(dialogId);
+        let messages = [];
+
+        if (!dialogId) {
+          console.log('缺少 dialogId，仅加载初始化消息');
+          // 加载初始化消息
+          messages = dialogService.getInitialSystemMessages();
+        } else {
+          // 设置当前对话ID
+          dialogService.setCurrentDialogId(dialogId);
+
+          // 从服务器获取对话记录
+          messages = await dialogService.getDialogMessages(dialogId);
+        }
 
         // 更新到页面
         this.setData({
@@ -234,7 +256,7 @@ Component({
           loading: false
         });
 
-        return Promise.reject(error);
+        return initialMessages;
       }
     },
 

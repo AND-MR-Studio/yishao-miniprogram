@@ -177,8 +177,6 @@ Page({
   async handleLoadSoupWithDialog(data) {
     if (!data || !data.soupId) return;
 
-
-
     try {
       // 设置加载状态
       this.setData({ isLoading: true });
@@ -197,44 +195,17 @@ Page({
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData);
 
-      // 如果有dialogId，预加载对话记录并切换到喝汤状态
+      // 如果有dialogId，切换到喝汤状态
+      // dialog组件会在visible变为true时自动加载对话记录
       if (data.dialogId) {
-        try {
-          // 获取用户ID
-          const userId = await userService.getUserId();
-          if (!userId) {
-            throw new Error('无法获取用户ID');
-          }
-
-          // 预加载对话记录
-          const dialog = this.selectComponent('#dialog');
-          if (dialog) {
-            // 设置必要的属性
-            dialog.setData({
-              soupId: data.soupId,
-              dialogId: data.dialogId,
-              userId: userId,
-              visible: false
-            });
-
-            // 显式加载对话记录
-            await dialog.loadDialogMessages();
-
-            // 等待汤面数据加载完成后切换到喝汤状态
-            setTimeout(() => {
-              this.switchToDrinking();
-            }, 300); // 增加延迟，确保对话记录已加载
-          }
-        } catch (error) {
-
-          // 即使预加载失败，也尝试切换到喝汤状态
-          setTimeout(() => {
-            this.switchToDrinking();
-          }, 300);
-        }
+        // 等待汤面数据加载完成后切换到喝汤状态
+        // 使用短延迟确保UI更新完成
+        setTimeout(() => {
+          this.switchToDrinking();
+        }, 100);
       }
     } catch (error) {
-
+      console.error('加载汤面和对话失败:', error);
       this.showErrorToast('加载失败，请重试');
       this.setData({
         isLoading: false,
@@ -301,70 +272,44 @@ Page({
     const dialogId = dialogService.getCurrentDialogId();
 
     try {
-      // 获取用户ID - 等待Promise解析
-      const userId = await userService.getUserId();
+      // 获取用户ID
+      let userId = await userService.getUserId();
 
-      // 检查是否获取到用户ID
+      // 如果没有用户ID，尝试刷新用户信息
       if (!userId) {
-        // 尝试刷新用户信息
         await userService.refreshUserInfo();
+        userId = await userService.getUserId();
 
-        // 重新获取用户ID
-        const refreshedUserId = await userService.getUserId();
-
-        if (!refreshedUserId) {
-          throw new Error('刷新用户信息后仍无法获取用户ID');
+        if (!userId) {
+          throw new Error('无法获取用户信息');
         }
-
-        // 更新页面状态
-        this.setData({
-          pageState: PAGE_STATE.DRINKING,
-          showButtons: false
-        });
-
-        // 显示对话框
-        wx.nextTick(() => {
-          const dialog = this.selectComponent('#dialog');
-          if (dialog) {
-            // 先设置 soupId、dialogId 和 userId，等待下一帧后再设置 visible，确保能正确加载对话历史
-            dialog.setData({
-              soupId: currentSoupId,
-              dialogId: dialogId,
-              userId: refreshedUserId
-            });
-
-            // 等待下一帧，确保 soupId、dialogId 和 userId 已经被正确设置
-            wx.nextTick(() => {
-              dialog.setData({ visible: true });
-            });
-          }
-        });
-      } else {
-        // 更新页面状态
-        this.setData({
-          pageState: PAGE_STATE.DRINKING,
-          showButtons: false
-        });
-
-        // 显示对话框
-        wx.nextTick(() => {
-          const dialog = this.selectComponent('#dialog');
-          if (dialog) {
-            // 先设置 soupId、dialogId 和 userId，等待下一帧后再设置 visible，确保能正确加载对话历史
-            dialog.setData({
-              soupId: currentSoupId,
-              dialogId: dialogId,
-              userId: userId
-            });
-
-            // 等待下一帧，确保 soupId、dialogId 和 userId 已经被正确设置
-            wx.nextTick(() => {
-              dialog.setData({ visible: true });
-            });
-          }
-        });
       }
+
+      // 更新页面状态
+      this.setData({
+        pageState: PAGE_STATE.DRINKING,
+        showButtons: false
+      });
+
+      // 获取对话组件
+      const dialog = this.selectComponent('#dialog');
+      if (!dialog) {
+        console.error('无法获取对话组件');
+        return;
+      }
+
+      // 一次性设置所有必要属性
+      // 注意：dialog组件已优化，会在visible变为true时自动加载对话记录
+      dialog.setData({
+        soupId: currentSoupId,
+        dialogId: dialogId,
+        userId: userId,
+        visible: true  // 直接设置为可见，组件内部会处理加载和动画
+      });
+
     } catch (error) {
+      console.error('切换到喝汤状态失败:', error);
+
       // 显示提示并跳转到个人中心页面
       wx.showModal({
         title: '提示',
@@ -430,11 +375,13 @@ Page({
    * 处理用户点击开始喝汤按钮的所有逻辑
    */
   async onStartSoup() {
+    // 获取开始按钮组件
+    const startButton = this.selectComponent('.start-button');
+
     // 检查用户是否已登录
     const token = wx.getStorageSync('token');
     if (!token) {
       // 未登录状态下，通知按钮重置
-      const startButton = this.selectComponent('.start-button');
       if (startButton) {
         startButton.setLoadingComplete(false);
       }
@@ -460,100 +407,59 @@ Page({
     // 获取当前汤面ID
     const currentSoupId = this.getCurrentSoupId();
     if (!currentSoupId) {
-      const startButton = this.selectComponent('.start-button');
       if (startButton) {
         startButton.setLoadingComplete(false);
       }
       return;
     }
 
-    // 获取用户ID
-    let userId = await userService.getUserId();
-    if (!userId) {
-      try {
+    try {
+      // 获取用户ID
+      let userId = await userService.getUserId();
+      if (!userId) {
         // 尝试刷新用户信息
         await userService.refreshUserInfo();
         userId = await userService.getUserId();
 
         if (!userId) {
-          throw new Error('刷新用户信息后仍无法获取用户ID');
+          throw new Error('无法获取用户信息');
         }
-      } catch (error) {
-        // 显示提示并跳转到个人中心页面
-        wx.showModal({
-          title: '提示',
-          content: '无法获取用户信息，请重新登录',
-          showCancel: false,
-          success: () => {
-            wx.switchTab({
-              url: '/pages/mine/mine'
-            });
-          }
-        });
-
-        // 通知按钮重置
-        const startButton = this.selectComponent('.start-button');
-        if (startButton) {
-          startButton.setLoadingComplete(false);
-        }
-        return;
       }
-    }
 
-    // 设置当前汤面ID到dialogService
-    dialogService.setCurrentSoupId(currentSoupId);
+      // 设置当前汤面ID到dialogService
+      dialogService.setCurrentSoupId(currentSoupId);
 
-    // 预加载对话记录
-    const dialog = this.selectComponent('#dialog');
-    if (dialog) {
-      try {
-        // 根据用户ID和汤面ID获取或创建对话
-        const dialogData = await dialogService.getUserDialog(userId, currentSoupId);
+      // 获取或创建对话
+      const dialogData = await dialogService.getUserDialog(userId, currentSoupId);
 
-        // 如果没有对话ID，则创建新对话
-        let finalDialogData = dialogData;
-        if (!dialogData.dialogId) {
-          finalDialogData = await dialogService.createDialog(userId, currentSoupId);
-        }
-
-        // 设置对话ID和汤面ID到对话组件
-        dialog.setData({
-          soupId: currentSoupId,
-          dialogId: finalDialogData.dialogId,
-          userId: userId,
-          visible: false
-        });
-
-        // 加载对话记录
-        await dialog.loadDialogMessages();
-
-        // 通知按钮加载完成并切换到喝汤状态
-        const startButton = this.selectComponent('.start-button');
-        if (startButton) {
-          startButton.setLoadingComplete();
-        }
-
-        // 切换到喝汤状态
-        this.switchToDrinking();
-      } catch (error) {
-
-        // 即使加载失败也通知按钮完成并切换到喝汤状态
-        const startButton = this.selectComponent('.start-button');
-        if (startButton) {
-          startButton.setLoadingComplete();
-        }
-
-        // 切换到喝汤状态
-        this.switchToDrinking();
+      // 如果没有对话ID，则创建新对话
+      let dialogId = dialogData.dialogId;
+      if (!dialogId) {
+        const newDialogData = await dialogService.createDialog(userId, currentSoupId);
+        dialogId = newDialogData.dialogId;
       }
-    } else {
-      // 如果无法获取对话组件，也通知按钮完成并切换到喝汤状态
-      const startButton = this.selectComponent('.start-button');
+
+      // 设置当前对话ID到dialogService
+      if (dialogId) {
+        dialogService.setCurrentDialogId(dialogId);
+      }
+
+      // 通知按钮加载完成
       if (startButton) {
         startButton.setLoadingComplete();
       }
 
-      // 切换到喝汤状态
+      // 切换到喝汤状态 - 会自动显示dialog组件并加载对话记录
+      this.switchToDrinking();
+
+    } catch (error) {
+      console.error('开始喝汤失败:', error);
+
+      // 即使出错也尝试切换到喝汤状态
+      if (startButton) {
+        startButton.setLoadingComplete();
+      }
+
       this.switchToDrinking();
     }
   },
@@ -762,7 +668,7 @@ Page({
           // 显示收藏成功提示
           wx.showToast({
             title: '收藏成功',
-            icon: 'success',
+            icon: 'none',
             duration: 1500
           });
         } else {
