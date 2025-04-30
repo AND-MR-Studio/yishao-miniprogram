@@ -33,7 +33,7 @@ async function handleSignIn(openid, CONFIG) {
 
     // 检查是否已经签到
     if (userData.lastSignInDate === today) {
-      logger('info', 'signIn', '用户今日已签到', { userId });
+      logger('info', 'signIn', '用户今日已签到', { userId: userData.userId });
       return { success: false, message: '今日已签到' };
     }
 
@@ -71,7 +71,7 @@ async function handleSignIn(openid, CONFIG) {
     };
   } catch (error) {
     logger('error', 'signIn', '签到处理异常', {
-      userId,
+      openid,
       error: error.message,
       stack: process.env.DEBUG ? error.stack : undefined
     });

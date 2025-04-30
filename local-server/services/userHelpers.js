@@ -228,7 +228,7 @@ function sendResponse(res, success, data, statusCode = 200) {
 
   return res.status(statusCode).json({
     success,
-    success ? data : undefined,
+    data: success ? data : undefined,
     error: !success ? data : undefined
   });
 }
@@ -374,7 +374,7 @@ function formatFullUserInfo(userData, avatarUrl) {
 module.exports = {
   // 配置
   CONFIG,
-  
+
   // 日志和工具函数
   logger,
   getWechatOpenId,
@@ -384,7 +384,7 @@ module.exports = {
   generateSecureToken,
   validateParams,
   asyncHandler,
-  
+
   // 格式化函数
   formatUserResponse,
   formatFullUserInfo
