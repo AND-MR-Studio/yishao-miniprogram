@@ -27,7 +27,7 @@ const ASSET_PATHS = {
 };
 
 // 服务器基础URL
-const SERVER_BASE_URL = 'http://14.103.193.11:8080';
+const SERVER_BASE_URL = 'http://and-tech.cn';
 
 // 资源URL前缀（相对路径）
 const ASSET_URL_PREFIX = '/uploads';

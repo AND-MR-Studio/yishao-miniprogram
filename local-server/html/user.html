@@ -200,7 +200,31 @@
                         <el-input-number v-model="editForm.signInCount" :min="0"></el-input-number>
                     </el-form-item>
                     <el-form-item label="剩余答题次数">
-                        <el-input-number v-model="editForm.remainingAnswers" :min="0" :max="20"></el-input-number>
+                        <el-input-number v-model="editForm.remainingAnswers" :min="0" :max="999"></el-input-number>
+                    </el-form-item>
+
+                    <el-divider content-position="center">统计数据</el-divider>
+
+                    <el-form-item label="总答题数">
+                        <el-input-number v-model="editForm.totalAnswered" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="正确答题数">
+                        <el-input-number v-model="editForm.totalCorrect" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="总浏览数">
+                        <el-input-number v-model="editForm.totalViewed" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="已解决数">
+                        <el-input-number v-model="editForm.solvedCount" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="未解决数">
+                        <el-input-number v-model="editForm.unsolvedCount" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="创作数">
+                        <el-input-number v-model="editForm.creationCount" :min="0"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="收藏数">
+                        <el-input-number v-model="editForm.favoriteCount" :min="0"></el-input-number>
                     </el-form-item>
                 </el-form>
                 <span slot="footer" class="dialog-footer">
@@ -235,7 +259,14 @@
                     maxExperience: 1000,
                     points: 0,
                     signInCount: 0,
-                    remainingAnswers: 0
+                    remainingAnswers: 100,
+                    totalAnswered: 0,
+                    totalCorrect: 0,
+                    totalViewed: 0,
+                    solvedCount: 0,
+                    unsolvedCount: 0,
+                    creationCount: 0,
+                    favoriteCount: 0
                 }
             },
             computed: {
@@ -289,21 +320,7 @@
                     }
                 },
 
-                // 修改保存用户信息方法
-                async handleSave() {
-                    try {
-                        const response = await this.request('/yishao-api/user/update', 'POST', this.editForm);
-                        if (response.success) {
-                            this.$message.success('更新成功');
-                            this.dialogVisible = false;
-                            this.fetchUsers();
-                        } else {
-                            this.$message.error(response.error || '更新失败');
-                        }
-                    } catch (error) {
-                        this.$message.error('更新失败：' + error.message);
-                    }
-                },
+                // 修改保存用户信息方法 - 使用管理员接口
 
                 formatDate(date) {
                     if (!date) return '';
@@ -338,7 +355,14 @@
                         maxExperience: row.maxExperience || 1000,
                         points: row.points || 0,
                         signInCount: row.signInCount || 0,
-                        remainingAnswers: row.remainingAnswers || 0
+                        remainingAnswers: row.remainingAnswers || 100,
+                        totalAnswered: row.totalAnswered || 0,
+                        totalCorrect: row.totalCorrect || 0,
+                        totalViewed: row.totalViewed || 0,
+                        solvedCount: row.solvedCount || 0,
+                        unsolvedCount: row.unsolvedCount || 0,
+                        creationCount: row.creationCount || 0,
+                        favoriteCount: row.favoriteCount || 0
                     };
                     this.dialogVisible = true;
                 },

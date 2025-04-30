@@ -158,7 +158,7 @@ Component({
 
             // 显示签到成功提示
             wx.showToast({
-              title: '签到成功，回答次数+10',
+              title: '签到成功',
               icon: 'success',
               duration: 2000
             });

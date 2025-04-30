@@ -10,7 +10,6 @@ const userService = require('./services/userService');
 const soupService = require('./services/soupService');
 const assetService = require('./services/assetService');
 
-// 不再需要单独导入资源路由，已集成到assetService中
 
 const app = express();
 const PORT = 8080;

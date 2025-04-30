@@ -1,6 +1,7 @@
 // components/dialog/index.js
 const dialogService = require('../../utils/dialogService');
 const typeAnimation = require('../../utils/typeAnimation');
+const userService = require('../../utils/userService');
 
 Component({
   properties: {
@@ -284,6 +285,14 @@ Component({
       // 设置当前汤面ID和对话ID
       dialogService.setCurrentSoupId(soupId);
       dialogService.setCurrentDialogId(dialogId);
+
+      // 更新用户回答过的汤记录
+      if (soupId) {
+        userService.updateAnsweredSoup(soupId).catch(err => {
+          console.error('更新用户回答汤记录失败:', err);
+          // 失败不影响用户体验，继续执行
+        });
+      }
 
       // 使用服务层处理用户输入
       const { userMessage } = dialogService.handleUserInput(value.trim());

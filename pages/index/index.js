@@ -496,16 +496,21 @@ Page({
   },
 
   /**
-   * 增加汤面阅读数
+   * 增加汤面阅读数并更新用户浏览记录
    * @param {string} soupId 汤面ID
    */
   async incrementSoupViewCount(soupId) {
     if (!soupId) return;
 
     try {
+      // 增加汤面阅读数
       await soupService.viewSoup(soupId);
+
+      // 更新用户浏览过的汤记录
+      await userService.updateViewedSoup(soupId);
     } catch (error) {
       // 阅读数增加失败不影响用户体验，不显示错误提示
+      console.error('增加汤面阅读数或更新浏览记录失败:', error);
     }
   },
 

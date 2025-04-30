@@ -324,15 +324,6 @@ function login() {
               wx.setStorageSync('token', res.data.token);
             }
 
-            // 如果后端返回了首次登录标志并且是首次登录，显示提示
-            if (res.data.isDailyFirstLogin) {
-              wx.showToast({
-                title: '每日首次登录，回答次数+10',
-                icon: 'success',
-                duration: 2000
-              });
-            }
-
             isLoggingIn = false;
 
 
@@ -561,6 +552,226 @@ async function setUserInfo(userInfo) {
   return res;
 }
 
+/**
+ * 更新用户浏览过的汤
+ * 将当前浏览的汤ID添加到用户的viewedSoups数组中
+ * @param {string} soupId - 汤ID
+ * @returns {Promise} - 更新结果
+ */
+async function updateViewedSoup(soupId) {
+  if (!soupId) return Promise.reject('汤ID为空');
+
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
+    console.log('用户未登录，不记录浏览历史');
+    return Promise.resolve({ success: false, message: '用户未登录' });
+  }
+
+  try {
+    // 调用后端接口更新用户浏览过的汤
+    const config = {
+      url: api.user_viewed_soup_url,
+      method: 'POST',
+      data: {
+        soupId: soupId
+      }
+    };
+
+    const res = await api.userRequest(config);
+    return res;
+  } catch (error) {
+    console.error('更新用户浏览汤记录失败:', error);
+    // 浏览记录更新失败不影响用户体验，返回静默失败
+    return { success: false, message: '更新浏览记录失败' };
+  }
+}
+
+/**
+ * 更新用户回答过的汤
+ * 将当前回答的汤ID添加到用户的answeredSoups数组中
+ * 只要创建过dialog对话就算回答过，不管有没有完成
+ * @param {string} soupId - 汤ID
+ * @returns {Promise} - 更新结果
+ */
+async function updateAnsweredSoup(soupId) {
+  if (!soupId) return Promise.reject('汤ID为空');
+
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
+    console.log('用户未登录，不记录回答历史');
+    return Promise.resolve({ success: false, message: '用户未登录' });
+  }
+
+  try {
+    // 调用后端接口更新用户回答过的汤
+    const config = {
+      url: api.user_answered_soup_url,
+      method: 'POST',
+      data: {
+        soupId: soupId
+      }
+    };
+
+    const res = await api.userRequest(config);
+    return res;
+  } catch (error) {
+    console.error('更新用户回答汤记录失败:', error);
+    // 回答记录更新失败不影响用户体验，返回静默失败
+    return { success: false, message: '更新回答记录失败' };
+  }
+}
+
+/**
+ * 更新用户收藏的汤
+ * 将汤ID添加到用户的favoriteSoups数组中或从中移除
+ * @param {string} soupId - 汤ID
+ * @param {boolean} isFavorite - 是否收藏
+ * @returns {Promise} - 更新结果
+ */
+async function updateFavoriteSoup(soupId, isFavorite) {
+  if (!soupId) return Promise.reject('汤ID为空');
+
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
+    console.log('用户未登录，不能更新收藏');
+    return Promise.resolve({ success: false, message: '用户未登录' });
+  }
+
+  try {
+    // 调用后端接口更新用户收藏的汤
+    const config = {
+      url: api.user_favorite_soup_url,
+      method: 'POST',
+      data: {
+        soupId: soupId,
+        isFavorite: isFavorite
+      }
+    };
+
+    const res = await api.userRequest(config);
+    return res;
+  } catch (error) {
+    console.error('更新用户收藏汤记录失败:', error);
+    // 收藏记录更新失败不影响用户体验，返回静默失败
+    return { success: false, message: '更新收藏记录失败' };
+  }
+}
+
+/**
+ * 检查用户是否收藏了某个汤（从本地用户数据中检查）
+ * @param {string} soupId - 汤ID
+ * @returns {boolean} - 是否收藏
+ */
+function isFavoriteSoup(soupId) {
+  if (!soupId) return false;
+
+  // 从本地存储获取用户信息
+  const userInfo = wx.getStorageSync('userInfo');
+  if (!userInfo || !userInfo.soups || !Array.isArray(userInfo.soups.favoriteSoups)) {
+    return false;
+  }
+
+  // 检查汤ID是否在收藏列表中
+  return userInfo.soups.favoriteSoups.includes(soupId);
+}
+
+/**
+ * 更新用户创建的汤
+ * 将汤ID添加到用户的createSoups数组中
+ * @param {string} soupId - 汤ID
+ * @returns {Promise} - 更新结果
+ */
+async function updateCreatedSoup(soupId) {
+  if (!soupId) return Promise.reject('汤ID为空');
+
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
+    console.log('用户未登录，不记录创建历史');
+    return Promise.resolve({ success: false, message: '用户未登录' });
+  }
+
+  try {
+    // 调用后端接口更新用户创建的汤
+    const config = {
+      url: api.user_created_soup_url,
+      method: 'POST',
+      data: {
+        soupId: soupId
+      }
+    };
+
+    const res = await api.userRequest(config);
+    return res;
+  } catch (error) {
+    console.error('更新用户创建汤记录失败:', error);
+    // 创建记录更新失败不影响用户体验，返回静默失败
+    return { success: false, message: '更新创建记录失败' };
+  }
+}
+
+/**
+ * 更新用户已解决的汤
+ * 将汤ID添加到用户的solvedSoups数组中
+ * @param {string} soupId - 汤ID
+ * @returns {Promise} - 更新结果
+ */
+async function updateSolvedSoup(soupId) {
+  if (!soupId) return Promise.reject('汤ID为空');
+
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
+    console.log('用户未登录，不记录解决历史');
+    return Promise.resolve({ success: false, message: '用户未登录' });
+  }
+
+  try {
+    // 调用后端接口更新用户已解决的汤
+    const config = {
+      url: api.user_solved_soup_url,
+      method: 'POST',
+      data: {
+        soupId: soupId
+      }
+    };
+
+    const res = await api.userRequest(config);
+
+    // 如果成功且有升级，显示升级提示
+    if (res.success && res.data && res.data.levelUp) {
+      showLevelUpNotification(res.data.level, res.data.levelTitle);
+    }
+
+    return res;
+  } catch (error) {
+    console.error('更新用户已解决汤记录失败:', error);
+    // 解决记录更新失败不影响用户体验，返回静默失败
+    return { success: false, message: '更新解决记录失败' };
+  }
+}
+
+/**
+ * 检查用户是否已解决某个汤（从本地用户数据中检查）
+ * @param {string} soupId - 汤ID
+ * @returns {boolean} - 是否已解决
+ */
+function isSolvedSoup(soupId) {
+  if (!soupId) return false;
+
+  // 从本地存储获取用户信息
+  const userInfo = wx.getStorageSync('userInfo');
+  if (!userInfo || !userInfo.soups || !Array.isArray(userInfo.soups.solvedSoups)) {
+    return false;
+  }
+
+  // 检查汤ID是否在已解决列表中
+  return userInfo.soups.solvedSoups.includes(soupId);
+}
+
 module.exports = {
   TOKEN_KEY,
   DEFAULT_AVATAR_URL,
@@ -577,5 +788,12 @@ module.exports = {
   showLevelUpNotification,
   getFormattedUserInfo,
   setUserInfo,
-  getUserAvatar
+  getUserAvatar,
+  updateViewedSoup,
+  updateAnsweredSoup,
+  updateFavoriteSoup,
+  isFavoriteSoup,
+  updateCreatedSoup,
+  updateSolvedSoup,
+  isSolvedSoup
 };

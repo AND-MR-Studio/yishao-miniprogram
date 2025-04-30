@@ -36,6 +36,16 @@ const user_info_url = ysUrl + userBasePath + 'info';
 const user_signin_url = ysUrl + userBasePath + 'signin';
 // 获取用户列表（管理员接口）
 const user_list_url = ysUrl + userBasePath + 'list';
+// 更新用户浏览过的汤
+const user_viewed_soup_url = ysUrl + userBasePath + 'viewed-soup';
+// 更新用户回答过的汤
+const user_answered_soup_url = ysUrl + userBasePath + 'answered-soup';
+// 更新用户创建的汤
+const user_created_soup_url = ysUrl + userBasePath + 'created-soup';
+// 更新用户收藏的汤
+const user_favorite_soup_url = ysUrl + userBasePath + 'favorite-soup';
+// 更新用户已解决的汤
+const user_solved_soup_url = ysUrl + userBasePath + 'solved-soup';
 
 // 默认头像URL (绝对路径)
 const default_avatar_url = '/static/images/default-avatar.jpg';
@@ -113,6 +123,11 @@ module.exports = {
   user_info_url,
   user_signin_url,
   user_list_url,
+  user_viewed_soup_url,
+  user_answered_soup_url,
+  user_created_soup_url,
+  user_favorite_soup_url,
+  user_solved_soup_url,
   default_avatar_url,
 
   // 系统相关接口URL

@@ -6,9 +6,8 @@
 // 使用本地路径，与前端保持一致
 const DEFAULT_AVATAR_URL = '/static/images/default-avatar.jpg';
 const LEVEL_TITLES = ['见习侦探', '初级侦探', '中级侦探', '高级侦探', '特级侦探', '神探'];
-const MAX_DAILY_ANSWERS = 10; // 每日最大回答次数
 const DAILY_SIGN_IN_POINTS = 10; // 每日签到积分
-const DAILY_SIGN_IN_EXPERIENCE = 20; // 每日签到经验值
+const DAILY_SIGN_IN_EXPERIENCE = 50; // 每日签到经验值
 
 /**
  * 创建默认用户对象
@@ -24,6 +23,9 @@ function createDefaultUser() {
     openid: '',
     answeredSoups: [],
     viewedSoups: [],
+    createSoups: [], // 用户创建过的谜题soup ID列表
+    favoriteSoups: [], // 用户收藏的soup ID列表
+    solvedSoups: [], // 用户已解决的soup ID列表
     totalAnswered: 0,
     totalCorrect: 0,
     totalViewed: 0,
@@ -33,7 +35,7 @@ function createDefaultUser() {
     experience: 0,
     maxExperience: 1000,
     // 回答次数
-    remainingAnswers: MAX_DAILY_ANSWERS,
+    remainingAnswers: 100, // 初始回答次数设置为100
     // 积分和签到
     points: 0,
     lastSignInDate: null,
@@ -114,7 +116,6 @@ module.exports = {
   // 常量
   DEFAULT_AVATAR_URL,
   LEVEL_TITLES,
-  MAX_DAILY_ANSWERS,
   DAILY_SIGN_IN_POINTS,
   DAILY_SIGN_IN_EXPERIENCE,
 
