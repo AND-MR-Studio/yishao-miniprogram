@@ -31,7 +31,6 @@ async function getUserAvatar(userId) {
       return DEFAULT_AVATAR_URL;
     }
   } catch (error) {
-    console.error('获取用户头像失败:', error);
     return DEFAULT_AVATAR_URL;
   }
 }
@@ -70,8 +69,7 @@ function getUserInfo() {
       });
     });
   } catch (error) {
-    console.error('获取用户信息失败:', error);
-    return Promise.reject(error);
+    return Promise.reject('获取用户信息失败');
   }
 }
 
@@ -120,8 +118,9 @@ async function getRemainingAnswers() {
     }
 
     // 从后端获取最新用户信息
+    // 后端已返回扁平化的数据结构
     const userInfo = await getUserInfo();
-    return userInfo.answers?.remainingAnswers || 0;
+    return userInfo.remainingAnswers || 0;
   } catch {
     return 0;
   }
@@ -191,8 +190,7 @@ async function updateAvatar(avatarUrl) {
     }
   } catch (error) {
     wx.hideLoading();
-    console.error('上传头像失败:', error);
-    return Promise.reject(error);
+    return Promise.reject('上传头像失败');
   }
 }
 
@@ -230,8 +228,9 @@ async function getDetectiveId() {
     }
 
     // 从后端获取最新用户信息
+    // 后端已返回扁平化的数据结构
     const userInfo = await getUserInfo();
-    return userInfo.userInfo?.detectiveId || '';
+    return userInfo.detectiveId || '';
   } catch {
     return '';
   }
@@ -292,8 +291,7 @@ function login() {
             hasCompletedSetup: false // 始终返回false，强制显示用户信息设置弹窗
           });
         })
-        .catch(err => {
-          console.error('获取用户信息失败:', err);
+        .catch(() => {
           // 即使获取失败，也返回成功，标记为未完成设置
           resolve({
             userInfo: {isLoggedIn: true},
@@ -452,10 +450,10 @@ function showLevelUpNotification(levelTitle) {
 }
 
 /**
- * 获取用户信息并格式化为UI显示所需的格式
- * 简洁的实现，只关注必要的功能
+ * 获取用户信息
+ * 简化实现，直接使用后端返回的扁平化数据结构，不再进行结构转换
  * @param {boolean} showLoading - 是否显示加载提示
- * @returns {Promise<Object>} 格式化后的用户信息
+ * @returns {Promise<Object>} 用户信息
  */
 async function getFormattedUserInfo(showLoading = false) {
   try {
@@ -473,62 +471,21 @@ async function getFormattedUserInfo(showLoading = false) {
     }
 
     // 使用getUserInfo方法获取用户信息
+    // 后端已返回扁平化的数据结构，包含头像URL
     const userInfo = await getUserInfo();
 
     if (showLoading) {
       wx.hideLoading();
     }
 
-    if (!userInfo || !userInfo.userInfo) {
-      return null;
-    }
-
-    // 获取用户ID
-    const userId = userInfo.userId || '';
-
-    // 从资源服务获取用户头像
-    let avatarUrl = '';
-    if (userId) {
-      avatarUrl = await getUserAvatar(userId);
-    } else {
-      avatarUrl = DEFAULT_AVATAR_URL;
-    }
-
-    // 格式化用户信息，只提取UI需要的字段
-    return {
-      userId: userInfo.userId || '',
-      nickName: userInfo.userInfo?.nickName || '',
-      detectiveId: userInfo.userInfo?.detectiveId || '',
-      avatarUrl: avatarUrl, // 使用从资源服务获取的头像
-      levelTitle: userInfo.level?.levelTitle || '',
-      level: userInfo.level?.level || 1,
-      experience: userInfo.level?.experience || 0,
-      maxExperience: userInfo.level?.maxExperience || 1000,
-      remainingAnswers: userInfo.answers?.remainingAnswers || 100, // 默认值为100
-      points: userInfo.points?.total || 0,
-      signInCount: userInfo.points?.signInCount || 0,
-      lastSignInDate: userInfo.points?.lastSignInDate || '',
-      // 统计数据
-      totalAnswered: userInfo.stats?.totalAnswered || 0,
-      totalCorrect: userInfo.stats?.totalCorrect || 0,
-      totalViewed: userInfo.stats?.totalViewed || 0,
-      todayViewed: userInfo.stats?.todayViewed || 0,
-      unsolvedCount: userInfo.stats?.unsolvedCount || 0,
-      solvedCount: userInfo.stats?.solvedCount || 0,
-      creationCount: userInfo.stats?.creationCount || 0,
-      favoriteCount: userInfo.stats?.favoriteCount || 0,
-      // 汤谜题数组
-      viewedSoups: userInfo.soups?.viewedSoups || [],
-      answeredSoups: userInfo.soups?.answeredSoups || [],
-      createSoups: userInfo.soups?.createSoups || [],
-      favoriteSoups: userInfo.soups?.favoriteSoups || [],
-      solvedSoups: userInfo.soups?.solvedSoups || [],
-      isLoggedIn: true
-    };
-  } catch {
+    // 直接返回后端数据，不再进行结构转换
+    // 后端已经提供了所有必要的字段和默认值
+    return userInfo;
+  } catch (error) {
     if (showLoading) {
       wx.hideLoading();
     }
+    console.error('获取用户信息失败:', error);
     return null;
   }
 }
@@ -578,7 +535,6 @@ async function updateViewedSoup(soupId) {
   // 检查用户是否已登录
   const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
-    console.log('用户未登录，不记录浏览历史');
     return Promise.resolve({ success: false, message: '用户未登录' });
   }
 
@@ -595,7 +551,6 @@ async function updateViewedSoup(soupId) {
     const res = await api.userRequest(config);
     return res;
   } catch (error) {
-    console.error('更新用户浏览汤记录失败:', error);
     // 浏览记录更新失败不影响用户体验，返回静默失败
     return { success: false, message: '更新浏览记录失败' };
   }
@@ -614,7 +569,6 @@ async function updateAnsweredSoup(soupId) {
   // 检查用户是否已登录
   const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
-    console.log('用户未登录，不记录回答历史');
     return Promise.resolve({ success: false, message: '用户未登录' });
   }
 
@@ -631,7 +585,6 @@ async function updateAnsweredSoup(soupId) {
     const res = await api.userRequest(config);
     return res;
   } catch (error) {
-    console.error('更新用户回答汤记录失败:', error);
     // 回答记录更新失败不影响用户体验，返回静默失败
     return { success: false, message: '更新回答记录失败' };
   }
@@ -650,7 +603,6 @@ async function updateFavoriteSoup(soupId, isFavorite) {
   // 检查用户是否已登录
   const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
-    console.log('用户未登录，不能更新收藏');
     return Promise.resolve({ success: false, message: '用户未登录' });
   }
 
@@ -668,7 +620,6 @@ async function updateFavoriteSoup(soupId, isFavorite) {
     const res = await api.userRequest(config);
     return res;
   } catch (error) {
-    console.error('更新用户收藏汤记录失败:', error);
     // 收藏记录更新失败不影响用户体验，返回静默失败
     return { success: false, message: '更新收藏记录失败' };
   }
@@ -690,15 +641,14 @@ async function isFavoriteSoup(soupId) {
 
   try {
     // 从服务器获取最新用户信息
+    // 后端已返回扁平化的数据结构
     const userInfo = await getUserInfo();
 
     // 检查汤ID是否在收藏列表中
     return userInfo &&
-           userInfo.soups &&
-           Array.isArray(userInfo.soups.favoriteSoups) &&
-           userInfo.soups.favoriteSoups.includes(soupId);
+           Array.isArray(userInfo.favoriteSoups) &&
+           userInfo.favoriteSoups.includes(soupId);
   } catch (error) {
-    console.error('检查收藏状态失败:', error);
     return false;
   }
 }
@@ -715,7 +665,6 @@ async function updateCreatedSoup(soupId) {
   // 检查用户是否已登录
   const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
-    console.log('用户未登录，不记录创建历史');
     return Promise.resolve({ success: false, message: '用户未登录' });
   }
 
@@ -732,7 +681,6 @@ async function updateCreatedSoup(soupId) {
     const res = await api.userRequest(config);
     return res;
   } catch (error) {
-    console.error('更新用户创建汤记录失败:', error);
     // 创建记录更新失败不影响用户体验，返回静默失败
     return { success: false, message: '更新创建记录失败' };
   }
@@ -750,7 +698,6 @@ async function updateSolvedSoup(soupId) {
   // 检查用户是否已登录
   const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
-    console.log('用户未登录，不记录解决历史');
     return Promise.resolve({ success: false, message: '用户未登录' });
   }
 
@@ -773,7 +720,6 @@ async function updateSolvedSoup(soupId) {
 
     return res;
   } catch (error) {
-    console.error('更新用户已解决汤记录失败:', error);
     // 解决记录更新失败不影响用户体验，返回静默失败
     return { success: false, message: '更新解决记录失败' };
   }
@@ -795,15 +741,14 @@ async function isSolvedSoup(soupId) {
 
   try {
     // 从服务器获取最新用户信息
+    // 后端已返回扁平化的数据结构
     const userInfo = await getUserInfo();
 
     // 检查汤ID是否在已解决列表中
     return userInfo &&
-           userInfo.soups &&
-           Array.isArray(userInfo.soups.solvedSoups) &&
-           userInfo.soups.solvedSoups.includes(soupId);
+           Array.isArray(userInfo.solvedSoups) &&
+           userInfo.solvedSoups.includes(soupId);
   } catch (error) {
-    console.error('检查解决状态失败:', error);
     return false;
   }
 }

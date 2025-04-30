@@ -153,8 +153,6 @@ Page({
 
     // 检查是否获取到用户ID
     if (!userId) {
-      console.error('获取用户ID失败，尝试刷新用户信息');
-
       try {
         // 尝试刷新用户信息
         await userService.refreshUserInfo();
@@ -165,11 +163,8 @@ Page({
         if (!refreshedUserId) {
           throw new Error('刷新用户信息后仍无法获取用户ID');
         }
-
-        // 成功获取用户ID，继续执行
-        console.log('成功刷新用户信息，获取到用户ID:', refreshedUserId);
       } catch (error) {
-        console.error('刷新用户信息失败:', error);
+
 
         // 显示提示并跳转到个人中心页面
         wx.showModal({
@@ -274,11 +269,10 @@ Page({
   async onButtonPreload() {
     // 防止重复预加载
     if (this._isPreloading) {
-      console.log('已经在预加载中，忽略重复调用');
       return;
     }
     this._isPreloading = true;
-    console.log('开始预加载对话记录');
+
 
     try {
       // 检查用户是否已登录（使用token判断）
@@ -333,9 +327,8 @@ Page({
           }
 
           // 成功获取用户ID，继续执行
-          console.log('成功刷新用户信息，获取到用户ID:', refreshedUserId);
         } catch (error) {
-          console.error('刷新用户信息失败:', error);
+
 
           // 显示提示并跳转到个人中心页面
           wx.showModal({
@@ -394,7 +387,7 @@ Page({
             startButton.setLoadingComplete();
           }
         } catch (error) {
-          console.error('预加载对话记录失败:', error);
+
           // 即使加载失败也通知按钮完成
           const startButton = this.selectComponent('.start-button');
           if (startButton) {
@@ -510,7 +503,6 @@ Page({
       await userService.updateViewedSoup(soupId);
     } catch (error) {
       // 阅读数增加失败不影响用户体验，不显示错误提示
-      console.error('增加汤面阅读数或更新浏览记录失败:', error);
     }
   },
 

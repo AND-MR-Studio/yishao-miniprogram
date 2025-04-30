@@ -13,8 +13,6 @@ App({
     console.log('基础URL:', this.globalData.config.baseUrl);
     console.log('一勺服务URL:', this.globalData.config.ysUrl);
 
-    // 添加调试日志，检查是否有自动登录逻辑
-    console.log('app.js onLaunch 执行');
   },
 
   globalData: {

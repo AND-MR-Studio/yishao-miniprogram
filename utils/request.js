@@ -28,7 +28,6 @@ const request = (options) => {
       header.Authorization = `Bearer ${token}`;
     }
 
-    // 直接使用传入的URL，不再拼接基础URL
     // 因为在api.js中已经拼接好了完整URL
     wx.request({
       url: options.url,
@@ -56,7 +55,6 @@ const request = (options) => {
         else if (res.statusCode === 400) {
           // 从响应中获取错误信息
           const errorMsg = data.error || data.message || '请求参数错误';
-          console.log('400错误，错误信息:', errorMsg);
           reject(new Error(errorMsg));
         }
         // 其他错误
@@ -65,8 +63,6 @@ const request = (options) => {
         }
       },
       fail: (err) => {
-        console.error('网络请求失败:', err);
-
         // 根据错误类型提供更具体的错误信息
         let errorMsg = '网络请求失败';
 
@@ -176,8 +172,13 @@ const requestOpen = (options) => {
         }
       },
       fail: (err) => {
-        console.error('网络请求失败:', err);
-        reject(new Error('网络请求失败'));
+        let errorMsg = '网络请求失败';
+        if (err.errMsg && err.errMsg.includes('ERR_CONNECTION_REFUSED')) {
+          errorMsg = '无法连接到服务器';
+        } else if (err.errMsg && err.errMsg.includes('timeout')) {
+          errorMsg = '请求超时';
+        }
+        reject(new Error(errorMsg));
       }
     });
   });

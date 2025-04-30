@@ -321,53 +321,55 @@ function formatUserResponse(userData, avatarUrl) {
 
 /**
  * 格式化完整的用户信息响应
+ * 返回扁平化的数据结构，与前端期望的格式一致，减少前端再处理
  *
  * @param {Object} userData - 用户数据对象
  * @param {string} avatarUrl - 用户头像URL
- * @returns {Object} - 格式化后的完整用户信息
+ * @returns {Object} - 格式化后的完整用户信息（扁平结构）
  */
 function formatFullUserInfo(userData, avatarUrl) {
   // 获取等级信息
   const levelInfo = userModel.getLevelInfo(userData.experience || 0);
 
+  // 返回扁平化的数据结构，与前端期望的格式一致
   return {
-    userId: userData.userId,
-    userInfo: {
-      avatarUrl: avatarUrl,
-      nickName: userData.nickName,
-      detectiveId: userData.detectiveId || ''
-    },
-    stats: {
-      totalAnswered: userData.totalAnswered || 0,
-      totalCorrect: userData.totalCorrect || 0,
-      totalViewed: userData.totalViewed || 0,
-      todayViewed: userData.todayViewed || 0,
-      unsolvedCount: userData.unsolvedCount || 0,
-      solvedCount: userData.solvedCount || 0,
-      creationCount: userData.creationCount || 0,
-      favoriteCount: userData.favoriteCount || 0
-    },
-    soups: {
-      answeredSoups: userData.answeredSoups || [],
-      viewedSoups: userData.viewedSoups || [],
-      createSoups: userData.createSoups || [],
-      favoriteSoups: userData.favoriteSoups || [],
-      solvedSoups: userData.solvedSoups || []
-    },
-    level: {
-      level: userData.level || 1,
-      levelTitle: levelInfo.levelTitle,
-      experience: userData.experience || 0,
-      maxExperience: userData.maxExperience || 1000
-    },
-    answers: {
-      remainingAnswers: userData.remainingAnswers || 0
-    },
-    points: {
-      total: userData.points || 0,
-      signInCount: userData.signInCount || 0,
-      lastSignInDate: userData.lastSignInDate
-    }
+    // 基本信息
+    userId: userData.userId || '',
+    nickName: userData.nickName || '',
+    detectiveId: userData.detectiveId || '',
+    avatarUrl: avatarUrl, // 已经从资源服务获取的头像URL
+
+    // 等级信息
+    levelTitle: levelInfo.levelTitle,
+    level: userData.level || 1,
+    experience: userData.experience || 0,
+    maxExperience: userData.maxExperience || 1000,
+
+    // 回答和积分信息
+    remainingAnswers: userData.remainingAnswers || 100, // 使用前端期望的默认值100
+    points: userData.points || 0,
+    signInCount: userData.signInCount || 0,
+    lastSignInDate: userData.lastSignInDate || '',
+
+    // 统计数据
+    totalAnswered: userData.totalAnswered || 0,
+    totalCorrect: userData.totalCorrect || 0,
+    totalViewed: userData.totalViewed || 0,
+    todayViewed: userData.todayViewed || 0,
+    unsolvedCount: userData.unsolvedCount || 0,
+    solvedCount: userData.solvedCount || 0,
+    creationCount: userData.creationCount || 0,
+    favoriteCount: userData.favoriteCount || 0,
+
+    // 汤谜题数组
+    viewedSoups: userData.viewedSoups || [],
+    answeredSoups: userData.answeredSoups || [],
+    createSoups: userData.createSoups || [],
+    favoriteSoups: userData.favoriteSoups || [],
+    solvedSoups: userData.solvedSoups || [],
+
+    // 登录状态标志
+    isLoggedIn: true
   };
 }
 

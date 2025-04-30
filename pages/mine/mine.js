@@ -106,8 +106,6 @@ Page({
           throw new Error('获取用户信息失败');
         }
       } catch (error) {
-        console.log('获取用户信息失败:', error);
-
         // 获取失败，但仍然显示已登录状态
         this.setData({
           userInfo: {isLoggedIn: true},
@@ -150,15 +148,16 @@ Page({
       }
 
       // 从后端获取用户信息和统计数据
+      // 后端已返回扁平化的数据结构
       const userInfo = await userService.getUserInfo();
 
       // 更新统计数据
       this.setData({
-        totalSoupCount: userInfo?.stats?.totalSoupCount || 0,
-        pointsCount: userInfo?.points?.points || 0
+        totalSoupCount: userInfo?.totalSoupCount || 0,
+        pointsCount: userInfo?.points || 0
       });
     } catch (error) {
-      console.error('获取统计数据失败:', error);
+      console.error('更新统计数据失败:', error);
       // 出错时使用默认值
       this.setData({
         totalSoupCount: 0,
@@ -174,7 +173,7 @@ Page({
   onChooseAvatar(e) {
     // 防止重复调用 - 使用更严格的检查
     if (this._isUploadingAvatar || this._isChoosingAvatar) {
-      console.log('头像选择或上传操作正在进行中，请稍后再试');
+
       return;
     }
 
@@ -184,7 +183,7 @@ Page({
 
     const { avatarUrl } = e.detail;
     if (!avatarUrl) {
-      console.log('未获取到头像URL');
+
       this._isChoosingAvatar = false;
       this._isUploadingAvatar = false;
       return;
@@ -209,8 +208,7 @@ Page({
             duration: 2000
           });
         })
-        .catch(error => {
-          console.error('头像上传失败:', error);
+        .catch(() => {
           wx.showToast({
             title: '头像上传失败',
             icon: 'none',
@@ -291,7 +289,7 @@ Page({
       try {
         detectiveInfo = await userService.getFormattedUserInfo(false);
       } catch (error) {
-        console.log('获取用户信息失败，使用默认值', error);
+
         // 出错时使用空对象，后续代码会处理默认值
         detectiveInfo = {};
       }
@@ -567,7 +565,7 @@ Page({
       // 例如统计数据等
       if (data && data.points) {
         this.setData({
-          pointsCount: data.points.points || this.data.pointsCount
+          pointsCount: data.points || this.data.pointsCount
         });
       }
     }
