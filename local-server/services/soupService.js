@@ -1,7 +1,7 @@
 /**
- * 海龟汤服务 - RESTful API实现
+ * 海龟汤服务 - RESTful yishao-api实现
  * 提供符合RESTful规范的海龟汤数据CRUD操作
- * 遵循简洁设计原则，只提供必要的API接口
+ * 遵循简洁设计原则，只提供必要的yishao-api接口
  */
 const soupDataAccess = require('../dataAccess/soupDataAccess');
 const { SOUP_TYPES, SOUP_TAGS, validateSoup } = require('../models/soupModel');
@@ -151,12 +151,12 @@ function sendResponse(res, success, data, statusCode = 200) {
 
 /**
  * 初始化海龟汤服务路由
- * 实现RESTful API规范的路由
- * 简化API设计，只提供必要的接口
+ * 实现RESTful yishao-api规范的路由
+ * 简化yishao-api设计，只提供必要的接口
  */
 function initSoupRoutes(app) {
   // 基础路径
-  const BASE_PATH = '/api/soup';
+  const BASE_PATH = '/yishao-api/soup';
 
   // GET /api/soup - 获取所有海龟汤或根据ID获取特定海龟汤
   app.get(BASE_PATH, async (req, res) => {

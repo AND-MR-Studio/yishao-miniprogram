@@ -85,8 +85,8 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         // API基础URL
-        const DIALOG_API_BASE_URL = 'http://localhost:8080/api/dialog';
-        const SOUP_API_BASE_URL = 'http://localhost:8080/api/soup';
+        const DIALOG_API_BASE_URL = 'http://localhost:8080/yishao-api/dialog';
+        const SOUP_API_BASE_URL = 'http://localhost:8080/yishao-api/soup';
 
         // 存储所有汤面的映射关系
         let soupsMap = {};
@@ -292,7 +292,7 @@
                     const messageInfo = document.createElement('div');
                     messageInfo.className = 'message-info';
                     const messageTime = new Date(message.timestamp).toLocaleString();
-                    messageInfo.textContent = `${message.role === 'user' ? '用户' : '代理'} · ${messageTime}`;
+                    messageInfo.textContent = `${message.role === 'user' ? '用户' : 'agent'} · ${messageTime}`;
 
                     // 消息内容
                     const messageElement = document.createElement('div');

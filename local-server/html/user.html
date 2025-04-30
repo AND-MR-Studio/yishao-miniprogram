@@ -176,7 +176,7 @@
                     </el-form-item>
                     <el-form-item label="头像">
                         <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                            <img :src="editForm.avatarUrl || '../static/images/default-avatar.jpg'"
+                            <img :src="editForm.avatarUrl || '/uploads/avatars/default-avatar.jpg'"
                                  style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
                         </div>
                         <el-input v-model="editForm.avatarUrl" placeholder="头像URL"></el-input>
