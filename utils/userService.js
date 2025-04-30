@@ -496,6 +496,7 @@ async function getFormattedUserInfo(showLoading = false) {
 
     // 格式化用户信息，只提取UI需要的字段
     return {
+      userId: userInfo.userId || '',
       nickName: userInfo.userInfo?.nickName || '',
       detectiveId: userInfo.userInfo?.detectiveId || '',
       avatarUrl: avatarUrl, // 使用从资源服务获取的头像
@@ -503,12 +504,25 @@ async function getFormattedUserInfo(showLoading = false) {
       level: userInfo.level?.level || 1,
       experience: userInfo.level?.experience || 0,
       maxExperience: userInfo.level?.maxExperience || 1000,
-      remainingAnswers: userInfo.answers?.remainingAnswers || 0,
+      remainingAnswers: userInfo.answers?.remainingAnswers || 100, // 默认值为100
+      points: userInfo.points?.total || 0,
+      signInCount: userInfo.points?.signInCount || 0,
+      lastSignInDate: userInfo.points?.lastSignInDate || '',
+      // 统计数据
+      totalAnswered: userInfo.stats?.totalAnswered || 0,
+      totalCorrect: userInfo.stats?.totalCorrect || 0,
+      totalViewed: userInfo.stats?.totalViewed || 0,
+      todayViewed: userInfo.stats?.todayViewed || 0,
       unsolvedCount: userInfo.stats?.unsolvedCount || 0,
       solvedCount: userInfo.stats?.solvedCount || 0,
       creationCount: userInfo.stats?.creationCount || 0,
       favoriteCount: userInfo.stats?.favoriteCount || 0,
-      lastSignInDate: userInfo.points?.lastSignInDate || '',
+      // 汤谜题数组
+      viewedSoups: userInfo.soups?.viewedSoups || [],
+      answeredSoups: userInfo.soups?.answeredSoups || [],
+      createSoups: userInfo.soups?.createSoups || [],
+      favoriteSoups: userInfo.soups?.favoriteSoups || [],
+      solvedSoups: userInfo.soups?.solvedSoups || [],
       isLoggedIn: true
     };
   } catch {
@@ -661,21 +675,32 @@ async function updateFavoriteSoup(soupId, isFavorite) {
 }
 
 /**
- * 检查用户是否收藏了某个汤（从本地用户数据中检查）
+ * 检查用户是否收藏了某个汤
  * @param {string} soupId - 汤ID
- * @returns {boolean} - 是否收藏
+ * @returns {Promise<boolean>} - 是否收藏
  */
-function isFavoriteSoup(soupId) {
+async function isFavoriteSoup(soupId) {
   if (!soupId) return false;
 
-  // 从本地存储获取用户信息
-  const userInfo = wx.getStorageSync('userInfo');
-  if (!userInfo || !userInfo.soups || !Array.isArray(userInfo.soups.favoriteSoups)) {
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
     return false;
   }
 
-  // 检查汤ID是否在收藏列表中
-  return userInfo.soups.favoriteSoups.includes(soupId);
+  try {
+    // 从服务器获取最新用户信息
+    const userInfo = await getUserInfo();
+
+    // 检查汤ID是否在收藏列表中
+    return userInfo &&
+           userInfo.soups &&
+           Array.isArray(userInfo.soups.favoriteSoups) &&
+           userInfo.soups.favoriteSoups.includes(soupId);
+  } catch (error) {
+    console.error('检查收藏状态失败:', error);
+    return false;
+  }
 }
 
 /**
@@ -743,7 +768,7 @@ async function updateSolvedSoup(soupId) {
 
     // 如果成功且有升级，显示升级提示
     if (res.success && res.data && res.data.levelUp) {
-      showLevelUpNotification(res.data.level, res.data.levelTitle);
+      showLevelUpNotification(res.data.levelTitle);
     }
 
     return res;
@@ -755,21 +780,32 @@ async function updateSolvedSoup(soupId) {
 }
 
 /**
- * 检查用户是否已解决某个汤（从本地用户数据中检查）
+ * 检查用户是否已解决某个汤
  * @param {string} soupId - 汤ID
- * @returns {boolean} - 是否已解决
+ * @returns {Promise<boolean>} - 是否已解决
  */
-function isSolvedSoup(soupId) {
+async function isSolvedSoup(soupId) {
   if (!soupId) return false;
 
-  // 从本地存储获取用户信息
-  const userInfo = wx.getStorageSync('userInfo');
-  if (!userInfo || !userInfo.soups || !Array.isArray(userInfo.soups.solvedSoups)) {
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
     return false;
   }
 
-  // 检查汤ID是否在已解决列表中
-  return userInfo.soups.solvedSoups.includes(soupId);
+  try {
+    // 从服务器获取最新用户信息
+    const userInfo = await getUserInfo();
+
+    // 检查汤ID是否在已解决列表中
+    return userInfo &&
+           userInfo.soups &&
+           Array.isArray(userInfo.soups.solvedSoups) &&
+           userInfo.soups.solvedSoups.includes(soupId);
+  } catch (error) {
+    console.error('检查解决状态失败:', error);
+    return false;
+  }
 }
 
 module.exports = {
