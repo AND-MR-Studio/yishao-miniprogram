@@ -17,6 +17,9 @@
         class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
         wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"
+        bind:tabchange="handleTabChange"
+        bind:soupchange="handleSoupChange"
+        bind:loading="handleSoupLoading"
       ></soup-display>
     </view>
 

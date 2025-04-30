@@ -753,6 +753,45 @@ Page({
       icon: 'none',
       duration: 2000
     });
+  },
+
+  /**
+   * 处理标签切换事件
+   * @param {Object} e 事件对象
+   */
+  handleTabChange(e) {
+    const { tab } = e.detail;
+    console.log('标签切换:', tab);
+    // 标签切换逻辑已在组件内部处理
+  },
+
+  /**
+   * 处理汤数据变更事件
+   * @param {Object} e 事件对象
+   */
+  async handleSoupChange(e) {
+    const { soup } = e.detail;
+    if (!soup) return;
+
+    // 更新对话组件
+    const soupId = soup.soupId || '';
+    this.selectComponent('#dialog')?.setData({ soupId });
+
+    // 初始化汤面数据和页面状态
+    await this.initSoupData(soup);
+  },
+
+  /**
+   * 处理汤加载状态变更事件
+   * @param {Object} e 事件对象
+   */
+  handleSoupLoading(e) {
+    const { loading } = e.detail;
+
+    this.setData({
+      isLoading: loading,
+      breathingBlur: loading // 根据加载状态设置呼吸模糊效果
+    });
   }
 
   // 页面结束
