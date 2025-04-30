@@ -27,13 +27,19 @@ Page({
     // 汤面相关
     currentSoup: null, // 当前汤面数据
     breathingBlur: false, // 呈现呼吸模糊效果
+    isFavorite: false, // 当前汤面是否已收藏
 
     // 滑动相关 - 由swipeManager管理
     swiping: false, // 是否正在滑动中
     swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
     swipeFeedback: false, // 滑动反馈动画
     swipeStarted: false, // 是否开始滑动
-    blurAmount: 0 // 模糊程度（0-10px）
+    blurAmount: 0, // 模糊程度（0-10px）
+
+    // 双击相关
+    lastTapTime: 0, // 上次点击时间
+    lastTapX: 0, // 上次点击X坐标
+    lastTapY: 0 // 上次点击Y坐标
   },
 
   // ===== 页面属性 =====
@@ -108,12 +114,27 @@ Page({
     // 设置当前汤面ID到dialogService
     dialogService.setCurrentSoupId(soupId);
 
+    // 检查用户是否已收藏该汤面
+    let isFavorite = false;
+    try {
+      isFavorite = await userService.isFavoriteSoup(soupId);
+    } catch (error) {
+      console.error('检查收藏状态失败:', error);
+    }
+
     // 更新页面状态和数据
     this.setData({
       currentSoup: soupData,
       isLoading: false,
-      showButtons: true
+      showButtons: true,
+      isFavorite: isFavorite
     });
+
+    // 更新汤面显示组件的收藏状态
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (soupDisplay) {
+      soupDisplay.setData({ isFavorite: isFavorite });
+    }
 
     // 增加汤面阅读数
     await this.incrementSoupViewCount(soupId);
@@ -702,9 +723,109 @@ Page({
   },
 
   // 使用简化的通用处理函数
-  touchStart(e) { this.handleTouch('handleTouchStart', e); },
+  touchStart(e) {
+    this.handleTouch('handleTouchStart', e);
+    this.handleDoubleTap(e);
+  },
   touchMove(e) { this.handleTouch('handleTouchMove', e); },
   touchEnd(e) { this.handleTouch('handleTouchEnd', e); },
+
+  /**
+   * 处理双击事件
+   * 检测双击并触发收藏/取消收藏功能
+   * @param {Object} e 触摸事件对象
+   */
+  handleDoubleTap(e) {
+    // 如果不在查看状态，不处理双击
+    if (this.data.pageState !== PAGE_STATE.VIEWING || this.data.isLoading) {
+      return;
+    }
+
+    const currentTime = e.timeStamp;
+    const lastTapTime = this.data.lastTapTime;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const lastTapX = this.data.lastTapX;
+    const lastTapY = this.data.lastTapY;
+
+    // 计算时间差和位置差
+    const timeDiff = currentTime - lastTapTime;
+    const xDiff = Math.abs(currentX - lastTapX);
+    const yDiff = Math.abs(currentY - lastTapY);
+
+    // 如果时间差小于300ms且位置差小于30px，认为是双击
+    if (timeDiff < 300 && xDiff < 30 && yDiff < 30) {
+      this.toggleFavorite();
+    }
+
+    // 更新最后一次点击的时间和位置
+    this.setData({
+      lastTapTime: currentTime,
+      lastTapX: currentX,
+      lastTapY: currentY
+    });
+  },
+
+  /**
+   * 切换收藏状态
+   * 收藏或取消收藏当前汤面
+   */
+  async toggleFavorite() {
+    // 获取当前汤面ID
+    const soupId = this.getCurrentSoupId();
+    if (!soupId) return;
+
+    // 检查用户是否已登录
+    if (!userService.checkLoginStatus()) {
+      return;
+    }
+
+    try {
+      // 获取当前收藏状态的反向值
+      const newFavoriteStatus = !this.data.isFavorite;
+
+      // 调用用户服务更新收藏状态
+      const result = await userService.updateFavoriteSoup(soupId, newFavoriteStatus);
+
+      if (result && result.success) {
+        // 更新页面状态
+        this.setData({ isFavorite: newFavoriteStatus });
+
+        // 更新汤面显示组件的收藏状态
+        const soupDisplay = this.selectComponent('#soupDisplay');
+        if (soupDisplay) {
+          soupDisplay.setData({ isFavorite: newFavoriteStatus });
+        }
+
+        // 更新汤面的点赞数
+        if (newFavoriteStatus) {
+          // 如果是收藏，增加点赞数
+          await soupService.likeSoup(soupId);
+
+          // 显示收藏成功提示
+          wx.showToast({
+            title: '收藏成功',
+            icon: 'success',
+            duration: 1500
+          });
+        } else {
+          // 显示取消收藏提示
+          wx.showToast({
+            title: '已取消收藏',
+            icon: 'none',
+            duration: 1500
+          });
+        }
+      }
+    } catch (error) {
+      console.error('切换收藏状态失败:', error);
+      wx.showToast({
+        title: '操作失败，请重试',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  },
 
   // ===== 辅助方法 =====
   /**

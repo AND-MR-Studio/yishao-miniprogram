@@ -35,6 +35,30 @@
   will-change: transform, opacity;
 }
 
+/* 收藏图标样式 */
+.favorite-icon {
+  position: absolute;
+  bottom: -60rpx;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  opacity: 0.9;
+  transition: all 0.3s ease;
+}
+
+/* 心形文本样式 - 玻璃拟物风格 */
+.heart-text {
+  font-size: 48rpx;
+  color: rgba(158, 46, 255, 0.9); /* 绿色 */
+  text-shadow: 0 2rpx 8rpx rgba(0, 230, 115, 0.4);
+  line-height: 1;
+}
+
 /* 文本行容器 */
 .text-line-container {
   width: fit-content;

@@ -13,6 +13,7 @@
         id="soupDisplay"
         soupData="{{currentSoup}}"
         loading="{{isLoading}}"
+        isFavorite="{{isFavorite}}"
         class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}}"
         wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"

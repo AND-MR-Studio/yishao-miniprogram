@@ -35,6 +35,11 @@ Component({
     loading: {
       type: Boolean,
       value: false
+    },
+    // 是否已收藏
+    isFavorite: {
+      type: Boolean,
+      value: false
     }
   },
 

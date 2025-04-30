@@ -22,5 +22,10 @@
         </view>
       </block>
     </view>
+
+    <!-- 收藏图标 -->
+    <view class="favorite-icon {{isFavorite ? 'active' : ''}}" wx:if="{{isFavorite}}">
+      <text class="heart-text">❤</text>
+    </view>
   </block>
 </view>
