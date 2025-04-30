@@ -92,7 +92,7 @@
   border-radius: 20rpx;
   opacity: var(--dialog-opacity);
   transition: opacity 0.5s ease;
-  z-index: 200;
+  z-index: 15;
 }
 
 /* 偷看功能已移除，准备重构 */

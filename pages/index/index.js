@@ -177,6 +177,8 @@ Page({
   async handleLoadSoupWithDialog(data) {
     if (!data || !data.soupId) return;
 
+
+
     try {
       // 设置加载状态
       this.setData({ isLoading: true });
@@ -195,17 +197,44 @@ Page({
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData);
 
-      // 如果有dialogId，切换到喝汤状态
-      // dialog组件会在visible变为true时自动加载对话记录
+      // 如果有dialogId，预加载对话记录并切换到喝汤状态
       if (data.dialogId) {
-        // 等待汤面数据加载完成后切换到喝汤状态
-        // 使用短延迟确保UI更新完成
-        setTimeout(() => {
-          this.switchToDrinking();
-        }, 100);
+        try {
+          // 获取用户ID
+          const userId = await userService.getUserId();
+          if (!userId) {
+            throw new Error('无法获取用户ID');
+          }
+
+          // 预加载对话记录
+          const dialog = this.selectComponent('#dialog');
+          if (dialog) {
+            // 设置必要的属性
+            dialog.setData({
+              soupId: data.soupId,
+              dialogId: data.dialogId,
+              userId: userId,
+              visible: false
+            });
+
+            // 显式加载对话记录
+            await dialog.loadDialogMessages();
+
+            // 等待汤面数据加载完成后切换到喝汤状态
+            setTimeout(() => {
+              this.switchToDrinking();
+            }, 300); // 增加延迟，确保对话记录已加载
+          }
+        } catch (error) {
+
+          // 即使预加载失败，也尝试切换到喝汤状态
+          setTimeout(() => {
+            this.switchToDrinking();
+          }, 300);
+        }
       }
     } catch (error) {
-      console.error('加载汤面和对话失败:', error);
+
       this.showErrorToast('加载失败，请重试');
       this.setData({
         isLoading: false,
@@ -265,12 +294,6 @@ Page({
     const currentSoupId = this.getCurrentSoupId();
     if (!currentSoupId) return;
 
-    // 设置当前汤面ID到dialogService
-    dialogService.setCurrentSoupId(currentSoupId);
-
-    // 获取当前对话ID
-    const dialogId = dialogService.getCurrentDialogId();
-
     try {
       // 获取用户ID
       let userId = await userService.getUserId();
@@ -281,7 +304,7 @@ Page({
         userId = await userService.getUserId();
 
         if (!userId) {
-          throw new Error('无法获取用户信息');
+          throw new Error('无法获取用户ID');
         }
       }
 
@@ -291,25 +314,20 @@ Page({
         showButtons: false
       });
 
-      // 获取对话组件
+      // 获取当前对话ID
+      const dialogId = dialogService.getCurrentDialogId();
+
+      // 显示对话框并设置必要属性
       const dialog = this.selectComponent('#dialog');
-      if (!dialog) {
-        console.error('无法获取对话组件');
-        return;
+      if (dialog) {
+        dialog.setData({
+          soupId: currentSoupId,
+          dialogId: dialogId,
+          userId: userId,
+          visible: true
+        });
       }
-
-      // 一次性设置所有必要属性
-      // 注意：dialog组件已优化，会在visible变为true时自动加载对话记录
-      dialog.setData({
-        soupId: currentSoupId,
-        dialogId: dialogId,
-        userId: userId,
-        visible: true  // 直接设置为可见，组件内部会处理加载和动画
-      });
-
     } catch (error) {
-      console.error('切换到喝汤状态失败:', error);
-
       // 显示提示并跳转到个人中心页面
       wx.showModal({
         title: '提示',
@@ -375,42 +393,27 @@ Page({
    * 处理用户点击开始喝汤按钮的所有逻辑
    */
   async onStartSoup() {
-    // 获取开始按钮组件
-    const startButton = this.selectComponent('.start-button');
-
     // 检查用户是否已登录
     const token = wx.getStorageSync('token');
     if (!token) {
-      // 未登录状态下，通知按钮重置
-      if (startButton) {
-        startButton.setLoadingComplete(false);
-      }
-
-      // 显示登录提示
-      wx.showModal({
-        title: '侦探大人，想喝海龟汤吗？',
-        content: '先去「个人中心」登录一下吧～',
-        confirmText: '去登录',
-        cancelText: '先等等',
-        success: (res) => {
-          if (res.confirm) {
-            // 跳转到个人中心页面
-            wx.switchTab({
-              url: '/pages/mine/mine'
-            });
-          }
-        }
-      });
+      this.showLoginPrompt();
       return;
     }
 
     // 获取当前汤面ID
     const currentSoupId = this.getCurrentSoupId();
     if (!currentSoupId) {
+      const startButton = this.selectComponent('.start-button');
       if (startButton) {
         startButton.setLoadingComplete(false);
       }
       return;
+    }
+
+    // 设置按钮加载状态
+    const startButton = this.selectComponent('.start-button');
+    if (startButton) {
+      startButton.setData({ isLoading: true });
     }
 
     try {
@@ -422,46 +425,57 @@ Page({
         userId = await userService.getUserId();
 
         if (!userId) {
-          throw new Error('无法获取用户信息');
+          throw new Error('无法获取用户ID');
         }
       }
 
-      // 设置当前汤面ID到dialogService
-      dialogService.setCurrentSoupId(currentSoupId);
+      // 使用统一的对话加载方法
+      await dialogService.loadOrCreateDialog(userId, currentSoupId);
 
-      // 获取或创建对话
-      const dialogData = await dialogService.getUserDialog(userId, currentSoupId);
-
-      // 如果没有对话ID，则创建新对话
-      let dialogId = dialogData.dialogId;
-      if (!dialogId) {
-        const newDialogData = await dialogService.createDialog(userId, currentSoupId);
-        dialogId = newDialogData.dialogId;
-      }
-
-      // 设置当前对话ID到dialogService
-      if (dialogId) {
-        dialogService.setCurrentDialogId(dialogId);
-      }
-
-      // 通知按钮加载完成
+      // 设置按钮加载完成
       if (startButton) {
-        startButton.setLoadingComplete();
+        startButton.setLoadingComplete(true);
       }
 
-      // 切换到喝汤状态 - 会自动显示dialog组件并加载对话记录
+      // 切换到喝汤状态
       this.switchToDrinking();
-
     } catch (error) {
       console.error('开始喝汤失败:', error);
 
-      // 即使出错也尝试切换到喝汤状态
+      // 设置按钮加载完成
       if (startButton) {
-        startButton.setLoadingComplete();
+        startButton.setLoadingComplete(false);
       }
 
-      this.switchToDrinking();
+      // 显示错误提示
+      this.showErrorToast('加载失败，请重试');
     }
+  },
+
+  /**
+   * 显示登录提示
+   */
+  showLoginPrompt() {
+    // 重置按钮状态
+    const startButton = this.selectComponent('.start-button');
+    if (startButton) {
+      startButton.setLoadingComplete(false);
+    }
+
+    // 显示登录提示
+    wx.showModal({
+      title: '侦探大人，想喝海龟汤吗？',
+      content: '先去「个人中心」登录一下吧～',
+      confirmText: '去登录',
+      cancelText: '先等等',
+      success: (res) => {
+        if (res.confirm) {
+          wx.switchTab({
+            url: '/pages/mine/mine'
+          });
+        }
+      }
+    });
   },
 
   // 偷看功能已移除，准备重构

@@ -324,6 +324,74 @@ class DialogService {
     }
 
     /**
+     * 加载或创建对话
+     * 统一处理对话加载和创建逻辑
+     * @param {string} userId 用户ID
+     * @param {string} soupId 汤面ID
+     * @param {string} [dialogId] 可选的对话ID，如果提供则直接加载
+     * @returns {Promise<Object>} 包含对话数据和消息的对象
+     */
+    async loadOrCreateDialog(userId, soupId, dialogId = null) {
+        if (!userId) {
+            throw new Error('加载对话失败: 缺少用户ID');
+        }
+
+        if (!soupId) {
+            throw new Error('加载对话失败: 缺少汤面ID');
+        }
+
+        try {
+            // 设置当前汤面ID
+            this.setCurrentSoupId(soupId);
+
+            let finalDialogId = dialogId;
+            let dialogData = null;
+
+            // 如果提供了对话ID，直接加载
+            if (finalDialogId) {
+                this.setCurrentDialogId(finalDialogId);
+                const messages = await this.getDialogMessages(finalDialogId);
+                return {
+                    dialogId: finalDialogId,
+                    soupId: soupId,
+                    userId: userId,
+                    messages: messages
+                };
+            }
+
+            // 否则，获取或创建对话
+            dialogData = await this.getUserDialog(userId, soupId);
+
+            // 如果没有对话ID，创建新对话
+            if (!dialogData.dialogId) {
+                dialogData = await this.createDialog(userId, soupId);
+            }
+
+            finalDialogId = dialogData.dialogId;
+            this.setCurrentDialogId(finalDialogId);
+
+            // 加载对话消息
+            const messages = await this.getDialogMessages(finalDialogId);
+
+            return {
+                dialogId: finalDialogId,
+                soupId: soupId,
+                userId: userId,
+                messages: messages
+            };
+        } catch (error) {
+            console.error('加载或创建对话失败:', error);
+            // 出错时返回初始化消息
+            return {
+                dialogId: '',
+                soupId: soupId,
+                userId: userId,
+                messages: this.getInitialSystemMessages()
+            };
+        }
+    }
+
+    /**
      * 创建新对话
      * @param {string} userId 用户ID
      * @param {string} soupId 汤面ID
