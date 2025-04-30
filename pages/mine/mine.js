@@ -24,7 +24,11 @@ Page({
     totalSoupCount: 0,
     pointsCount: 0,
     // 是否已签到
-    hasSignedIn: false
+    hasSignedIn: false,
+    // 汤面列表弹窗
+    showSoupListModal: false,
+    // 汤面列表类型: 'unsolved', 'solved', 'creations', 'favorites'
+    soupListType: 'unsolved'
   },
 
   /**
@@ -53,19 +57,17 @@ Page({
   /**
    * 刷新页面数据
    * 使用async/await优化异步流程
-   * @param {boolean} showLoading - 是否显示加载提示
+   * @param {boolean} showToast - 是否显示操作成功提示
    * @returns {Promise<void>}
    */
-  async refreshPageData(showLoading = false) {
-    try {
-      // 如果需要显示加载提示，则显示
-      if (showLoading) {
-        wx.showLoading({
-          title: '加载中...',
-          mask: true
-        });
-      }
+  async refreshPageData(showToast = false) {
+    // 防止重复调用
+    if (this._isRefreshingPageData) {
+      return;
+    }
+    this._isRefreshingPageData = true;
 
+    try {
       // 检查登录状态
       if (!userService.checkLoginStatus(false)) {
         // 未登录，显示未登录状态
@@ -120,11 +122,20 @@ Page({
       // 更新统计数据
       this.updateStatistics();
 
-    } finally {
-      // 无论成功失败，都隐藏加载提示
-      if (showLoading) {
-        wx.hideLoading();
+      // 如果需要显示提示，则显示
+      if (showToast) {
+        wx.showToast({
+          title: '刷新成功',
+          icon: 'success',
+          duration: 1000
+        });
       }
+
+    } finally {
+      // 重置刷新状态标志
+      setTimeout(() => {
+        this._isRefreshingPageData = false;
+      }, 300);
     }
   },
 
@@ -267,21 +278,19 @@ Page({
   /**
    * 打开用户信息设置弹窗
    * 使用async/await优化异步流程
-   * @param {boolean} showLoading - 是否显示加载提示
+   * @param {boolean} showToast - 是否显示操作成功提示
    */
-  async openUserInfoModal(showLoading = true) {
+  async openUserInfoModal(showToast = false) {
+    // 防止重复调用
+    if (this._isOpeningUserInfoModal) {
+      return;
+    }
+    this._isOpeningUserInfoModal = true;
+
     try {
       // 检查登录状态
       if (!userService.checkLoginStatus(false)) {
         return;
-      }
-
-      // 显示加载提示
-      if (showLoading) {
-        wx.showLoading({
-          title: '加载中...',
-          mask: true
-        });
       }
 
       // 异步获取用户信息
@@ -289,7 +298,6 @@ Page({
       try {
         detectiveInfo = await userService.getFormattedUserInfo(false);
       } catch (error) {
-
         // 出错时使用空对象，后续代码会处理默认值
         detectiveInfo = {};
       }
@@ -306,11 +314,20 @@ Page({
         userInfo: userInfo,
         showUserInfoModal: true
       });
-    } finally {
-      // 无论成功失败，都隐藏加载提示
-      if (showLoading) {
-        wx.hideLoading();
+
+      // 如果需要显示提示，则显示
+      if (showToast) {
+        wx.showToast({
+          title: '加载成功',
+          icon: 'success',
+          duration: 1000
+        });
       }
+    } finally {
+      // 重置状态标志
+      setTimeout(() => {
+        this._isOpeningUserInfoModal = false;
+      }, 300);
     }
   },
 
@@ -331,6 +348,12 @@ Page({
    * @param {boolean} useDefault - 是否使用默认侦探信息
    */
   async setUserInfoAndRefresh(useDefault = false) {
+    // 防止重复调用
+    if (this._isSettingUserInfo) {
+      return;
+    }
+    this._isSettingUserInfo = true;
+
     try {
       // 获取当前用户信息
       const userInfo = this.data.userInfo;
@@ -341,16 +364,6 @@ Page({
         userInfo.nickName = '';
         this.setData({ userInfo });
       }
-
-      // 防止重复调用
-      if (this._isSettingUserInfo) return;
-      this._isSettingUserInfo = true;
-
-      // 显示加载中提示
-      wx.showLoading({
-        title: '保存中...',
-        mask: true
-      });
 
       // 异步设置用户信息
       await userService.setUserInfo(userInfo);
@@ -392,9 +405,6 @@ Page({
       // 关闭弹窗
       this.closeUserInfoModal();
     } finally {
-      // 隐藏加载提示
-      wx.hideLoading();
-
       // 重置标志
       setTimeout(() => {
         this._isSettingUserInfo = false;
@@ -414,11 +424,31 @@ Page({
    * 关闭弹窗并刷新页面数据，但不更新用户信息
    */
   skipUserInfo() {
-    // 关闭弹窗
-    this.closeUserInfoModal();
+    // 防止重复调用
+    if (this._isSkippingUserInfo) {
+      return;
+    }
+    this._isSkippingUserInfo = true;
 
-    // 刷新页面数据，显示最新的用户信息
-    this.refreshPageData(true);
+    try {
+      // 关闭弹窗
+      this.closeUserInfoModal();
+
+      // 刷新页面数据，显示最新的用户信息
+      this.refreshPageData(false);
+
+      // 显示提示
+      wx.showToast({
+        title: '已跳过设置',
+        icon: 'none',
+        duration: 1500
+      });
+    } finally {
+      // 重置状态标志
+      setTimeout(() => {
+        this._isSkippingUserInfo = false;
+      }, 300);
+    }
   },
 
   /**
@@ -426,13 +456,13 @@ Page({
    * 使用async/await优化异步流程
    */
   async handleLogin() {
-    try {
-      // 显示加载中提示
-      wx.showLoading({
-        title: '登录中...',
-        mask: true
-      });
+    // 防止重复调用
+    if (this._isLoggingIn) {
+      return;
+    }
+    this._isLoggingIn = true;
 
+    try {
       // 使用userService登录
       await userService.login();
 
@@ -446,8 +476,10 @@ Page({
       console.error('登录失败:', error);
       // 登录失败，不需要额外处理，userService已经显示了提示
     } finally {
-      // 隐藏加载提示
-      wx.hideLoading();
+      // 重置登录状态标志
+      setTimeout(() => {
+        this._isLoggingIn = false;
+      }, 300);
     }
   },
 
@@ -597,54 +629,28 @@ Page({
   handleNavigate(e) {
     const { page } = e.detail;
 
-    switch (page) {
-      case 'unsolved':
-        this.navigateToUnsolved();
-        break;
-      case 'solved':
-        this.navigateToSolved();
-        break;
-      case 'creations':
-        this.navigateToCreations();
-        break;
-      case 'favorites':
-        this.navigateToFavorites();
-        break;
-      default:
-        break;
+    // 检查页面类型是否有效
+    if (!['unsolved', 'solved', 'creations', 'favorites'].includes(page)) {
+      return;
     }
+
+    // 检查登录状态
+    if (!userService.checkLoginStatus()) return;
+
+    // 显示对应类型的汤面列表弹窗
+    this.setData({
+      soupListType: page,
+      showSoupListModal: true
+    });
   },
 
   /**
-   * 导航到未解决页面
-   * TODO: 实现导航到未解决汤面列表页面
+   * 关闭汤面列表弹窗
    */
-  navigateToUnsolved() {
-    this.showFeatureInDevelopment('未解决汤面', '/pages/unsolved/unsolved', true);
-  },
-
-  /**
-   * 导航到已解决页面
-   * TODO: 实现导航到已解决汤面列表页面
-   */
-  navigateToSolved() {
-    this.showFeatureInDevelopment('已解决汤面', '/pages/solved/solved', true);
-  },
-
-  /**
-   * 导航到创作页面
-   * TODO: 实现导航到用户创作汤面列表页面
-   */
-  navigateToCreations() {
-    this.showFeatureInDevelopment('我的创作', '/pages/creations/creations', true);
-  },
-
-  /**
-   * 导航到收藏页面
-   * TODO: 实现导航到收藏汤面列表页面
-   */
-  navigateToFavorites() {
-    this.showFeatureInDevelopment('我的收藏', '/pages/favorites/favorites', true);
+  closeSoupListModal() {
+    this.setData({
+      showSoupListModal: false
+    });
   },
 
   /**

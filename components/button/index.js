@@ -122,8 +122,8 @@ Component({
           isLoading: true
         });
 
-        // 直接触发预加载事件，由父组件处理数据加载
-        this.triggerEvent('preload');
+        // 触发tap事件，由父组件处理业务逻辑
+        this.triggerEvent('tap');
 
         // 设置最大加载时间，如果超过这个时间还没有收到加载完成的通知，则自动重置按钮
         this._loadingTimeout = setTimeout(() => {
@@ -182,12 +182,11 @@ Component({
         this.triggerEvent('animationend');
       }
 
-      // 如果是展开动画结束，触发完成事件
+      // 如果是展开动画结束，重置状态
       if (this.data.isExpanding) {
         this.setData({
           isExpanding: false
         });
-        this.triggerEvent('expandend');
       }
     },
 
@@ -208,9 +207,11 @@ Component({
         isExpanding: true
       });
 
-      // 延迟触发展开结束事件，确保动画有时间执行
+      // 延迟重置展开状态，确保动画有时间执行
       setTimeout(() => {
-        this.triggerEvent('expandend');
+        this.setData({
+          isExpanding: false
+        });
       }, 300);
     },
 
@@ -310,7 +311,7 @@ Component({
    * 监听属性变化
    */
   observers: {
-    'show, animation, delay': function (show, animation, delay) {
+    'show, animation, delay': function () {
       this.updateAnimation();
     }
   }

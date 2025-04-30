@@ -42,9 +42,10 @@ Page({
   // ===== 生命周期方法 =====
   /**
    * 页面加载时执行
-   * 获取用户设置并加载第一个汤面
+   * 获取用户设置并加载汤面
+   * @param {Object} options - 页面参数，可能包含soupId和dialogId
    */
-  async onLoad() {
+  async onLoad(options) {
     // 初始化滑动管理器
     this.initSwipeManager();
 
@@ -53,15 +54,41 @@ Page({
     try {
       this.setData({ isLoading: true });
 
-      // 获取第一个汤面数据
-      const soupData = await soupService.getAdjacentSoup(null, true); // 传入null获取第一个汤面
+      // 检查是否有指定的汤面ID
+      const soupId = options.soupId || null;
+      const dialogId = options.dialogId || null;
+
+      // 如果有dialogId，先设置到dialogService
+      if (dialogId) {
+        dialogService.setCurrentDialogId(dialogId);
+      }
+
+      // 获取汤面数据
+      let soupData;
+      if (soupId) {
+        // 如果有指定的汤面ID，直接获取该汤面
+        soupData = await soupService.getSoup(soupId);
+      } else {
+        // 否则获取第一个汤面
+        soupData = await soupService.getAdjacentSoup(null, true); // 传入null获取第一个汤面
+      }
+
       if (!soupData) {
         throw new Error('无法获取汤面数据');
       }
 
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData);
+
+      // 如果有dialogId，自动切换到喝汤状态
+      if (dialogId) {
+        // 等待汤面数据加载完成后切换到喝汤状态
+        wx.nextTick(() => {
+          this.switchToDrinking();
+        });
+      }
     } catch (error) {
+      console.error('加载失败:', error);
       this.showErrorToast('加载失败，请重试');
       this.setData({
         isLoading: false,
@@ -105,6 +132,104 @@ Page({
   },
 
   /**
+   * 页面加载完成时执行
+   * 注册事件监听器
+   */
+  onReady() {
+    // 初始化事件中心（如果尚未初始化）
+    wx.eventCenter = wx.eventCenter || {};
+    if (!wx.eventCenter.on) {
+      wx.eventCenter.callbacks = {};
+      wx.eventCenter.on = function(eventName, callback) {
+        this.callbacks[eventName] = this.callbacks[eventName] || [];
+        this.callbacks[eventName].push(callback);
+      };
+      wx.eventCenter.emit = function(eventName, data) {
+        const callbacks = this.callbacks[eventName] || [];
+        callbacks.forEach(callback => callback(data));
+      };
+    }
+
+    // 注册事件监听器
+    wx.eventCenter.on('loadSoupWithDialog', this.handleLoadSoupWithDialog.bind(this));
+  },
+
+  /**
+   * 处理加载汤面和对话的事件
+   * @param {Object} data 包含 soupId 和 dialogId 的对象
+   */
+  async handleLoadSoupWithDialog(data) {
+    if (!data || !data.soupId) return;
+
+    console.log('接收到加载汤面和对话的事件:', data);
+
+    try {
+      // 设置加载状态
+      this.setData({ isLoading: true });
+
+      // 如果有dialogId，先设置到dialogService
+      if (data.dialogId) {
+        dialogService.setCurrentDialogId(data.dialogId);
+      }
+
+      // 获取汤面数据
+      const soupData = await soupService.getSoup(data.soupId);
+      if (!soupData) {
+        throw new Error('无法获取汤面数据');
+      }
+
+      // 初始化汤面数据和页面状态
+      await this.initSoupData(soupData);
+
+      // 如果有dialogId，预加载对话记录并切换到喝汤状态
+      if (data.dialogId) {
+        try {
+          // 获取用户ID
+          const userId = await userService.getUserId();
+          if (!userId) {
+            throw new Error('无法获取用户ID');
+          }
+
+          // 预加载对话记录
+          const dialog = this.selectComponent('#dialog');
+          if (dialog) {
+            // 设置必要的属性
+            dialog.setData({
+              soupId: data.soupId,
+              dialogId: data.dialogId,
+              userId: userId,
+              visible: false
+            });
+
+            // 显式加载对话记录
+            console.log('预加载对话记录:', data.dialogId);
+            await dialog.loadDialogMessages();
+
+            // 等待汤面数据加载完成后切换到喝汤状态
+            setTimeout(() => {
+              console.log('切换到喝汤状态');
+              this.switchToDrinking();
+            }, 300); // 增加延迟，确保对话记录已加载
+          }
+        } catch (error) {
+          console.error('预加载对话记录失败:', error);
+          // 即使预加载失败，也尝试切换到喝汤状态
+          setTimeout(() => {
+            this.switchToDrinking();
+          }, 300);
+        }
+      }
+    } catch (error) {
+      console.error('处理加载汤面和对话事件失败:', error);
+      this.showErrorToast('加载失败，请重试');
+      this.setData({
+        isLoading: false,
+        showButtons: true
+      });
+    }
+  },
+
+  /**
    * 页面卸载时执行
    * 清理资源
    */
@@ -113,6 +238,17 @@ Page({
     if (this.swipeManager) {
       this.swipeManager.destroy();
       this.swipeManager = null;
+    }
+
+    // 清理事件监听器
+    if (wx.eventCenter && wx.eventCenter.callbacks) {
+      // 移除当前页面的事件监听
+      if (wx.eventCenter.callbacks['loadSoupWithDialog']) {
+        wx.eventCenter.callbacks['loadSoupWithDialog'] =
+          wx.eventCenter.callbacks['loadSoupWithDialog'].filter(
+            callback => callback !== this.handleLoadSoupWithDialog
+          );
+      }
     }
   },
 
@@ -147,64 +283,86 @@ Page({
     // 设置当前汤面ID到dialogService
     dialogService.setCurrentSoupId(currentSoupId);
 
-    // 获取当前对话ID和用户ID
+    // 获取当前对话ID
     const dialogId = dialogService.getCurrentDialogId();
-    const userId = userService.getUserId();
 
-    // 检查是否获取到用户ID
-    if (!userId) {
-      try {
+    try {
+      // 获取用户ID - 等待Promise解析
+      const userId = await userService.getUserId();
+
+      // 检查是否获取到用户ID
+      if (!userId) {
         // 尝试刷新用户信息
         await userService.refreshUserInfo();
 
         // 重新获取用户ID
-        const refreshedUserId = userService.getUserId();
+        const refreshedUserId = await userService.getUserId();
 
         if (!refreshedUserId) {
           throw new Error('刷新用户信息后仍无法获取用户ID');
         }
-      } catch (error) {
 
+        // 更新页面状态
+        this.setData({
+          pageState: PAGE_STATE.DRINKING,
+          showButtons: false
+        });
 
-        // 显示提示并跳转到个人中心页面
-        wx.showModal({
-          title: '提示',
-          content: '无法获取用户信息，请重新登录',
-          showCancel: false,
-          success: () => {
-            wx.switchTab({
-              url: '/pages/mine/mine'
+        // 显示对话框
+        wx.nextTick(() => {
+          const dialog = this.selectComponent('#dialog');
+          if (dialog) {
+            // 先设置 soupId、dialogId 和 userId，等待下一帧后再设置 visible，确保能正确加载对话历史
+            dialog.setData({
+              soupId: currentSoupId,
+              dialogId: dialogId,
+              userId: refreshedUserId
+            });
+
+            // 等待下一帧，确保 soupId、dialogId 和 userId 已经被正确设置
+            wx.nextTick(() => {
+              dialog.setData({ visible: true });
             });
           }
         });
-
-        return;
-      }
-    }
-
-    // 更新页面状态
-    this.setData({
-      pageState: PAGE_STATE.DRINKING,
-      showButtons: false
-    });
-
-    // 显示对话框
-    wx.nextTick(() => {
-      const dialog = this.selectComponent('#dialog');
-      if (dialog) {
-        // 先设置 soupId、dialogId 和 userId，等待下一帧后再设置 visible，确保能正确加载对话历史
-        dialog.setData({
-          soupId: currentSoupId,
-          dialogId: dialogId,
-          userId: userId
+      } else {
+        // 更新页面状态
+        this.setData({
+          pageState: PAGE_STATE.DRINKING,
+          showButtons: false
         });
 
-        // 等待下一帧，确保 soupId、dialogId 和 userId 已经被正确设置
+        // 显示对话框
         wx.nextTick(() => {
-          dialog.setData({ visible: true });
+          const dialog = this.selectComponent('#dialog');
+          if (dialog) {
+            // 先设置 soupId、dialogId 和 userId，等待下一帧后再设置 visible，确保能正确加载对话历史
+            dialog.setData({
+              soupId: currentSoupId,
+              dialogId: dialogId,
+              userId: userId
+            });
+
+            // 等待下一帧，确保 soupId、dialogId 和 userId 已经被正确设置
+            wx.nextTick(() => {
+              dialog.setData({ visible: true });
+            });
+          }
         });
       }
-    });
+    } catch (error) {
+      // 显示提示并跳转到个人中心页面
+      wx.showModal({
+        title: '提示',
+        content: '无法获取用户信息，请重新登录',
+        showCancel: false,
+        success: () => {
+          wx.switchTab({
+            url: '/pages/mine/mine'
+          });
+        }
+      });
+    }
   },
 
   /**
@@ -255,172 +413,135 @@ Page({
 
   /**
    * 开始喝汤按钮点击事件
-   * 按钮点击后会触发preload事件，在那里处理登录检查和预加载
-   * 这里不需要做任何处理，保留方法以便将来扩展
+   * 处理用户点击开始喝汤按钮的所有逻辑
    */
-  onStartSoup() {
-    // 不需要在这里处理，所有逻辑已移至onButtonPreload方法
-    // 按钮点击后会自动触发preload事件
-  },
-
-  /**
-   * 处理按钮预加载事件 - 异步处理
-   */
-  async onButtonPreload() {
-    // 防止重复预加载
-    if (this._isPreloading) {
-      return;
-    }
-    this._isPreloading = true;
-
-
-    try {
-      // 检查用户是否已登录（使用token判断）
-      const token = wx.getStorageSync('token');
-      if (!token) {
-        // 未登录状态下，通知按钮重置到原始状态，不进行预加载
-        const startButton = this.selectComponent('.start-button');
-        if (startButton) {
-          startButton.setLoadingComplete(false); // 传入false表示失败，按钮应该重置
-        }
-
-        // 显示登录提示
-        wx.showModal({
-          title: '侦探大人，想喝海龟汤吗？',
-          content: '先去「个人中心」登录一下吧～',
-          confirmText: '去登录',
-          cancelText: '先等等',
-          success: (res) => {
-            if (res.confirm) {
-              // 跳转到个人中心页面
-              wx.switchTab({
-                url: '/pages/mine/mine'
-              });
-            }
-          }
-        });
-        return;
-      }
-
-      // 获取当前汤面ID
-      const currentSoupId = this.getCurrentSoupId();
-      if (!currentSoupId) {
-        this._isPreloading = false;
-        return;
-      }
-
-      // 获取用户ID
-      const userId = userService.getUserId();
-
-      if (!userId) {
-        console.error('获取用户ID失败，尝试刷新用户信息');
-
-        try {
-          // 尝试刷新用户信息
-          await userService.refreshUserInfo();
-
-          // 重新获取用户ID
-          const refreshedUserId = userService.getUserId();
-
-          if (!refreshedUserId) {
-            throw new Error('刷新用户信息后仍无法获取用户ID');
-          }
-
-          // 成功获取用户ID，继续执行
-        } catch (error) {
-
-
-          // 显示提示并跳转到个人中心页面
-          wx.showModal({
-            title: '提示',
-            content: '无法获取用户信息，请重新登录',
-            showCancel: false,
-            success: () => {
-              // 跳转到个人中心页面
-              wx.switchTab({
-                url: '/pages/mine/mine'
-              });
-            }
-          });
-
-          // 通知按钮重置
-          const startButton = this.selectComponent('.start-button');
-          if (startButton) {
-            startButton.setLoadingComplete(false);
-          }
-
-          this._isPreloading = false;
-          return;
-        }
-      }
-
-      // 设置当前汤面ID到dialogService
-      dialogService.setCurrentSoupId(currentSoupId);
-
-      // 异步预加载对话记录
-      const dialog = this.selectComponent('#dialog');
-      if (dialog) {
-        try {
-          // 根据用户ID和汤面ID获取或创建对话
-          const dialogData = await dialogService.getUserDialog(userId, currentSoupId);
-
-          // 如果没有对话ID，则创建新对话
-          let finalDialogData = dialogData;
-          if (!dialogData.dialogId) {
-            finalDialogData = await dialogService.createDialog(userId, currentSoupId);
-          }
-
-          // 设置对话ID和汤面ID到对话组件
-          dialog.setData({
-            soupId: currentSoupId,
-            dialogId: finalDialogData.dialogId,
-            userId: userId,
-            visible: false
-          });
-
-          // 加载对话记录
-          await dialog.loadDialogMessages();
-
-          // 加载完成后通知按钮
-          const startButton = this.selectComponent('.start-button');
-          if (startButton) {
-            startButton.setLoadingComplete();
-          }
-        } catch (error) {
-
-          // 即使加载失败也通知按钮完成
-          const startButton = this.selectComponent('.start-button');
-          if (startButton) {
-            startButton.setLoadingComplete();
-          }
-        }
-      }
-    } finally {
-      // 预加载完成后重置标志
-      setTimeout(() => {
-        this._isPreloading = false;
-      }, 500);
-    }
-  },
-
-  /**
-   * 处理按钮展开动画完成事件 - 异步处理
-   */
-  async onButtonExpandEnd() {
-    // 再次检查用户是否已登录（以防万一）
+  async onStartSoup() {
+    // 检查用户是否已登录
     const token = wx.getStorageSync('token');
     if (!token) {
-      // 未登录状态下，不切换到喝汤状态
+      // 未登录状态下，通知按钮重置
+      const startButton = this.selectComponent('.start-button');
+      if (startButton) {
+        startButton.setLoadingComplete(false);
+      }
+
+      // 显示登录提示
+      wx.showModal({
+        title: '侦探大人，想喝海龟汤吗？',
+        content: '先去「个人中心」登录一下吧～',
+        confirmText: '去登录',
+        cancelText: '先等等',
+        success: (res) => {
+          if (res.confirm) {
+            // 跳转到个人中心页面
+            wx.switchTab({
+              url: '/pages/mine/mine'
+            });
+          }
+        }
+      });
       return;
     }
 
-    // 在单独的微任务中切换到喝汤状态
-    // 这样可以减少主线程负担，避免卡顿
-    setTimeout(() => {
-      // 设置标志，表示对话记录已经预加载，避免重复加载
-      this._dialogPreloaded = true;
+    // 获取当前汤面ID
+    const currentSoupId = this.getCurrentSoupId();
+    if (!currentSoupId) {
+      const startButton = this.selectComponent('.start-button');
+      if (startButton) {
+        startButton.setLoadingComplete(false);
+      }
+      return;
+    }
+
+    // 获取用户ID
+    let userId = await userService.getUserId();
+    if (!userId) {
+      try {
+        // 尝试刷新用户信息
+        await userService.refreshUserInfo();
+        userId = await userService.getUserId();
+
+        if (!userId) {
+          throw new Error('刷新用户信息后仍无法获取用户ID');
+        }
+      } catch (error) {
+        // 显示提示并跳转到个人中心页面
+        wx.showModal({
+          title: '提示',
+          content: '无法获取用户信息，请重新登录',
+          showCancel: false,
+          success: () => {
+            wx.switchTab({
+              url: '/pages/mine/mine'
+            });
+          }
+        });
+
+        // 通知按钮重置
+        const startButton = this.selectComponent('.start-button');
+        if (startButton) {
+          startButton.setLoadingComplete(false);
+        }
+        return;
+      }
+    }
+
+    // 设置当前汤面ID到dialogService
+    dialogService.setCurrentSoupId(currentSoupId);
+
+    // 预加载对话记录
+    const dialog = this.selectComponent('#dialog');
+    if (dialog) {
+      try {
+        // 根据用户ID和汤面ID获取或创建对话
+        const dialogData = await dialogService.getUserDialog(userId, currentSoupId);
+
+        // 如果没有对话ID，则创建新对话
+        let finalDialogData = dialogData;
+        if (!dialogData.dialogId) {
+          finalDialogData = await dialogService.createDialog(userId, currentSoupId);
+        }
+
+        // 设置对话ID和汤面ID到对话组件
+        dialog.setData({
+          soupId: currentSoupId,
+          dialogId: finalDialogData.dialogId,
+          userId: userId,
+          visible: false
+        });
+
+        // 加载对话记录
+        await dialog.loadDialogMessages();
+
+        // 通知按钮加载完成并切换到喝汤状态
+        const startButton = this.selectComponent('.start-button');
+        if (startButton) {
+          startButton.setLoadingComplete();
+        }
+
+        // 切换到喝汤状态
+        this.switchToDrinking();
+      } catch (error) {
+        console.error('加载对话记录失败:', error);
+        // 即使加载失败也通知按钮完成并切换到喝汤状态
+        const startButton = this.selectComponent('.start-button');
+        if (startButton) {
+          startButton.setLoadingComplete();
+        }
+
+        // 切换到喝汤状态
+        this.switchToDrinking();
+      }
+    } else {
+      // 如果无法获取对话组件，也通知按钮完成并切换到喝汤状态
+      const startButton = this.selectComponent('.start-button');
+      if (startButton) {
+        startButton.setLoadingComplete();
+      }
+
+      // 切换到喝汤状态
       this.switchToDrinking();
-    }, 0);
+    }
   },
 
   // 偷看功能已移除，准备重构
@@ -536,17 +657,9 @@ Page({
    * 初始化滑动管理器
    */
   initSwipeManager() {
-    // 创建滑动管理器
+    // 创建滑动管理器，只提供必要参数
     this.swipeManager = createSwipeManager({
-      threshold: 50,
-      maxBlur: 10, // 最大模糊程度，默认10px
-      maxDistance: 100, // 最大滑动距离，默认100px
-      enableBlurEffect: true, // 启用模糊特效
-      enableBackgroundEffect: true, // 启用背景效果
-      pageSelector: '.page', // 页面元素选择器
       setData: this.setData.bind(this),
-
-      // 滑动方向回调
       onSwipeLeft: this.handleSwipe.bind(this, 'next'),
       onSwipeRight: this.handleSwipe.bind(this, 'previous')
     });

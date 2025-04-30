@@ -37,7 +37,6 @@ function createSwipeManager(options = {}) {
     maxDistance: options.maxDistance || 100, // 最大滑动距离，默认100px
     enableBlurEffect: options.enableBlurEffect !== false, // 默认启用模糊特效
     enableBackgroundEffect: options.enableBackgroundEffect !== false, // 默认启用背景效果
-    pageSelector: options.pageSelector || '.page', // 页面元素选择器
     setData: options.setData || (() => {}),
     callbacks: {
       onSwipeLeft: options.onSwipeLeft,

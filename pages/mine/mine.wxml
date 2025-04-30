@@ -114,4 +114,12 @@
       </view>
     </view>
   </view>
+
+  <!-- 汤面列表弹窗 -->
+  <soup-list-modal
+    visible="{{showSoupListModal}}"
+    type="{{soupListType}}"
+    userInfo="{{detectiveInfo}}"
+    bind:close="closeSoupListModal"
+  ></soup-list-modal>
 </view>

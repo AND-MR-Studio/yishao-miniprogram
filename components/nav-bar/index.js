@@ -35,7 +35,7 @@ Component({
       type: String,
       value: ''
     },
-    // 当前汤面ID
+    // 当前海龟汤ID
     soupId: {
       type: String,
       value: ''
@@ -146,9 +146,9 @@ Component({
       this.triggerEvent('about');
     },
 
-    // 处理放弃汤面事件
+    // 处理放弃海龟汤事件
     onAbandon() {
-      // 触发放弃汤面事件给页面处理
+      // 触发放弃海龟汤事件给页面处理
       this.triggerEvent('abandon');
     }
   }

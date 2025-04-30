@@ -121,6 +121,12 @@ Component({
      * 组件内部处理签到逻辑，并通知父页面结果
      */
     async handleSignIn() {
+      // 防止重复调用
+      if (this._isSigningIn) {
+        return;
+      }
+      this._isSigningIn = true;
+
       try {
         // 检查登录状态
         if (!this.data.isLoggedIn) {
@@ -138,12 +144,6 @@ Component({
           wx.vibrateShort({ type: 'light' });
           return;
         }
-
-        // 显示加载中提示
-        wx.showLoading({
-          title: '签到中...',
-          mask: true
-        });
 
         try {
           // 调用后端签到接口
@@ -227,7 +227,10 @@ Component({
           }
         }
       } finally {
-        wx.hideLoading();
+        // 重置签到状态标志
+        setTimeout(() => {
+          this._isSigningIn = false;
+        }, 300);
       }
     },
 

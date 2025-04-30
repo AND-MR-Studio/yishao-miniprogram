@@ -34,8 +34,6 @@
         width="50%"
         height="80rpx"
         bind:tap="onStartSoup"
-        bind:preload="onButtonPreload"
-        bind:expandend="onButtonExpandEnd"
         class="start-button"
         wx:if="{{showButtons}}">
       </custom-button>

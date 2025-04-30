@@ -141,23 +141,23 @@ async function updateAvatar(avatarUrl) {
     return Promise.reject('用户未登录，请先登录');
   }
 
-  // 显示上传中提示
-  wx.showLoading({
-    title: '上传头像中...',
-    mask: true
-  });
-
   try {
     // 获取用户ID
     const userId = await getUserId();
     if (!userId) {
-      wx.hideLoading();
       return Promise.reject('获取用户ID失败');
     }
 
     // 添加更长的延迟，确保微信内部的chooseAvatar操作完全结束
     // 从300ms增加到800ms，给微信API更多时间完成内部操作
     await new Promise(resolve => setTimeout(resolve, 800));
+
+    // 显示上传中提示
+    wx.showToast({
+      title: '上传头像中...',
+      icon: 'loading',
+      duration: 10000 // 设置较长时间，会在上传完成后被hide覆盖
+    });
 
     // 使用资源服务上传头像
     const result = await api.uploadFile({
@@ -171,7 +171,8 @@ async function updateAvatar(avatarUrl) {
       }
     });
 
-    wx.hideLoading();
+    // 隐藏提示
+    wx.hideToast();
 
     if (result.success && result.data) {
       // 刷新用户信息，获取最新数据
@@ -180,16 +181,35 @@ async function updateAvatar(avatarUrl) {
       // 添加额外延迟，确保所有操作完全结束
       await new Promise(resolve => setTimeout(resolve, 300));
 
+      // 显示成功提示
+      wx.showToast({
+        title: '头像上传成功',
+        icon: 'success',
+        duration: 2000
+      });
+
       return {
         success: true,
         avatarUrl: result.data.url || '',
         message: '头像上传成功'
       };
     } else {
+      wx.showToast({
+        title: result.error || '上传头像失败',
+        icon: 'none',
+        duration: 2000
+      });
       return Promise.reject(result.error || '上传头像失败');
     }
   } catch (error) {
-    wx.hideLoading();
+    // 隐藏提示
+    wx.hideToast();
+
+    wx.showToast({
+      title: '上传头像失败',
+      icon: 'none',
+      duration: 2000
+    });
     return Promise.reject('上传头像失败');
   }
 }
@@ -452,10 +472,10 @@ function showLevelUpNotification(levelTitle) {
 /**
  * 获取用户信息
  * 简化实现，直接使用后端返回的扁平化数据结构，不再进行结构转换
- * @param {boolean} showLoading - 是否显示加载提示
+ * @param {boolean} showToast - 是否显示加载提示
  * @returns {Promise<Object>} 用户信息
  */
-async function getFormattedUserInfo(showLoading = false) {
+async function getFormattedUserInfo(showToast = false) {
   try {
     // 检查登录状态
     if (!checkLoginStatus(false)) {
@@ -463,10 +483,11 @@ async function getFormattedUserInfo(showLoading = false) {
     }
 
     // 显示加载中提示
-    if (showLoading) {
-      wx.showLoading({
+    if (showToast) {
+      wx.showToast({
         title: '加载中...',
-        mask: false
+        icon: 'loading',
+        duration: 10000 // 设置较长时间，会在获取完成后被hide覆盖
       });
     }
 
@@ -474,16 +495,18 @@ async function getFormattedUserInfo(showLoading = false) {
     // 后端已返回扁平化的数据结构，包含头像URL
     const userInfo = await getUserInfo();
 
-    if (showLoading) {
-      wx.hideLoading();
+    // 隐藏提示
+    if (showToast) {
+      wx.hideToast();
     }
 
     // 直接返回后端数据，不再进行结构转换
     // 后端已经提供了所有必要的字段和默认值
     return userInfo;
   } catch (error) {
-    if (showLoading) {
-      wx.hideLoading();
+    // 隐藏提示
+    if (showToast) {
+      wx.hideToast();
     }
     console.error('获取用户信息失败:', error);
     return null;

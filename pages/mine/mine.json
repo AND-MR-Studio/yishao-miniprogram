@@ -3,6 +3,7 @@
     "nav-bar": "/components/nav-bar/index",
     "button-component": "/components/button/index",
     "detective-card": "/components/detective-card/detective-card",
-    "banner-swiper": "/components/banner-swiper/banner-swiper"
+    "banner-swiper": "/components/banner-swiper/banner-swiper",
+    "soup-list-modal": "/components/soup-list-modal/soup-list-modal"
   }
 }

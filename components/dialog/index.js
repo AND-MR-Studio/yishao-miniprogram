@@ -96,10 +96,14 @@ Component({
     },
     'dialogId': function(dialogId) {
       // 当dialogId变化且对话框可见时，重新加载对话记录
-      // 但只有在之前没有dialogId的情况下才加载，避免重复加载
-      if (dialogId && this.data.visible && !this.data.isAnimating && !this.data._previousDialogId) {
+      if (dialogId && this.data.visible && !this.data.isAnimating) {
+        console.log('dialogId变化，加载对话记录:', dialogId);
         this.data._previousDialogId = dialogId;
-        // 不再在这里加载对话记录，避免重复加载
+
+        // 确保在下一帧加载对话记录，避免与其他状态变化冲突
+        wx.nextTick(() => {
+          this.loadDialogMessages();
+        });
       }
     }
   },
@@ -282,16 +286,18 @@ Component({
         return;
       }
 
-      // 设置当前汤面ID和对话ID
+      // 设置当前海龟汤ID和对话ID
       dialogService.setCurrentSoupId(soupId);
       dialogService.setCurrentDialogId(dialogId);
 
       // 更新用户回答过的汤记录
       if (soupId) {
-        userService.updateAnsweredSoup(soupId).catch(err => {
+        try {
+          await userService.updateAnsweredSoup(soupId);
+        } catch (err) {
           console.error('更新用户回答汤记录失败:', err);
           // 失败不影响用户体验，继续执行
-        });
+        }
       }
 
       // 使用服务层处理用户输入
