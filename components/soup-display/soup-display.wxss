@@ -100,7 +100,7 @@
   transition: all 0.3s ease;
 }
 
-/* 心形文本样式 - 玻璃拟物风格 */
+/* 收藏图标文本样式 */
 .heart-text {
   font-size: 48rpx;
   color: rgba(158, 46, 255, 0.9); /* 紫色 */

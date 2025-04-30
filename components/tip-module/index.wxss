@@ -1,0 +1,92 @@
+/* components/tip-module/index.wxss */
+@import "../../styles/animation.wxss";
+
+/* 提示模块容器 */
+.tip-module-container {
+  position: fixed;
+  top: 200rpx; /* 调整顶部位置，确保在导航栏下方 */
+  left: 0;
+  width: 100%;
+  z-index: 1200; /* 确保在对话框之上但不遮挡导航栏 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.6s var(--transition-decelerated);
+  opacity: 0;
+  transform: translateY(-50rpx);
+  pointer-events: none;
+}
+
+/* 可见状态 */
+.tip-module-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* 隐藏状态 */
+.tip-module-container.hidden {
+  opacity: 0;
+  transform: translateY(-50rpx);
+  pointer-events: none;
+}
+
+
+
+/* 内容区域 */
+.tip-content {
+  width: 80%; /* 增加宽度 */
+  padding: 10rpx 30rpx; /* 调整内边距 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 20rpx; /* 减小圆角 */
+  background-color: rgba(0, 0, 0, 0.29); /* 增加不透明度 */
+  position: relative; /* 确保可以正确定位子元素 */
+  height: 220rpx; /* 减小高度 */
+  border: 1px solid rgba(140, 0, 255, 0.3); /* 添加红色边框 */
+}
+
+/* 头像容器 */
+.avatar-container {
+  width: 280rpx; /* 减小尺寸 */
+  height: 280rpx; /* 减小尺寸 */
+  margin-bottom: 10rpx;
+  margin-top: -90rpx; /* 让头像部分超出容器顶部 */
+  position: relative;
+  z-index: 1500; /* 确保在tip内容之上 */
+}
+
+/* 头像GIF */
+.avatar-gif {
+  width: 100%;
+  height: 100%;
+}
+
+/* 文本容器 */
+.text-container {
+  width: 100%;
+  padding: 0rpx; /* 减小内边距 */
+  color: #ffffff;
+  text-align: left;
+  max-height: 200rpx; /* 确保在固定高度内正确显示 */
+}
+
+/* 文本行 */
+.text-line {
+  margin-bottom: 12rpx; /* 减小行间距 */
+  font-size: 28rpx; /* 减小字体大小 */
+  line-height: 1.4; /* 减小行高 */
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.5);
+  padding-left: 15rpx; /* 减小左内边距 */
+}
+
+/* 第一行特殊样式 */
+.text-line:first-child {
+  font-size: 32rpx; /* 减小字体大小 */
+  font-weight: bold;
+  margin-bottom: 15rpx; /* 减小下边距 */
+  color: #ffffff;
+}
+
+

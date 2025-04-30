@@ -198,9 +198,9 @@ Component({
         let messages;
 
         if (!dialogId) {
-          console.log('缺少 dialogId，仅加载初始化消息');
-          // 加载初始化消息
-          messages = dialogService.getInitialSystemMessages();
+          console.log('缺少 dialogId，返回空消息数组');
+          // 返回空消息数组
+          messages = [];
         } else {
           // 确保服务层也知道当前的 dialogId 和 soupId
           dialogService.setCurrentDialogId(dialogId);
@@ -225,14 +225,13 @@ Component({
       } catch (error) {
         console.error('加载对话记录失败:', error);
 
-        // 出错时加载初始化消息
-        const initialMessages = dialogService.getInitialSystemMessages();
+        // 出错时返回空消息数组
         this.setData({
-          messages: initialMessages,
+          messages: [],
           loading: false
         });
 
-        return initialMessages;
+        return [];
       }
     },
 

@@ -49,7 +49,7 @@
       <!-- 系统和Agent回复消息 - 简化版打字机动画 -->
       <view
         wx:if="{{(item.role === 'system' || item.role === 'agent') && index === animatingMessageIndex}}"
-        class="message response typing-simple {{item.status ? item.status : ''}}"
+        class="response typing-simple {{item.status ? item.status : ''}}"
         aria-live="polite"
         id="msg-{{index}}"
       >> {{typingText}}</view>

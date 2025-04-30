@@ -73,44 +73,13 @@ class DialogService {
     }
 
     /**
-     * 获取初始化系统消息
-     * @returns {Array} 系统消息数组
-     */
-    getInitialSystemMessages() {
-        return [
-            {
-                role: 'system',
-                content: '欢迎来到一勺推理社。'
-            },
-            {
-                role: 'system',
-                content: '你需要通过提问来猜测谜底，'
-            },
-            {
-                role: 'system',
-                content: '我只会回答"是"、"否"或"不确定"。'
-            },
-            {
-                role: 'system',
-                content: '长按对话区域显示汤面。'
-            }
-        ];
-    }
-
-    /**
-     * 合并初始系统消息与历史消息
+     * 处理历史消息
      * @param {Array} messages 历史消息数组
-     * @returns {Array} 合并后的消息数组
+     * @returns {Array} 处理后的消息数组
      */
-    combineWithInitialMessages(messages) {
-        const initialMessages = this.getInitialSystemMessages();
+    processMessages(messages) {
         const historyMessages = messages || [];
-
-        // 过滤掉历史消息中的系统消息，避免重复
-        const filteredMessages = historyMessages.filter(msg => msg.role !== 'system');
-
-        // 合并初始系统消息和过滤后的历史消息
-        return [...initialMessages, ...filteredMessages];
+        return historyMessages;
     }
 
     /**
@@ -304,7 +273,7 @@ class DialogService {
     /**
      * 加载对话记录（只从服务器获取）
      * @param {string} dialogId 对话ID
-     * @returns {Promise<Array>} 消息数组Promise，包含系统初始消息
+     * @returns {Promise<Array>} 消息数组Promise
      */
     async getDialogMessages(dialogId) {
         if (!dialogId) {
@@ -315,11 +284,11 @@ class DialogService {
             // 从服务器获取对话记录
             const serverMessages = await this.fetchMessages(dialogId);
 
-            // 合并系统初始消息并返回
-            return this.combineWithInitialMessages(serverMessages);
+            // 处理消息并返回
+            return this.processMessages(serverMessages);
         } catch (error) {
-            // 出错时返回只包含系统初始消息的数组
-            return this.getInitialSystemMessages();
+            // 出错时返回空数组
+            return [];
         }
     }
 
@@ -381,12 +350,12 @@ class DialogService {
             };
         } catch (error) {
             console.error('加载或创建对话失败:', error);
-            // 出错时返回初始化消息
+            // 出错时返回空消息数组
             return {
                 dialogId: '',
                 soupId: soupId,
                 userId: userId,
-                messages: this.getInitialSystemMessages()
+                messages: []
             };
         }
     }

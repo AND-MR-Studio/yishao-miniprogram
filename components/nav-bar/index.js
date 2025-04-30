@@ -28,7 +28,7 @@ Component({
     // 标题内容
     title: {
       type: String,
-      value: '一勺推理社'
+      value: ''
     },
     // 标题样式
     titleStyle: {
