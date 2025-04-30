@@ -38,7 +38,7 @@
 /* 收藏图标样式 */
 .favorite-icon {
   position: fixed;
-  bottom: -600rpx; /* 固定在页面底部往上一点的位置，在tabbar和开始喝汤按钮之间 */
+  bottom: -650rpx; /* 固定在页面底部往上一点的位置，在tabbar和开始喝汤按钮之间 */
   left: 50%;
   transform: translateX(-50%);
   width: 60rpx;

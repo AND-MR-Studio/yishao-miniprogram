@@ -28,6 +28,7 @@ Page({
     currentSoup: null, // 当前汤面数据
     breathingBlur: false, // 呈现呼吸模糊效果
     isFavorite: false, // 当前汤面是否已收藏
+    isPeeking: false, // 是否处于偷看状态
 
     // 交互相关 - 由interactionManager管理
     swiping: false, // 是否正在滑动中
@@ -174,10 +175,12 @@ Page({
    * 处理加载汤面和对话的事件
    * @param {Object} data 包含 soupId 和 dialogId 的对象
    */
+  /**
+   * 处理加载汤面和对话的事件
+   * @param {Object} data 包含 soupId 和 dialogId 的对象
+   */
   async handleLoadSoupWithDialog(data) {
     if (!data || !data.soupId) return;
-
-
 
     try {
       // 设置加载状态
@@ -217,24 +220,19 @@ Page({
               visible: false
             });
 
-            // 显式加载对话记录
+            // 显式加载对话记录并直接切换到喝汤状态
             await dialog.loadDialogMessages();
-
-            // 等待汤面数据加载完成后切换到喝汤状态
-            setTimeout(() => {
-              this.switchToDrinking();
-            }, 300); // 增加延迟，确保对话记录已加载
+            // 加载完成后直接切换到喝汤状态，无需使用setTimeout
+            this.switchToDrinking();
           }
         } catch (error) {
-
+          console.error('预加载对话记录失败:', error);
           // 即使预加载失败，也尝试切换到喝汤状态
-          setTimeout(() => {
-            this.switchToDrinking();
-          }, 300);
+          this.switchToDrinking();
         }
       }
     } catch (error) {
-
+      console.error('加载汤面失败:', error);
       this.showErrorToast('加载失败，请重试');
       this.setData({
         isLoading: false,
@@ -470,9 +468,12 @@ Page({
       cancelText: '先等等',
       success: (res) => {
         if (res.confirm) {
-          wx.switchTab({
-            url: '/pages/mine/mine'
-          });
+          // 使用setTimeout确保模态框先关闭，再进行页面跳转
+          setTimeout(() => {
+            wx.switchTab({
+              url: '/pages/mine/mine'
+            });
+          }, 100);
         }
       }
     });
@@ -481,6 +482,11 @@ Page({
   // 偷看功能已移除，准备重构
 
   // ===== 汤面切换相关 =====
+  /**
+   * 切换汤面
+   * @param {string} direction 切换方向，'next' 或 'previous'
+   * @returns {Promise<void>}
+   */
   /**
    * 切换汤面
    * @param {string} direction 切换方向，'next' 或 'previous'
@@ -515,16 +521,13 @@ Page({
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData);
 
-      // 等待一帧，确保汤面数据已经加载完成
-      wx.nextTick(() => {
-        // 设置页面状态，关闭呼吸模糊效果
-        this.setData({
-          pageState: PAGE_STATE.VIEWING,
-          swipeFeedback: false,  // 关闭滑动反馈动画
-          breathingBlur: false   // 关闭呼吸模糊效果
-        });
+      // 重置UI状态（无需使用nextTick，因为initSoupData是异步的，已经确保数据加载完成）
+      this.setData({
+        swipeFeedback: false,  // 关闭滑动反馈动画
+        breathingBlur: false   // 关闭呼吸模糊效果
       });
     } catch (error) {
+      console.error('切换汤面失败:', error);
       this.showErrorToast('切换失败，请重试');
       this.setData({
         isLoading: false,
@@ -591,12 +594,47 @@ Page({
    * 初始化交互管理器
    */
   initInteractionManager() {
-    // 创建交互管理器，提供滑动和双击回调
+    // 创建交互管理器，提供滑动、双击和长按回调
     this.interactionManager = createInteractionManager({
       setData: this.setData.bind(this),
       onSwipeLeft: this.handleSwipe.bind(this, 'next'),
       onSwipeRight: this.handleSwipe.bind(this, 'previous'),
-      onDoubleTap: this.toggleFavorite.bind(this)
+      onDoubleTap: this.toggleFavorite.bind(this),
+      onLongPressStart: this.handleLongPressStart.bind(this),
+      onLongPressEnd: this.handleLongPressEnd.bind(this),
+      // 长按相关配置
+      longPressDelay: 300, // 长按触发时间，默认300ms
+      enablePeek: true // 启用偷看功能
+    });
+  },
+
+  /**
+   * 处理长按开始事件
+   * 在drinking状态下，实现偷看功能
+   * @param {Object} e 事件对象
+   */
+  handleLongPressStart(e) {
+    // 只在喝汤状态下启用偷看功能
+    if (this.data.pageState !== PAGE_STATE.DRINKING) return;
+
+    // 设置soup-display组件的样式
+    this.setData({
+      isPeeking: true
+    });
+  },
+
+  /**
+   * 处理长按结束事件
+   * 恢复正常显示状态
+   * @param {Object} e 事件对象
+   */
+  handleLongPressEnd(e) {
+    // 只在喝汤状态下处理
+    if (this.data.pageState !== PAGE_STATE.DRINKING) return;
+
+    // 恢复soup-display组件的样式
+    this.setData({
+      isPeeking: false
     });
   },
 

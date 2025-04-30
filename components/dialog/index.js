@@ -42,7 +42,8 @@ Component({
     isAnimating: false,
     displayLines: [],
     animatingMessageIndex: -1, // 当前正在执行动画的消息索引
-    _previousDialogId: '' // 用于跟踪dialogId变化，避免重复加载
+    _previousDialogId: '', // 用于跟踪dialogId变化，避免重复加载
+    peekMode: false // 是否处于偷看模式
   },
 
   lifetimes: {
@@ -412,6 +413,22 @@ Component({
       });
     },
 
-    // 偷看相关功能已移除，准备重构
+    // 偷看功能相关方法
+    handleLongPress(e) {
+      // 触发长按事件，传递给页面处理
+      this.triggerEvent('longpress', e);
+
+      // 设置偷看模式
+      this.setData({ peekMode: true });
+    },
+
+    handleTouchEnd(e) {
+      // 如果当前处于偷看模式，恢复正常显示
+      if (this.data.peekMode) {
+        this.setData({ peekMode: false });
+        // 触发触摸结束事件，传递给页面处理
+        this.triggerEvent('touchend', e);
+      }
+    }
   }
 });

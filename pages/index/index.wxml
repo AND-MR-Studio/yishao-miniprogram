@@ -14,7 +14,7 @@
         soupData="{{currentSoup}}"
         loading="{{isLoading}}"
         isFavorite="{{isFavorite}}"
-        class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}}"
+        class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
         wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"
       ></soup-display>
@@ -52,6 +52,8 @@
     visible="{{pageState === 'drinking'}}"
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
+    bind:longpress="handleLongPressStart"
+    bind:touchend="handleLongPressEnd"
   ></dialog-component>
 
 </view>

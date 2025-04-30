@@ -10,22 +10,25 @@
   transition: opacity 0.3s ease;
   pointer-events: none; /* 默认不捕获点击事件 */
   display: none; /* 默认不显示 */
+  background-color: hsla(258, 100.00%, 25.50%, 0.03); /* 背景改为半透明 */
+  --dialog-opacity: 1; /* CSS变量控制透明度 */
 }
 
 .dialog-container.visible {
   opacity: 1;
   pointer-events: auto; /* 可见时捕获点击事件 */
-  display: block; /* 可见时显示 */
+  display: flex; /* 可见时显示为flex布局 */
+  flex-direction: column;
 }
 
-/* 页面样式 */
-.page {
-  width: 100%;
-  min-height: 100vh;
-  background-color:hsla(216, 74.50%, 9.20%, 0.29); /* 背景改为半透明 */
-  --dialog-opacity: 1; /* CSS变量控制透明度 */
+/* 对话包装器 */
+.dialog-wrapper {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
+  padding-top: 180rpx; /* 调整顶部padding以适应导航栏 */
+  padding-bottom: 150rpx;
 }
 
 /* 偷看功能已移除，准备重构 */
@@ -50,31 +53,43 @@
   color: #ffffff;
 }
 
-/* 容器样式 */
-.container {
-  flex: 1;
-  position: relative;
-  padding-top: 180rpx; /* 调整顶部padding以适应导航栏 */
-  padding-bottom: 150rpx;
+/* 导航栏容器 */
+.nav-bar-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1001;
 }
 
 /* 毛玻璃效果遮罩层 */
 .frosted-glass {
   position: fixed;
-  top: 180rpx; /* 导航栏基础高度 + 状态栏高度 */
+  top: 0;
   left: 0;
   right: 0;
-  bottom: 150rpx;
-  background-color: rgba(255, 255, 255, 0);
-  backdrop-filter: blur(15rpx);
-  -webkit-backdrop-filter: blur(15rpx);
+  bottom: 0;
+  background-color: rgba(4, 0, 8, 0.21);
+  backdrop-filter: blur(20rpx);
   z-index: 100;
   pointer-events: none; /* 确保不会影响底层组件的交互 */
   opacity: var(--dialog-opacity);
-  transition: opacity 0.5s ease, backdrop-filter 0.5s ease;
+  transition: opacity 0.3s ease, backdrop-filter 0.3s ease;
 }
 
-/* 偷看功能已移除，准备重构 */
+/* 偷看功能样式 */
+.peek-mode .frosted-glass {
+  backdrop-filter: blur(0);
+  -webkit-backdrop-filter: blur(0);
+  background-color: transparent;
+  opacity: 0;
+  transition: backdrop-filter 0.2s ease, -webkit-backdrop-filter 0.2s ease, opacity 0.3s ease;
+}
+
+/* 偷看模式下的对话容器 */
+.dialog-container.peek-mode {
+  background-color: transparent;
+}
 
 /* 对话区域样式 */
 .dialog-content {
@@ -84,23 +99,28 @@
   align-items: flex-start;
   padding: 40rpx 0rpx;
   gap: 10rpx;
-  width: 100%;
-  height: 100%;
+  width: 190%;
+  flex: 1;
   position: relative;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   border-radius: 20rpx;
   opacity: var(--dialog-opacity);
-  transition: opacity 0.5s ease;
-  z-index: 15;
+  transition: opacity 0.3s ease;
+  z-index: 200; /* 确保在毛玻璃效果之上 */
 }
 
-/* 偷看功能已移除，准备重构 */
+/* 偷看功能样式 - 对话内容先模糊后透明 */
+.peek-mode .dialog-content {
+  opacity: 0;
+  filter: blur(5px);
+  transition: filter 0.15s ease, opacity 0.25s ease 0.1s;
+}
 
 /* 基础消息样式 */
 .message {
   margin-bottom: 10rpx;
-  width: 100%;
+  width: 85%;
   padding: 0 40rpx;
   box-sizing: border-box;
   white-space: pre-wrap;
@@ -111,7 +131,7 @@
 
 /* 回复消息样式（红色） */
 .response {
-  color: var(--color-accent);
+  color: var(--color-primary);
   position: relative;
 }
 
@@ -192,7 +212,7 @@
 }
 
 /* 对话组件内部的输入栏样式 */
-.container .input-bar-wrapper {
+.input-bar-wrapper {
   position: fixed;
   bottom: calc(env(safe-area-inset-bottom));
   left: 0;

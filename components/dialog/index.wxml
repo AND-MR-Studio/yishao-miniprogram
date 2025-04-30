@@ -1,32 +1,31 @@
 <!--components/dialog/index.wxml-->
-<view class="dialog-container {{visible ? 'visible' : 'hidden'}}" animation="{{animationData}}">
-  <view class="page">
-    <!-- 导航栏 - 增加点击捕获 -->
-    <view class="nav-bar-container" catchtap="handleClose">
-      <nav-bar
-        showBackButton="{{true}}"
-        bind:back="handleClose"
-      />
-    </view>
+<view class="dialog-container {{visible ? 'visible' : 'hidden'}} {{peekMode ? 'peek-mode' : ''}}" animation="{{animationData}}" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd">
+  <!-- 导航栏 - 增加点击捕获 -->
+  <view class="nav-bar-container" catchtap="handleClose">
+    <nav-bar
+      showBackButton="{{true}}"
+      bind:back="handleClose"
+    />
+  </view>
 
-    <view class="container">
-      <!-- 毛玻璃效果遮罩层 -->
-      <view class="frosted-glass"></view>
+  <view class="dialog-wrapper">
+    <!-- 毛玻璃效果遮罩层 -->
+    <view class="frosted-glass"></view>
 
-      <!-- 对话区域 -->
-      <scroll-view
-        class="dialog-content"
-        scroll-y="true"
-        scroll-with-animation="true"
-        scroll-anchoring="true"
-        enhanced="true"
-        bounces="true"
-        show-scrollbar="false"
-        enable-passive="true"
-        enable-flex="true"
-        id="dialogScroll"
-        aria-busy="{{loading}}"
-      >
+    <!-- 对话区域 -->
+    <scroll-view
+      class="dialog-content"
+      scroll-y="true"
+      scroll-with-animation="true"
+      scroll-anchoring="true"
+      enhanced="true"
+      bounces="true"
+      show-scrollbar="false"
+      enable-passive="true"
+      enable-flex="true"
+      id="dialogScroll"
+      aria-busy="{{loading}}"
+    >
         <block wx:if="{{loading && !messages.length}}">
           <view class="message loading">加载中...</view>
         </block>
@@ -67,15 +66,14 @@
         <view id="scrollBottom" style="height: 2rpx;"></view>
       </scroll-view>
 
-      <!-- 输入栏组件 -->
-      <view class="input-bar-wrapper">
-        <input-bar
-          bind:send="handleSend"
-          bind:voiceStart="handleVoiceStart"
-          bind:voiceEnd="handleVoiceEnd"
-          bind:voiceCancel="handleVoiceCancel"
-        />
-      </view>
+    <!-- 输入栏组件 -->
+    <view class="input-bar-wrapper">
+      <input-bar
+        bind:send="handleSend"
+        bind:voiceStart="handleVoiceStart"
+        bind:voiceEnd="handleVoiceEnd"
+        bind:voiceCancel="handleVoiceCancel"
+      />
     </view>
   </view>
 </view>

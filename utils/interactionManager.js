@@ -28,11 +28,15 @@ function createInteractionManager(options = {}) {
     swipeStarted: false,
     blurAmount: 0,
     angle: 0, // 当前旋转角度，用于计算圆的位置
-    
+
     // 双击相关状态
     lastTapTime: 0,
     lastTapX: 0,
-    lastTapY: 0
+    lastTapY: 0,
+
+    // 长按相关状态
+    longPressTimer: null,
+    isLongPressing: false
   };
 
   // 配置选项
@@ -43,14 +47,18 @@ function createInteractionManager(options = {}) {
     maxDistance: options.maxDistance || 100, // 最大滑动距离，默认100px
     enableBlurEffect: options.enableBlurEffect !== false, // 默认启用模糊特效
     enableBackgroundEffect: options.enableBackgroundEffect !== false, // 默认启用背景效果
-    
+
     // 双击相关配置
     doubleTapDelay: options.doubleTapDelay || 300, // 双击间隔时间，默认300ms
     doubleTapDistance: options.doubleTapDistance || 30, // 双击允许的位置偏差，默认30px
-    
+
+    // 长按相关配置
+    longPressDelay: options.longPressDelay || 500, // 长按触发时间，默认500ms
+    enablePeek: options.enablePeek !== false, // 默认启用偷看功能
+
     // 数据更新方法
     setData: options.setData || (() => {}),
-    
+
     // 回调函数
     callbacks: {
       // 滑动相关回调
@@ -61,9 +69,13 @@ function createInteractionManager(options = {}) {
       onSwipeStart: options.onSwipeStart,
       onSwipeMove: options.onSwipeMove,
       onSwipeEnd: options.onSwipeEnd,
-      
+
       // 双击相关回调
-      onDoubleTap: options.onDoubleTap
+      onDoubleTap: options.onDoubleTap,
+
+      // 长按相关回调
+      onLongPressStart: options.onLongPressStart,
+      onLongPressEnd: options.onLongPressEnd
     }
   };
 
@@ -188,6 +200,45 @@ function createInteractionManager(options = {}) {
   }
 
   /**
+   * 开始长按检测
+   * @param {Object} e 触摸事件对象
+   */
+  function startLongPressDetection(e) {
+    // 清除可能存在的定时器
+    if (state.longPressTimer) {
+      clearTimeout(state.longPressTimer);
+      state.longPressTimer = null;
+    }
+
+    // 设置长按检测定时器
+    state.longPressTimer = setTimeout(() => {
+      // 标记为长按状态
+      state.isLongPressing = true;
+
+      // 触发长按开始回调
+      triggerCallback('onLongPressStart', e);
+    }, config.longPressDelay);
+  }
+
+  /**
+   * 结束长按检测
+   * @param {Object} e 触摸事件对象
+   */
+  function endLongPressDetection(e) {
+    // 清除长按定时器
+    if (state.longPressTimer) {
+      clearTimeout(state.longPressTimer);
+      state.longPressTimer = null;
+    }
+
+    // 如果当前处于长按状态，触发长按结束回调
+    if (state.isLongPressing) {
+      state.isLongPressing = false;
+      triggerCallback('onLongPressEnd', e);
+    }
+  }
+
+  /**
    * 触摸开始事件处理
    * @param {Object} e 触摸事件对象
    * @param {boolean} [canInteract=true] 是否允许交互
@@ -218,6 +269,11 @@ function createInteractionManager(options = {}) {
       blurAmount: 0
     });
 
+    // 启动长按检测
+    if (config.enablePeek) {
+      startLongPressDetection(e);
+    }
+
     // 触发开始滑动回调
     triggerCallback('onSwipeStart', e);
   }
@@ -237,6 +293,11 @@ function createInteractionManager(options = {}) {
     const deltaY = moveY - state.startY;
     const absX = Math.abs(deltaX);
     const absY = Math.abs(deltaY);
+
+    // 如果移动距离超过阈值，取消长按检测
+    if (absX > 10 || absY > 10) {
+      endLongPressDetection(e);
+    }
 
     // 确定主要滑动方向
     const isHorizontal = absX > absY;
@@ -288,6 +349,9 @@ function createInteractionManager(options = {}) {
    */
   function handleTouchEnd(e, canInteract = true) {
     if (!canInteract || !state.isSwiping) return;
+
+    // 结束长按检测
+    endLongPressDetection(e);
 
     // 计算最终滑动距离
     const endX = e.changedTouches[0].clientX;
@@ -347,6 +411,13 @@ function createInteractionManager(options = {}) {
     state.direction = SWIPE_DIRECTION.NONE;
     state.swipeStarted = false;
     state.blurAmount = 0;
+
+    // 重置长按状态
+    if (state.longPressTimer) {
+      clearTimeout(state.longPressTimer);
+      state.longPressTimer = null;
+    }
+    state.isLongPressing = false;
 
     // 不重置背景效果，保持当前背景状态
 
