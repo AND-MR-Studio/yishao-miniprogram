@@ -43,14 +43,14 @@
   border-radius: 20rpx; /* 减小圆角 */
   background-color: rgba(0, 0, 0, 0.29); /* 增加不透明度 */
   position: relative; /* 确保可以正确定位子元素 */
-  height: 220rpx; /* 减小高度 */
+  height: 180rpx; /* 减小高度 */
   border: 1px solid rgba(140, 0, 255, 0.3); /* 添加红色边框 */
 }
 
 /* 头像容器 */
 .avatar-container {
-  width: 280rpx; /* 减小尺寸 */
-  height: 280rpx; /* 减小尺寸 */
+  width: 120rpx; /* 减小尺寸 */
+  height: 120rpx; /* 减小尺寸 */
   margin-bottom: 10rpx;
   margin-top: -90rpx; /* 让头像部分超出容器顶部 */
   position: relative;

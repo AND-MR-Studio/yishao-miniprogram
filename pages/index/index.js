@@ -316,7 +316,8 @@ Page({
       // 更新页面状态
       this.setData({
         pageState: PAGE_STATE.DRINKING,
-        showButtons: false
+        showButtons: false,
+        tipVisible: true // 初始化tip模块为显示状态
       });
 
       // 获取当前对话ID
@@ -632,9 +633,10 @@ Page({
     // 只在喝汤状态下启用偷看功能
     if (this.data.pageState !== PAGE_STATE.DRINKING) return;
 
-    // 设置soup-display组件的样式
+    // 设置soup-display组件的样式，同时隐藏tip模块
     this.setData({
-      isPeeking: true
+      isPeeking: true,
+      tipVisible: false // 隐藏tip模块
     });
   },
 
@@ -647,9 +649,10 @@ Page({
     // 只在喝汤状态下处理
     if (this.data.pageState !== PAGE_STATE.DRINKING) return;
 
-    // 恢复soup-display组件的样式
+    // 恢复soup-display组件的样式，同时显示tip模块
     this.setData({
-      isPeeking: false
+      isPeeking: false,
+      tipVisible: true // 恢复显示tip模块
     });
   },
 

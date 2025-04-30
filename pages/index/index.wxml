@@ -69,9 +69,9 @@
     bind:touchend="handleLongPressEnd"
   ></dialog-component>
 
-  <!-- 提示模块组件 - 仅在喝汤状态显示 -->
+  <!-- 提示模块组件 - 仅在喝汤状态且未长按时显示 -->
   <tip-module
-    visible="{{pageState === 'drinking'}}"
+    visible="{{pageState === 'drinking' && (tipVisible === undefined ? true : tipVisible)}}"
     bind:close="onTipModuleClose"
     tipText="{{['汤来了！我是陪你熬夜猜谜的小勺🌙', '只答是、否、不确定，别想套我话哦～', '长按汤面就浮出来咯！']}}"
   ></tip-module>

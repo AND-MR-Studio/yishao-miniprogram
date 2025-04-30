@@ -4,7 +4,7 @@
   <view class="tip-content">
     <!-- 顶部GIF动画 -->
     <view class="avatar-container">
-      <image class="avatar-gif" src="/static/images/xiaoshao.gif" mode="aspectFit"></image>
+      <image class="avatar-gif" src="https://i.postimg.cc/ZnNWG8bS/xiaoshao.gif" mode="aspectFit"></image>
     </view>
 
     <!-- 文本内容区域 -->
