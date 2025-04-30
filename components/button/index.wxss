@@ -1,4 +1,5 @@
 /* components/button/index.wxss */
+@import "../../styles/animation.wxss";
 
 /* 呼吸动画 */
 @keyframes breathing {
@@ -112,14 +113,89 @@
   color:#4a4e57;
 }
 
-/* 保留原有的未点亮文本类，以避免兼容问题 */
-.btn-text-unlight {
-  composes: text-mincho-sm;
+/* 标签切换器样式 */
+.tab-switcher {
+  position: fixed;
+  top: 180rpx; /* 位置固定在顶部，留出导航栏空间 */
+  left: 0;
+  width: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  text-align: center;
-  color:rgb(77, 77, 77);
+  z-index: 10;
+  padding: 20rpx 0;
+}
+
+/* 标签容器 */
+.tab-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 60%;
+  height: 70rpx;
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border-radius: 35rpx;
+  border: 1rpx solid rgba(33, 0, 94, 0.8);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  position: relative;
+  padding: 2rpx;
+}
+
+/* 标签样式 */
+.tab {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: all 0.3s ease;
+  z-index: 1;
+  position: relative;
+  overflow: hidden;
+  margin: 4rpx;
+  border-radius: 30rpx;
+}
+
+/* 标签文本 */
+.tab-text {
+  font-size: 28rpx;
+  color: rgba(111, 111, 111, 0.2);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+/* 激活标签的文本 */
+.tab.active .tab-text {
+  color:rgba(155, 155, 155, 0.63);
+  font-weight: bold;
+}
+
+/* 激活的标签背景 */
+.tab.active {
+  background: rgba(34, 12, 132, 0.57);
+  border-radius: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.5);
+}
+
+/* 未解决数量徽章 */
+.badge {
+  position: absolute;
+  right: -6rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 6rpx;
+  background: rgba(68, 20, 135, 0.58);
+  border-radius: 16rpx;
+  font-size: 20rpx;
+  color:rgba(255, 255, 255, 0.41);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+  z-index: 3;
 }
 
 /* 确定类型按钮 - 玻璃拟物感样式 */

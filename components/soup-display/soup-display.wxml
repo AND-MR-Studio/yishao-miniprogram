@@ -2,19 +2,6 @@
 <view
   class="soup-container {{loading ? 'loading' : ''}}"
 >
-  <!-- 切换标签区域 - 在偷看模式下隐藏 -->
-  <view class="tab-switcher" wx:if="{{!isPeeking}}">
-    <view class="tab-container">
-      <view class="tab {{activeTab === 'preset' ? 'active' : ''}}" data-tab="preset" bindtap="switchTab">
-        <text class="tab-text">预制汤</text>
-        <view class="badge" wx:if="{{unsolvedCount > 0}}">{{unsolvedCount}}</view>
-      </view>
-      <view class="tab {{activeTab === 'diy' ? 'active' : ''}}" data-tab="diy" bindtap="switchTab">
-        <text class="tab-text">DIY</text>
-      </view>
-    </view>
-  </view>
-
   <!-- 汤面内容区域 -->
   <block wx:if="{{!loading}}">
     <view class="soup-content {{isPeeking ? 'peeking' : ''}}">

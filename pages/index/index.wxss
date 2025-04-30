@@ -147,6 +147,7 @@
 .soup-display-wrapper {
   width: 100%;
   height: auto;
+  top: 60rpx;
   position: relative;
   display: block;
 }

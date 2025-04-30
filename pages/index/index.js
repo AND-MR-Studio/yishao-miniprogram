@@ -30,6 +30,10 @@ Page({
     isFavorite: false, // 当前汤面是否已收藏
     isPeeking: false, // 是否处于偷看状态
 
+    // 标签切换相关
+    activeTab: 'preset', // 当前激活的标签: 'preset', 'diy'，默认显示预制汤
+    unsolvedCount: 0, // 未解决的预制汤数量
+
     // 交互相关 - 由interactionManager管理
     swiping: false, // 是否正在滑动中
     swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
@@ -81,6 +85,9 @@ Page({
 
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData);
+
+      // 获取未解决的预制汤数量
+      this.getUnsolvedSoupCount();
 
       // 如果有dialogId，自动切换到喝汤状态
       if (dialogId) {
@@ -759,10 +766,68 @@ Page({
    * 处理标签切换事件
    * @param {Object} e 事件对象
    */
-  handleTabChange(e) {
+  async handleTabChange(e) {
     const { tab } = e.detail;
-    console.log('标签切换:', tab);
-    // 标签切换逻辑已在组件内部处理
+    // 删除调试日志
+
+    // 更新当前激活的标签
+    this.setData({ activeTab: tab });
+
+    try {
+      // 根据标签类型确定汤类型
+      let soupType;
+      switch (tab) {
+        case 'preset':
+          soupType = 0; // 预制汤
+          break;
+        case 'diy':
+          soupType = 1; // DIY汤
+          break;
+        default:
+          soupType = 0; // 默认为预制汤
+          break;
+      }
+
+      // 设置加载状态，但不启用模糊效果
+      this.setData({
+        isLoading: true
+        // 移除 breathingBlur: true，避免标签切换时触发模糊效果
+      });
+
+      // 获取对应类型的汤
+      let soups = await soupService.getSoupList({ type: soupType });
+
+      // 如果有汤数据，随机选择一个
+      if (soups && soups.length > 0) {
+        const randomIndex = Math.floor(Math.random() * soups.length);
+        const randomSoup = soups[randomIndex];
+
+        // 更新对话组件
+        const soupId = randomSoup.soupId || '';
+        this.selectComponent('#dialog')?.setData({ soupId });
+
+        // 初始化汤面数据和页面状态
+        await this.initSoupData(randomSoup);
+      } else {
+        wx.showToast({
+          title: '没有找到相关汤',
+          icon: 'none'
+        });
+
+        // 重置加载状态
+        this.setData({
+          isLoading: false
+          // 保持与上面设置一致，不设置 breathingBlur
+        });
+      }
+    } catch (error) {
+      console.error('加载汤面失败:', error);
+      this.showErrorToast('加载失败，请重试');
+      this.setData({
+        isLoading: false
+        // 保持与上面设置一致，不设置 breathingBlur
+      });
+    }
   },
 
   /**
@@ -788,10 +853,49 @@ Page({
   handleSoupLoading(e) {
     const { loading } = e.detail;
 
+    // 只设置加载状态，不设置模糊效果
     this.setData({
-      isLoading: loading,
-      breathingBlur: loading // 根据加载状态设置呼吸模糊效果
+      isLoading: loading
+      // 移除 breathingBlur: loading，避免触发模糊效果
     });
+  },
+
+  /**
+   * 获取未解决的预制汤数量
+   * 暂时固定显示为5
+   */
+  async getUnsolvedSoupCount() {
+    try {
+      // 检查用户是否已登录
+      if (!userService.checkLoginStatus()) {
+        return;
+      }
+
+      // 暂时固定显示未解决数量为5
+      this.setData({
+        unsolvedCount: 5
+      });
+
+      /*
+      // 原始获取未解决数量的代码，暂时注释
+      // 获取用户ID
+      const userId = await userService.getUserId();
+      if (!userId) {
+        return;
+      }
+
+      // 获取未解决的预制汤数量
+      const result = await soupService.getUnsolvedSoupCount(userId);
+      if (result && typeof result.count === 'number') {
+        this.setData({
+          unsolvedCount: result.count
+        });
+      }
+      */
+    } catch (error) {
+      console.error('获取未解决汤数量失败:', error);
+      // 失败时不显示错误提示，保持数量为0
+    }
   }
 
   // 页面结束

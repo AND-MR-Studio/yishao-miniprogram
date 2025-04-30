@@ -6,9 +6,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 300rpx 0 0; /* 减少顶部padding，为标签腾出空间 */
+  padding: 300rpx 0 100rpx; /* 顶部和底部都添加padding，确保内容区域固定 */
   width: 100%;
-  min-height: 443rpx;
+  height: 100vh; /* 使用视口高度 */
   position: fixed;
   box-sizing: border-box;
   will-change: transform;
@@ -29,98 +29,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* 切换标签区域样式 */
-.tab-switcher {
-  position: fixed;
-  top: 180rpx; /* 位置固定在顶部，留出导航栏空间 */
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  z-index: 10;
-  padding: 20rpx 0;
-}
 
-/* 标签容器 */
-.tab-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 60%;
-  height: 70rpx;
-  background: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(20rpx);
-  -webkit-backdrop-filter: blur(20rpx);
-  border-radius: 35rpx;
-  border: 1rpx solid rgba(33, 0, 94, 0.8);
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  position: relative;
-  padding: 2rpx;
-}
-
-/* 标签样式 */
-.tab {
-  flex: 1;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  transition: all 0.3s ease;
-  z-index: 1;
-}
-
-/* 激活的标签 */
-
-/* 标签文本 */
-.tab-text {
-  font-size: 28rpx;
-  color: rgba(111, 111, 111, 0.5);
-  transition: all 0.3s ease;
-  z-index: 2;
-}
-
-/* 激活标签的文本 */
-.tab.active .tab-text {
-  color:rgb(155, 155, 155);
-  font-weight: bold;
-}
-
-/* 标签背景 */
-.tab {
-  position: relative;
-  overflow: hidden;
-  margin: 4rpx;
-  border-radius: 30rpx;
-}
-
-/* 激活的标签背景 */
-.tab.active {
-  background: rgba(23, 0, 80, 0.95);
-  border-radius: 30rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.5);
-}
-
-/* 未解决数量徽章 */
-.badge {
-  position: absolute;
-  right: 15rpx;
-  min-width: 32rpx;
-  height: 32rpx;
-  background:rgb(78, 30, 209);
-  border-radius: 16rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 22rpx;
-  color: white;
-  padding: 0 6rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.3);
-  border: 1rpx solid rgba(255, 255, 255, 0.3);
-  z-index: 2;
-  font-weight: normal;
-}
 
 /* 加载中的样式 */
 .soup-container.loading {
@@ -135,11 +44,12 @@
   align-items: center;
   padding: 20rpx 0;
   margin-bottom: 20rpx;
-  min-height: 200px;
-  max-height: 335px;
+  height: 700rpx; /* 固定高度 */
   position: relative;
   transition: all 0.6s var(--transition-decelerated);
   will-change: transform, opacity;
+  overflow-y: auto; /* 内容超出时可滚动 */
+  box-sizing: border-box;
 }
 
 /* 标题容器样式 */
@@ -170,12 +80,14 @@
   word-break: break-all;
   width: 100%;
   letter-spacing: 5rpx;
+  box-sizing: border-box;
+  flex: 1;
 }
 
 /* 收藏图标样式 */
 .favorite-icon {
   position: fixed;
-  bottom: -650rpx; /* 固定在页面底部往上一点的位置，在tabbar和开始喝汤按钮之间 */
+  bottom: 300rpx; /* 固定在页面底部的位置，确保在汤面内容区域下方 */
   left: 50%;
   transform: translateX(-50%);
   width: 60rpx;

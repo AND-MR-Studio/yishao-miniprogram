@@ -1,5 +1,18 @@
 <!--components/button/index.wxml-->
-<block wx:if="{{type === 'switch'}}">
+<block wx:if="{{type === 'tab-switcher'}}">
+  <view class="tab-switcher" wx:if="{{!isPeeking}}">
+    <view class="tab-container">
+      <view class="tab {{activeTab === 'preset' ? 'active' : ''}}" data-tab="preset" bindtap="handleTabTap">
+        <text class="tab-text">预制汤</text>
+        <view class="badge" wx:if="{{unsolvedCount > 0}}">{{unsolvedCount}}</view>
+      </view>
+      <view class="tab {{activeTab === 'diy' ? 'active' : ''}}" data-tab="diy" bindtap="handleTabTap">
+        <text class="tab-text">DIY</text>
+      </view>
+    </view>
+  </view>
+</block>
+<block wx:elif="{{type === 'switch'}}">
   <view class="switch-item">
     <view class="item-label">{{label}}</view>
     <view class="jelly-effect-container">

@@ -7,6 +7,17 @@
   />
 
   <view class="container" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd">
+    <!-- 标签切换器 -->
+    <custom-button
+      wx:if="{{pageState === 'viewing'}}"
+      type="tab-switcher"
+      activeTab="{{activeTab}}"
+      unsolvedCount="{{unsolvedCount}}"
+      isPeeking="{{isPeeking}}"
+      bind:tabchange="handleTabChange"
+      class="tab-switcher-component"
+    ></custom-button>
+
     <!-- 汤面显示区域 -->
     <view class="soup-display-wrapper swipe-container {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}} {{breathingBlur ? 'breathing-blur' : ''}}" style="filter: blur({{blurAmount}}px);">
       <soup-display
@@ -17,7 +28,6 @@
         class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
         wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"
-        bind:tabchange="handleTabChange"
         bind:soupchange="handleSoupChange"
         bind:loading="handleSoupLoading"
       ></soup-display>

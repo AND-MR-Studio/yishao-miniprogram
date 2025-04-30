@@ -5,7 +5,7 @@ Component({
    * 组件的属性列表
    */
   properties: {
-    // 按钮类型，light: 点亮，unlight: 未点亮，，dark: 深色按钮，switch: 开关，radio: 单选按钮
+    // 按钮类型，light: 点亮，unlight: 未点亮，dark: 深色按钮，switch: 开关，radio: 单选按钮，tab-switcher: 标签切换器
     type: {
       type: String,
       value: 'unlight'
@@ -69,6 +69,21 @@ Component({
     height: {
       type: String,
       value: 'auto'
+    },
+    // 当前激活的标签（仅在type为tab-switcher时有效）
+    activeTab: {
+      type: String,
+      value: 'preset'
+    },
+    // 未解决的预制汤数量（仅在type为tab-switcher时有效）
+    unsolvedCount: {
+      type: Number,
+      value: 0
+    },
+    // 是否处于偷看模式（仅在type为tab-switcher时有效）
+    isPeeking: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -169,6 +184,28 @@ Component({
       } else {
         this.triggerEvent('tap');
       }
+    },
+
+    // 标签切换点击事件
+    handleTabTap(e) {
+      const tab = e.currentTarget.dataset.tab;
+      if (tab === this.data.activeTab) return;
+
+      // 开始果冻动画
+      this.setData({
+        jellyAnimating: true,
+        activeTab: tab
+      });
+
+      // 监听动画结束并重置状态
+      setTimeout(() => {
+        this.setData({
+          jellyAnimating: false
+        });
+      }, 600); // 与动画持续时间一致
+
+      // 触发标签切换事件，通知父组件
+      this.triggerEvent('tabchange', { tab });
     },
 
     // 监听动画结束事件
