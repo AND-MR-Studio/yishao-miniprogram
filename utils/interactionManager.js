@@ -1,6 +1,6 @@
 /**
- * 滑动手势管理工具
- * 提供简洁高效的滑动检测、方向判断和模糊特效功能
+ * 交互管理器
+ * 统一管理滑动翻页和双击点赞等交互功能
  */
 
 // 滑动方向常量
@@ -13,39 +13,57 @@ const SWIPE_DIRECTION = {
 };
 
 /**
- * 创建滑动管理器
+ * 创建交互管理器
  * @param {Object} options 配置选项
- * @returns {Object} 滑动管理器对象
+ * @returns {Object} 交互管理器对象
  */
-function createSwipeManager(options = {}) {
+function createInteractionManager(options = {}) {
   // 内部状态
   const state = {
+    // 滑动相关状态
     startX: 0,
     startY: 0,
     isSwiping: false,
     direction: SWIPE_DIRECTION.NONE,
     swipeStarted: false,
     blurAmount: 0,
-    // 使用角度而不是百分比位置，实现真正的无限循环
-    angle: 0 // 当前旋转角度，用于计算圆的位置
+    angle: 0, // 当前旋转角度，用于计算圆的位置
+    
+    // 双击相关状态
+    lastTapTime: 0,
+    lastTapX: 0,
+    lastTapY: 0
   };
 
   // 配置选项
   const config = {
+    // 滑动相关配置
     threshold: options.threshold || 50,
     maxBlur: options.maxBlur || 10, // 最大模糊程度，默认10px
     maxDistance: options.maxDistance || 100, // 最大滑动距离，默认100px
     enableBlurEffect: options.enableBlurEffect !== false, // 默认启用模糊特效
     enableBackgroundEffect: options.enableBackgroundEffect !== false, // 默认启用背景效果
+    
+    // 双击相关配置
+    doubleTapDelay: options.doubleTapDelay || 300, // 双击间隔时间，默认300ms
+    doubleTapDistance: options.doubleTapDistance || 30, // 双击允许的位置偏差，默认30px
+    
+    // 数据更新方法
     setData: options.setData || (() => {}),
+    
+    // 回调函数
     callbacks: {
+      // 滑动相关回调
       onSwipeLeft: options.onSwipeLeft,
       onSwipeRight: options.onSwipeRight,
       onSwipeUp: options.onSwipeUp,
       onSwipeDown: options.onSwipeDown,
       onSwipeStart: options.onSwipeStart,
       onSwipeMove: options.onSwipeMove,
-      onSwipeEnd: options.onSwipeEnd
+      onSwipeEnd: options.onSwipeEnd,
+      
+      // 双击相关回调
+      onDoubleTap: options.onDoubleTap
     }
   };
 
@@ -143,12 +161,44 @@ function createSwipeManager(options = {}) {
   }
 
   /**
+   * 检测双击事件
+   * @param {Object} e 触摸事件对象
+   * @returns {boolean} 是否触发了双击
+   */
+  function detectDoubleTap(e) {
+    const currentTime = e.timeStamp;
+    const lastTapTime = state.lastTapTime;
+    const currentX = e.touches[0].clientX;
+    const currentY = e.touches[0].clientY;
+    const lastTapX = state.lastTapX;
+    const lastTapY = state.lastTapY;
+
+    // 计算时间差和位置差
+    const timeDiff = currentTime - lastTapTime;
+    const xDiff = Math.abs(currentX - lastTapX);
+    const yDiff = Math.abs(currentY - lastTapY);
+
+    // 更新最后一次点击的时间和位置
+    state.lastTapTime = currentTime;
+    state.lastTapX = currentX;
+    state.lastTapY = currentY;
+
+    // 如果时间差小于配置的双击延迟且位置差小于配置的双击距离，认为是双击
+    return (timeDiff < config.doubleTapDelay && xDiff < config.doubleTapDistance && yDiff < config.doubleTapDistance);
+  }
+
+  /**
    * 触摸开始事件处理
    * @param {Object} e 触摸事件对象
-   * @param {boolean} [canSwipe=true] 是否允许滑动
+   * @param {boolean} [canInteract=true] 是否允许交互
    */
-  function handleTouchStart(e, canSwipe = true) {
-    if (!canSwipe) return;
+  function handleTouchStart(e, canInteract = true) {
+    if (!canInteract) return;
+
+    // 检测双击
+    if (detectDoubleTap(e)) {
+      triggerCallback('onDoubleTap', e);
+    }
 
     // 记录起始触摸点坐标
     state.startX = e.touches[0].clientX;
@@ -168,8 +218,6 @@ function createSwipeManager(options = {}) {
       blurAmount: 0
     });
 
-    // 不重置背景效果，保持当前背景状态
-
     // 触发开始滑动回调
     triggerCallback('onSwipeStart', e);
   }
@@ -177,10 +225,10 @@ function createSwipeManager(options = {}) {
   /**
    * 触摸移动事件处理
    * @param {Object} e 触摸事件对象
-   * @param {boolean} [canSwipe=true] 是否允许滑动
+   * @param {boolean} [canInteract=true] 是否允许交互
    */
-  function handleTouchMove(e, canSwipe = true) {
-    if (!canSwipe || !state.isSwiping) return;
+  function handleTouchMove(e, canInteract = true) {
+    if (!canInteract || !state.isSwiping) return;
 
     // 计算滑动距离
     const moveX = e.touches[0].clientX;
@@ -236,10 +284,10 @@ function createSwipeManager(options = {}) {
   /**
    * 触摸结束事件处理
    * @param {Object} e 触摸事件对象
-   * @param {boolean} [canSwipe=true] 是否允许滑动
+   * @param {boolean} [canInteract=true] 是否允许交互
    */
-  function handleTouchEnd(e, canSwipe = true) {
-    if (!canSwipe || !state.isSwiping) return;
+  function handleTouchEnd(e, canInteract = true) {
+    if (!canInteract || !state.isSwiping) return;
 
     // 计算最终滑动距离
     const endX = e.changedTouches[0].clientX;
@@ -292,7 +340,7 @@ function createSwipeManager(options = {}) {
   }
 
   /**
-   * 重置滑动状态
+   * 重置交互状态
    */
   function reset() {
     state.isSwiping = false;
@@ -329,6 +377,6 @@ function createSwipeManager(options = {}) {
 }
 
 module.exports = {
-  createSwipeManager,
+  createInteractionManager,
   SWIPE_DIRECTION
 };

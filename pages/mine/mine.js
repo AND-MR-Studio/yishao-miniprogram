@@ -626,7 +626,7 @@ Page({
    * 处理导航事件 - 由detective-card组件触发
    * @param {Object} e - 事件对象
    */
-  handleNavigate(e) {
+  async handleNavigate(e) {
     const { page } = e.detail;
 
     // 检查页面类型是否有效
@@ -637,11 +637,27 @@ Page({
     // 检查登录状态
     if (!userService.checkLoginStatus()) return;
 
-    // 显示对应类型的汤面列表弹窗
-    this.setData({
-      soupListType: page,
-      showSoupListModal: true
-    });
+    try {
+      // 在打开弹窗前刷新用户信息，确保获取最新数据
+      if (page === 'favorites') {
+        console.log('准备打开收藏列表，刷新用户信息');
+        // 刷新用户信息
+        await this.refreshPageData(false);
+      }
+
+      // 显示对应类型的汤面列表弹窗
+      this.setData({
+        soupListType: page,
+        showSoupListModal: true
+      });
+    } catch (error) {
+      console.error('打开汤面列表弹窗失败:', error);
+      wx.showToast({
+        title: '加载失败，请重试',
+        icon: 'none',
+        duration: 2000
+      });
+    }
   },
 
   /**

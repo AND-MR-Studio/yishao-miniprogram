@@ -6,7 +6,7 @@
 const soupService = require('../../utils/soupService');
 const dialogService = require('../../utils/dialogService');
 const userService = require('../../utils/userService');
-const { createSwipeManager, SWIPE_DIRECTION } = require('../../utils/swipeManager');
+const { createInteractionManager, SWIPE_DIRECTION } = require('../../utils/interactionManager');
 
 // ===== 常量定义 =====
 const PAGE_STATE = {
@@ -29,21 +29,16 @@ Page({
     breathingBlur: false, // 呈现呼吸模糊效果
     isFavorite: false, // 当前汤面是否已收藏
 
-    // 滑动相关 - 由swipeManager管理
+    // 交互相关 - 由interactionManager管理
     swiping: false, // 是否正在滑动中
     swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
     swipeFeedback: false, // 滑动反馈动画
     swipeStarted: false, // 是否开始滑动
     blurAmount: 0, // 模糊程度（0-10px）
-
-    // 双击相关
-    lastTapTime: 0, // 上次点击时间
-    lastTapX: 0, // 上次点击X坐标
-    lastTapY: 0 // 上次点击Y坐标
   },
 
   // ===== 页面属性 =====
-  swipeManager: null, // 滑动管理器
+  interactionManager: null, // 交互管理器
 
   // ===== 生命周期方法 =====
   /**
@@ -52,8 +47,8 @@ Page({
    * @param {Object} options - 页面参数，可能包含soupId和dialogId
    */
   async onLoad(options) {
-    // 初始化滑动管理器
-    this.initSwipeManager();
+    // 初始化交互管理器
+    this.initInteractionManager();
 
     // 不再需要获取用户设置，已移除打字机动画相关功能
 
@@ -182,7 +177,7 @@ Page({
   async handleLoadSoupWithDialog(data) {
     if (!data || !data.soupId) return;
 
-    console.log('接收到加载汤面和对话的事件:', data);
+
 
     try {
       // 设置加载状态
@@ -223,17 +218,15 @@ Page({
             });
 
             // 显式加载对话记录
-            console.log('预加载对话记录:', data.dialogId);
             await dialog.loadDialogMessages();
 
             // 等待汤面数据加载完成后切换到喝汤状态
             setTimeout(() => {
-              console.log('切换到喝汤状态');
               this.switchToDrinking();
             }, 300); // 增加延迟，确保对话记录已加载
           }
         } catch (error) {
-          console.error('预加载对话记录失败:', error);
+
           // 即使预加载失败，也尝试切换到喝汤状态
           setTimeout(() => {
             this.switchToDrinking();
@@ -241,7 +234,7 @@ Page({
         }
       }
     } catch (error) {
-      console.error('处理加载汤面和对话事件失败:', error);
+
       this.showErrorToast('加载失败，请重试');
       this.setData({
         isLoading: false,
@@ -255,10 +248,10 @@ Page({
    * 清理资源
    */
   onUnload() {
-    // 销毁滑动管理器
-    if (this.swipeManager) {
-      this.swipeManager.destroy();
-      this.swipeManager = null;
+    // 销毁交互管理器
+    if (this.interactionManager) {
+      this.interactionManager.destroy();
+      this.interactionManager = null;
     }
 
     // 清理事件监听器
@@ -543,7 +536,7 @@ Page({
         // 切换到喝汤状态
         this.switchToDrinking();
       } catch (error) {
-        console.error('加载对话记录失败:', error);
+
         // 即使加载失败也通知按钮完成并切换到喝汤状态
         const startButton = this.selectComponent('.start-button');
         if (startButton) {
@@ -673,16 +666,17 @@ Page({
     this.setData({ showSetting: false });
   },
 
-  // ===== 滑动相关 =====
+  // ===== 交互相关 =====
   /**
-   * 初始化滑动管理器
+   * 初始化交互管理器
    */
-  initSwipeManager() {
-    // 创建滑动管理器，只提供必要参数
-    this.swipeManager = createSwipeManager({
+  initInteractionManager() {
+    // 创建交互管理器，提供滑动和双击回调
+    this.interactionManager = createInteractionManager({
       setData: this.setData.bind(this),
       onSwipeLeft: this.handleSwipe.bind(this, 'next'),
-      onSwipeRight: this.handleSwipe.bind(this, 'previous')
+      onSwipeRight: this.handleSwipe.bind(this, 'previous'),
+      onDoubleTap: this.toggleFavorite.bind(this)
     });
   },
 
@@ -719,52 +713,15 @@ Page({
    * 触摸事件处理方法
    */
   handleTouch(method, e) {
-    this.swipeManager?.[method](e, this.canSwitchSoup());
+    // 只有在查看状态且不在加载中时才允许交互
+    const canInteract = this.data.pageState === PAGE_STATE.VIEWING && !this.data.isLoading;
+    this.interactionManager?.[method](e, canInteract);
   },
 
   // 使用简化的通用处理函数
-  touchStart(e) {
-    this.handleTouch('handleTouchStart', e);
-    this.handleDoubleTap(e);
-  },
+  touchStart(e) { this.handleTouch('handleTouchStart', e); },
   touchMove(e) { this.handleTouch('handleTouchMove', e); },
   touchEnd(e) { this.handleTouch('handleTouchEnd', e); },
-
-  /**
-   * 处理双击事件
-   * 检测双击并触发收藏/取消收藏功能
-   * @param {Object} e 触摸事件对象
-   */
-  handleDoubleTap(e) {
-    // 如果不在查看状态，不处理双击
-    if (this.data.pageState !== PAGE_STATE.VIEWING || this.data.isLoading) {
-      return;
-    }
-
-    const currentTime = e.timeStamp;
-    const lastTapTime = this.data.lastTapTime;
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const lastTapX = this.data.lastTapX;
-    const lastTapY = this.data.lastTapY;
-
-    // 计算时间差和位置差
-    const timeDiff = currentTime - lastTapTime;
-    const xDiff = Math.abs(currentX - lastTapX);
-    const yDiff = Math.abs(currentY - lastTapY);
-
-    // 如果时间差小于300ms且位置差小于30px，认为是双击
-    if (timeDiff < 300 && xDiff < 30 && yDiff < 30) {
-      this.toggleFavorite();
-    }
-
-    // 更新最后一次点击的时间和位置
-    this.setData({
-      lastTapTime: currentTime,
-      lastTapX: currentX,
-      lastTapY: currentY
-    });
-  },
 
   /**
    * 切换收藏状态
@@ -818,7 +775,7 @@ Page({
         }
       }
     } catch (error) {
-      console.error('切换收藏状态失败:', error);
+
       wx.showToast({
         title: '操作失败，请重试',
         icon: 'none',

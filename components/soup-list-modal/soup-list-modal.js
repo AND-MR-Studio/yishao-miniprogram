@@ -86,6 +86,8 @@ Component({
           emptyText: config.emptyText
         });
 
+
+
         // 加载数据
         this.loadSoupList();
       } else {
@@ -119,8 +121,12 @@ Component({
           return;
         }
 
-        // 获取用户信息
-        const userInfo = await userService.getFormattedUserInfo(false);
+        // 获取用户信息 - 优先使用传入的userInfo，如果没有则重新获取
+        let userInfo = this.properties.userInfo;
+        if (!userInfo) {
+          userInfo = await userService.getFormattedUserInfo(false);
+        }
+
         if (!userInfo) {
           throw new Error('获取用户信息失败');
         }
@@ -142,13 +148,23 @@ Component({
         }
 
         // 获取海龟汤详细信息
-        const soupList = await soupService.getSoup(soupIds);
+        let soupList = await soupService.getSoup(soupIds);
+
+        // 确保 soupList 是数组
+        if (!Array.isArray(soupList)) {
+          // 如果返回的是单个对象，将其转换为数组
+          if (soupList && typeof soupList === 'object') {
+            soupList = [soupList];
+          } else {
+            soupList = [];
+          }
+        }
 
         // 获取用户ID
         const userId = await userService.getUserId();
 
         // 为每个汤面获取对应的对话ID
-        if (userId && Array.isArray(soupList)) {
+        if (userId && soupList.length > 0) {
           // 使用Promise.all并行处理所有请求
           await Promise.all(soupList.map(async (soup) => {
             try {
@@ -167,8 +183,8 @@ Component({
 
         // 更新数据
         this.setData({
-          soupList: Array.isArray(soupList) ? soupList : [],
-          isEmpty: !soupList || (Array.isArray(soupList) && soupList.length === 0),
+          soupList: soupList,
+          isEmpty: soupList.length === 0,
           loading: false,
           hasMore: false // 目前一次性加载所有数据，不支持分页
         });
@@ -236,19 +252,21 @@ Component({
       wx.switchTab({
         url: '/pages/index/index',
         success: () => {
-          console.log('跳转到首页成功');
           // 跳转成功后发布事件，传递参数
           // 增加延迟时间，确保页面完全准备好接收事件
           setTimeout(() => {
-            console.log('发送加载汤面和对话的事件:', soupid, dialogid);
             wx.eventCenter.emit('loadSoupWithDialog', {
               soupId: soupid,
               dialogId: dialogid || ''
             });
           }, 500); // 增加延迟时间，确保页面已经完成跳转和初始化
         },
-        fail: (error) => {
-          console.error('跳转到首页失败:', error);
+        fail: () => {
+          wx.showToast({
+            title: '跳转失败，请重试',
+            icon: 'none',
+            duration: 2000
+          });
         }
       });
     },
