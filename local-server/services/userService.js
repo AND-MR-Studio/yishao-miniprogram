@@ -14,9 +14,10 @@
  * - 用户等级和经验值系统 - 游戏化激励机制
  * - 用户汤谜题交互记录 - 浏览、回答、解决、创建、收藏
  */
+const path = require('path');
 
-const userDataAccess = require('../../dataAccess/userDataAccess');
-const userModel = require('../../models/userModel');
+const userDataAccess = require(__dirname,'../dataAccess/userDataAccess');
+const userModel = require(__dirname,'../models/userModel');
 
 // 导入辅助模块
 const helpers = require('./userHelpers');
@@ -32,6 +33,7 @@ const {
   sendResponse,
   validateParams,
   asyncHandler,
+  formatUserResponse,
   formatFullUserInfo
 } = helpers;
 
@@ -105,7 +107,7 @@ function initUserRoutes(app) {
       }
 
       // 返回用户信息和token
-      const responseData = userUtils.formatUserResponse(userData, avatarUrl);
+      const responseData = formatUserResponse(userData, avatarUrl);
       logger('info', 'login', '用户登录成功', { userId: userData.userId });
       return sendResponse(res, true, responseData);
     } catch (err) {
