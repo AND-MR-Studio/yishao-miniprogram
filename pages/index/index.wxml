@@ -5,7 +5,7 @@
     pageState="{{pageState}}"
     bind:settingchange="handleSettingChange"
     bind:close="onSettingClose"
-    bind:clearcontext="handleClearContext"
+    bind:clearcontext="clearContext"
   />
 
   <view class="container">
@@ -73,6 +73,7 @@
     visible="{{pageState === 'drinking'}}"
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
+    bind:clearcontext="clearContext"
   ></dialog-component>
 
   <!-- 提示模块组件 - 在喝汤状态和汤底状态显示 -->

@@ -402,61 +402,13 @@ Page({
   },
 
   /**
-   * 处理清理上下文事件
-   * 清空当前对话的所有消息记录
+   * 转发清理上下文事件到对话组件
    * @param {Object} e 事件对象
    */
-  async handleClearContext(e) {
-    try {
-      const { dialogId } = e.detail;
-      if (!dialogId) {
-        console.error('清理上下文失败: 缺少对话ID');
-        return;
-      }
-
-      // 显示确认弹窗
-      wx.showModal({
-        title: '提示',
-        content: '确定要清理当前对话上下文吗？这将删除当前对话的所有记录。',
-        success: async (res) => {
-          if (res.confirm) {
-            try {
-              // 获取用户ID
-              const userId = await userService.getUserId();
-              if (!userId) {
-                console.error('清理上下文失败: 无法获取用户ID');
-                return;
-              }
-
-              // 清空对话消息
-              const dialog = this.selectComponent('#dialog');
-              if (dialog) {
-                // 清空对话组件中的消息
-                dialog.setData({ messages: [] });
-
-                // 保存空消息数组到服务器
-                try {
-                  await dialogService.saveDialogMessages(dialogId, userId, []);
-                  console.log('对话上下文已清理');
-
-                  // 显示成功提示
-                  wx.showToast({
-                    title: '对话已清理',
-                    icon: 'success',
-                    duration: 1500
-                  });
-                } catch (error) {
-                  console.error('保存清空的对话记录失败:', error);
-                }
-              }
-            } catch (error) {
-              console.error('清理上下文失败:', error);
-            }
-          }
-        }
-      });
-    } catch (error) {
-      console.error('清理上下文失败:', error);
+  clearContext(e) {
+    const dialog = this.selectComponent('#dialog');
+    if (dialog) {
+      dialog.clearContext(e);
     }
   },
 
