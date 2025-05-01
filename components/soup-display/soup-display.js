@@ -115,8 +115,13 @@ Component({
       return '';
     },
 
-    // 点赞功能已移除，仅显示点赞数
-
-
+    /**
+     * 处理收藏点击事件
+     * 从交互底部组件传递上来的事件
+     */
+    onFavoriteClick() {
+      // 触发收藏事件，由页面处理具体逻辑
+      this.triggerEvent('favorite');
+    }
   }
 });

@@ -27,12 +27,14 @@
         soupData="{{currentSoup}}"
         loading="{{isLoading}}"
         isFavorite="{{isFavorite}}"
+        isPeeking="{{isPeeking}}"
         isDrinking="{{pageState === 'drinking'}}"
         class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
         wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"
         bind:soupchange="handleSoupChange"
         bind:loading="handleSoupLoading"
+        bind:favorite="toggleFavorite"
       ></soup-display>
     </view>
 

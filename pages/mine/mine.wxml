@@ -30,14 +30,6 @@
 
     <!-- 功能菜单 -->
     <view class="function-list">
-      <!-- 帮助与反馈 -->
-      <view class="function-item" bindtap="navigateToHelp">
-        <view class="item-content">
-          <text>帮助与反馈</text>
-        </view>
-        <view class="item-arrow"></view>
-      </view>
-
       <!-- 关于一勺推理社 -->
       <view class="function-item" bindtap="navigateToAbout">
         <view class="item-content">

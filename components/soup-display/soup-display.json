@@ -1,4 +1,6 @@
 {
   "component": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "interaction-footer": "/components/interaction-footer/interaction-footer"
+  }
 }
