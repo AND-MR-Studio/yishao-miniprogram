@@ -1,0 +1,144 @@
+/* components/popup/index.wxss */
+.popup-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.popup-container.visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.popup-content {
+  width: 75%;
+  max-width: 600rpx;
+  background-color: #6C3EF8; /* 更新为图片中的紫色背景 */
+  border-radius: 20rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.5);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+  position: relative;
+  padding: 40rpx 30rpx 30rpx;
+}
+
+.popup-container.visible .popup-content {
+  transform: scale(1);
+}
+
+.popup-header {
+  padding-bottom: 10rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.popup-title {
+  font-size: 36rpx;
+  color: #FFFFFF;
+  font-weight: bold;
+  margin-bottom: 10rpx;
+}
+
+.popup-close {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  font-size: 40rpx;
+  color: rgba(255, 255, 255, 0.7);
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.popup-close:active {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.popup-body {
+  padding: 10rpx 0 30rpx;
+}
+
+.popup-text {
+  font-size: 28rpx;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  text-align: left;
+  display: block;
+}
+
+.popup-footer {
+  display: flex;
+  padding-top: 30rpx;
+}
+
+.popup-btn {
+  height: 70rpx;
+  line-height: 70rpx;
+  text-align: center;
+  border-radius: 35rpx;
+  font-size: 28rpx;
+  transition: all 0.3s ease;
+  border: none;
+  background: none;
+  position: relative;
+  overflow: hidden;
+  padding: 0 40rpx;
+  min-width: 160rpx;
+}
+
+.popup-btn::after {
+  border: none;
+}
+
+.popup-btn-cancel {
+  color:rgb(197, 197, 197);
+  border: 2rpx solid rgba(255, 255, 255, 0.5);
+}
+
+.popup-btn-confirm {
+  background-color: #BBD551;
+  box-shadow: 0 4rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+.popup-btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+/* 添加图片样式 */
+.popup-image {
+  position: absolute;
+  right: -20rpx;
+  bottom: 0;
+  width: 240rpx;
+  height: 240rpx;
+  z-index: 10;
+}
+
+/* 调整按钮容器，让按钮靠左显示 */
+.popup-footer {
+  justify-content: flex-start;
+  gap: 20rpx; /* 按钮之间的间距 */
+  padding-right: 180rpx; /* 为右侧图片留出空间 */
+}

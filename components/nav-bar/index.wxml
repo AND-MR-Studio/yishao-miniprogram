@@ -25,5 +25,4 @@
   bind:clickright="onClickRight"
   bind:contact="onContact"
   bind:about="onAbout"
-  bind:abandon="onAbandon"
 />

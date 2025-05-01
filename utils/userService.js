@@ -139,7 +139,7 @@ async function updateAvatar(avatarUrl) {
   const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
     return Promise.reject('用户未登录，请先登录');
-  }
+  }  
 
   try {
     // 获取用户ID

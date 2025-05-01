@@ -1,0 +1,40 @@
+<!--components/popup/index.wxml-->
+<view class="popup-container {{visible ? 'visible' : ''}}" catchtap="onMaskClick">
+  <view class="popup-content" catchtap="preventBubble">
+    <!-- 弹窗标题 -->
+    <view class="popup-header" wx:if="{{title}}">
+      <text class="popup-title">{{title}}</text>
+      <view class="popup-close" catchtap="onClose" wx:if="{{showClose}}">×</view>
+    </view>
+
+    <!-- 弹窗内容 -->
+    <view class="popup-body">
+      <!-- 自定义内容 -->
+      <slot></slot>
+
+      <!-- 默认内容 -->
+      <block wx:if="{{content}}">
+        <text class="popup-text">{{content}}</text>
+      </block>
+    </view>
+
+    <!-- 弹窗按钮 -->
+    <view class="popup-footer" wx:if="{{showConfirm || showCancel}}">
+      <button
+        class="popup-btn popup-btn-cancel"
+        catchtap="onCancel"
+        wx:if="{{showCancel}}">{{cancelText}}</button>
+      <button
+        class="popup-btn popup-btn-confirm"
+        catchtap="onConfirm"
+        wx:if="{{showConfirm}}">{{confirmText}}</button>
+    </view>
+
+    <!-- 弹窗图片 -->
+    <image
+      class="popup-image"
+      src="{{imageUrl}}"
+      wx:if="{{imageUrl}}"
+      mode="aspectFit"></image>
+  </view>
+</view>

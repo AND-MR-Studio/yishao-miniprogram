@@ -17,13 +17,6 @@
     <view class="setting-section" catchtap="stopPropagation">
       <view class="section-title">问答设置</view>
 
-      <view class="setting-item">
-        <view class="item-label">放弃当前海龟汤</view>
-        <custom-button
-          type="confirm"
-          text="确定"
-          bind:tap="abandonSoup" />
-      </view>
 
       <view class="setting-item">
         <view class="item-label">清理缓存</view>

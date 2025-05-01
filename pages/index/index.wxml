@@ -76,4 +76,17 @@
     tipText="{{['汤来了！我是陪你熬夜猜谜的小勺🌙', '只答是、否、不确定，别想套我话哦～', '长按汤面就浮出来咯！']}}"
   ></tip-module>
 
+  <!-- 登录提示弹窗 -->
+  <popup
+    id="loginPopup"
+    title="侦探大人，想喝海龟汤吗？"
+    content="先去「个人中心」登录一下吧～"
+    confirmText="去登录→"
+    cancelText="再想想"
+    showClose="{{false}}"
+    imageUrl="https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png"
+    bind:confirm="onLoginConfirm"
+    bind:cancel="onLoginCancel"
+  ></popup>
+
 </view>

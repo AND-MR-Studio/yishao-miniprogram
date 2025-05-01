@@ -148,32 +148,7 @@ Component({
       });
     },
 
-    // 放弃当前海龟汤
-     abandonSoup(){
-      this.triggerVibration();
 
-      wx.showModal({
-        title: '提示',
-        content: '确定要放弃当前海龟汤吗？这不会重置提问次数哦',
-        success: (res) => {
-          if (res.confirm) {
-            this.triggerVibration();
-
-            // 触发放弃事件通知父组件处理后续逻辑
-            this.triggerEvent('abandon');
-
-            // 显示提示消息
-            wx.showToast({
-              title: '已放弃当前海龟汤',
-              icon: 'success',
-              duration: 1500
-            });
-
-            // 注意：页面跳转和清除对话记录的逻辑已移至dialog.js的handleAbandonSoup中处理
-          }
-        }
-      });
-    },
 
     // 清理缓存
     clearCache() {

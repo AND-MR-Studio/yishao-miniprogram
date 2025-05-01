@@ -148,10 +148,11 @@ Page({
    * 设置底部TabBar选中状态
    */
   onShow() {
+    // 设置底部TabBar选中状态
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({
         selected: 1  // 第二个tab是喝汤页面
-      })
+      });
     }
   },
 
@@ -410,7 +411,17 @@ Page({
     // 检查用户是否已登录
     const token = wx.getStorageSync('token');
     if (!token) {
-      this.showLoginPrompt();
+      // 重置按钮状态
+      const startButton = this.selectComponent('.start-button');
+      if (startButton) {
+        startButton.setLoadingComplete(false);
+      }
+
+      // 显示登录提示弹窗
+      const loginPopup = this.selectComponent('#loginPopup');
+      if (loginPopup) {
+        loginPopup.show();
+      }
       return;
     }
 
@@ -467,35 +478,22 @@ Page({
   },
 
   /**
-   * 显示登录提示
+   * 处理登录弹窗确认按钮点击事件
    */
-  showLoginPrompt() {
-    // 重置按钮状态
-    const startButton = this.selectComponent('.start-button');
-    if (startButton) {
-      startButton.setLoadingComplete(false);
-    }
-
-    // 显示登录提示
-    wx.showModal({
-      title: '侦探大人，想喝海龟汤吗？',
-      content: '先去「个人中心」登录一下吧～',
-      confirmText: '去登录',
-      cancelText: '先等等',
-      success: (res) => {
-        if (res.confirm) {
-          // 使用setTimeout确保模态框先关闭，再进行页面跳转
-          setTimeout(() => {
-            wx.switchTab({
-              url: '/pages/mine/mine'
-            });
-          }, 100);
-        }
-      }
+  onLoginConfirm() {
+    // 跳转到个人中心页面
+    wx.switchTab({
+      url: '/pages/mine/mine'
     });
   },
 
-  // 偷看功能已移除，准备重构
+  /**
+   * 处理登录弹窗取消按钮点击事件
+   */
+  onLoginCancel() {
+    // 不需要额外处理，弹窗会自动关闭
+    console.log('用户取消登录');
+  },
 
   // ===== 汤面切换相关 =====
   /**
@@ -655,8 +653,6 @@ Page({
       tipVisible: true // 恢复显示tip模块
     });
   },
-
-
 
   /**
    * 处理滑动方向回调（滑动距离足够时触发）

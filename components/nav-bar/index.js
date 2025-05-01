@@ -146,10 +146,6 @@ Component({
       this.triggerEvent('about');
     },
 
-    // 处理放弃海龟汤事件
-    onAbandon() {
-      // 触发放弃海龟汤事件给页面处理
-      this.triggerEvent('abandon');
-    }
+
   }
 })
