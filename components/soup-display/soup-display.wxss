@@ -11,8 +11,8 @@
   height: 100vh; /* 使用视口高度 */
   position: fixed;
   box-sizing: border-box;
-  will-change: transform;
-  transition: opacity 0.6s var(--transition-decelerated);
+  will-change: transform, filter;
+  transition: opacity 0.6s var(--transition-decelerated), filter 0.3s ease;
 }
 
 /* 汤面内容样式 - 无模糊效果 */
@@ -85,3 +85,35 @@
 }
 
 /* 底部控件样式已移至interaction-footer组件 */
+
+/* 滑动反馈样式 */
+.soup-container.swipe-feedback-left {
+  animation: swipe-left 0.5s ease-out;
+}
+
+.soup-container.swipe-feedback-right {
+  animation: swipe-right 0.5s ease-out;
+}
+
+/* 呼吸模糊效果 */
+.soup-container.breathing-blur {
+  animation: breathing-blur 2s infinite alternate ease-in-out;
+}
+
+@keyframes swipe-left {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-30rpx); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes swipe-right {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(30rpx); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes breathing-blur {
+  0% { filter: blur(0px); }
+  50% { filter: blur(5px); }
+  100% { filter: blur(0px); }
+}

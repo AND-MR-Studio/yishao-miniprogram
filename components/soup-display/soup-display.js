@@ -53,6 +53,26 @@ Component({
     isDrinking: {
       type: Boolean,
       value: false
+    },
+    // 模糊程度（0-10px）
+    blurAmount: {
+      type: Number,
+      value: 0
+    },
+    // 是否启用呼吸模糊效果
+    breathingBlur: {
+      type: Boolean,
+      value: false
+    },
+    // 滑动方向反馈
+    swipeFeedback: {
+      type: Boolean,
+      value: false
+    },
+    // 滑动方向
+    swipeDirection: {
+      type: String,
+      value: 'none'
     }
   },
 

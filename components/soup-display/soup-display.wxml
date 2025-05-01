@@ -1,6 +1,7 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container {{loading ? 'loading' : ''}}"
+  class="soup-container {{loading ? 'loading' : ''}} {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
+  style="filter: blur({{blurAmount}}px);"
 >
   <!-- 汤面内容区域 -->
   <block wx:if="{{!loading}}">
