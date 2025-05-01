@@ -1,24 +1,5 @@
 <!--components/button/index.wxml-->
-<block wx:if="{{type === 'tab-switcher'}}">
-  <view class="tab-switcher" wx:if="{{!isPeeking}}">
-    <view class="tab-container">
-      <view class="tab {{activeTab === '荒诞' ? 'active' : ''}}" data-tab="荒诞" bindtap="handleTabTap">
-        <text class="tab-text">荒诞</text>
-      </view>
-      <view class="tab {{activeTab === '搞笑' ? 'active' : ''}}" data-tab="搞笑" bindtap="handleTabTap">
-        <text class="tab-text">搞笑</text>
-      </view>
-      <view class="tab {{activeTab === '惊悚' ? 'active' : ''}}" data-tab="惊悚" bindtap="handleTabTap">
-        <text class="tab-text">惊悚</text>
-      </view>
-      <view class="tab {{activeTab === '变格' ? 'active' : ''}}" data-tab="变格" bindtap="handleTabTap">
-        <text class="tab-text">变格</text>
-        <view class="badge" wx:if="{{unsolvedCount > 0}}">{{unsolvedCount}}</view>
-      </view>
-    </view>
-  </view>
-</block>
-<block wx:elif="{{type === 'switch'}}">
+<block wx:if="{{type === 'switch'}}">
   <view class="switch-item">
     <view class="item-label">{{label}}</view>
     <view class="jelly-effect-container">

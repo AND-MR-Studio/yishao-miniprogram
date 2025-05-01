@@ -22,15 +22,6 @@
   transition: opacity 0.6s var(--transition-decelerated);
 }
 
-/* 偷看模式下的内容样式 */
-.soup-content.peeking {
-  background: rgba(6, 20, 41, 0.7);
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-
-
 /* 加载中的样式 */
 .soup-container.loading {
   opacity: 0.6;

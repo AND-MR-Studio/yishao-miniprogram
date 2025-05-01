@@ -147,8 +147,6 @@
 .soup-display-wrapper {
   width: 100%;
   height: auto;
-  top: 60rpx;
   position: relative;
   display: block;
-  /* 移除模糊效果相关样式，由soup-display组件管理 */
 }

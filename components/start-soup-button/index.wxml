@@ -1,0 +1,18 @@
+<!--components/start-soup-button/index.wxml-->
+<view class="start-soup-button-container" wx:if="{{visible}}">
+  <view class="btn-container" bindtap="handleTap">
+    <view class="btn-light {{isExpanding ? 'expand-animation' : ''}} {{isPressed ? 'pressed' : ''}}"
+          bindanimationend="handleAnimationEnd">
+      <block wx:if="{{!isPressed}}">
+        <text class="btn-text-light">{{text}}</text>
+      </block>
+      <block wx:else>
+        <view class="loading-dots" wx:if="{{isLoading}}">
+          <text class="dot">.</text>
+          <text class="dot">.</text>
+          <text class="dot">.</text>
+        </view>
+      </block>
+    </view>
+  </view>
+</view>

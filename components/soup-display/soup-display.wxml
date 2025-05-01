@@ -2,6 +2,9 @@
 <view
   class="soup-container {{loading ? 'loading' : ''}} {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
   style="filter: blur({{blurAmount}}px);"
+  bindtouchstart="touchStart"
+  bindtouchmove="touchMove"
+  bindtouchend="touchEnd"
 >
   <!-- 汤面内容区域 -->
   <block wx:if="{{!loading}}">
@@ -15,13 +18,15 @@
 
     <!-- 使用独立的交互底部组件 -->
     <interaction-footer
+      id="interactionFooter"
       isFavorite="{{isFavorite}}"
       favoriteCount="{{favoriteCount}}"
       likeCount="{{likeCount}}"
       creatorId="{{creatorId}}"
       isPeeking="{{isPeeking}}"
       isDrinking="{{isDrinking}}"
-      bind:favorite="onFavoriteClick"
+      soupId="{{currentSoup.soupId || ''}}"
+      bind:favoriteChange="onFavoriteChange"
     ></interaction-footer>
   </block>
 </view>

@@ -8,17 +8,16 @@
     bind:clearcontext="handleClearContext"
   />
 
-  <view class="container" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd">
+  <view class="container">
     <!-- 标签切换器 -->
-    <custom-button
+    <tab-switcher
       wx:if="{{pageState === 'viewing'}}"
-      type="tab-switcher"
       activeTab="{{activeTab}}"
-      unsolvedCount="{{unsolvedCount}}"
       isPeeking="{{isPeeking}}"
+      disabled="{{isLoading}}"
       bind:tabchange="handleTabChange"
       class="tab-switcher-component"
-    ></custom-button>
+    ></tab-switcher>
 
     <!-- 汤面显示区域 -->
     <view class="soup-display-wrapper">
@@ -29,6 +28,7 @@
         isFavorite="{{isFavorite}}"
         isPeeking="{{isPeeking}}"
         isDrinking="{{pageState === 'drinking'}}"
+        pageState="{{pageState}}"
         blurAmount="{{blurAmount}}"
         breathingBlur="{{breathingBlur}}"
         swipeFeedback="{{swipeFeedback}}"
@@ -38,7 +38,8 @@
         bind:animationComplete="onAnimationComplete"
         bind:soupchange="handleSoupChange"
         bind:loading="handleSoupLoading"
-        bind:favorite="toggleFavorite"
+        bind:favoriteChange="handleFavoriteChange"
+        bind:swipe="handleSoupSwipe"
       ></soup-display>
     </view>
 
@@ -51,15 +52,13 @@
 
     <!-- 按钮区域 -->
     <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
-      <custom-button
-        type="light"
-        text="开始喝汤"
-        width="50%"
-        height="80rpx"
+      <start-soup-button
+        id="startSoupButton"
         bind:tap="onStartSoup"
-        class="start-button"
-        wx:if="{{showButtons}}">
-      </custom-button>
+        visible="{{showButtons}}"
+        width="50%"
+        height="80rpx">
+      </start-soup-button>
     </view>
 
     <!-- 滑动提示 -->
@@ -74,8 +73,6 @@
     visible="{{pageState === 'drinking'}}"
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
-    bind:longpress="handleLongPressStart"
-    bind:touchend="handleLongPressEnd"
   ></dialog-component>
 
   <!-- 提示模块组件 - 在喝汤状态和汤底状态显示 -->

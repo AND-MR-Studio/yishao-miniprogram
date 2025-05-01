@@ -3,7 +3,11 @@
  * 负责汤面内容的渲染
  */
 
-// 不再需要引入服务
+// 引入交互管理器
+const { createInteractionManager, SWIPE_DIRECTION } = require('../../utils/interactionManager');
+// 引入服务
+const soupService = require('../../utils/soupService');
+const userService = require('../../utils/userService');
 
 Component({
   properties: {
@@ -21,6 +25,12 @@ Component({
             likeCount: newVal.likeCount || 0,
             creatorId: newVal.creatorId || ''
           });
+
+          // 增加汤面阅读数
+          const soupId = newVal.soupId || '';
+          if (soupId) {
+            this.incrementSoupViewCount(soupId);
+          }
         }
       }
     },
@@ -73,6 +83,11 @@ Component({
     swipeDirection: {
       type: String,
       value: 'none'
+    },
+    // 页面状态：viewing, drinking, truth
+    pageState: {
+      type: String,
+      value: 'viewing'
     }
   },
 
@@ -96,11 +111,20 @@ Component({
           displayContent: this._formatSoupContent(this.data.currentSoup)
         });
       }
+
+      // 初始化交互管理器
+      this.initInteractionManager();
     },
 
     // 组件卸载
     detached() {
       this._isAttached = false;
+
+      // 销毁交互管理器
+      if (this.interactionManager) {
+        this.interactionManager.destroy();
+        this.interactionManager = null;
+      }
     }
   },
 
@@ -136,12 +160,147 @@ Component({
     },
 
     /**
-     * 处理收藏点击事件
+     * 处理收藏状态变更事件
      * 从交互底部组件传递上来的事件
      */
-    onFavoriteClick() {
-      // 触发收藏事件，由页面处理具体逻辑
-      this.triggerEvent('favorite');
+    onFavoriteChange(e) {
+      const { isFavorite, favoriteCount } = e.detail;
+
+      // 更新组件状态
+      this.setData({
+        isFavorite: isFavorite,
+        favoriteCount: favoriteCount
+      });
+
+      // 将事件继续向上传递给页面
+      this.triggerEvent('favoriteChange', {
+        isFavorite: isFavorite,
+        favoriteCount: favoriteCount
+      });
+    },
+
+    /**
+     * 初始化交互管理器
+     */
+    initInteractionManager() {
+      this.interactionManager = createInteractionManager({
+        setData: this.setData.bind(this),
+        onSwipeLeft: this.handleSwipeLeft.bind(this),
+        onSwipeRight: this.handleSwipeRight.bind(this),
+        onDoubleTap: this.handleDoubleTap.bind(this),
+        onLongPressStart: this.handleLongPressStart.bind(this),
+        onLongPressEnd: this.handleLongPressEnd.bind(this),
+        // 长按相关配置
+        longPressDelay: 300, // 长按触发时间，默认300ms
+        enablePeek: true // 启用偷看功能
+      });
+    },
+
+    /**
+     * 处理左滑事件
+     */
+    handleSwipeLeft() {
+      if (this.canSwitchSoup()) {
+        this.setData({
+          swipeFeedback: true,
+          swipeDirection: SWIPE_DIRECTION.LEFT
+        });
+
+        // 通知页面切换汤面
+        this.triggerEvent('swipe', { direction: 'next' });
+      }
+    },
+
+    /**
+     * 处理右滑事件
+     */
+    handleSwipeRight() {
+      if (this.canSwitchSoup()) {
+        this.setData({
+          swipeFeedback: true,
+          swipeDirection: SWIPE_DIRECTION.RIGHT
+        });
+
+        // 通知页面切换汤面
+        this.triggerEvent('swipe', { direction: 'previous' });
+      }
+    },
+
+    /**
+     * 处理双击事件
+     */
+    handleDoubleTap() {
+      // 调用交互底部组件的收藏方法
+      const interactionFooter = this.selectComponent('#interactionFooter');
+      if (interactionFooter) {
+        interactionFooter.toggleFavorite();
+      }
+    },
+
+    /**
+     * 处理长按开始事件
+     */
+    handleLongPressStart() {
+      // 触发长按开始事件
+      this.triggerEvent('longPressStart');
+    },
+
+    /**
+     * 处理长按结束事件
+     */
+    handleLongPressEnd() {
+      // 触发长按结束事件
+      this.triggerEvent('longPressEnd');
+    },
+
+    /**
+     * 检查是否可以切换汤面
+     * @returns {boolean} 是否可以切换汤面
+     */
+    canSwitchSoup() {
+      return this.properties.pageState === 'viewing' && !this.properties.loading;
+    },
+
+    /**
+     * 触摸开始事件处理
+     */
+    touchStart(e) {
+      const canInteract = this.canSwitchSoup();
+      this.interactionManager?.handleTouchStart(e, canInteract);
+    },
+
+    /**
+     * 触摸移动事件处理
+     */
+    touchMove(e) {
+      const canInteract = this.canSwitchSoup();
+      this.interactionManager?.handleTouchMove(e, canInteract);
+    },
+
+    /**
+     * 触摸结束事件处理
+     */
+    touchEnd(e) {
+      const canInteract = this.canSwitchSoup();
+      this.interactionManager?.handleTouchEnd(e, canInteract);
+    },
+
+    /**
+     * 增加汤面阅读数并更新用户浏览记录
+     * @param {string} soupId 汤面ID
+     */
+    async incrementSoupViewCount(soupId) {
+      if (!soupId) return;
+
+      try {
+        // 增加汤面阅读数
+        await soupService.viewSoup(soupId);
+
+        // 更新用户浏览过的汤记录
+        await userService.updateViewedSoup(soupId);
+      } catch (error) {
+        // 阅读数增加失败不影响用户体验，不显示错误提示
+      }
     }
   }
 });

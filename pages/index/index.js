@@ -6,7 +6,7 @@
 const soupService = require('../../utils/soupService');
 const dialogService = require('../../utils/dialogService');
 const userService = require('../../utils/userService');
-const { createInteractionManager, SWIPE_DIRECTION } = require('../../utils/interactionManager');
+const { SWIPE_DIRECTION } = require('../../utils/interactionManager');
 
 // ===== 常量定义 =====
 const PAGE_STATE = {
@@ -32,7 +32,6 @@ Page({
 
     // 标签切换相关
     activeTab: '荒诞', // 当前激活的标签: '荒诞', '搞笑', '惊悚', '变格'，默认显示荒诞汤
-    unsolvedCount: 0, // 未解决的预制汤数量
 
     // 交互相关 - 由interactionManager管理
     swiping: false, // 是否正在滑动中
@@ -43,7 +42,6 @@ Page({
   },
 
   // ===== 页面属性 =====
-  interactionManager: null, // 交互管理器
 
   // ===== 生命周期方法 =====
   /**
@@ -52,9 +50,6 @@ Page({
    * @param {Object} options - 页面参数，可能包含soupId和dialogId
    */
   async onLoad(options) {
-    // 初始化交互管理器
-    this.initInteractionManager();
-
     try {
       this.setData({ isLoading: true });
 
@@ -91,9 +86,6 @@ Page({
 
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData);
-
-      // 获取未解决的预制汤数量
-      this.getUnsolvedSoupCount();
 
       // 如果有dialogId，自动切换到喝汤状态
       if (dialogId) {
@@ -144,13 +136,10 @@ Page({
     if (soupDisplay) {
       soupDisplay.setData({
         isFavorite: isFavorite,
-        favoriteCount: soupData.favoriteCount || 0,
-        likeCount: soupData.likeCount || 0
+        favoriteCount: soupData && soupData.favoriteCount || 0,
+        likeCount: soupData && soupData.likeCount || 0
       });
     }
-
-    // 增加汤面阅读数
-    await this.incrementSoupViewCount(soupId);
   },
 
   /**
@@ -264,12 +253,6 @@ Page({
    * 清理资源
    */
   onUnload() {
-    // 销毁交互管理器
-    if (this.interactionManager) {
-      this.interactionManager.destroy();
-      this.interactionManager = null;
-    }
-
     // 清理事件监听器
     if (wx.eventCenter && wx.eventCenter.callbacks) {
       // 移除当前页面的事件监听
@@ -330,6 +313,12 @@ Page({
         showButtons: false,
         tipVisible: true // 初始化tip模块为显示状态
       });
+
+      // 确保开始喝汤按钮隐藏
+      const startButton = this.selectComponent('#startSoupButton');
+      if (startButton) {
+        startButton.setData({ visible: false });
+      }
 
       // 获取当前对话ID
       const dialogId = dialogService.getCurrentDialogId();
@@ -393,6 +382,15 @@ Page({
       pageState: PAGE_STATE.VIEWING,
       showButtons: true
     });
+
+    // 确保开始喝汤按钮显示并重置到初始状态
+    const startButton = this.selectComponent('#startSoupButton');
+    if (startButton) {
+      // 先设置为可见
+      startButton.setData({ visible: true });
+      // 完全重置按钮状态到idle状态
+      startButton.resetButton();
+    }
   },
 
   /**
@@ -481,7 +479,7 @@ Page({
     const token = wx.getStorageSync('token');
     if (!token) {
       // 重置按钮状态
-      const startButton = this.selectComponent('.start-button');
+      const startButton = this.selectComponent('#startSoupButton');
       if (startButton) {
         startButton.setLoadingComplete(false);
       }
@@ -497,17 +495,11 @@ Page({
     // 获取当前汤面ID
     const currentSoupId = this.getCurrentSoupId();
     if (!currentSoupId) {
-      const startButton = this.selectComponent('.start-button');
+      const startButton = this.selectComponent('#startSoupButton');
       if (startButton) {
         startButton.setLoadingComplete(false);
       }
       return;
-    }
-
-    // 设置按钮加载状态
-    const startButton = this.selectComponent('.start-button');
-    if (startButton) {
-      startButton.setData({ isLoading: true });
     }
 
     try {
@@ -527,6 +519,7 @@ Page({
       await dialogService.loadOrCreateDialog(userId, currentSoupId);
 
       // 设置按钮加载完成
+      const startButton = this.selectComponent('#startSoupButton');
       if (startButton) {
         startButton.setLoadingComplete(true);
       }
@@ -537,6 +530,7 @@ Page({
       console.error('开始喝汤失败:', error);
 
       // 设置按钮加载完成
+      const startButton = this.selectComponent('#startSoupButton');
       if (startButton) {
         startButton.setLoadingComplete(false);
       }
@@ -629,33 +623,12 @@ Page({
       (this.data.currentSoup.soupId || '') : '';
   },
 
-  /**
-   * 增加汤面阅读数并更新用户浏览记录
-   * @param {string} soupId 汤面ID
-   */
-  async incrementSoupViewCount(soupId) {
-    if (!soupId) return;
-
-    try {
-      // 增加汤面阅读数
-      await soupService.viewSoup(soupId);
-
-      // 更新用户浏览过的汤记录
-      await userService.updateViewedSoup(soupId);
-    } catch (error) {
-      // 阅读数增加失败不影响用户体验，不显示错误提示
-    }
-  },
-
-
   // ===== 设置相关 =====
   /**
    * 处理设置变更事件
    * @param {Object} e 事件对象
    */
   handleSettingChange() {
-    // 设置变更处理逻辑
-    // 注意：已移除打字机动画相关设置
   },
 
   /**
@@ -674,170 +647,31 @@ Page({
 
   // ===== 交互相关 =====
   /**
-   * 初始化交互管理器
+   * 处理soup-display组件的滑动事件
+   * @param {Object} e 事件对象
    */
-  initInteractionManager() {
-    // 创建交互管理器，提供滑动、双击和长按回调
-    this.interactionManager = createInteractionManager({
-      setData: this.setData.bind(this),
-      onSwipeLeft: this.handleSwipe.bind(this, 'next'),
-      onSwipeRight: this.handleSwipe.bind(this, 'previous'),
-      onDoubleTap: this.toggleFavorite.bind(this),
-      onLongPressStart: this.handleLongPressStart.bind(this),
-      onLongPressEnd: this.handleLongPressEnd.bind(this),
-      // 长按相关配置
-      longPressDelay: 300, // 长按触发时间，默认300ms
-      enablePeek: true // 启用偷看功能
+  handleSoupSwipe(e) {
+    const { direction } = e.detail;
+    // 等待一帧，确保滑动反馈动画先应用
+    wx.nextTick(() => {
+      this.switchSoup(direction);
     });
   },
 
-  /**
-   * 处理长按开始事件
-   * 在drinking状态下，实现偷看功能
-   */
-  handleLongPressStart() {
-    // 只在喝汤状态下启用偷看功能
-    if (this.data.pageState !== PAGE_STATE.DRINKING) return;
+  // 长按功能已移至dialog组件
 
-    // 设置soup-display组件的样式，同时隐藏tip模块
+  /**
+   * 处理收藏状态变更事件
+   * 从soup-display组件传递上来的事件
+   * @param {Object} e 事件对象
+   */
+  handleFavoriteChange(e) {
+    const { isFavorite } = e.detail;
+
+    // 更新页面状态
     this.setData({
-      isPeeking: true,
-      tipVisible: false // 隐藏tip模块
+      isFavorite: isFavorite
     });
-  },
-
-  /**
-   * 处理长按结束事件
-   * 恢复正常显示状态
-   */
-  handleLongPressEnd() {
-    // 只在喝汤状态下处理
-    if (this.data.pageState !== PAGE_STATE.DRINKING) return;
-
-    // 恢复soup-display组件的样式，同时显示tip模块
-    this.setData({
-      isPeeking: false,
-      tipVisible: true // 恢复显示tip模块
-    });
-  },
-
-  /**
-   * 处理滑动方向回调（滑动距离足够时触发）
-   * @param {string} direction 滑动方向
-   */
-  handleSwipe(direction) {
-    if (this.canSwitchSoup()) {
-      // 滑动结束时，设置滑动反馈动画
-      this.setData({
-        swipeFeedback: true,
-        swipeDirection: direction === 'next' ? SWIPE_DIRECTION.LEFT : SWIPE_DIRECTION.RIGHT
-      });
-
-      // 等待一帧，确保滑动反馈动画先应用
-      wx.nextTick(() => {
-        this.switchSoup(direction);
-      });
-    }
-  },
-
-  /**
-   * 检查是否可以切换汤面
-   * @returns {boolean} 是否可以切换汤面
-   */
-  canSwitchSoup() {
-    return this.data.pageState === PAGE_STATE.VIEWING && !this.data.isLoading;
-  },
-
-  /**
-   * 触摸事件处理方法
-   */
-  handleTouch(method, e) {
-    // 只有在查看状态且不在加载中时才允许交互
-    const canInteract = this.data.pageState === PAGE_STATE.VIEWING && !this.data.isLoading;
-    this.interactionManager?.[method](e, canInteract);
-  },
-
-  // 使用简化的通用处理函数
-  touchStart(e) { this.handleTouch('handleTouchStart', e); },
-  touchMove(e) { this.handleTouch('handleTouchMove', e); },
-  touchEnd(e) { this.handleTouch('handleTouchEnd', e); },
-
-  /**
-   * 切换收藏状态
-   * 收藏或取消收藏当前汤面
-   */
-  async toggleFavorite() {
-    // 获取当前汤面ID
-    const soupId = this.getCurrentSoupId();
-    if (!soupId) return;
-
-    // 检查用户是否已登录
-    if (!userService.checkLoginStatus()) {
-      return;
-    }
-
-    try {
-      // 获取当前收藏状态的反向值
-      const newFavoriteStatus = !this.data.isFavorite;
-
-      // 调用用户服务更新收藏状态
-      const result = await userService.updateFavoriteSoup(soupId, newFavoriteStatus);
-
-      if (result && result.success) {
-        // 更新页面状态
-        this.setData({ isFavorite: newFavoriteStatus });
-
-        // 如果是收藏，增加收藏数
-        if (newFavoriteStatus) {
-          // 调用收藏API，获取更新后的收藏数
-          const favoriteResult = await soupService.favoriteSoup(soupId);
-          const newFavoriteCount = favoriteResult ? favoriteResult.favoriteCount : 0;
-
-          // 更新汤面显示组件的收藏状态和收藏数
-          const soupDisplay = this.selectComponent('#soupDisplay');
-          if (soupDisplay) {
-            soupDisplay.setData({
-              isFavorite: newFavoriteStatus,
-              favoriteCount: newFavoriteCount
-            });
-          }
-
-          // 显示收藏成功提示
-          wx.showToast({
-            title: '收藏成功',
-            icon: 'none',
-            duration: 1500
-          });
-        } else {
-          // 如果是取消收藏，调用取消收藏API减少收藏数
-          const unfavoriteResult = await soupService.unfavoriteSoup(soupId);
-          const newFavoriteCount = unfavoriteResult ? unfavoriteResult.favoriteCount : 0;
-
-          // 更新汤面显示组件的收藏状态和收藏数
-          const soupDisplay = this.selectComponent('#soupDisplay');
-          if (soupDisplay) {
-            soupDisplay.setData({
-              isFavorite: newFavoriteStatus,
-              favoriteCount: newFavoriteCount
-            });
-          }
-
-          // 显示取消收藏提示
-          wx.showToast({
-            title: '已取消收藏',
-            icon: 'none',
-            duration: 1500
-          });
-        }
-      }
-    } catch (error) {
-
-      wx.showToast({
-        title: '操作失败，请重试',
-        icon: 'none',
-        duration: 2000
-      });
-    }
   },
 
   // ===== 辅助方法 =====
@@ -939,43 +773,7 @@ Page({
 
   // 点赞功能已移除，仅显示点赞数
 
-  /**
-   * 获取未解决的数量
-   * 暂时固定显示为5
-   */
-  async getUnsolvedSoupCount() {
-    try {
-      // 检查用户是否已登录
-      if (!userService.checkLoginStatus()) {
-        return;
-      }
-
-      // 暂时固定显示未解决数量为5
-      this.setData({
-        unsolvedCount: 5
-      });
-
-      /*
-      // 原始获取未解决数量的代码，暂时注释
-      // 获取用户ID
-      const userId = await userService.getUserId();
-      if (!userId) {
-        return;
-      }
-
-      // 获取未解决的预制汤数量
-      const result = await soupService.getUnsolvedSoupCount(userId);
-      if (result && typeof result.count === 'number') {
-        this.setData({
-          unsolvedCount: result.count
-        });
-      }
-      */
-    } catch (error) {
-      console.error('获取未解决汤数量失败:', error);
-      // 失败时不显示错误提示，保持数量为0
-    }
-  }
+  // getUnsolvedSoupCount方法已移至tab-switcher组件
 
   // 页面结束
 });

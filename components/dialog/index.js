@@ -482,20 +482,45 @@ Component({
     },
 
     // 偷看功能相关方法
-    handleLongPress(e) {
-      // 触发长按事件，传递给页面处理
-      this.triggerEvent('longpress', e);
-
+    handleLongPress() {
       // 设置偷看模式
       this.setData({ peekMode: true });
+
+      // 通知页面处理偷看状态
+      wx.nextTick(() => {
+        // 获取页面实例
+        const pages = getCurrentPages();
+        const currentPage = pages[pages.length - 1];
+
+        // 如果当前页面有设置isPeeking方法，则调用
+        if (currentPage && currentPage.setData) {
+          currentPage.setData({
+            isPeeking: true,
+            tipVisible: false // 隐藏tip模块
+          });
+        }
+      });
     },
 
-    handleTouchEnd(e) {
+    handleTouchEnd() {
       // 如果当前处于偷看模式，恢复正常显示
       if (this.data.peekMode) {
         this.setData({ peekMode: false });
-        // 触发触摸结束事件，传递给页面处理
-        this.triggerEvent('touchend', e);
+
+        // 通知页面恢复正常显示
+        wx.nextTick(() => {
+          // 获取页面实例
+          const pages = getCurrentPages();
+          const currentPage = pages[pages.length - 1];
+
+          // 如果当前页面有设置isPeeking方法，则调用
+          if (currentPage && currentPage.setData) {
+            currentPage.setData({
+              isPeeking: false,
+              tipVisible: true // 恢复显示tip模块
+            });
+          }
+        });
       }
     }
   }
