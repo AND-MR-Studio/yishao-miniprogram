@@ -32,7 +32,7 @@ const request = (options) => {
     wx.request({
       url: options.url,
       method: options.method || 'GET',
-      data: options.data,
+      data: options.data, 
       header: header,
       success: (res) => {
         const { data } = res;

@@ -73,7 +73,7 @@ Component({
     // 当前激活的标签（仅在type为tab-switcher时有效）
     activeTab: {
       type: String,
-      value: 'preset'
+      value: '荒诞'
     },
     // 未解决的预制汤数量（仅在type为tab-switcher时有效）
     unsolvedCount: {

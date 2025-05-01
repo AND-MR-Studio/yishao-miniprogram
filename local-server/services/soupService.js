@@ -161,12 +161,14 @@ function initSoupRoutes(app) {
   // GET /api/soup - 获取所有海龟汤或根据ID获取特定海龟汤
   app.get(BASE_PATH, async (req, res) => {
     try {
-      const { id, type, tag } = req.query;
+      const { id, type, tags } = req.query;
       let result;
 
       // 如果指定了标签，按标签筛选
-      if (tag !== undefined) {
-        result = await soupDataAccess.getSoupsByTag(tag);
+      if (tags !== undefined) {
+        // 将逗号分隔的标签字符串转换为数组
+        const tagArray = tags.includes(',') ? tags.split(',') : [tags];
+        result = await soupDataAccess.getSoupsByTag(tagArray);
       }
       // 如果指定了类型，按类型筛选
       else if (type !== undefined) {

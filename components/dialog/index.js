@@ -322,6 +322,14 @@ Component({
         this.scrollToBottom();
       });
 
+      // 触发用户发送消息事件，用于提示模块更新
+      if (wx.eventCenter) {
+        wx.eventCenter.emit('userSentMessage', {
+          messageId: userMessage.id,
+          content: userMessage.content
+        });
+      }
+
       try {
         // 发送消息到服务器并获取回复
         const reply = await dialogService.sendMessage({

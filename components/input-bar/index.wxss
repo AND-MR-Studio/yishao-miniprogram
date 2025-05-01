@@ -229,7 +229,7 @@
 /* 有内容时的发送按钮 */
 .send-btn.active {
   /* 玻璃质感按钮 */
-  background: linear-gradient(135deg, rgba(94, 232, 33, 0.8), rgba(75, 209, 60, 0.8));
+  background: var(--color-accent);
   border: 1rpx solid rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);

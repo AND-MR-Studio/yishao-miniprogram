@@ -135,7 +135,7 @@
 .typing-simple::after {
   content: '|';
   display: inline-block;
-  color: var(--color-accent);
+  color: var(--cursor-color);
   animation: cursor-blink 0.8s infinite;
   position: relative;
   margin-left: 2rpx;

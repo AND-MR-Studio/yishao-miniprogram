@@ -1,6 +1,36 @@
 /* components/tip-module/index.wxss */
 @import "../../styles/animation.wxss";
 
+/* 滚轮动画 - 从下向上滚动 */
+@keyframes scrollUp {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 滚轮动画 - 从上向上滚出 */
+@keyframes scrollOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
 /* 提示模块容器 */
 .tip-module-container {
   position: fixed;
@@ -44,7 +74,7 @@
   background-color: rgba(0, 0, 0, 0.29); /* 增加不透明度 */
   position: relative; /* 确保可以正确定位子元素 */
   height: 180rpx; /* 减小高度 */
-  border: 1px solid var( --color-primary); 
+  border: 1px solid var( --color-primary);
 }
 
 /* 头像容器 */
@@ -70,6 +100,32 @@
   color: var(--color-text-secondary);
   text-align: left;
   max-height: 200rpx; /* 确保在固定高度内正确显示 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 提示标题 */
+.text-title {
+  font-size: 32rpx; /* 标题字体大小 */
+  font-weight: bold;
+  margin-bottom: 10rpx; /* 减小下边距 */
+  padding-left: 15rpx; /* 左内边距 */
+  color: var(--color-text-primary);
+}
+
+/* 可滚动区域 */
+.tip-scroll-view {
+  width: 100%;
+  height: 90rpx; /* 固定高度，确保可滚动 */
+  overflow: hidden;
+  position: relative;
+}
+
+/* 文本行容器 */
+.tip-content-container {
+  position: relative;
+  width: 100%;
+  transition: transform 0.5s ease-out;
 }
 
 /* 文本行 */
@@ -78,14 +134,17 @@
   font-size: 28rpx; /* 减小字体大小 */
   line-height: 1.4; /* 减小行高 */
   padding-left: 15rpx; /* 减小左内边距 */
+  position: relative;
+  animation: scrollUp 0.5s ease-out forwards;
 }
 
-/* 第一行特殊样式 */
-.text-line:first-child {
-  font-size: 32rpx; /* 减小字体大小 */
-  font-weight: bold;
-  margin-bottom: 15rpx; /* 减小下边距 */
-  color:var(--color-text-primary);
+/* 滚出的文本行 */
+.text-line.scrolling-out {
+  animation: scrollOut 0.5s ease-out forwards;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
 }
 
 

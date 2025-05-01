@@ -32,6 +32,14 @@
         .nav-link.active {
             font-weight: bold;
         }
+        .tag-badge {
+            margin-right: 5px;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        .selected-tags {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -99,6 +107,15 @@
                                 <label class="form-check-label" for="typeDIY">DIY汤</label>
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label for="tags" class="form-label">标签</label>
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" id="tagInput" placeholder="输入标签名称">
+                                <button class="btn btn-outline-secondary" type="button" id="addTagBtn">添加</button>
+                            </div>
+                            <div id="selectedTags" class="selected-tags"></div>
+                            <div class="form-text">添加标签以便更好地分类海龟汤</div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -144,6 +161,15 @@
                                 <label class="form-check-label" for="editTypeDIY">DIY汤</label>
                             </div>
                         </div>
+                        <div class="mb-3">
+                            <label for="editTags" class="form-label">标签</label>
+                            <div class="input-group mb-2">
+                                <input type="text" class="form-control" id="editTagInput" placeholder="输入标签名称">
+                                <button class="btn btn-outline-secondary" type="button" id="editAddTagBtn">添加</button>
+                            </div>
+                            <div id="editSelectedTags" class="selected-tags"></div>
+                            <div class="form-text">添加标签以便更好地分类海龟汤</div>
+                        </div>
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="mb-3">
@@ -176,10 +202,40 @@
         // 当前选中的标签
         let currentTab = 'all';
 
+        // 存储标签数据
+        let selectedTags = [];
+        let editSelectedTags = [];
+
         // 页面加载完成后执行
         document.addEventListener('DOMContentLoaded', function() {
             // 加载海龟汤列表
             loadSoups();
+
+            // 添加标签按钮事件
+            document.getElementById('addTagBtn').addEventListener('click', function() {
+                addTag('add');
+            });
+
+            // 编辑模态框中的添加标签按钮事件
+            document.getElementById('editAddTagBtn').addEventListener('click', function() {
+                addTag('edit');
+            });
+
+            // 标签输入框回车事件
+            document.getElementById('tagInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag('add');
+                }
+            });
+
+            // 编辑模态框中的标签输入框回车事件
+            document.getElementById('editTagInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addTag('edit');
+                }
+            });
 
             // 标签切换事件
             document.getElementById('allSoupsTab').addEventListener('click', function(e) {
@@ -276,6 +332,7 @@
                                     <span>点赞: ${soup.likeCount || 0}</span>
                                     <span>发布时间: ${formatDate(soup.publishTime || soup.createTime)}</span>
                                 </div>
+                                ${renderTagsHTML(soup.tags || [])}
                                 <div class="action-buttons">
                                     <button class="btn btn-primary btn-sm me-2" onclick="editSoup('${soup.soupId}')">编辑</button>
                                     <button class="btn btn-danger btn-sm" onclick="deleteSoup('${soup.soupId}')">删除</button>
@@ -315,7 +372,8 @@
                     title,
                     contentLines,
                     truth,
-                    soupType
+                    soupType,
+                    tags: selectedTags
                 };
 
                 const response = await fetch(API_BASE_URL, {
@@ -338,6 +396,8 @@
 
                 // 重置表单
                 document.getElementById('addSoupForm').reset();
+                selectedTags = [];
+                renderTags('add');
 
                 // 重新加载列表
                 loadSoups();
@@ -377,6 +437,10 @@
                     document.getElementById('editViewCount').value = soup.viewCount || 0;
                     document.getElementById('editLikeCount').value = soup.likeCount || 0;
 
+                    // 设置标签
+                    editSelectedTags = soup.tags || [];
+                    renderTags('edit');
+
                     // 显示模态框
                     const editModal = new bootstrap.Modal(document.getElementById('editSoupModal'));
                     editModal.show();
@@ -414,7 +478,8 @@
                     truth,
                     soupType,
                     viewCount,
-                    likeCount
+                    likeCount,
+                    tags: editSelectedTags
                 };
 
                 const response = await fetch(`${API_BASE_URL}/${soupId}`, {
@@ -542,6 +607,64 @@
                 hour: '2-digit',
                 minute: '2-digit'
             });
+        }
+
+        // 添加标签
+        function addTag(mode) {
+            const inputId = mode === 'edit' ? 'editTagInput' : 'tagInput';
+            const tagInput = document.getElementById(inputId);
+            const tagValue = tagInput.value.trim();
+
+            if (!tagValue) return;
+
+            // 确定使用哪个标签数组
+            const tagsArray = mode === 'edit' ? editSelectedTags : selectedTags;
+
+            // 检查标签是否已存在
+            if (!tagsArray.includes(tagValue)) {
+                tagsArray.push(tagValue);
+                renderTags(mode);
+            }
+
+            // 清空输入框
+            tagInput.value = '';
+            tagInput.focus();
+        }
+
+        // 删除标签
+        function removeTag(tagIndex, mode) {
+            const tagsArray = mode === 'edit' ? editSelectedTags : selectedTags;
+            tagsArray.splice(tagIndex, 1);
+            renderTags(mode);
+        }
+
+        // 渲染标签
+        function renderTags(mode) {
+            const containerId = mode === 'edit' ? 'editSelectedTags' : 'selectedTags';
+            const container = document.getElementById(containerId);
+            const tagsArray = mode === 'edit' ? editSelectedTags : selectedTags;
+
+            container.innerHTML = '';
+
+            tagsArray.forEach((tag, index) => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'badge bg-primary tag-badge';
+                tagElement.innerHTML = `${tag} <i class="fas fa-times" onclick="removeTag(${index}, '${mode}')"></i>`;
+                container.appendChild(tagElement);
+            });
+        }
+
+        // 渲染标签HTML（用于列表展示）
+        function renderTagsHTML(tags) {
+            if (!tags || tags.length === 0) return '';
+
+            let html = '<div class="mt-2">';
+            tags.forEach(tag => {
+                html += `<span class="badge bg-secondary me-1">${tag}</span>`;
+            });
+            html += '</div>';
+
+            return html;
         }
     </script>
 </body>

@@ -54,13 +54,32 @@ const soupService = {
      * 获取海龟汤列表
      * @param {Object} options 选项
      * @param {number} [options.type] 海龟汤类型，0表示预制汤，1表示DIY汤
+     * @param {string|string[]} [options.tags] 海龟汤标签或标签数组
      * @returns {Promise<Array>} 海龟汤数组
      */
     async getSoupList(options = {}) {
         try {
             let url = soup_base_url;
+            let params = [];
+
             if (options.type !== undefined) {
-                url += `?type=${options.type}`;
+                params.push(`type=${options.type}`);
+            }
+
+            // 处理标签参数
+            if (options.tags) {
+                // 如果是数组，将其转换为逗号分隔的字符串
+                if (Array.isArray(options.tags) && options.tags.length > 0) {
+                    params.push(`tags=${options.tags.join(',')}`);
+                }
+                // 如果是单个标签字符串，直接使用
+                else if (typeof options.tags === 'string') {
+                    params.push(`tags=${options.tags}`);
+                }
+            }
+
+            if (params.length > 0) {
+                url += `?${params.join('&')}`;
             }
 
             const response = await soupRequest({
@@ -81,6 +100,7 @@ const soupService = {
      * @param {string[]} soupData.contentLines 内容行数组
      * @param {string} soupData.truth 汤底
      * @param {number} [soupData.soupType] 海龟汤类型，0表示预制汤，1表示DIY汤
+     * @param {string[]} [soupData.tags] 海龟汤标签数组（可包含多个标签）
      * @returns {Promise<Object>} 创建的海龟汤数据
      */
     async createSoup(soupData) {

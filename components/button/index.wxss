@@ -130,13 +130,13 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 60%;
+  width: 80%;
   height: 70rpx;
   background: rgba(0, 0, 0, 0.22);
   backdrop-filter: blur(20rpx);
   -webkit-backdrop-filter: blur(20rpx);
   border-radius: 35rpx;
-  border: 1rpx solid rgba(33, 0, 94, 0.8);
+  border: 1rpx solid rgba(209, 209, 209, 0.1);
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
   overflow: hidden;
   position: relative;
@@ -161,7 +161,7 @@
 
 /* 标签文本 */
 .tab-text {
-  font-size: 28rpx;
+  font-size: 24rpx;
   color: var(--color-text-disabled);
   transition: all 0.3s ease;
   z-index: 2;

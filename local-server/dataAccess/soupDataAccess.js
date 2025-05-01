@@ -40,7 +40,7 @@ async function initSoupsFile() {
         contentLines: ['这是一个', '本地测试海龟汤', '用于开发环境测试'],
         truth: '这是一个测试用的汤底',
         soupType: 0, // 预制汤
-        tag: SOUP_TAGS.ABSURD, // 荒诞
+        tags: [SOUP_TAGS.ABSURD, SOUP_TAGS.HORROR], // 荒诞、惊悚
         publishTime: now,
         publishIp: '127.0.0.1',
         updateTime: now,
@@ -52,7 +52,7 @@ async function initSoupsFile() {
         contentLines: ['又一个', '本地测试海龟汤', '开发环境专用'],
         truth: '这是另一个测试用的汤底',
         soupType: 1, // DIY汤
-        tag: SOUP_TAGS.FUNNY, // 搞笑
+        tags: [SOUP_TAGS.FUNNY, SOUP_TAGS.VARIANT], // 搞笑、变格
         viewCount: 5,
         likeCount: 2,
         publishTime: now,
@@ -131,13 +131,28 @@ async function getSoupsByType(soupType) {
 
 /**
  * 根据标签获取海龟汤
- * @param {string} tag 海龟汤标签
+ * @param {string|string[]} tag 海龟汤标签或标签数组
  * @returns {Promise<Array>} 海龟汤数组
  */
 async function getSoupsByTag(tag) {
   try {
     const soups = await getAllSoups();
-    return soups.filter(soup => soup.tag === tag);
+
+    // 如果tag是数组，查找包含任一标签的汤
+    if (Array.isArray(tag)) {
+      return soups.filter(soup => {
+        // 检查soup的tags数组中是否有任何一个标签在传入的tag数组中
+        return soup.tags && Array.isArray(soup.tags) &&
+               soup.tags.some(t => tag.includes(t));
+      });
+    }
+
+    // 如果tag是单个字符串，查找包含该标签的汤
+    return soups.filter(soup => {
+      // 检查soup的tags数组是否包含指定标签
+      return soup.tags && Array.isArray(soup.tags) &&
+             soup.tags.includes(tag);
+    });
   } catch (err) {
     console.error('根据标签获取海龟汤失败:', err);
     return [];

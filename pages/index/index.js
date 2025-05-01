@@ -31,7 +31,7 @@ Page({
     isPeeking: false, // 是否处于偷看状态
 
     // 标签切换相关
-    activeTab: 'preset', // 当前激活的标签: 'preset', 'diy'，默认显示预制汤
+    activeTab: '荒诞', // 当前激活的标签: '荒诞', '搞笑', '惊悚', '变格'，默认显示荒诞汤
     unsolvedCount: 0, // 未解决的预制汤数量
 
     // 交互相关 - 由interactionManager管理
@@ -75,8 +75,16 @@ Page({
         // 如果有指定的汤面ID，直接获取该汤面
         soupData = await soupService.getSoup(soupId);
       } else {
-        // 否则获取第一个汤面
-        soupData = await soupService.getAdjacentSoup(null, true); // 传入null获取第一个汤面
+        // 否则获取默认标签的汤面
+        const soups = await soupService.getSoupList({ tags: this.data.activeTab });
+        if (soups && soups.length > 0) {
+          // 随机选择一个汤面
+          const randomIndex = Math.floor(Math.random() * soups.length);
+          soupData = soups[randomIndex];
+        } else {
+          // 如果没有找到对应标签的汤面，获取第一个汤面
+          soupData = await soupService.getAdjacentSoup(null, true);
+        }
       }
 
       if (!soupData) {
@@ -781,28 +789,14 @@ Page({
     this.setData({ activeTab: tab });
 
     try {
-      // 根据标签类型确定汤类型
-      let soupType;
-      switch (tab) {
-        case 'preset':
-          soupType = 0; // 预制汤
-          break;
-        case 'diy':
-          soupType = 1; // DIY汤
-          break;
-        default:
-          soupType = 0; // 默认为预制汤
-          break;
-      }
-
       // 设置加载状态，但不启用模糊效果
       this.setData({
         isLoading: true
         // 移除 breathingBlur: true，避免标签切换时触发模糊效果
       });
 
-      // 获取对应类型的汤
-      let soups = await soupService.getSoupList({ type: soupType });
+      // 获取对应标签的汤
+      let soups = await soupService.getSoupList({ tags: tab });
 
       // 如果有汤数据，随机选择一个
       if (soups && soups.length > 0) {

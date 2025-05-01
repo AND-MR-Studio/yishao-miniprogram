@@ -78,6 +78,19 @@
                 style="width: 100%"
                 v-loading="loading">
                 <el-table-column
+                    label="头像"
+                    width="80"
+                    align="center">
+                    <template slot-scope="scope">
+                        <el-avatar
+                            :size="50"
+                            :src="scope.row.avatarUrl || '/uploads/avatars/default-avatar.jpg'"
+                            @click.native="previewAvatar(scope.row.avatarUrl)"
+                            style="cursor: pointer; border: 2px solid #eee;">
+                        </el-avatar>
+                    </template>
+                </el-table-column>
+                <el-table-column
                     prop="nickName"
                     label="昵称"
                     width="150">
@@ -168,6 +181,17 @@
                 </el-pagination>
             </div>
 
+            <!-- 头像预览对话框 -->
+            <el-dialog title="头像预览" :visible.sync="avatarPreviewVisible" width="400px" center>
+                <div style="text-align: center;">
+                    <img :src="previewAvatarUrl || '/uploads/avatars/default-avatar.jpg'"
+                         style="max-width: 100%; max-height: 300px; border-radius: 5px; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1);">
+                </div>
+                <div style="margin-top: 20px; text-align: center; color: #606266; font-size: 14px;">
+                    <p>{{ previewAvatarUrl || '默认头像' }}</p>
+                </div>
+            </el-dialog>
+
             <!-- 编辑用户对话框 -->
             <el-dialog title="编辑用户" :visible.sync="dialogVisible" width="500px">
                 <el-form :model="editForm" label-width="100px">
@@ -176,12 +200,22 @@
                     </el-form-item>
                     <el-form-item label="头像">
                         <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                            <img :src="editForm.avatarUrl || '/uploads/avatars/default-avatar.jpg'"
-                                 style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 15px;">
-                        </div>
-                        <el-input v-model="editForm.avatarUrl" placeholder="头像URL"></el-input>
-                        <div style="margin-top: 5px; color: #909399; font-size: 12px;">
-                            输入头像图片的URL地址，用户头像上传应在小程序端进行
+                            <el-avatar
+                                :size="100"
+                                :src="editForm.avatarUrl || '/uploads/avatars/default-avatar.jpg'"
+                                style="border: 3px solid #f0f0f0; box-shadow: 0 2px 12px 0 rgba(0,0,0,0.1); cursor: pointer;"
+                                @click.native="previewAvatar(editForm.avatarUrl)">
+                            </el-avatar>
+                            <div style="margin-left: 20px; flex: 1;">
+                                <el-input v-model="editForm.avatarUrl" placeholder="头像URL"></el-input>
+                                <div style="margin-top: 5px; color: #909399; font-size: 12px;">
+                                    输入头像图片的URL地址，用户头像上传应在小程序端进行
+                                </div>
+                                <div style="margin-top: 10px;">
+                                    <el-button size="mini" type="primary" @click="previewAvatar(editForm.avatarUrl)">预览头像</el-button>
+                                    <el-button size="mini" type="danger" @click="resetAvatar">重置为默认头像</el-button>
+                                </div>
+                            </div>
                         </div>
                     </el-form-item>
                     <el-form-item label="等级">
@@ -249,6 +283,9 @@
                 pageSize: 10,
                 total: 0,
                 dialogVisible: false,
+                avatarPreviewVisible: false,
+                previewAvatarUrl: '',
+                defaultAvatarUrl: '/uploads/avatars/default-avatar.jpg',
                 today: new Date().toISOString().split('T')[0],
                 editForm: {
                     userId: '',
@@ -419,6 +456,32 @@
                 },
                 openApiDocs() {
                     window.open('/docs', '_blank');
+                },
+
+                // 预览头像
+                previewAvatar(url) {
+                    this.previewAvatarUrl = url || this.defaultAvatarUrl;
+                    this.avatarPreviewVisible = true;
+                },
+
+                // 重置为默认头像
+                resetAvatar() {
+                    this.$confirm('确定要将头像重置为默认头像吗?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        this.editForm.avatarUrl = this.defaultAvatarUrl;
+                        this.$message({
+                            type: 'success',
+                            message: '已重置为默认头像'
+                        });
+                    }).catch(() => {
+                        this.$message({
+                            type: 'info',
+                            message: '已取消重置'
+                        });
+                    });
                 }
             },
             mounted() {

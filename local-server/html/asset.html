@@ -6,15 +6,28 @@
     <title>资源管理</title>
     <link href="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <style>
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
         .asset-item {
             border: 1px solid #eee;
             border-radius: 5px;
             padding: 15px;
-            margin-bottom: 15px;
             transition: all 0.2s;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
         }
         .asset-item:hover {
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .asset-preview-container {
+            text-align: center;
+            margin-bottom: 10px;
+            flex: 0 0 auto;
         }
         .asset-preview {
             width: 100%;
@@ -22,25 +35,70 @@
             object-fit: contain;
             background-color: #f8f9fa;
             border-radius: 4px;
-            margin-bottom: 10px;
         }
-        .avatar-preview {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            background-color: #f8f9fa;
-            border-radius: 50%;
-            margin: 0 auto 10px;
-            display: block;
+        .asset-info {
+            flex: 1 0 auto;
         }
         .asset-type-badge {
             margin-right: 5px;
+            font-size: 0.75rem;
         }
         .asset-actions {
             margin-top: 10px;
+            display: flex;
+            justify-content: space-between;
         }
         .filter-bar {
             margin-bottom: 20px;
+        }
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+        .asset-url {
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            padding: 4px 6px;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            position: relative;
+            word-break: break-all;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .asset-url:hover {
+            white-space: normal;
+        }
+        .copy-btn {
+            position: absolute;
+            right: 2px;
+            top: 2px;
+            font-size: 0.65rem;
+            padding: 0px 3px;
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 2px;
+            cursor: pointer;
+            line-height: 1.2;
+        }
+        .copy-btn:hover {
+            background-color: #e9ecef;
+        }
+        .asset-description {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+            max-height: 40px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
     </style>
 </head>
@@ -52,11 +110,9 @@
         <div class="row filter-bar">
             <div class="col-md-6">
                 <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-outline-primary active" data-type="all">全部</button>
-                    <button type="button" class="btn btn-outline-primary" data-type="icon">图标</button>
+                    <button type="button" class="btn btn-outline-primary active" data-type="icon">图标</button>
                     <button type="button" class="btn btn-outline-primary" data-type="banner">横幅</button>
                     <button type="button" class="btn btn-outline-primary" data-type="image">图片</button>
-                    <button type="button" class="btn btn-outline-primary" data-type="avatar">头像</button>
                     <button type="button" class="btn btn-outline-primary" data-type="font">字体</button>
                 </div>
             </div>
@@ -68,14 +124,33 @@
         </div>
 
         <!-- 资源列表 -->
-        <div id="assetList" class="row">
+        <div id="assetList" class="asset-grid">
             <!-- 资源将通过JavaScript动态加载 -->
-            <div class="text-center py-5">
+            <div class="text-center py-5 col-12">
                 <div class="spinner-border" role="status">
                     <span class="visually-hidden">加载中...</span>
                 </div>
                 <p class="mt-2">正在加载资源...</p>
             </div>
+        </div>
+
+        <!-- 分页控件 -->
+        <div id="paginationContainer" class="pagination-container" style="display: none;">
+            <nav aria-label="资源分页">
+                <ul class="pagination">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" id="prevPage" aria-label="上一页">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" id="nextPage" aria-label="下一页">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 
@@ -99,7 +174,6 @@
                                 <option value="icon">图标</option>
                                 <option value="banner">横幅</option>
                                 <option value="image">图片</option>
-                                <option value="avatar">头像</option>
                                 <option value="font">字体</option>
                             </select>
                         </div>
@@ -139,14 +213,7 @@
                             </div>
                         </div>
 
-                        <!-- 头像特有字段，默认隐藏 -->
-                        <div id="avatarFields" style="display: none;">
-                            <div class="mb-3">
-                                <label for="avatarUserId" class="form-label">用户ID <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="avatarUserId" placeholder="例如: user123456">
-                                <div class="form-text">关联的用户ID，用于识别头像所属用户</div>
-                            </div>
-                        </div>
+
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -207,14 +274,7 @@
                             </div>
                         </div>
 
-                        <!-- 头像特有字段，根据资源类型显示 -->
-                        <div id="editAvatarFields" style="display: none;">
-                            <div class="mb-3">
-                                <label for="editAvatarUserId" class="form-label">用户ID <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editAvatarUserId" placeholder="例如: user123456">
-                                <div class="form-text">关联的用户ID，用于识别头像所属用户</div>
-                            </div>
-                        </div>
+
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -227,13 +287,42 @@
 
     <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
+        // 复制到剪贴板函数
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                // 显示复制成功提示
+                const tooltip = document.createElement('div');
+                tooltip.className = 'position-fixed top-0 start-50 translate-middle-x p-2 bg-success text-white rounded';
+                tooltip.style.zIndex = '9999';
+                tooltip.textContent = '复制成功！';
+                document.body.appendChild(tooltip);
+
+                // 2秒后移除提示
+                setTimeout(() => {
+                    tooltip.remove();
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                alert('复制失败，请手动复制');
+            });
+        }
+
         // API基础URL
         const API_BASE_URL = '/yishao-api/asset';
+
+        // 分页状态
+        const paginationState = {
+            currentPage: 1,
+            pageSize: 12,
+            totalPages: 1,
+            totalItems: 0,
+            currentType: 'icon'
+        };
 
         // 页面加载完成后执行
         document.addEventListener('DOMContentLoaded', function() {
             // 加载资源列表
-            loadAssets();
+            loadAssets('icon');
 
             // 资源类型过滤按钮点击事件
             document.querySelectorAll('.btn-group button').forEach(button => {
@@ -249,8 +338,8 @@
                     // 获取资源类型
                     const assetType = this.getAttribute('data-type');
 
-                    // 加载指定类型的资源
-                    loadAssets(assetType);
+                    // 重置页码并加载指定类型的资源
+                    loadAssets(assetType, 1);
                 });
             });
 
@@ -258,13 +347,10 @@
             document.getElementById('assetType').addEventListener('change', function() {
                 // 隐藏所有特有字段
                 document.getElementById('bannerFields').style.display = 'none';
-                document.getElementById('avatarFields').style.display = 'none';
 
                 // 根据选择的类型显示对应的特有字段
                 if (this.value === 'banner') {
                     document.getElementById('bannerFields').style.display = 'block';
-                } else if (this.value === 'avatar') {
-                    document.getElementById('avatarFields').style.display = 'block';
                 }
             });
 
@@ -276,10 +362,14 @@
         });
 
         // 加载资源列表
-        async function loadAssets(type = 'all') {
+        async function loadAssets(type = 'icon', page = 1) {
+            // 更新当前类型和页码
+            paginationState.currentType = type;
+            paginationState.currentPage = page;
+
             const assetList = document.getElementById('assetList');
             assetList.innerHTML = `
-                <div class="text-center py-5">
+                <div class="text-center py-5 col-12" style="grid-column: 1 / -1;">
                     <div class="spinner-border" role="status">
                         <span class="visually-hidden">加载中...</span>
                     </div>
@@ -289,10 +379,7 @@
 
             try {
                 // 构建URL
-                let url = `${API_BASE_URL}/list`;
-                if (type !== 'all') {
-                    url += `?type=${type}`;
-                }
+                let url = `${API_BASE_URL}/list?page=${page}&pageSize=${paginationState.pageSize}&type=${type}`;
 
                 // 发送请求
                 const response = await fetch(url);
@@ -303,26 +390,33 @@
                 }
 
                 const assets = data.data?.assets || [];
+                const pagination = data.data?.pagination || { total: 0, page: 1, pageSize: paginationState.pageSize, totalPages: 1 };
+
+                // 更新分页状态
+                paginationState.totalItems = pagination.total;
+                paginationState.totalPages = pagination.totalPages;
+                paginationState.currentPage = pagination.page;
+
+                // 更新分页控件
+                updatePagination();
 
                 // 清空列表
                 assetList.innerHTML = '';
 
                 if (assets.length === 0) {
-                    assetList.innerHTML = '<div class="col-12"><div class="alert alert-info">没有找到资源</div></div>';
+                    assetList.innerHTML = '<div style="grid-column: 1 / -1;"><div class="alert alert-info">没有找到资源</div></div>';
                     return;
                 }
 
                 // 渲染资源列表
                 assets.forEach(asset => {
                     const assetElement = document.createElement('div');
-                    assetElement.className = 'col-md-4 col-sm-6 mb-4';
 
                     // 根据资源类型设置徽章颜色
                     let badgeClass = 'bg-secondary';
                     if (asset.type === 'icon') badgeClass = 'bg-primary';
                     if (asset.type === 'banner') badgeClass = 'bg-success';
                     if (asset.type === 'image') badgeClass = 'bg-info';
-                    if (asset.type === 'avatar') badgeClass = 'bg-danger';
                     if (asset.type === 'font') badgeClass = 'bg-warning';
 
                     // 准备额外的资源信息
@@ -342,33 +436,29 @@
                         `;
                     }
 
-                    // Avatar特有信息
-                    if (asset.type === 'avatar') {
-                        extraInfo = `
-                            <div class="mt-2 mb-2">
-                                <small class="text-muted d-block">用户ID: ${asset.userId || '未关联'}</small>
-                            </div>
-                        `;
-                    }
-
-                    // 根据资源类型选择不同的预览样式
+                    // 设置预览样式
                     let previewClass = 'asset-preview';
-                    if (asset.type === 'avatar') {
-                        previewClass = 'avatar-preview';
-                    }
 
                     assetElement.innerHTML = `
                         <div class="asset-item">
-                            <img src="${asset.url}" alt="${asset.name}" class="${previewClass}">
-                            <h5>${asset.name}</h5>
-                            <div>
-                                <span class="badge ${badgeClass} asset-type-badge">${asset.type}</span>
-                                ${asset.page ? `<span class="badge bg-light text-dark">${asset.page}</span>` : ''}
+                            <div class="asset-preview-container">
+                                <img src="${asset.url}" alt="${asset.name}" class="${previewClass}">
                             </div>
-                            <p class="text-muted small">${asset.description || ''}</p>
-                            ${extraInfo}
+                            <div class="asset-info">
+                                <h5 class="mb-1">${asset.name}</h5>
+                                <div>
+                                    <span class="badge ${badgeClass} asset-type-badge">${asset.type}</span>
+                                    ${asset.page ? `<span class="badge bg-light text-dark">${asset.page}</span>` : ''}
+                                </div>
+                                <p class="asset-description">${asset.description || ''}</p>
+                                ${extraInfo}
+                                <div class="asset-url">
+                                    <span>${asset.url}</span>
+                                    <button class="copy-btn" onclick="copyToClipboard('${asset.url}')">复制</button>
+                                </div>
+                            </div>
                             <div class="asset-actions">
-                                <button class="btn btn-sm btn-outline-primary me-2" onclick="editAsset('${asset.id}')">编辑</button>
+                                <button class="btn btn-sm btn-outline-primary" onclick="editAsset('${asset.id}')">编辑</button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="deleteAsset('${asset.id}')">删除</button>
                             </div>
                         </div>
@@ -379,8 +469,110 @@
 
             } catch (err) {
                 console.error('加载资源失败:', err);
-                assetList.innerHTML = `<div class="col-12"><div class="alert alert-danger">加载失败: ${err.message}</div></div>`;
+                assetList.innerHTML = `<div style="grid-column: 1 / -1;"><div class="alert alert-danger">加载失败: ${err.message}</div></div>`;
             }
+        }
+
+        // 更新分页控件
+        function updatePagination() {
+            const paginationContainer = document.getElementById('paginationContainer');
+            const paginationList = paginationContainer.querySelector('ul.pagination');
+
+            // 如果总页数小于等于1，隐藏分页控件
+            if (paginationState.totalPages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+
+            // 显示分页控件
+            paginationContainer.style.display = 'flex';
+
+            // 清空现有页码按钮，只保留上一页和下一页按钮
+            const prevPageItem = paginationList.querySelector('#prevPage').parentNode;
+            const nextPageItem = paginationList.querySelector('#nextPage').parentNode;
+
+            paginationList.innerHTML = '';
+            paginationList.appendChild(prevPageItem);
+
+            // 生成页码按钮
+            const maxVisiblePages = 5; // 最多显示的页码数
+            let startPage = Math.max(1, paginationState.currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(paginationState.totalPages, startPage + maxVisiblePages - 1);
+
+            // 调整起始页，确保显示足够的页码
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+
+            // 添加第一页按钮（如果不是从第一页开始）
+            if (startPage > 1) {
+                const firstPageItem = document.createElement('li');
+                firstPageItem.className = 'page-item';
+                firstPageItem.innerHTML = `<a class="page-link" href="#" data-page="1">1</a>`;
+                paginationList.appendChild(firstPageItem);
+
+                // 添加省略号（如果第一页和起始页之间有间隔）
+                if (startPage > 2) {
+                    const ellipsisItem = document.createElement('li');
+                    ellipsisItem.className = 'page-item disabled';
+                    ellipsisItem.innerHTML = `<a class="page-link" href="#">...</a>`;
+                    paginationList.appendChild(ellipsisItem);
+                }
+            }
+
+            // 添加页码按钮
+            for (let i = startPage; i <= endPage; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = `page-item ${i === paginationState.currentPage ? 'active' : ''}`;
+                pageItem.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`;
+                paginationList.appendChild(pageItem);
+            }
+
+            // 添加最后一页按钮（如果不是到最后一页结束）
+            if (endPage < paginationState.totalPages) {
+                // 添加省略号（如果最后一页和结束页之间有间隔）
+                if (endPage < paginationState.totalPages - 1) {
+                    const ellipsisItem = document.createElement('li');
+                    ellipsisItem.className = 'page-item disabled';
+                    ellipsisItem.innerHTML = `<a class="page-link" href="#">...</a>`;
+                    paginationList.appendChild(ellipsisItem);
+                }
+
+                const lastPageItem = document.createElement('li');
+                lastPageItem.className = 'page-item';
+                lastPageItem.innerHTML = `<a class="page-link" href="#" data-page="${paginationState.totalPages}">${paginationState.totalPages}</a>`;
+                paginationList.appendChild(lastPageItem);
+            }
+
+            paginationList.appendChild(nextPageItem);
+
+            // 更新上一页和下一页按钮状态
+            prevPageItem.className = `page-item ${paginationState.currentPage <= 1 ? 'disabled' : ''}`;
+            nextPageItem.className = `page-item ${paginationState.currentPage >= paginationState.totalPages ? 'disabled' : ''}`;
+
+            // 添加页码点击事件
+            paginationList.querySelectorAll('a.page-link[data-page]').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = parseInt(this.getAttribute('data-page'));
+                    loadAssets(paginationState.currentType, page);
+                });
+            });
+
+            // 添加上一页和下一页按钮点击事件
+            document.getElementById('prevPage').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (paginationState.currentPage > 1) {
+                    loadAssets(paginationState.currentType, paginationState.currentPage - 1);
+                }
+            });
+
+            document.getElementById('nextPage').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (paginationState.currentPage < paginationState.totalPages) {
+                    loadAssets(paginationState.currentType, paginationState.currentPage + 1);
+                }
+            });
         }
 
         // 上传资源
@@ -424,15 +616,6 @@
                     const sortOrder = document.getElementById('bannerSortOrder').value;
                     formData.append('sortOrder', sortOrder);
                 }
-                // 头像特有信息
-                else if (type === 'avatar') {
-                    const userId = document.getElementById('avatarUserId').value.trim();
-                    if (!userId) {
-                        alert('请填写用户ID');
-                        return;
-                    }
-                    formData.append('userId', userId);
-                }
 
                 // 发送请求
                 const response = await fetch(`${API_BASE_URL}/upload`, {
@@ -454,8 +637,8 @@
                 document.getElementById('uploadAssetForm').reset();
                 document.getElementById('bannerFields').style.display = 'none';
 
-                // 重新加载资源列表
-                loadAssets();
+                // 重新加载资源列表，重置为第一页
+                loadAssets(paginationState.currentType, 1);
 
                 alert('上传成功');
 
@@ -486,7 +669,6 @@
 
                 // 隐藏所有特有字段
                 document.getElementById('editBannerFields').style.display = 'none';
-                document.getElementById('editAvatarFields').style.display = 'none';
 
                 // 根据资源类型显示特有字段
                 if (asset.type === 'banner') {
@@ -495,14 +677,6 @@
                     document.getElementById('editBannerLinkUrl').value = asset.linkUrl || '';
                     document.getElementById('editBannerBgColor').value = asset.bgColor || '';
                     document.getElementById('editBannerSortOrder').value = asset.sortOrder || 0;
-                }
-                // 头像特有字段
-                else if (asset.type === 'avatar') {
-                    document.getElementById('editAvatarFields').style.display = 'block';
-                    document.getElementById('editAvatarUserId').value = asset.userId || '';
-
-                    // 为头像设置圆形预览样式
-                    document.getElementById('editAssetPreview').className = 'avatar-preview';
                 } else {
                     // 其他类型使用默认预览样式
                     document.getElementById('editAssetPreview').className = 'asset-preview';
@@ -555,15 +729,6 @@
                     // 添加排序顺序
                     updateData.sortOrder = parseInt(document.getElementById('editBannerSortOrder').value) || 0;
                 }
-                // 头像特有信息
-                else if (document.getElementById('editAvatarFields').style.display !== 'none') {
-                    const userId = document.getElementById('editAvatarUserId').value.trim();
-                    if (!userId) {
-                        alert('请填写用户ID');
-                        return;
-                    }
-                    updateData.userId = userId;
-                }
 
                 // 发送请求
                 const response = await fetch(`${API_BASE_URL}/update/${id}`, {
@@ -584,8 +749,8 @@
                 const modal = bootstrap.Modal.getInstance(document.getElementById('editAssetModal'));
                 modal.hide();
 
-                // 重新加载资源列表
-                loadAssets();
+                // 重新加载资源列表，重置为第一页
+                loadAssets(paginationState.currentType, 1);
 
                 alert('更新成功');
 
@@ -613,8 +778,8 @@
                     throw new Error(data.error || '删除失败');
                 }
 
-                // 重新加载资源列表
-                loadAssets();
+                // 重新加载资源列表，重置为第一页
+                loadAssets(paginationState.currentType, 1);
 
                 alert('删除成功');
 
