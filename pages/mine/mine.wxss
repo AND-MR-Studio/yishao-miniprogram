@@ -23,7 +23,7 @@
   right: 0;
   bottom: 0;
   background: radial-gradient(circle at 30% 20%, rgba(92, 232, 33, 0.1) 0%, transparent 50%),
-              radial-gradient(circle at 70% 60%, rgba(128, 0, 255, 0.1) 0%, transparent 50%);
+              radial-gradient(circle at 70% 60%, rgba(87, 44, 239, 0.1) 0%, transparent 50%);
   z-index: 0;
 }
 
@@ -89,105 +89,7 @@
   letter-spacing: 1px;
 }
 
-/* 更新日志Banner轮播样式 */
-.banner-swiper {
-  width: 100%;
-  height: 260rpx;
-  margin-bottom: 30rpx;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-}
-
-.update-banner {
-  width: 100%;
-  height: 260rpx;
-  background-color: rgba(128, 0, 255, 0.7);
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  position: relative;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.2);
-}
-
-.update-banner-gradient {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-  z-index: 0;
-}
-
-.banner-purple {
-  background-color: rgba(128, 0, 255, 0.7);
-}
-
-.banner-purple-gradient {
-  background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 60%);
-}
-
-.banner-mix {
-  background-color: rgba(128, 0, 255, 0.7);
-}
-
-.banner-mix-gradient {
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-}
-
-.banner-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 30rpx 40rpx;
-  height: 100%;
-  position: relative;
-  z-index: 1;
-}
-
-.banner-title {
-  display: flex;
-  flex-direction: column;
-}
-
-.banner-title-main {
-  font-size: 38rpx;
-  color: #FFFFFF;
-  font-weight: bold;
-  margin-bottom: 15rpx;
-  text-shadow: 0 0 10rpx rgba(255, 255, 255, 0.5);
-  letter-spacing: 1px;
-}
-
-.banner-title-sub {
-  font-size: 28rpx;
-  color: rgba(255, 255, 255, 0.9);
-  letter-spacing: 0.5px;
-}
-
-.banner-image {
-  width: 120rpx;
-  height: 120rpx;
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 50%;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 0 15rpx rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-}
-
-.banner-image-glow {
-  position: absolute;
-  top: -10rpx;
-  left: -10rpx;
-  right: -10rpx;
-  bottom: -10rpx;
-  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
-  z-index: 0;
-  filter: blur(5px);
-}
+/* Banner样式已移至banner-swiper组件，此处不再重复定义 */
 
 /* 功能列表样式 */
 .function-list {
@@ -245,8 +147,8 @@
   width: 18rpx;
   height: 18rpx;
   display: inline-block;
-  border-top: 2rpx solid var(--color-primary);
-  border-right: 2rpx solid var(--color-primary);
+  border-top: 2rpx solid var(--color-accent);
+  border-right: 2rpx solid var(--color-accent);
   transform: rotate(45deg);
   box-shadow: 2rpx -2rpx 0 rgba(92, 232, 33, 0.3);
 }
@@ -316,7 +218,7 @@
   background: linear-gradient(90deg,
     transparent 0%,
     rgba(92, 232, 33, 0.3) 15%,
-    rgba(128, 0, 255, 0.3) 85%,
+    rgba(87, 44, 239, 0.3) 85%,
     transparent 100%);
 }
 
@@ -395,7 +297,7 @@
   right: -5rpx;
   bottom: -5rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(128, 0, 255, 0.5));
+  background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(87, 44, 239, 0.5));
   z-index: -1;
   opacity: 0.7;
 }

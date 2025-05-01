@@ -44,7 +44,7 @@
   background-color: rgba(0, 0, 0, 0.29); /* 增加不透明度 */
   position: relative; /* 确保可以正确定位子元素 */
   height: 180rpx; /* 减小高度 */
-  border: 1px solid rgba(140, 0, 255, 0.3); /* 添加红色边框 */
+  border: 1px solid var( --color-primary); 
 }
 
 /* 头像容器 */
@@ -67,7 +67,7 @@
 .text-container {
   width: 100%;
   padding: 0rpx; /* 减小内边距 */
-  color: #ffffff;
+  color: var(--color-text-secondary);
   text-align: left;
   max-height: 200rpx; /* 确保在固定高度内正确显示 */
 }
@@ -77,7 +77,6 @@
   margin-bottom: 12rpx; /* 减小行间距 */
   font-size: 28rpx; /* 减小字体大小 */
   line-height: 1.4; /* 减小行高 */
-  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.5);
   padding-left: 15rpx; /* 减小左内边距 */
 }
 
@@ -86,7 +85,7 @@
   font-size: 32rpx; /* 减小字体大小 */
   font-weight: bold;
   margin-bottom: 15rpx; /* 减小下边距 */
-  color: #ffffff;
+  color:var(--color-text-primary);
 }
 
 

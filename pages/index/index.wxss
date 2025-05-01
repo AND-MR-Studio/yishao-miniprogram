@@ -15,13 +15,13 @@
 
 /* 弥散光渐变背景 - 统一的绿紫品牌色调 */
 .page {
-  --default-gradient: radial-gradient(ellipse at 20% 30%, rgba(76, 0, 255, 0.5) 0%, rgba(25, 0, 112, 0.3) 30%, transparent 70%),
+  --default-gradient: radial-gradient(ellipse at 20% 30%, rgba(87, 44, 239, 0.5) 0%, rgba(25, 0, 112, 0.3) 30%, transparent 70%),
                      radial-gradient(ellipse at 80% 85%, rgba(0, 30, 255, 0.3) 0%, rgba(0, 10, 80, 0.2) 40%, transparent 70%),
-                     radial-gradient(ellipse at 50% 50%, rgba(128, 0, 255, 0.2) 0%, rgba(50, 0, 120, 0.1) 30%, transparent 60%),
+                     radial-gradient(ellipse at 50% 50%, rgba(87, 44, 239, 0.2) 0%, rgba(50, 0, 120, 0.1) 30%, transparent 60%),
                      /* 适度增强绿色品牌色 */
-                     radial-gradient(ellipse at 65% 20%, rgba(0, 255, 136, 0.25) 0%, rgba(0, 180, 90, 0.15) 30%, transparent 60%),
-                     radial-gradient(ellipse at 40% 60%, rgba(0, 230, 115, 0.2) 0%, rgba(0, 150, 75, 0.1) 40%, transparent 70%),
-                     radial-gradient(circle at 30% 75%, rgba(0, 200, 100, 0.2) 0%, rgba(0, 100, 50, 0.1) 40%, transparent 70%);
+                     radial-gradient(ellipse at 65% 20%, rgba(92, 232, 33, 0.25) 0%, rgba(0, 180, 90, 0.15) 30%, transparent 60%),
+                     radial-gradient(ellipse at 40% 60%, rgba(92, 232, 33, 0.2) 0%, rgba(0, 150, 75, 0.1) 40%, transparent 70%),
+                     radial-gradient(circle at 30% 75%, rgba(92, 232, 33, 0.2) 0%, rgba(0, 100, 50, 0.1) 40%, transparent 70%);
   --dynamic-gradient: var(--default-gradient);
 }
 

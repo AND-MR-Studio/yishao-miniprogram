@@ -53,7 +53,7 @@
   font-size: 32rpx;
   color: #FFFFFF;
   font-weight: bold;
-  text-shadow: 0 0 10rpx rgba(92, 232, 33, 0.5);
+  text-shadow: 0 0 10rpx rgba(87, 44, 239, 0.5);
 }
 
 .modal-close {
@@ -95,7 +95,7 @@
   width: 80rpx;
   height: 80rpx;
   border: 4rpx solid rgba(255, 255, 255, 0.1);
-  border-top: 4rpx solid rgba(92, 232, 33, 0.9);
+  border-top: 4rpx solid rgba(87, 44, 239, 0.9);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20rpx;

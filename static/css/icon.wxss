@@ -48,9 +48,9 @@
   height: 40rpx;
   display: inline-block;
   position: relative;
-  border: 2rpx solid #5CE821;
+  border: 2rpx solid #5ce821;
   border-radius: 50%;
-  color: #5CE821;
+  color: #5ce821;
   text-align: center;
   line-height: 40rpx;
 }
@@ -66,7 +66,7 @@
   width: 16rpx;
   height: 16rpx;
   display: inline-block;
-  border-top: 2rpx solid #5CE821;
-  border-right: 2rpx solid #5CE821;
+  border-top: 2rpx solid #5ce821;
+  border-right: 2rpx solid #5ce821;
   transform: rotate(45deg);
 }

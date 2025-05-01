@@ -20,11 +20,11 @@
 }
 
 .banner-purple {
-  background: linear-gradient(135deg, rgba(128, 0, 255, 0.7), rgba(20, 10, 40, 0.8));
+  background: linear-gradient(135deg, rgba(87, 44, 239, 0.7), rgba(20, 10, 40, 0.8));
 }
 
 .banner-mix {
-  background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(128, 0, 255, 0.5));
+  background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(87, 44, 239, 0.5));
 }
 
 .banner-loading {

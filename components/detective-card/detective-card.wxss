@@ -44,7 +44,7 @@
   right: -3rpx;
   bottom: -3rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(128, 0, 255, 0.5));
+  background: linear-gradient(135deg, var(--color-accent), var(--color-primary));
   z-index: -1;
   opacity: 0.7;
 }
@@ -125,7 +125,7 @@
 
 .level-badge {
   display: inline-block;
-  background-color: rgba(128, 0, 255, 0.6); /* 紫色品牌色 */
+  background-color: var(--color-primary); /* 紫色品牌色 */
   color: #FFFFFF;
   font-size: 24rpx;
   font-weight: bold;
@@ -167,14 +167,14 @@
 
 .answer-value {
   font-size: 36rpx;
-  color: rgba(92, 232, 33, 0.9); /* 绿色 */
+  color: var(--color-accent); /* 绿色 */
   font-weight: bold;
   line-height: 1;
   margin-left: 8rpx;
 }
 
 .sign-in-btn {
-  background-color: rgba(128, 0, 255, 0.6); /* 紫色品牌色 */
+  background-color:var(--color-primary); /* 紫色品牌色 */
   color: #FFFFFF;
   padding: 12rpx 30rpx;
   border-radius: 10rpx;
@@ -201,11 +201,6 @@
 }
 
 /* 四栏数据样式 */
-:host {
-  --color-primary: rgba(92, 232, 33, 0.9);
-  --color-text-secondary: rgba(255, 255, 255, 0.6);
-}
-
 .stats-section {
   display: flex;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -239,10 +234,10 @@
 
 .stat-value {
   font-size: 38rpx;
-  color: var(--color-primary);
+  color: var(--color-accent);
   font-weight: bold;
   margin-bottom: 12rpx;
-  text-shadow: 0 0 10rpx rgba(92, 232, 33, 0.5);
+  text-shadow: 0 0 10rpx rgba(44, 239, 106, 0.5);
 }
 
 .stat-label {

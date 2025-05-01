@@ -45,7 +45,7 @@
   gap: 10rpx;
   width: 100rpx;
   height: 56rpx;
-  background: #5CE821;
+  background:var(--color-accent);
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
   transition: all 0.3s ease;
@@ -64,7 +64,7 @@
   padding: 0 !important;
   margin: 0 auto !important;
   border-radius: 50% !important;
-  background-color: #5CE821 !important;
+  background-color:var(--color-accent);
   box-shadow: 0rpx 10rpx 25rpx rgba(4, 244, 77, 0.3) !important;
   z-index: 1000 !important;
   transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; /* 弹性过渡效果 */
@@ -162,20 +162,21 @@
 /* 标签文本 */
 .tab-text {
   font-size: 28rpx;
-  color: rgba(111, 111, 111, 0.2);
+  color: var(--color-text-disabled);
   transition: all 0.3s ease;
   z-index: 2;
 }
 
 /* 激活标签的文本 */
 .tab.active .tab-text {
-  color:rgba(155, 155, 155, 0.63);
-  font-weight: bold;
+  color: var(--color-text-primary);
+  font-weight: normal;
 }
 
 /* 激活的标签背景 */
 .tab.active {
-  background: rgba(34, 12, 132, 0.57);
+  background: var(--color-primary);
+  opacity: 0.6;
   border-radius: 30rpx;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.5);
 }
@@ -187,10 +188,10 @@
   min-width: 32rpx;
   height: 32rpx;
   padding: 0 6rpx;
-  background: rgba(68, 20, 135, 0.58);
+  background: var(--color-primary-light);
   border-radius: 16rpx;
   font-size: 20rpx;
-  color:rgba(255, 255, 255, 0.41);
+  color: var(--color-text-secondary);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -312,7 +313,7 @@
 }
 
 .switch.active {
-  background: rgba(92, 232, 33, 0.6);
+  background: var(--color-accent);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 0 0 10rpx rgba(92, 232, 33, 0.2);
 }

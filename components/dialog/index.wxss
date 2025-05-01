@@ -96,7 +96,7 @@
 
 /* 回复消息样式 */
 .response {
-  color: var(--color-primary);
+  color: var(--color-accent);
 }
 
 /* 用户消息样式 */

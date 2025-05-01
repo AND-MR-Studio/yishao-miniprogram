@@ -12,7 +12,7 @@ Component({
   data: {
     selected: 1,
     color: "#DBFFEC",
-    selectedColor: "#5CE821",
+    selectedColor: "#5ce821",
     list: [
       {
         pagePath: "/pages/gensoup/gensoup",
