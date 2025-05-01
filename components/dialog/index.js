@@ -89,10 +89,7 @@ Component({
 
       if (visible) {
         this.showDialog();
-        // 只有在没有消息时才加载
-        if (!this.data.messages.length) {
-          this.loadDialogMessages();
-        }
+        // 不再自动加载消息，由外部控制加载时机
       } else {
         this.hideDialog();
       }
@@ -213,10 +210,12 @@ Component({
           messages = await dialogService.getDialogMessages(dialogId);
         }
 
-        // 更新到页面
-        this.setData({
-          messages: messages,
-          loading: false
+        // 使用Promise包装setData，确保UI更新完成
+        await new Promise(resolve => {
+          this.setData({
+            messages: messages,
+            loading: false
+          }, resolve);
         });
 
         // 滚动到底部
@@ -227,9 +226,11 @@ Component({
         console.error('加载对话记录失败:', error);
 
         // 出错时返回空消息数组
-        this.setData({
-          messages: [],
-          loading: false
+        await new Promise(resolve => {
+          this.setData({
+            messages: [],
+            loading: false
+          }, resolve);
         });
 
         return [];

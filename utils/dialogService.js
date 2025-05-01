@@ -2,7 +2,7 @@
  * 对话服务类
  * 处理用户与系统对话的通信、存储与加载
  */
-const { request } = require('./api');
+const { dialogRequest } = require('./api');
 
 // 获取基础 URL
 const getBaseUrl = () => {
@@ -180,7 +180,7 @@ class DialogService {
             const url = `${getBaseUrl()}dialog/${params.dialogId}/send`;
 
             // 发送请求到后端
-            const response = await request({
+            const response = await dialogRequest({
                 url: url,
                 method: 'POST',
                 data: {
@@ -237,7 +237,7 @@ class DialogService {
         try {
             const url = `${getBaseUrl()}dialog/${dialogId}`;
 
-            const response = await request({
+            const response = await dialogRequest({
                 url: url,
                 method: 'GET'
             });
@@ -379,7 +379,7 @@ class DialogService {
             // 构建请求URL
             const url = `${getBaseUrl()}dialog/create`;
 
-            const response = await request({
+            const response = await dialogRequest({
                 url: url,
                 method: 'POST',
                 data: {
@@ -424,7 +424,7 @@ class DialogService {
             // 构建请求URL
             const url = `${getBaseUrl()}dialog/user/${userId}/soup/${soupId}`;
 
-            const response = await request({
+            const response = await dialogRequest({
                 url: url,
                 method: 'GET'
             });
@@ -479,7 +479,7 @@ class DialogService {
             // 构建请求URL
             const url = `${getBaseUrl()}dialog/${dialogId}/save`;
 
-            const response = await request({
+            const response = await dialogRequest({
                 url: url,
                 method: 'POST',
                 data: {

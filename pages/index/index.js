@@ -58,6 +58,8 @@ const createPageStateManager = (page) => {
       // 显示对话框并设置必要属性
       const dialog = page.selectComponent('#dialog');
       if (dialog) {
+        // 对话记录应该已经在onStartSoup中预加载完成
+        // 现在只需要设置visible为true显示对话框
         dialog.setData({
           soupId: soupId,
           dialogId: dialogId,
@@ -626,16 +628,44 @@ Page({
       const userId = await this.ensureUserId();
 
       // 使用统一的对话加载方法
-      await dialogService.loadOrCreateDialog(userId, currentSoupId);
+      const dialogData = await dialogService.loadOrCreateDialog(userId, currentSoupId);
+      const dialogId = dialogData.dialogId || dialogService.getCurrentDialogId();
 
-      // 设置按钮加载完成
-      if (startButton) {
-        startButton.setLoadingComplete(true);
+      if (!dialogId) {
+        throw new Error('无法获取对话ID');
       }
 
-      // 切换到喝汤状态
-      const dialogId = dialogService.getCurrentDialogId();
-      this.pageStateManager.switchToDrinking(currentSoupId, dialogId, userId);
+      // 预加载对话记录
+      const dialog = this.selectComponent('#dialog');
+      if (dialog) {
+        // 设置必要的属性，但不显示对话框
+        dialog.setData({
+          soupId: currentSoupId,
+          dialogId: dialogId,
+          userId: userId,
+          visible: false
+        });
+
+        // 显式加载对话记录
+        await dialog.loadDialogMessages();
+
+        // 加载完成后，设置按钮加载完成
+        if (startButton) {
+          startButton.setLoadingComplete(true);
+        }
+
+        // 等待一小段时间确保UI更新完成
+        setTimeout(() => {
+          // 切换到喝汤状态
+          this.pageStateManager.switchToDrinking(currentSoupId, dialogId, userId);
+        }, 100);
+      } else {
+        // 如果无法获取对话组件，仍然尝试切换状态
+        if (startButton) {
+          startButton.setLoadingComplete(true);
+        }
+        this.pageStateManager.switchToDrinking(currentSoupId, dialogId, userId);
+      }
     } catch (error) {
       console.error('开始喝汤失败:', error);
 

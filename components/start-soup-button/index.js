@@ -46,7 +46,7 @@ Component({
     // 按钮点击事件
     handleTap() {
       // 如果正在加载或展开中，不处理点击
-      if (this.data.isLoading || this.data.isExpanding) {
+      if (this.data.isLoading || this.data.isExpanding || this.data.isPressed) {
         return;
       }
 
