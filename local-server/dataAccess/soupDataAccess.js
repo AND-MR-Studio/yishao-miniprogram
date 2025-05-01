@@ -41,6 +41,8 @@ async function initSoupsFile() {
         truth: '这是一个测试用的汤底',
         soupType: 0, // 预制汤
         tags: [SOUP_TAGS.ABSURD, SOUP_TAGS.HORROR], // 荒诞、惊悚
+        favoriteCount: 3,
+        unlikeCount: 1,
         publishTime: now,
         publishIp: '127.0.0.1',
         updateTime: now,
@@ -55,6 +57,8 @@ async function initSoupsFile() {
         tags: [SOUP_TAGS.FUNNY, SOUP_TAGS.VARIANT], // 搞笑、变格
         viewCount: 5,
         likeCount: 2,
+        favoriteCount: 1,
+        unlikeCount: 0,
         publishTime: now,
         publishIp: '127.0.0.1',
         updateTime: now,

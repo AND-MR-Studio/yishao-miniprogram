@@ -16,7 +16,10 @@ Component({
           // 更新当前汤面数据
           this.setData({
             currentSoup: newVal,
-            displayContent: this._formatSoupContent(newVal)
+            displayContent: this._formatSoupContent(newVal),
+            favoriteCount: newVal.favoriteCount || 0,
+            likeCount: newVal.likeCount || 0,
+            creatorId: newVal.creatorId || ''
           });
         }
       }
@@ -35,6 +38,21 @@ Component({
     isPeeking: {
       type: Boolean,
       value: false
+    },
+    // 收藏数量
+    favoriteCount: {
+      type: Number,
+      value: 0
+    },
+    // 点赞数量
+    likeCount: {
+      type: Number,
+      value: 0
+    },
+    // 是否处于喝汤状态
+    isDrinking: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -45,7 +63,8 @@ Component({
 
   data: {
     currentSoup: null,  // 当前汤面数据
-    displayContent: ''  // 显示的文本内容
+    displayContent: '',  // 显示的文本内容
+    creatorId: ''  // 创作者ID
   },
 
   lifetimes: {
@@ -96,7 +115,7 @@ Component({
       return '';
     },
 
-
+    // 点赞功能已移除，仅显示点赞数
 
 
   }

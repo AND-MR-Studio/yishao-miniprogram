@@ -40,6 +40,7 @@ Component({
     isFullyVisible: false,
     loading: false,
     isAnimating: false,
+    isSending: false, // 是否正在发送消息
     typingText: '', // 简化版打字机文本
     animatingMessageIndex: -1, // 当前正在执行动画的消息索引
     _previousDialogId: '', // 用于跟踪dialogId变化，避免重复加载
@@ -257,7 +258,22 @@ Component({
     async handleSend(e) {
       // 处理文本消息
       const { value } = e.detail;
-      if (!value || !value.trim() || this.data.isAnimating) return;
+
+      // 如果正在执行打字机动画，显示提示并返回
+      if (this.data.isAnimating) {
+        // 只有当有内容时才显示提示
+        if (value && value.trim()) {
+          wx.showToast({
+            title: '正在回复中...',
+            icon: 'none',
+            duration: 800
+          });
+        }
+        return;
+      }
+
+      // 检查消息是否为空
+      if (!value || !value.trim()) return;
 
       // 验证消息长度不超过50个字
       if (value.length > 50) {
@@ -315,9 +331,12 @@ Component({
         status: 'sending'
       };
 
-      // 添加用户消息
+      // 添加用户消息并设置发送状态
       const messages = [...this.data.messages, userMessageWithStatus];
-      this.setData({ messages }, () => {
+      this.setData({
+        messages,
+        isSending: true // 设置发送状态，使按钮保持激活并旋转
+      }, () => {
         // 添加消息后滚动到底部
         this.scrollToBottom();
       });
@@ -353,6 +372,7 @@ Component({
           const finalMessages = [...messages, replyMessage];
           this.setData({
             messages: finalMessages,
+            isSending: false, // 重置发送状态
             scrollToView: 'scrollBottom' // 确保滚动到底部
           });
           return;
@@ -391,11 +411,14 @@ Component({
         this.setData({
           messages: finalMessages,
           animatingMessageIndex: -1,
+          isSending: false, // 重置发送状态
           typingText: '' // 清空打字机文本
         });
       } catch (error) {
         console.error('发送消息失败:', error);
         this.updateMessageStatus(userMessage.id, 'error');
+        // 重置发送状态
+        this.setData({ isSending: false });
       }
     },
 

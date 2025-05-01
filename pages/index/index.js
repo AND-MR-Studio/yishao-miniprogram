@@ -55,8 +55,6 @@ Page({
     // 初始化交互管理器
     this.initInteractionManager();
 
-    // 不再需要获取用户设置，已移除打字机动画相关功能
-
     try {
       this.setData({ isLoading: true });
 
@@ -141,10 +139,14 @@ Page({
       isFavorite: isFavorite
     });
 
-    // 更新汤面显示组件的收藏状态
+    // 更新汤面显示组件的收藏状态、收藏数和点赞数
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (soupDisplay) {
-      soupDisplay.setData({ isFavorite: isFavorite });
+      soupDisplay.setData({
+        isFavorite: isFavorite,
+        favoriteCount: soupData.favoriteCount || 0,
+        likeCount: soupData.likeCount || 0
+      });
     }
 
     // 增加汤面阅读数
@@ -402,6 +404,65 @@ Page({
   },
 
   /**
+   * 处理清理上下文事件
+   * 清空当前对话的所有消息记录
+   * @param {Object} e 事件对象
+   */
+  async handleClearContext(e) {
+    try {
+      const { dialogId } = e.detail;
+      if (!dialogId) {
+        console.error('清理上下文失败: 缺少对话ID');
+        return;
+      }
+
+      // 显示确认弹窗
+      wx.showModal({
+        title: '提示',
+        content: '确定要清理当前对话上下文吗？这将删除当前对话的所有记录。',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              // 获取用户ID
+              const userId = await userService.getUserId();
+              if (!userId) {
+                console.error('清理上下文失败: 无法获取用户ID');
+                return;
+              }
+
+              // 清空对话消息
+              const dialog = this.selectComponent('#dialog');
+              if (dialog) {
+                // 清空对话组件中的消息
+                dialog.setData({ messages: [] });
+
+                // 保存空消息数组到服务器
+                try {
+                  await dialogService.saveDialogMessages(dialogId, userId, []);
+                  console.log('对话上下文已清理');
+
+                  // 显示成功提示
+                  wx.showToast({
+                    title: '对话已清理',
+                    icon: 'success',
+                    duration: 1500
+                  });
+                } catch (error) {
+                  console.error('保存清空的对话记录失败:', error);
+                }
+              }
+            } catch (error) {
+              console.error('清理上下文失败:', error);
+            }
+          }
+        }
+      });
+    } catch (error) {
+      console.error('清理上下文失败:', error);
+    }
+  },
+
+  /**
    * 处理显示汤底事件
    * @param {Object} e 事件对象
    */
@@ -633,9 +694,8 @@ Page({
   /**
    * 处理长按开始事件
    * 在drinking状态下，实现偷看功能
-   * @param {Object} e 事件对象
    */
-  handleLongPressStart(e) {
+  handleLongPressStart() {
     // 只在喝汤状态下启用偷看功能
     if (this.data.pageState !== PAGE_STATE.DRINKING) return;
 
@@ -649,9 +709,8 @@ Page({
   /**
    * 处理长按结束事件
    * 恢复正常显示状态
-   * @param {Object} e 事件对象
    */
-  handleLongPressEnd(e) {
+  handleLongPressEnd() {
     // 只在喝汤状态下处理
     if (this.data.pageState !== PAGE_STATE.DRINKING) return;
 
@@ -728,16 +787,20 @@ Page({
         // 更新页面状态
         this.setData({ isFavorite: newFavoriteStatus });
 
-        // 更新汤面显示组件的收藏状态
-        const soupDisplay = this.selectComponent('#soupDisplay');
-        if (soupDisplay) {
-          soupDisplay.setData({ isFavorite: newFavoriteStatus });
-        }
-
-        // 更新汤面的点赞数
+        // 如果是收藏，增加收藏数
         if (newFavoriteStatus) {
-          // 如果是收藏，增加点赞数
-          await soupService.likeSoup(soupId);
+          // 调用收藏API，获取更新后的收藏数
+          const favoriteResult = await soupService.favoriteSoup(soupId);
+          const newFavoriteCount = favoriteResult ? favoriteResult.favoriteCount : 0;
+
+          // 更新汤面显示组件的收藏状态和收藏数
+          const soupDisplay = this.selectComponent('#soupDisplay');
+          if (soupDisplay) {
+            soupDisplay.setData({
+              isFavorite: newFavoriteStatus,
+              favoriteCount: newFavoriteCount
+            });
+          }
 
           // 显示收藏成功提示
           wx.showToast({
@@ -746,6 +809,19 @@ Page({
             duration: 1500
           });
         } else {
+          // 如果是取消收藏，调用取消收藏API减少收藏数
+          const unfavoriteResult = await soupService.unfavoriteSoup(soupId);
+          const newFavoriteCount = unfavoriteResult ? unfavoriteResult.favoriteCount : 0;
+
+          // 更新汤面显示组件的收藏状态和收藏数
+          const soupDisplay = this.selectComponent('#soupDisplay');
+          if (soupDisplay) {
+            soupDisplay.setData({
+              isFavorite: newFavoriteStatus,
+              favoriteCount: newFavoriteCount
+            });
+          }
+
           // 显示取消收藏提示
           wx.showToast({
             title: '已取消收藏',
@@ -861,8 +937,10 @@ Page({
     });
   },
 
+  // 点赞功能已移除，仅显示点赞数
+
   /**
-   * 获取未解决的预制汤数量
+   * 获取未解决的数量
    * 暂时固定显示为5
    */
   async getUnsolvedSoupCount() {

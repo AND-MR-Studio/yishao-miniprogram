@@ -2,8 +2,10 @@
 <view class="page {{swiping ? 'swiping' : ''}}" style="{{gradientStyle ? '--dynamic-gradient: ' + gradientStyle : ''}}">
   <!-- 导航栏 -->
   <nav-bar
+    pageState="{{pageState}}"
     bind:settingchange="handleSettingChange"
     bind:close="onSettingClose"
+    bind:clearcontext="handleClearContext"
   />
 
   <view class="container" bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd">
@@ -25,6 +27,7 @@
         soupData="{{currentSoup}}"
         loading="{{isLoading}}"
         isFavorite="{{isFavorite}}"
+        isDrinking="{{pageState === 'drinking'}}"
         class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
         wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"

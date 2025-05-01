@@ -8,9 +8,9 @@
  * - 创建、更新、删除海龟汤
  * - 获取相邻海龟汤（上一个或下一个）
  * - 获取随机海龟汤
- * - 增加海龟汤阅读数和点赞数
+ * - 增加海龟汤阅读数、点赞数、收藏数和不喜欢数
  */
-const { soupRequest, soup_base_url, soup_by_id_url, soup_random_url, soup_like_url, soup_view_url } = require('./api');
+const { soupRequest, soup_base_url, soup_by_id_url, soup_random_url, soup_like_url, soup_view_url, soup_favorite_url, soup_unlike_url } = require('./api');
 
 const soupService = {
     /**
@@ -252,6 +252,75 @@ const soupService = {
             return response.success ? response.data : null;
         } catch (error) {
             console.error('增加阅读数失败:', error);
+            return null;
+        }
+    },
+
+    /**
+     * 收藏海龟汤
+     * @param {string} soupId 海龟汤ID
+     * @returns {Promise<Object>} 结果，包含更新后的收藏数
+     */
+    async favoriteSoup(soupId) {
+        if (!soupId) {
+            console.error('收藏海龟汤失败: 缺少海龟汤ID');
+            return null;
+        }
+
+        try {
+            const response = await soupRequest({
+                url: `${soup_favorite_url}${soupId}/favorite`,
+                method: 'POST'
+            });
+            return response.success ? response.data : null;
+        } catch (error) {
+            console.error('收藏海龟汤失败:', error);
+            return null;
+        }
+    },
+
+    /**
+     * 取消收藏海龟汤
+     * @param {string} soupId 海龟汤ID
+     * @returns {Promise<Object>} 结果，包含更新后的收藏数
+     */
+    async unfavoriteSoup(soupId) {
+        if (!soupId) {
+            console.error('取消收藏海龟汤失败: 缺少海龟汤ID');
+            return null;
+        }
+
+        try {
+            const response = await soupRequest({
+                url: `${soup_favorite_url}${soupId}/favorite?action=unfavorite`,
+                method: 'POST'
+            });
+            return response.success ? response.data : null;
+        } catch (error) {
+            console.error('取消收藏海龟汤失败:', error);
+            return null;
+        }
+    },
+
+    /**
+     * 不喜欢海龟汤
+     * @param {string} soupId 海龟汤ID
+     * @returns {Promise<Object>} 结果，包含更新后的不喜欢数
+     */
+    async unlikeSoup(soupId) {
+        if (!soupId) {
+            console.error('操作失败: 缺少海龟汤ID');
+            return null;
+        }
+
+        try {
+            const response = await soupRequest({
+                url: `${soup_unlike_url}${soupId}/unlike`,
+                method: 'POST'
+            });
+            return response.success ? response.data : null;
+        } catch (error) {
+            console.error('操作失败:', error);
             return null;
         }
     },

@@ -39,6 +39,11 @@ Component({
     soupId: {
       type: String,
       value: ''
+    },
+    // 当前页面状态
+    pageState: {
+      type: String,
+      value: 'viewing' // 默认为viewing状态，可选值：viewing, drinking, truth
     }
   },
 
@@ -146,6 +151,14 @@ Component({
       this.triggerEvent('about');
     },
 
+    // 处理清理上下文事件
+    onClearContext(e) {
+      // 获取对话ID
+      const { dialogId } = e.detail;
+      if (!dialogId) return;
 
+      // 触发清理上下文事件给页面处理
+      this.triggerEvent('clearcontext', { dialogId });
+    }
   }
 })

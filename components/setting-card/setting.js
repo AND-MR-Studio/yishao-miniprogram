@@ -14,6 +14,10 @@ Component({
     soupId: {
       type: String,
       value: ''
+    },
+    pageState: {
+      type: String,
+      value: 'viewing' // 默认为viewing状态，可选值：viewing, drinking, truth
     }
   },
 
@@ -28,7 +32,9 @@ Component({
     moveDistance: 0,
     panelStyle: '',
     isDragging: false,
-    isVibrating: false
+    isVibrating: false,
+    // 防止重复触发标志
+    isProcessingContext: false
   },
 
   lifetimes: {
@@ -150,25 +156,40 @@ Component({
 
 
 
-    // 清理缓存
-    clearCache() {
+    // 清理对话上下文
+    clearContext() {
+      // 防止重复触发
+      if (this.data.isProcessingContext) {
+        return;
+      }
+
       this.triggerVibration();
 
-      wx.showModal({
-        title: '提示',
-        content: '确定要清理缓存吗？',
-        success: (res) => {
-          if (res.confirm) {
-            this.triggerVibration();
-            this.triggerEvent('clearcache');
-            wx.showToast({
-              title: '缓存已清理',
-              icon: 'success',
-              duration: 1500
-            });
-          }
-        }
-      });
+      // 设置处理标志
+      this.setData({ isProcessingContext: true });
+
+      // 获取当前对话ID
+      const dialogService = require('../../utils/dialogService');
+      const dialogId = dialogService.getCurrentDialogId();
+
+      if (dialogId) {
+        // 触发清理上下文事件，传递dialogId
+        this.triggerEvent('clearcontext', { dialogId });
+
+        // 延迟重置处理标志，确保不会短时间内重复触发
+        setTimeout(() => {
+          this.setData({ isProcessingContext: false });
+        }, 1000); // 1秒后重置
+      } else {
+        wx.showToast({
+          title: '无对话可清理',
+          icon: 'none',
+          duration: 1500
+        });
+
+        // 立即重置处理标志
+        this.setData({ isProcessingContext: false });
+      }
     },
 
     // 下拉开始 - 使用工具类

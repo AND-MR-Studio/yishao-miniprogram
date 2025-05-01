@@ -62,6 +62,8 @@
   <!-- 输入栏组件 -->
   <view class="input-bar-wrapper">
     <input-bar
+      disabled="{{isAnimating}}"
+      sending="{{isSending}}"
       bind:send="handleSend"
       bind:voiceStart="handleVoiceStart"
       bind:voiceEnd="handleVoiceEnd"

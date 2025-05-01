@@ -13,19 +13,17 @@
       <view class="close-indicator"></view>
     </view>
 
-    <!-- 问答设置区块 -->
-    <view class="setting-section" catchtap="stopPropagation">
+    <!-- 问答设置区块 - 只在drinking状态显示 -->
+    <view class="setting-section" catchtap="stopPropagation" wx:if="{{pageState === 'drinking'}}">
       <view class="section-title">问答设置</view>
 
-
       <view class="setting-item">
-        <view class="item-label">清理缓存</view>
+        <view class="item-label">清理上下文</view>
         <custom-button
           type="confirm"
           text="确定"
-          bind:tap="clearCache" />
+          bindtap="clearContext" />
       </view>
-
 
     </view>
 

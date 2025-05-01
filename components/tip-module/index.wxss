@@ -37,7 +37,7 @@
   top: 200rpx; /* 调整顶部位置，确保在导航栏下方 */
   left: 0;
   width: 100%;
-  z-index: 1200; /* 确保在对话框之上但不遮挡导航栏 */
+  z-index: 1100; /* 确保在对话框之上但不遮挡导航栏 */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -84,7 +84,7 @@
   margin-bottom: 10rpx;
   margin-top: -90rpx; /* 让头像部分超出容器顶部 */
   position: relative;
-  z-index: 1500; /* 确保在tip内容之上 */
+  z-index: 1001; /* 确保在tip内容之上 */
 }
 
 /* 头像GIF */

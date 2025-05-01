@@ -30,6 +30,8 @@ const SOUP_TAGS = {
  * @property {string} creatorId - 创建者ID（可选）
  * @property {number} viewCount - 阅读数
  * @property {number} likeCount - 点赞数
+ * @property {number} favoriteCount - 收藏数
+ * @property {number} unlikeCount - 不喜欢数
  * @property {string} publishTime - 发布时间 (ISO格式)
  * @property {string} publishIp - 发布IP
  * @property {string} updateTime - 更新时间 (ISO格式)
@@ -106,6 +108,8 @@ function createSoupObject(data) {
     creatorId: data.creatorId || 'admin',
     viewCount: data.viewCount || 0,
     likeCount: data.likeCount || 0,
+    favoriteCount: data.favoriteCount || 0,
+    unlikeCount: data.unlikeCount || 0,
     publishTime: data.publishTime || now,
     publishIp: data.publishIp || '127.0.0.1',
     updateTime: data.updateTime || now,

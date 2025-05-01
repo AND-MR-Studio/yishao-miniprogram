@@ -74,7 +74,11 @@ const soup_random_url = ysUrl + soupBasePath + 'random';
 const soup_like_url = ysUrl + soupBasePath;
 // 增加汤面阅读数，后面需要追加ID+'/view'
 const soup_view_url = ysUrl + soupBasePath;
-// 按标签获取汤面，使用查询参数 ?tag=xxx
+// 收藏汤面，后面需要追加ID+'/favorite'
+const soup_favorite_url = ysUrl + soupBasePath;
+// 不喜欢汤面，后面需要追加ID+'/unlike'
+const soup_unlike_url = ysUrl + soupBasePath;
+// 按标签获取汤面，使用查询参数 ?tags=xxx 或 ?tags=xxx,yyy,zzz
 const soup_by_tag_url = ysUrl + soupBasePath;
 // 按类型获取汤面，使用查询参数 ?type=xxx
 const soup_by_type_url = ysUrl + soupBasePath;
@@ -144,6 +148,8 @@ module.exports = {
   soup_random_url,
   soup_like_url,
   soup_view_url,
+  soup_favorite_url,
+  soup_unlike_url,
   soup_by_tag_url,
   soup_by_type_url,
 

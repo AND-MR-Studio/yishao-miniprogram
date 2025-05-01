@@ -304,6 +304,55 @@ function initSoupRoutes(app) {
     }
   });
 
+  // POST /api/soup/:soupId/favorite - 收藏海龟汤
+  app.post(`${BASE_PATH}/:soupId/favorite`, async (req, res) => {
+    try {
+      const soup = await getSoup(req.params.soupId);
+      if (!soup) {
+        return sendResponse(res, false, '海龟汤不存在', 404);
+      }
+
+      // 检查是否是取消收藏操作
+      const isUnfavorite = req.query.action === 'unfavorite';
+
+      const updatedData = {
+        favoriteCount: isUnfavorite
+          ? Math.max((soup.favoriteCount || 0) - 1, 0) // 确保不会小于0
+          : (soup.favoriteCount || 0) + 1
+      };
+
+      const result = await updateSoup(req.params.soupId, updatedData, req);
+      if (!result) {
+        return sendResponse(res, false, isUnfavorite ? '取消收藏失败' : '收藏失败', 400);
+      }
+      return sendResponse(res, true, { favoriteCount: result.favoriteCount });
+    } catch (err) {
+      return sendResponse(res, false, '收藏操作失败: ' + err.message, 500);
+    }
+  });
+
+  // POST /api/soup/:soupId/unlike - 不喜欢海龟汤
+  app.post(`${BASE_PATH}/:soupId/unlike`, async (req, res) => {
+    try {
+      const soup = await getSoup(req.params.soupId);
+      if (!soup) {
+        return sendResponse(res, false, '海龟汤不存在', 404);
+      }
+
+      const updatedData = {
+        unlikeCount: (soup.unlikeCount || 0) + 1
+      };
+
+      const result = await updateSoup(req.params.soupId, updatedData, req);
+      if (!result) {
+        return sendResponse(res, false, '操作失败', 400);
+      }
+      return sendResponse(res, true, { unlikeCount: result.unlikeCount });
+    } catch (err) {
+      return sendResponse(res, false, '操作失败: ' + err.message, 500);
+    }
+  });
+
   // DELETE /api/soup/:soupId - 删除指定ID的海龟汤
   app.delete(`${BASE_PATH}/:soupId`, async (req, res) => {
     try {

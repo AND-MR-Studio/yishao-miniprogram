@@ -12,9 +12,24 @@
       <text class="soup-text">{{displayContent}}</text>
     </view>
 
-    <!-- 收藏图标 - 在偷看模式下隐藏 -->
-    <view class="favorite-icon {{isFavorite ? 'active' : 'hidden'}} {{isPeeking ? 'peek-hidden' : ''}}" wx:if="{{!isPeeking}}">
-      <text class="heart-text">⭐</text>
+    <!-- 图标容器 - 在偷看模式或喝汤状态下隐藏 -->
+    <view class="icons-container {{isPeeking ? 'peek-hidden' : ''}} {{isDrinking ? 'drinking-hidden' : ''}}" wx:if="{{!isPeeking && !isDrinking}}">
+      <!-- 收藏图标 -->
+      <view class="icon-wrapper favorite-icon {{isFavorite ? 'active' : 'hidden'}}">
+        <text class="heart-text">⭐</text>
+        <text class="count-text favorite-count" wx:if="{{favoriteCount > 0}}">{{favoriteCount}}</text>
+      </view>
+
+      <!-- 点赞图标 - 仅显示，不可点击 -->
+      <view class="icon-wrapper like-icon read-only">
+        <text class="heart-text">💜</text>
+        <text class="count-text like-count" wx:if="{{likeCount > 0}}">{{likeCount}}</text>
+      </view>
+    </view>
+
+    <!-- 创作者感谢文字 - 在偷看模式下隐藏 -->
+    <view class="creator-credit {{isPeeking ? 'peek-hidden' : ''}}" wx:if="{{!isPeeking && creatorId}}">
+      <text class="creator-text">感谢创作者：{{creatorId}}</text>
     </view>
   </block>
 </view>

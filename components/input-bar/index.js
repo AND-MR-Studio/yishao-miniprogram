@@ -8,6 +8,14 @@ Component({
     inputValue: {
       type: String,
       value: ''
+    },
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    sending: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -99,6 +107,11 @@ Component({
 
     // 处理输入事件
     handleInput(e) {
+      // 如果组件被禁用，仍然允许输入，但不更新状态
+      if (this.properties.disabled) {
+        return;
+      }
+
       const value = e.detail.value || '';
 
       // 限制最大长度为50个字符
@@ -123,6 +136,19 @@ Component({
 
     // 处理发送事件
     handleSend() {
+      // 如果组件被禁用，显示简短提示并返回
+      if (this.properties.disabled) {
+        // 只有当有内容时才显示提示，避免空点击也显示提示
+        if (this.data.hasContent) {
+          wx.showToast({
+            title: '侦探大人，请别急',
+            icon: 'none',
+            duration: 800
+          });
+        }
+        return;
+      }
+
       const value = this.data.inputValue;
       if (!value || !value.trim()) {
         wx.showToast({
