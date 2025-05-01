@@ -1,11 +1,11 @@
 <!--components/tab-switcher/tab-switcher.wxml-->
-<view class="tab-switcher" wx:if="{{!isPeeking}}">
+<view class="tab-switcher" wx:if="{{!isDrinking}}">
   <view class="tab-container">
-    <view 
-      wx:for="{{tabs}}" 
-      wx:key="*this" 
-      class="tab {{activeTab === item ? 'active' : ''}} {{isLoading ? 'disabled' : ''}}" 
-      data-tab="{{item}}" 
+    <view
+      wx:for="{{tabs}}"
+      wx:key="*this"
+      class="tab {{activeTab === item ? 'active' : ''}} {{isLoading ? 'disabled' : ''}}"
+      data-tab="{{item}}"
       bindtap="handleTabTap"
     >
       <text class="tab-text">{{item}}</text>

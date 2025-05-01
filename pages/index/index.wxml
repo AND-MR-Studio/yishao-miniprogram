@@ -13,7 +13,7 @@
     <tab-switcher
       wx:if="{{pageState === 'viewing'}}"
       activeTab="{{activeTab}}"
-      isPeeking="{{isPeeking}}"
+      isDrinking="{{pageState === 'drinking'}}"
       disabled="{{isLoading}}"
       bind:tabchange="handleTabChange"
       class="tab-switcher-component"

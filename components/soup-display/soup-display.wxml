@@ -23,7 +23,6 @@
       favoriteCount="{{favoriteCount}}"
       likeCount="{{likeCount}}"
       creatorId="{{creatorId}}"
-      isPeeking="{{isPeeking}}"
       isDrinking="{{isDrinking}}"
       soupId="{{currentSoup.soupId || ''}}"
       bind:favoriteChange="onFavoriteChange"

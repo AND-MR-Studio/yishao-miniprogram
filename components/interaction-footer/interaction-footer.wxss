@@ -16,11 +16,6 @@
   overflow: hidden; /* 防止内容溢出 */
 }
 
-/* 偷看模式下强制隐藏底部控件容器 */
-.bottom-controls-container.peek-hidden {
-  display: none !important;
-}
-
 /* 喝汤状态下强制隐藏底部控件容器 */
 .bottom-controls-container.drinking-hidden {
   display: none !important;

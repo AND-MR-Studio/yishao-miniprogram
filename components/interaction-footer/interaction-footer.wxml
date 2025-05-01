@@ -1,8 +1,8 @@
 <!--components/interaction-footer/interaction-footer.wxml-->
 <!-- 底部控件容器 - 包含图标和创作者信息 -->
-<view class="bottom-controls-container {{isPeeking ? 'peek-hidden' : ''}} {{isDrinking ? 'drinking-hidden' : ''}}">
-  <!-- 图标容器 - 在偷看模式或喝汤状态下隐藏 -->
-  <view class="icons-container" wx:if="{{!isPeeking && !isDrinking}}">
+<view class="bottom-controls-container {{isDrinking ? 'drinking-hidden' : ''}}">
+  <!-- 图标容器 - 在喝汤状态下隐藏 -->
+  <view class="icons-container" wx:if="{{!isDrinking}}">
     <!-- 收藏图标 -->
     <view class="icon-wrapper favorite-icon {{isFavorite ? 'active' : 'hidden'}}" bindtap="handleFavoriteClick">
       <text class="heart-text">⭐</text>
@@ -16,8 +16,8 @@
     </view>
   </view>
 
-  <!-- 创作者感谢文字 - 在偷看模式下隐藏 -->
-  <view class="creator-credit" wx:if="{{!isPeeking && creatorId}}">
+  <!-- 创作者感谢文字 -->
+  <view class="creator-credit" wx:if="{{creatorId && !isDrinking}}">
     <text class="creator-text">感谢创作者：{{creatorId}}</text>
   </view>
 </view>

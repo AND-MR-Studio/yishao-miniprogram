@@ -17,8 +17,8 @@ Component({
       type: Number,
       value: 0
     },
-    // 是否处于偷看模式
-    isPeeking: {
+    // 是否处于喝汤状态
+    isDrinking: {
       type: Boolean,
       value: false
     },
