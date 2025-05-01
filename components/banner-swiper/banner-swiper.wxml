@@ -1,0 +1,45 @@
+<!--components/banner-swiper/banner-swiper.wxml-->
+<view class="banner-swiper-container">
+  <swiper
+    class="banner-swiper"
+    indicator-dots="{{indicatorDots}}"
+    autoplay="{{autoplay}}"
+    interval="{{interval}}"
+    duration="{{duration}}"
+    circular="{{circular}}"
+    bindchange="handleSwiperChange">
+
+    <block wx:if="{{loading}}">
+      <!-- 加载中状态 -->
+      <swiper-item>
+        <view class="update-banner banner-loading">
+          <view class="banner-content">
+            <view class="banner-title">
+              <text class="banner-title-main">加载中...</text>
+            </view>
+          </view>
+        </view>
+      </swiper-item>
+    </block>
+
+    <block wx:else>
+      <!-- 显示banner内容 -->
+      <swiper-item wx:for="{{banners}}" wx:key="id" bindtap="handleBannerTap" data-index="{{index}}">
+        <!-- 图片banner -->
+        <view wx:if="{{item.imageUrl}}" class="image-banner">
+          <image src="{{item.imageUrl}}" mode="aspectFill" class="banner-image-full" binderror="handleImageError" bindload="handleImageLoad" data-index="{{index}}"></image>
+        </view>
+
+        <!-- 文字banner (默认或图片加载失败时显示) -->
+        <view wx:else class="update-banner {{item.bgColor || ''}}">
+          <view class="banner-content">
+            <view class="banner-title">
+              <text class="banner-title-main">{{item.title}}</text>
+              <text class="banner-title-sub">{{item.subtitle}}</text>
+            </view>
+          </view>
+        </view>
+      </swiper-item>
+    </block>
+  </swiper>
+</view>

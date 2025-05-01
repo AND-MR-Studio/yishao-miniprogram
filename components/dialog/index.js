@@ -1,6 +1,7 @@
 // components/dialog/index.js
 const dialogService = require('../../utils/dialogService');
-const typeAnimation = require('../../utils/typeAnimation');
+const simpleTypeAnimation = require('../../utils/typeAnimation');
+const userService = require('../../utils/userService');
 
 Component({
   properties: {
@@ -9,6 +10,14 @@ Component({
       value: false
     },
     soupId: {
+      type: String,
+      value: ''
+    },
+    dialogId: {
+      type: String,
+      value: ''
+    },
+    userId: {
       type: String,
       value: ''
     },
@@ -27,13 +36,16 @@ Component({
   data: {
     messages: [],
     keyboardHeight: 0,
-    isPeekingSoup: false,
     animationData: {},
     isFullyVisible: false,
     loading: false,
     isAnimating: false,
-    displayLines: [],
-    animatingMessageIndex: -1 // 当前正在执行动画的消息索引
+    isSending: false, // 是否正在发送消息
+    typingText: '', // 简化版打字机文本
+    animatingMessageIndex: -1, // 当前正在执行动画的消息索引
+    _previousDialogId: '', // 用于跟踪dialogId变化，避免重复加载
+    peekMode: false, // 是否处于偷看模式
+    scrollToView: 'scrollBottom' // 滚动到底部的视图ID
   },
 
   lifetimes: {
@@ -47,11 +59,18 @@ Component({
         timingFunction: 'ease',
       });
 
-      // 初始化打字机动画实例
-      this.typeAnimator = typeAnimation.createInstance(this, {
+      // 初始化简化版打字机动画实例
+      this.typeAnimator = simpleTypeAnimation.createInstance(this, {
         typeSpeed: this.properties.typeSpeed,
-        onAnimationComplete: () => {
+        batchSize: 1, // 每5个字符触发一次setData，平衡性能和动画效果
+        onComplete: () => {
           this.setData({ isAnimating: false });
+          // 动画完成后确保滚动到底部
+          this.scrollToBottom(true);
+        },
+        onUpdate: () => {
+          // 每次打字机更新时强制滚动到底部，忽略节流
+          this.scrollToBottom(true);
         }
       });
     },
@@ -70,20 +89,22 @@ Component({
 
       if (visible) {
         this.showDialog();
-        // 当对话框显示时加载对话记录
-        wx.nextTick(() => {
-          this.loadDialogMessages();
-        });
+        // 不再自动加载消息，由外部控制加载时机
       } else {
         this.hideDialog();
       }
     },
-    'soupId': function(soupId) {
-      // 当soupId变化且对话框可见时，重新加载对话记录
-      if (soupId && this.data.visible && !this.data.isAnimating) {
-        wx.nextTick(() => {
-          this.loadDialogMessages();
-        });
+    'dialogId': function(dialogId) {
+      // 只有当dialogId变化且有效且对话框可见时，才重新加载对话记录
+      if (dialogId &&
+          dialogId !== this.data._previousDialogId &&
+          this.data.visible &&
+          !this.data.isAnimating) {
+
+        console.log('dialogId变化，加载对话记录:', dialogId);
+        this.data._previousDialogId = dialogId;
+
+        this.loadDialogMessages();
       }
     }
   },
@@ -101,24 +122,22 @@ Component({
       }
 
       try {
-        // 初始化动画
-        this.animation.translateY('100%').opacity(0).step({ duration: 0 });
-        this.setData({ animationData: this.animation.export() });
-
-        // 等待下一帧
-        await new Promise(resolve => wx.nextTick(resolve));
+        // 一次性设置所有状态，减少重绘
+        this.animation.opacity(0).step({ duration: 0 });
+        this.setData({
+          animationData: this.animation.export(),
+          visible: true
+        });
 
         // 执行显示动画
-        this.animation.translateY(0).opacity(1).step();
-        this.setData({ animationData: this.animation.export() });
-
-        // 等待动画完成
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        this.setData({
-          isFullyVisible: true,
-          isAnimating: false
-        });
+        setTimeout(() => {
+          this.animation.opacity(1).step();
+          this.setData({
+            animationData: this.animation.export(),
+            isFullyVisible: true,
+            isAnimating: false
+          });
+        }, 50);
       } catch (error) {
         console.error('显示对话组件出错:', error);
         this.setData({ isAnimating: false });
@@ -134,18 +153,25 @@ Component({
       try {
         this.setData({ isFullyVisible: false });
 
-        // 执行隐藏动画
-        this.animation.translateY('100%').opacity(0).step();
+        // 执行隐藏动画 - 只使用透明度动画
+        this.animation.opacity(0).step();
         this.setData({ animationData: this.animation.export() });
 
         // 等待动画完成
         await new Promise(resolve => setTimeout(resolve, 300));
 
-        this.setData({ isAnimating: false });
+        // 完全隐藏元素，确保不会阻挡点击
+        this.setData({
+          isAnimating: false,
+          visible: false
+        });
         this.triggerEvent('close');
       } catch (error) {
         console.error('隐藏对话组件出错:', error);
-        this.setData({ isAnimating: false });
+        this.setData({
+          isAnimating: false,
+          visible: false
+        });
         this.triggerEvent('close');
       }
     },
@@ -156,77 +182,146 @@ Component({
 
     // 加载对话记录
     async loadDialogMessages() {
-      // 优先使用组件属性中的 soupId，如果没有则使用 dialogService 中的
-      const soupId = this.properties.soupId || dialogService.getCurrentSoupId();
+      // 如果正在加载，不重复加载
+      if (this.data.loading) return Promise.resolve(this.data.messages);
 
-      if (!soupId) {
-        console.log('缺少 soupId，仅加载初始化消息');
-        // 加载初始化消息
-        const initialMessages = dialogService.getInitialSystemMessages();
-        this.setData({
-          messages: initialMessages,
-          loading: false
-        });
-        return;
-      }
+      // 优先使用组件属性中的 dialogId
+      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
+      const soupId = this.properties.soupId || dialogService.getCurrentSoupId();
 
       // 设置加载状态
       this.setData({ loading: true });
 
       try {
-        // 确保服务层也知道当前的 soupId
-        dialogService.setCurrentSoupId(soupId);
+        let messages;
 
-        // 从服务器获取对话记录
-        const messages = await dialogService.getDialogMessages(soupId);
+        if (!dialogId) {
+          console.log('缺少 dialogId，返回空消息数组');
+          // 返回空消息数组
+          messages = [];
+        } else {
+          // 确保服务层也知道当前的 dialogId 和 soupId
+          dialogService.setCurrentDialogId(dialogId);
+          if (soupId) {
+            dialogService.setCurrentSoupId(soupId);
+          }
 
-        // 更新到页面
-        this.setData({
-          messages: messages,
-          loading: false
+          // 从服务器获取对话记录
+          messages = await dialogService.getDialogMessages(dialogId);
+        }
+
+        // 使用Promise包装setData，确保UI更新完成
+        await new Promise(resolve => {
+          this.setData({
+            messages: messages,
+            loading: false
+          }, resolve);
         });
 
         // 滚动到底部
         this.scrollToBottom();
+
+        return messages;
       } catch (error) {
         console.error('加载对话记录失败:', error);
 
-        // 出错时加载初始化消息
-        const initialMessages = dialogService.getInitialSystemMessages();
-        this.setData({
-          messages: initialMessages,
-          loading: false
+        // 出错时返回空消息数组
+        await new Promise(resolve => {
+          this.setData({
+            messages: [],
+            loading: false
+          }, resolve);
         });
+
+        return [];
       }
     },
 
-    // 滚动到底部
-    scrollToBottom() {
-      wx.nextTick(() => {
-        wx.createSelectorQuery()
-          .in(this)
-          .select('#dialogScroll')
-          .node()
-          .exec(res => {
-            if (res && res[0] && res[0].node) {
-              const scrollView = res[0].node;
-              scrollView.scrollIntoView({
-                selector: '.message:last-child',
-                animated: true
-              });
-            }
-          });
+    // 滚动到底部 - 优化版，减少setData调用
+    scrollToBottom(force = false) {
+      // 使用节流技术，避免短时间内多次触发滚动
+      // 但如果是强制滚动（如打字机效果中），则忽略节流
+      if (this._scrollThrottled && !force) return;
+
+      this._scrollThrottled = true;
+
+      // 使用scroll-into-view属性滚动到底部
+      this.setData({
+        scrollToView: 'scrollBottom'
       });
+
+      // 100ms后重置节流标志（减少延迟，提高响应速度）
+      setTimeout(() => {
+        this._scrollThrottled = false;
+      }, 100);
     },
 
     async handleSend(e) {
       // 处理文本消息
       const { value } = e.detail;
-      if (!value || !value.trim() || this.data.isAnimating) return;
 
-      // 设置当前汤面ID
+      // 如果正在执行打字机动画，显示提示并返回
+      if (this.data.isAnimating) {
+        // 只有当有内容时才显示提示
+        if (value && value.trim()) {
+          wx.showToast({
+            title: '正在回复中...',
+            icon: 'none',
+            duration: 800
+          });
+        }
+        return;
+      }
+
+      // 检查消息是否为空
+      if (!value || !value.trim()) return;
+
+      // 验证消息长度不超过50个字
+      if (value.length > 50) {
+        wx.showToast({
+          title: '消息不能超过50个字',
+          icon: 'none'
+        });
+        return;
+      }
+
+      // 获取必要参数
       const soupId = this.properties.soupId || '';
+      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
+      const userId = this.properties.userId || '';
+
+      // 检查必要参数
+      if (!dialogId) {
+        console.error('发送消息失败: 缺少对话ID');
+        wx.showToast({
+          title: '发送失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      if (!userId) {
+        console.error('发送消息失败: 缺少用户ID');
+        wx.showToast({
+          title: '发送失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      // 设置当前海龟汤ID和对话ID
       dialogService.setCurrentSoupId(soupId);
+      dialogService.setCurrentDialogId(dialogId);
+
+      // 更新用户回答过的汤记录
+      if (soupId) {
+        try {
+          await userService.updateAnsweredSoup(soupId);
+        } catch (err) {
+          console.error('更新用户回答汤记录失败:', err);
+          // 失败不影响用户体验，继续执行
+        }
+      }
 
       // 使用服务层处理用户输入
       const { userMessage } = dialogService.handleUserInput(value.trim());
@@ -237,15 +332,30 @@ Component({
         status: 'sending'
       };
 
-      // 添加用户消息
+      // 添加用户消息并设置发送状态
       const messages = [...this.data.messages, userMessageWithStatus];
-      this.setData({ messages });
+      this.setData({
+        messages,
+        isSending: true // 设置发送状态，使按钮保持激活并旋转
+      }, () => {
+        // 添加消息后滚动到底部
+        this.scrollToBottom();
+      });
+
+      // 触发用户发送消息事件，用于提示模块更新
+      if (wx.eventCenter) {
+        wx.eventCenter.emit('userSentMessage', {
+          messageId: userMessage.id,
+          content: userMessage.content
+        });
+      }
 
       try {
         // 发送消息到服务器并获取回复
         const reply = await dialogService.sendMessage({
           message: userMessage.content,
-          soupId,
+          userId: userId,
+          dialogId: dialogId,
           messageId: userMessage.id // 传递用户消息 ID
         });
 
@@ -261,7 +371,11 @@ Component({
         if (!this.properties.enableTyping) {
           // 不使用打字机效果时，直接添加完整回复
           const finalMessages = [...messages, replyMessage];
-          this.setData({ messages: finalMessages });
+          this.setData({
+            messages: finalMessages,
+            isSending: false, // 重置发送状态
+            scrollToView: 'scrollBottom' // 确保滚动到底部
+          });
           return;
         }
 
@@ -274,26 +388,38 @@ Component({
           timestamp: replyMessage.timestamp
         }];
 
+        // 一次性设置所有状态，减少setData调用
         this.setData({
           messages: updatedMessages,
           animatingMessageIndex: updatedMessages.length - 1,
-          isAnimating: true
+          isAnimating: true,
+          typingText: '', // 重置打字机文本
+          scrollToView: 'scrollBottom' // 确保滚动到底部
+        }, () => {
+          // 在状态更新后立即强制滚动到底部
+          wx.nextTick(() => {
+            this.scrollToBottom(true);
+          });
         });
 
-        // 启动打字机动画
+        // 启动简化版打字机动画
         await this.typeAnimator.start(replyMessage.content);
 
-        // 动画完成后更新消息内容
+        // 动画完成后更新消息内容 - 一次性更新所有状态
         const finalMessages = [...updatedMessages];
         finalMessages[finalMessages.length - 1] = replyMessage;
 
         this.setData({
           messages: finalMessages,
-          animatingMessageIndex: -1
+          animatingMessageIndex: -1,
+          isSending: false, // 重置发送状态
+          typingText: '' // 清空打字机文本
         });
       } catch (error) {
         console.error('发送消息失败:', error);
         this.updateMessageStatus(userMessage.id, 'error');
+        // 重置发送状态
+        this.setData({ isSending: false });
       }
     },
 
@@ -308,14 +434,20 @@ Component({
           status: newStatus
         };
 
-        this.setData({ messages });
+        this.setData({
+          messages,
+          scrollToView: 'scrollBottom' // 确保滚动到底部
+        });
       }
     },
 
     handleMessagesChange(e) {
       const { messages } = e.detail;
       if (messages && messages.length) {
-        this.setData({ messages });
+        this.setData({
+          messages,
+          scrollToView: 'scrollBottom' // 确保滚动到底部
+        });
       }
     },
 
@@ -350,16 +482,103 @@ Component({
       });
     },
 
-    // 偷看相关功能
+    // 偷看功能相关方法
     handleLongPress() {
-      this.setData({ isPeekingSoup: true });
-      this.triggerEvent('peekSoup', { isPeeking: true });
+      // 设置偷看模式
+      this.setData({ peekMode: true });
+
+      // 通知页面处理偷看状态
+      wx.nextTick(() => {
+        // 获取页面实例
+        const pages = getCurrentPages();
+        const currentPage = pages[pages.length - 1];
+
+        // 如果当前页面有设置isPeeking方法，则调用
+        if (currentPage && currentPage.setData) {
+          currentPage.setData({
+            isPeeking: true,
+            tipVisible: false // 隐藏tip模块
+          });
+        }
+      });
     },
 
     handleTouchEnd() {
-      if (this.data.isPeekingSoup) {
-        this.setData({ isPeekingSoup: false });
-        this.triggerEvent('peekSoup', { isPeeking: false });
+      // 如果当前处于偷看模式，恢复正常显示
+      if (this.data.peekMode) {
+        this.setData({ peekMode: false });
+
+        // 通知页面恢复正常显示
+        wx.nextTick(() => {
+          // 获取页面实例
+          const pages = getCurrentPages();
+          const currentPage = pages[pages.length - 1];
+
+          // 如果当前页面有设置isPeeking方法，则调用
+          if (currentPage && currentPage.setData) {
+            currentPage.setData({
+              isPeeking: false,
+              tipVisible: true // 恢复显示tip模块
+            });
+          }
+        });
+      }
+    },
+
+    /**
+     * 处理清理上下文事件
+     * 清空当前对话的所有消息记录
+     * @param {Object} e 事件对象
+     */
+    async clearContext(e) {
+      try {
+        const dialogId = e?.detail?.dialogId || this.properties.dialogId;
+        if (!dialogId) {
+          console.error('清理上下文失败: 缺少对话ID');
+          return;
+        }
+
+        // 显示确认弹窗
+        wx.showModal({
+          title: '提示',
+          content: '确定要清理当前对话上下文吗？这将删除当前对话的所有记录。',
+          success: async (res) => {
+            if (res.confirm) {
+              try {
+                // 获取用户ID
+                const userService = require('../../utils/userService');
+                const userId = await userService.getUserId();
+                if (!userId) {
+                  console.error('清理上下文失败: 无法获取用户ID');
+                  return;
+                }
+
+                // 清空对话消息
+                this.setData({ messages: [] });
+
+                // 保存空消息数组到服务器
+                try {
+                  const dialogService = require('../../utils/dialogService');
+                  await dialogService.saveDialogMessages(dialogId, userId, []);
+                  console.log('对话上下文已清理');
+
+                  // 显示成功提示
+                  wx.showToast({
+                    title: '对话已清理',
+                    icon: 'success',
+                    duration: 1500
+                  });
+                } catch (error) {
+                  console.error('保存清空的对话记录失败:', error);
+                }
+              } catch (error) {
+                console.error('清理上下文失败:', error);
+              }
+            }
+          }
+        });
+      } catch (error) {
+        console.error('清理上下文失败:', error);
       }
     }
   }

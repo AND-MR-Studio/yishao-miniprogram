@@ -8,6 +8,14 @@ Component({
     inputValue: {
       type: String,
       value: ''
+    },
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    sending: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -79,6 +87,15 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    // 处理语音按钮点击事件（临时禁用功能）
+    handleVoiceClick() {
+      wx.showToast({
+        title: '语音功能还在疯狂开发中~',
+        icon: 'none',
+        duration: 2000
+      });
+    },
+
     // 重置录音状态
     resetRecordStatus() {
       this.setData({
@@ -90,16 +107,48 @@ Component({
 
     // 处理输入事件
     handleInput(e) {
+      // 如果组件被禁用，仍然允许输入，但不更新状态
+      if (this.properties.disabled) {
+        return;
+      }
+
       const value = e.detail.value || '';
+
+      // 限制最大长度为50个字符
+      const limitedValue = value.slice(0, 50);
+
       this.setData({
-        inputValue: value,
-        hasContent: value.trim().length > 0
+        inputValue: limitedValue,
+        hasContent: limitedValue.trim().length > 0
       });
-      this.triggerEvent('input', { value });
+
+      this.triggerEvent('input', { value: limitedValue });
+
+      // 如果超出字数限制，显示提示
+      if (value.length > 50) {
+        wx.showToast({
+          title: '最多输入50个字',
+          icon: 'none',
+          duration: 1000
+        });
+      }
     },
 
     // 处理发送事件
     handleSend() {
+      // 如果组件被禁用，显示简短提示并返回
+      if (this.properties.disabled) {
+        // 只有当有内容时才显示提示，避免空点击也显示提示
+        if (this.data.hasContent) {
+          wx.showToast({
+            title: '侦探大人，请别急',
+            icon: 'none',
+            duration: 800
+          });
+        }
+        return;
+      }
+
       const value = this.data.inputValue;
       if (!value || !value.trim()) {
         wx.showToast({
@@ -108,6 +157,16 @@ Component({
         });
         return;
       }
+
+      // 检查字数是否超过限制
+      if (value.length > 50) {
+        wx.showToast({
+          title: '消息不能超过50个字',
+          icon: 'none'
+        });
+        return;
+      }
+
       this.triggerEvent('send', { value: value.trim() });
       // 发送后自动清空输入框
       this.clearInput();

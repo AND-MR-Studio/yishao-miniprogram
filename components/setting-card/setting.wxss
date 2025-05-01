@@ -7,11 +7,13 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1100;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 1101;
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 .setting-mask.show {
@@ -23,23 +25,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 32px 15px;
+  padding: 0 15px 15px; /* 移除顶部padding，为固定指示器留空间 */
   position: fixed;
   width: 100%;
-  /* 调整高度使其在小屏幕上更合理 */
+  /* 增加高度 */
   height: 90vh;
   max-height: 90vh;
   left: 0;
   bottom: 0;
-  background: #959DAE;
   border-radius: 40rpx 40rpx 0 0;
   transform: translateY(100%);
   transition: all 0.3s ease-out;
-  z-index: 1100;
-  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+  z-index: 1101;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
   box-sizing: border-box;
   overflow-x: hidden;
-  overflow-y: hidden;
+  overflow-y: auto; /* 允许内容滚动 */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+
+  /* 简洁的背景 - 与截图匹配 */
+  background: rgba(60, 65, 75, 0.9);
 }
 
 .setting-panel.show {
@@ -50,29 +57,31 @@
   transform: translateY(100%);
 }
 
-/* 添加关闭指示器 */
+/* 添加关闭指示器 - 固定在顶部 */
 .close-bar {
   width: 100%;
-  height: 0rpx;
+  height: 20rpx;
   display: flex;
-  position:fixed;
   justify-content: center;
   align-items: center;
-  margin-bottom: 10rpx;
+  position: sticky;
+  top: 0;
+  z-index: 1200;
+  border-radius: 40rpx 40rpx 0 0;
+  margin-bottom: 0rpx;
 }
 
 .close-indicator {
-  width: 80rpx;
-  height: 8rpx;
-  background: #FFFFFF;
-  opacity: 0.7;
-  border-radius: 4rpx;
+  width: 60rpx;
+  height: 6rpx;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 3rpx;
   transition: all 0.2s ease;
 }
 
 .close-bar:active .close-indicator {
-  width: 100rpx;
-  opacity: 1;
+  width: 80rpx;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 /* 拖拽过程中的样式 - 配合panelDrag工具类使用 */
@@ -80,14 +89,29 @@
   animation: pulse 1.5s infinite;
 }
 
+@keyframes pulse {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+}
+
 /* 分割线样式 */
 .divider {
   width: 100%;
   height: 1px;
-  background: #000000;
-  opacity: 0.1;
+  background: rgba(255, 255, 255, 0.2);
   margin: 20rpx 0;
   align-self: center;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 /* 设置容器宽度控制 */
@@ -96,13 +120,10 @@
   flex-direction: column;
   align-items: center;
   padding: 0 0 30rpx 0;
-  gap: 20rpx;
+  gap: 30rpx;
   width: 92%;
   max-width: 650rpx;
   height: auto;
-  max-height: calc(100% - 60rpx);
-  overflow-y: auto;
-  overflow-x: hidden;
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
 }
@@ -112,22 +133,31 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  padding: 20rpx;
+  padding: 20rpx 30rpx;
   gap: 20rpx;
   width: 100%;
+  background: rgba(50, 55, 65, 0.6);
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
 }
 
 .section-title {
-  width: 136rpx;
-  height: 80rpx;
+  width: auto;
+  height: 60rpx;
   font-family: 'Source Han Sans CN';
   font-style: normal;
   font-weight: 700;
   font-size: 34rpx;
-  line-height: 80rpx;
+  line-height: 60rpx;
   display: flex;
   align-items: center;
-  color: #061429;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 15rpx;
+  text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+  padding-left: 10rpx;
 }
 
 .setting-item {
@@ -139,6 +169,7 @@
   gap: 20rpx;
   width: 100%;
   height: 62rpx;
+  transition: all 0.2s ease;
 }
 
 /* 确保开关组件右对齐 */
@@ -150,187 +181,57 @@
   flex: 1;
   font-family: 'Source Han Sans CN';
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400;
   font-size: 30rpx;
   line-height: 44rpx;
   display: flex;
   align-items: center;
-  color: #2A2D32;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
+  padding-left: 10rpx;
 }
 
-/* 字体大小设置 - 布局保留，但样式已移至按钮组件 */
-.font-size-setting {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20rpx;
-  height: 134rpx;
-}
 
-.font-size-label {
-  width: 100%;
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 500;
-  font-size: 30rpx;
-  line-height: 44rpx;
-  display: flex;
-  align-items: center;
-  letter-spacing: -0.6rpx;
-  color: #2A2D32;
-  opacity: 0.8;
-}
 
-.font-size-options {
+
+
+/* 联系我们区域调整 */
+.contact-row {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0;
   width: 100%;
-  height: 48rpx;
+  gap: 30rpx;
+  padding: 10rpx;
 }
 
-/* 字体大小选项样式 */
-.font-size-option {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0;
-  gap: 10rpx;
-  width: auto;
-  height: 48rpx;
-  cursor: pointer;
-}
-
-.font-size-option .radio {
-  box-sizing: border-box;
-  width: 48rpx;
-  height: 48rpx;
-  background: #F4F4F4;
-  mix-blend-mode: normal;
-  border: 3rpx solid #CACACA;
-  border-radius: 100rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: background-color 0.3s ease;
-}
-
-.font-size-option .radio.active {
-  background: #5CE821;
-  border: none;
-}
-
-.font-size-option .radio-inner {
-  width: 24rpx;
-  height: 24rpx;
-  background: #FFFFFF;
-  border-radius: 50%;
-}
-
-.font-size-option .option-label {
-  width: auto;
-  min-width: 28rpx;
-  height: 40rpx;
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 40rpx;
-  display: flex;
-  align-items: center;
-  letter-spacing: -0.6rpx;
-  color: #2A2D32;
-  opacity: 0.6;
-}
-
-.font-size-option.active .option-label {
-  opacity: 1;
-  font-weight: 500;
-}
-
-/* 联系我们区域调整 */
-.contact-section {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  padding: 0;
-  gap: 18rpx;
-  width: 100%;
-  height: 88rpx;
-}
-
-.contact-title {
-  width: 136rpx;
-  height: 80rpx;
-  font-family: 'Source Han Sans CN';
-  font-style: normal;
-  font-weight: 700;
-  font-size: 34rpx;
-  line-height: 80rpx;
-  display: flex;
-  align-items: center;
-  color: #061429;
-}
-
-.contact-buttons-container {
+.contact-item {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 0;
-  gap: 10rpx;
 }
 
-.contact-buttons {
+/* 自定义联系按钮样式 */
+.contact-button {
   display: flex;
-  flex-direction: row;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 0;
-  gap: 16rpx;
-  width: 100%;
-  height: 88rpx;
-}
-
-/* 调整按钮样式 */
-.contact-button-class {
-  margin: 0;
-  flex: none;
-  box-sizing: border-box;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-/* 覆盖深色按钮样式使其符合设计规范 */
-.contact-button-class .btn-dark {
-  display: flex;
-  flex-direction: row;
   justify-content: center;
   align-items: center;
-  padding: 6rpx 40rpx;
-  gap: 12rpx;
-  background: #29374F;
+  width: 100%;
+  height: 70rpx;
+  background: rgba(41, 55, 79, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 30rpx;
-  box-shadow: none;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 28rpx;
+  text-align: center;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
 }
 
-.contact-button-class .btn-dark:active {
-  transform: scale(0.98);
-  background: #1F2A3D;
-}
-
-.contact-button-class .btn-text-dark {
-  font-family: 'Microsoft YaHei';
-  font-style: normal;
-  font-weight: 400;
-  font-size: 28rpx;
-  line-height: 160%;
-  text-align: center;
-  color: #FFFFFF;
+.contact-button:active {
+  transform: scale(0.95);
+  background: rgba(31, 42, 61, 0.8);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.3);
 }
 
 /* 关于我们 */
@@ -339,29 +240,32 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  padding: 0;
-  gap: 20rpx;
+  padding: 20rpx 30rpx;
   width: 100%;
   height: auto;
+  background: rgba(50, 55, 65, 0.6);
+  border-radius: 16rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 10rpx;
+  box-sizing: border-box;
 }
 
 .studio-logo {
-  width: 300rpx; /* 稍微减小logo宽度 */
-  height: 90rpx;
-  background-image: url('https://img.picui.cn/free/2025/04/07/67f3a7b07374d.png');
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: left;
+  width: 240rpx; /* 减小logo宽度 */
+  height: 120rpx;
+  filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.2));
 }
 
 .developed {
   flex: 1;
-  min-width: 300rpx; /* 确保版权信息有足够空间 */
+  min-width: 320rpx; /* 确保版权信息有足够空间 */
   font-family: 'Source Han Sans CN';
   font-style: normal;
-  font-weight: 400;
+  font-weight: 100;
   font-size: 24rpx;
   line-height: 34rpx;
-  color: #000000;
-  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: right;
+  padding-left: 20rpx;
 }

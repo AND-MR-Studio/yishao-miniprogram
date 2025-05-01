@@ -55,41 +55,22 @@
             color: #666;
             margin-bottom: 2px;
         }
-        .nav-link.active {
-            font-weight: bold;
-        }
     </style>
 </head>
 <body>
     <div class="container mt-4">
-        <h1 class="mb-4">汤面管理系统</h1>
-
-        <!-- 导航栏 -->
-        <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-            <div class="container-fluid">
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav">
-                        <li class="nav-item">
-                            <a class="nav-link" href="soup.html">汤面管理</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="dialog.html">对话记录</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </nav>
+        <h1 class="mb-4">对话记录管理</h1>
 
         <!-- 对话记录管理 -->
         <div class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <span>对话记录</span>
+                <span>对话记录列表</span>
                 <div>
-                    <select id="soupFilter" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                    <select id="soupFilter" class="form-select form-select-sm" style="width: auto; display: inline-block; margin-right: 5px;">
                         <option value="all">所有汤面</option>
+                    </select>
+                    <select id="userFilter" class="form-select form-select-sm" style="width: auto; display: inline-block;">
+                        <option value="all">所有用户</option>
                     </select>
                     <button id="refreshDialogs" class="btn btn-sm btn-outline-primary ms-2">刷新</button>
                     <button id="clearAllDialogs" class="btn btn-sm btn-outline-danger ms-2">清除所有</button>
@@ -104,40 +85,45 @@
     <script src="https://cdn.bootcdn.net/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
     <script>
         // API基础URL
-        const API_BASE_URL = 'http://localhost:8080/api/soup';
-        const DIALOG_API_BASE_URL = 'http://localhost:8080/api';
+        const DIALOG_API_BASE_URL = 'http://localhost:8080/yishao-api/dialog';
+        const SOUP_API_BASE_URL = 'http://localhost:8080/yishao-api/soup';
 
         // 存储所有汤面的映射关系
         let soupsMap = {};
+        // 存储所有对话数据
+        let allDialogs = [];
+        // 存储所有用户ID
+        let userIds = new Set();
 
         // 获取所有对话记录
         async function fetchAllDialogs() {
             try {
-                // 首先获取所有汤面ID
-                const soupsResponse = await fetch(`${API_BASE_URL}`);
-                const soupsData = await soupsResponse.json();
-
-                if (!soupsData.success) {
-                    throw new Error('获取汤面列表失败：' + soupsData.error);
-                }
-
-                // 兼容新旧两种响应格式
-                const soups = Array.isArray(soupsData.data) ? soupsData.data : soupsData.data?.soups || [];
-
-                // 更新汤面选择器
-                updateSoupFilter(soups);
-
                 // 初始化对话列表
                 const dialogsList = document.getElementById('dialogsList');
                 dialogsList.innerHTML = '<div class="text-center my-5"><div class="spinner-border" role="status"></div><p class="mt-2">正在加载对话记录...</p></div>';
 
-                // 存储所有对话记录
-                const allDialogs = [];
+                // 获取所有汤面数据
+                try {
+                    const soupsResponse = await fetch(`${SOUP_API_BASE_URL}`);
+                    const soupsData = await soupsResponse.json();
 
-                // 存储汤面映射关系
-                soups.forEach(soup => {
-                    soupsMap[soup.soupId] = soup;
-                });
+                    if (soupsData.success) {
+                        // 获取汤面数据
+                        const soups = soupsData.data.soups || [];
+
+                        // 存储汤面映射关系
+                        soupsMap = {};
+                        soups.forEach(soup => {
+                            soupsMap[soup.soupId] = soup;
+                        });
+
+                        // 更新汤面选择器
+                        updateSoupFilter(soups);
+                    }
+                } catch (soupErr) {
+                    console.error('获取汤面数据失败:', soupErr);
+                    // 继续执行，不影响对话记录的获取
+                }
 
                 // 获取所有对话记录
                 const dialogResponse = await fetch(`${DIALOG_API_BASE_URL}/dialog/list`);
@@ -148,25 +134,49 @@
                 }
 
                 // 处理对话数据
-                for (const soupId in dialogData.data.dialogs) {
-                    const dialogInfo = dialogData.data.dialogs[soupId];
-                    const soup = soupsMap[soupId];
+                const dialogs = dialogData.data.dialogs || [];
+                allDialogs = [];
+                userIds = new Set();
 
-                    if (soup && dialogInfo.messages && dialogInfo.messages.length > 0) {
+                console.log('获取到的对话数据:', dialogs);
+
+                // 如果没有对话记录，直接显示无对话记录并返回
+                if (dialogs.length === 0) {
+                    document.getElementById('dialogsList').innerHTML = '<div class="alert alert-info">没有找到对话记录</div>';
+                    return; // 提前返回，不执行后续操作
+                }
+
+                for (const dialog of dialogs) {
+                    const soupTitle = soupsMap[dialog.soupId]?.title || '未知汤面';
+
+                    if (dialog.messages && dialog.messages.length > 0) {
                         allDialogs.push({
-                            soupId: soupId,
-                            soupTitle: soup.title,
-                            messages: dialogInfo.messages,
-                            lastUpdated: dialogInfo.lastUpdated || Date.now()
+                            dialogId: dialog.dialogId,
+                            soupId: dialog.soupId,
+                            userId: dialog.userId,
+                            soupTitle: soupTitle,
+                            messages: dialog.messages,
+                            lastUpdated: dialog.lastUpdated || Date.now()
                         });
+
+                        // 收集用户ID
+                        if (dialog.userId) {
+                            userIds.add(dialog.userId);
+                        }
                     }
                 }
+
+                console.log('处理后的对话数据:', allDialogs);
+                console.log('收集到的用户ID:', Array.from(userIds));
+
+                // 更新用户过滤器
+                updateUserFilter(Array.from(userIds));
 
                 // 按最后更新时间排序
                 allDialogs.sort((a, b) => b.lastUpdated - a.lastUpdated);
 
                 // 显示对话记录
-                displayDialogs(allDialogs);
+                applyFiltersAndDisplay();
 
             } catch (err) {
                 console.error('获取对话记录失败:', err);
@@ -192,40 +202,80 @@
             });
         }
 
+        // 更新用户过滤器
+        function updateUserFilter(userIds) {
+            const userFilter = document.getElementById('userFilter');
+
+            // 清除现有选项，保留第一个"所有用户"选项
+            while (userFilter.options.length > 1) {
+                userFilter.remove(1);
+            }
+
+            // 添加用户选项
+            userIds.sort().forEach(userId => {
+                const option = document.createElement('option');
+                option.value = userId;
+                option.textContent = userId;
+                userFilter.appendChild(option);
+            });
+        }
+
+        // 应用过滤器并显示对话
+        function applyFiltersAndDisplay() {
+            const soupFilter = document.getElementById('soupFilter');
+            const userFilter = document.getElementById('userFilter');
+            const selectedSoupId = soupFilter.value;
+            const selectedUserId = userFilter.value;
+
+            // 过滤对话记录
+            let filteredDialogs = allDialogs;
+
+            if (selectedSoupId !== 'all') {
+                filteredDialogs = filteredDialogs.filter(dialog => dialog.soupId === selectedSoupId);
+            }
+
+            if (selectedUserId !== 'all') {
+                filteredDialogs = filteredDialogs.filter(dialog => dialog.userId === selectedUserId);
+            }
+
+            // 显示对话记录
+            displayDialogs(filteredDialogs);
+        }
+
         // 显示对话记录
         function displayDialogs(dialogs) {
             const dialogsList = document.getElementById('dialogsList');
-            const soupFilter = document.getElementById('soupFilter');
-            const selectedSoupId = soupFilter.value;
-
-            // 过滤对话记录
-            const filteredDialogs = selectedSoupId === 'all' ?
-                dialogs :
-                dialogs.filter(dialog => dialog.soupId === selectedSoupId);
 
             // 清除现有内容
             dialogsList.innerHTML = '';
 
-            if (filteredDialogs.length === 0) {
+            console.log('显示对话记录:', dialogs);
+
+            if (dialogs.length === 0) {
                 dialogsList.innerHTML = '<div class="alert alert-info">没有找到对话记录</div>';
                 return;
             }
 
             // 显示对话记录
-            filteredDialogs.forEach(dialog => {
+            dialogs.forEach(dialog => {
                 const dialogElement = document.createElement('div');
                 dialogElement.className = 'dialog-group';
 
                 // 创建对话头部
                 const dialogHeader = document.createElement('div');
                 dialogHeader.className = 'dialog-header';
+                // 安全地获取对话ID的前10个字符
+                const dialogIdPrefix = dialog.dialogId ? dialog.dialogId.substring(0, 10) : 'unknown';
+
                 dialogHeader.innerHTML = `
                     <div>
-                        <h5 class="mb-0">${dialog.soupTitle}</h5>
-                        <small class="text-muted">汤面ID: ${dialog.soupId}</small>
+                        <h5 class="mb-0">对话 ${dialogIdPrefix}...</h5>
+                        <small class="text-muted">对话ID: ${dialog.dialogId || 'unknown'}</small><br>
+                        <small class="text-muted">汤面ID: ${dialog.soupId || 'unknown'}</small><br>
+                        <small class="text-muted">用户ID: ${dialog.userId || 'unknown'}</small>
                     </div>
                     <div>
-                        <button class="btn btn-sm btn-outline-danger" onclick="clearDialog('${dialog.soupId}')">清除对话</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="clearDialog('${dialog.dialogId || ''}')">清除对话</button>
                     </div>
                 `;
 
@@ -242,11 +292,11 @@
                     const messageInfo = document.createElement('div');
                     messageInfo.className = 'message-info';
                     const messageTime = new Date(message.timestamp).toLocaleString();
-                    messageInfo.textContent = `${message.type === 'user' ? '用户' : '系统'} · ${messageTime}`;
+                    messageInfo.textContent = `${message.role === 'user' ? '用户' : 'agent'} · ${messageTime}`;
 
                     // 消息内容
                     const messageElement = document.createElement('div');
-                    messageElement.className = `message message-${message.type}`;
+                    messageElement.className = `message message-${message.role === 'user' ? 'user' : 'normal'}`;
                     messageElement.textContent = message.content;
 
                     // 添加到容器
@@ -264,23 +314,28 @@
             });
         }
 
-        // 清除指定汤面的对话记录 - 定义为全局函数以便在HTML中调用
-        window.clearDialog = async function(soupId) {
-            if (!confirm(`确定要清除汤面 "${soupsMap[soupId]?.title || soupId}" 的对话记录吗？`)) {
+        // 清除指定对话记录 - 定义为全局函数以便在HTML中调用
+        window.clearDialog = async function(dialogId) {
+            if (!dialogId) {
+                alert('对话ID无效，无法删除');
+                return;
+            }
+
+            if (!confirm(`确定要清除对话 "${dialogId}" 吗？`)) {
                 return;
             }
 
             try {
-                const response = await fetch(`${DIALOG_API_BASE_URL}/dialog/delete/${soupId}`, {
+                const response = await fetch(`${DIALOG_API_BASE_URL}/dialog/${dialogId}`, {
                     method: 'DELETE'
                 });
 
                 const data = await response.json();
                 if (data.success) {
-                    alert(`清除成功！共清除了 ${data.data.deletedCount} 条消息。`);
+                    alert('清除成功！');
                     fetchAllDialogs(); // 重新加载对话记录
                 } else {
-                    alert('清除失败：' + data.error);
+                    alert('清除失败：' + (data.error || '未知错误'));
                 }
             } catch (err) {
                 console.error('清除对话记录失败:', err);
@@ -290,41 +345,50 @@
 
         // 清除所有对话记录
         async function clearAllDialogs() {
-            if (!confirm('确定要清除所有汤面的对话记录吗？此操作无法撤销！')) {
+            if (!confirm('确定要清除所有对话记录吗？此操作无法撤销！')) {
                 return;
             }
 
             try {
-                // 获取所有汤面ID
-                const soupsResponse = await fetch(`${API_BASE_URL}`);
-                const soupsData = await soupsResponse.json();
+                // 获取所有对话记录
+                const dialogResponse = await fetch(`${DIALOG_API_BASE_URL}/dialog/list`);
+                const dialogData = await dialogResponse.json();
 
-                if (!soupsData.success) {
-                    throw new Error('获取汤面列表失败：' + soupsData.error);
+                if (!dialogData.success) {
+                    throw new Error('获取对话记录失败：' + dialogData.error);
                 }
 
-                // 兼容新旧两种响应格式
-                const soups = Array.isArray(soupsData.data) ? soupsData.data : soupsData.data?.soups || [];
+                const dialogs = dialogData.data.dialogs || [];
+
+                if (dialogs.length === 0) {
+                    alert('没有对话记录需要清除');
+                    return;
+                }
 
                 let totalDeleted = 0;
 
-                // 对每个汤面ID清除对话记录
-                for (const soup of soups) {
+                // 对每个对话ID清除对话记录
+                for (const dialog of dialogs) {
+                    if (!dialog.dialogId) {
+                        console.error('对话缺少dialogId:', dialog);
+                        continue;
+                    }
+
                     try {
-                        const response = await fetch(`${DIALOG_API_BASE_URL}/dialog/delete/${soup.soupId}`, {
+                        const response = await fetch(`${DIALOG_API_BASE_URL}/dialog/${dialog.dialogId}`, {
                             method: 'DELETE'
                         });
 
                         const data = await response.json();
                         if (data.success) {
-                            totalDeleted += data.data.deletedCount;
+                            totalDeleted++;
                         }
                     } catch (err) {
-                        console.error(`清除汤面 ${soup.soupId} 的对话记录失败:`, err);
+                        console.error(`清除对话 ${dialog.dialogId} 失败:`, err);
                     }
                 }
 
-                alert(`清除成功！共清除了 ${totalDeleted} 条消息。`);
+                alert(`清除成功！共清除了 ${totalDeleted} 个对话。`);
                 fetchAllDialogs(); // 重新加载对话记录
 
             } catch (err) {
@@ -336,41 +400,8 @@
         // 添加事件监听器
         document.getElementById('refreshDialogs').addEventListener('click', fetchAllDialogs);
         document.getElementById('clearAllDialogs').addEventListener('click', clearAllDialogs);
-        document.getElementById('soupFilter').addEventListener('change', () => {
-            // 当选择不同汤面时，重新显示对话记录
-            const dialogsList = document.getElementById('dialogsList');
-            if (dialogsList.childElementCount > 0) {
-                const allDialogs = [];
-
-                // 收集当前显示的所有对话记录
-                document.querySelectorAll('.dialog-group').forEach(dialogElement => {
-                    const soupId = dialogElement.querySelector('.dialog-header small').textContent.split(': ')[1];
-                    const soupTitle = dialogElement.querySelector('.dialog-header h5').textContent;
-
-                    // 收集消息
-                    const messages = [];
-                    dialogElement.querySelectorAll('.message-container').forEach(messageContainer => {
-                        const messageInfo = messageContainer.querySelector('.message-info').textContent;
-                        const messageType = messageInfo.startsWith('用户') ? 'user' : 'normal';
-                        const messageContent = messageContainer.querySelector('.message').textContent;
-
-                        messages.push({
-                            type: messageType,
-                            content: messageContent
-                        });
-                    });
-
-                    allDialogs.push({
-                        soupId,
-                        soupTitle,
-                        messages
-                    });
-                });
-
-                // 重新显示对话记录
-                displayDialogs(allDialogs);
-            }
-        });
+        document.getElementById('soupFilter').addEventListener('change', applyFiltersAndDisplay);
+        document.getElementById('userFilter').addEventListener('change', applyFiltersAndDisplay);
 
         // 页面加载时获取对话记录
         fetchAllDialogs();

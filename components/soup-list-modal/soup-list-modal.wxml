@@ -1,0 +1,58 @@
+<!--components/soup-list-modal/soup-list-modal.wxml-->
+<view class="modal-container {{visible ? 'visible' : ''}}" catchtap="closeModal">
+  <view class="modal-content" catchtap="preventBubble">
+    <!-- 弹窗头部 -->
+    <view class="modal-header">
+      <text class="modal-title">{{title}}</text>
+      <view class="modal-close" catchtap="closeModal">×</view>
+    </view>
+
+    <!-- 弹窗内容 -->
+    <view class="modal-body">
+      <!-- 加载中 -->
+      <view class="loading-container" wx:if="{{loading}}">
+        <view class="loading-spinner"></view>
+        <text class="loading-text">加载中...</text>
+      </view>
+
+      <!-- 空状态 -->
+      <view class="empty-container" wx:elif="{{isEmpty}}">
+        <view class="empty-icon"></view>
+        <text class="empty-text">{{emptyText}}</text>
+      </view>
+
+      <!-- 海龟汤列表 -->
+      <scroll-view
+        class="soup-list-scroll"
+        scroll-y="true"
+        wx:else
+      >
+        <view class="soup-list">
+          <block wx:if="{{soupList && soupList.length > 0}}">
+            <view
+              class="soup-item"
+              wx:for="{{soupList}}"
+              wx:key="index"
+              data-soupid="{{item.soupId}}"
+              data-dialogid="{{item.dialogId}}"
+              catchtap="onSoupItemTap"
+            >
+              <view class="soup-item-content">
+                <view class="soup-title">{{item.title || '未知标题'}}</view>
+                <view class="soup-meta">
+                  <text class="soup-type">{{item.soupType === 0 ? '预制' : 'DIY'}}</text>
+                  <text class="soup-views">{{item.viewCount || 0}}次浏览</text>
+                </view>
+              </view>
+              <view class="soup-item-arrow"></view>
+            </view>
+          </block>
+          <view wx:else class="empty-container">
+            <view class="empty-icon"></view>
+            <text class="empty-text">{{emptyText}}</text>
+          </view>
+        </view>
+      </scroll-view>
+    </view>
+  </view>
+</view>

@@ -1,1 +1,57 @@
-[{"soupId":"local_001","title":"《本地测试海龟汤1》","contentLines":["这是一个","本地测试海龟汤","用于开发环境测试"],"truth":"这是一个测试用的汤底","soupType":0,"creatorId":"admin","viewCount":0,"likeCount":0,"publishTime":"2025-04-22T03:41:41.100Z","publishIp":"127.0.0.1","updateTime":"2025-04-22T03:41:41.100Z","updateIp":"127.0.0.1"},{"soupId":"local_002","title":"《本地测试海龟汤2》","contentLines":["又一个","本地测试海龟汤","开发环境专用"],"truth":"这是另一个测试用的汤底","soupType":1,"creatorId":"admin","viewCount":5,"likeCount":2,"publishTime":"2025-04-22T03:41:41.100Z","publishIp":"127.0.0.1","updateTime":"2025-04-22T03:41:41.100Z","updateIp":"127.0.0.1"}]
+[
+  {
+    "soupId": "local_001",
+    "title": "《服务器测试海龟汤1》",
+    "contentLines": [
+      "这是一个",
+      "服务器测试海龟汤",
+      "用于开发环境测试"
+    ],
+    "truth": "这是一个测试用的汤底",
+    "soupType": 0,
+    "creatorId": "admin",
+    "viewCount": 1155,
+    "likeCount": 0,
+    "publishTime": "2025-04-22T03:41:41.100Z",
+    "publishIp": "127.0.0.1",
+    "updateTime": "2025-04-30T02:15:34.886Z",
+    "updateIp": "127.0.0.1"
+  },
+  {
+    "soupId": "local_002",
+    "title": "《服务器测试海龟汤2》",
+    "contentLines": [
+      "又一个",
+      "服务器测试海龟汤",
+      "开发环境专用"
+    ],
+    "truth": "这是另一个测试用的汤底",
+    "soupType": 1,
+    "creatorId": "admin",
+    "viewCount": 444,
+    "likeCount": 2,
+    "publishTime": "2025-04-22T03:41:41.100Z",
+    "publishIp": "127.0.0.1",
+    "updateTime": "2025-04-30T01:53:01.046Z",
+    "updateIp": "127.0.0.1"
+  },
+  {
+    "soupId": "local_1745306274186",
+    "title": "服务器海龟汤3",
+    "contentLines": [
+      "testtesttest",
+      "testtest",
+      "test",
+      "testtesttest"
+    ],
+    "truth": "testtest",
+    "soupType": 0,
+    "creatorId": "admin",
+    "viewCount": 347,
+    "likeCount": 0,
+    "publishTime": "2025-04-22T07:17:54.186Z",
+    "publishIp": "::1",
+    "updateTime": "2025-04-30T01:53:01.602Z",
+    "updateIp": "127.0.0.1"
+  }
+]

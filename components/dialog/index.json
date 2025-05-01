@@ -4,5 +4,5 @@
     "nav-bar": "/components/nav-bar/index",
     "input-bar": "/components/input-bar/index"
   },
-  "styleIsolation": "apply-shared"
+  "styleIsolation": "isolated"
 }

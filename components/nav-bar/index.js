@@ -28,17 +28,22 @@ Component({
     // 标题内容
     title: {
       type: String,
-      value: '一勺海龟汤'
+      value: ''
     },
     // 标题样式
     titleStyle: {
       type: String,
       value: ''
     },
-    // 当前汤面ID
+    // 当前海龟汤ID
     soupId: {
       type: String,
       value: ''
+    },
+    // 当前页面状态
+    pageState: {
+      type: String,
+      value: 'viewing' // 默认为viewing状态，可选值：viewing, drinking, truth
     }
   },
 
@@ -146,10 +151,14 @@ Component({
       this.triggerEvent('about');
     },
 
-    // 处理放弃汤面事件
-    onAbandon() {
-      // 触发放弃汤面事件给页面处理
-      this.triggerEvent('abandon');
+    // 处理清理上下文事件
+    onClearContext(e) {
+      // 获取对话ID
+      const { dialogId } = e.detail;
+      if (!dialogId) return;
+
+      // 触发清理上下文事件给页面处理
+      this.triggerEvent('clearcontext', { dialogId });
     }
   }
 })

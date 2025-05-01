@@ -1,36 +1,31 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container {{staticMode ? 'static-mode' : ''}} {{isPeeking ? 'is-peeking' : ''}}"
-  aria-busy="{{loading}}"
+  class="soup-container {{loading ? 'loading' : ''}} {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
+  style="filter: blur({{blurAmount}}px);"
+  bindtouchstart="touchStart"
+  bindtouchmove="touchMove"
+  bindtouchend="touchEnd"
 >
-  <!-- 加载中状态 -->
-  <view
-    class="loading-container"
-    wx:if="{{loading}}"
-    aria-live="polite"
-  >
-    <text class="loading-text blink-animation">汤面加载中...</text>
-  </view>
-
   <!-- 汤面内容区域 -->
-  <block wx:else>
-    <view class="soup-content">
-      <block wx:for="{{displayLines}}" wx:key="index">
-        <view
-          class="text-line-container"
-          aria-label="{{index === 0 ? '汤面标题' : '第' + index + '行'}}"
-        >
-          <text class="text-line">
-            <text
-              wx:for="{{item.chars}}"
-              wx:for-item="char"
-              wx:for-index="charIndex"
-              wx:key="charIndex"
-              class="char-typing {{char.show ? 'show' : ''}} {{char.active ? 'active' : ''}}"
-            >{{char.char}}</text>
-          </text>
-        </view>
-      </block>
+  <block wx:if="{{!loading}}">
+    <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
+      <!-- 标题和内容分开显示 -->
+      <view class="title-container" wx:if="{{currentSoup.title}}">
+        <text class="title-text">{{currentSoup.title}}</text>
+      </view>
+      <text class="soup-text">{{displayContent}}</text>
     </view>
+
+    <!-- 使用独立的交互底部组件 -->
+    <interaction-footer
+      id="interactionFooter"
+      isFavorite="{{isFavorite}}"
+      favoriteCount="{{favoriteCount}}"
+      likeCount="{{likeCount}}"
+      creatorId="{{creatorId}}"
+      isDrinking="{{isDrinking}}"
+      soupId="{{currentSoup.soupId || ''}}"
+      bind:favoriteChange="onFavoriteChange"
+    ></interaction-footer>
   </block>
 </view>

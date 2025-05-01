@@ -1,0 +1,80 @@
+/* components/tab-switcher/tab-switcher.wxss */
+@import "../../styles/animation.wxss";
+
+/* 标签切换器样式 */
+.tab-switcher {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20rpx;
+  position: relative;
+  top:200rpx;
+  z-index: 100;
+}
+
+.tab-container {
+  display: flex;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 40rpx;
+  padding: 8rpx;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.tab {
+  padding: 16rpx 36rpx;
+  border-radius: 30rpx;
+  margin: 0 6rpx;
+  position: relative;
+  transition: all 0.3s ease;
+  will-change: transform;
+  /* 增加点击区域 */
+  min-width: 80rpx;
+  text-align: center;
+}
+
+.tab.active {
+  background: var(--color-primary);
+  box-shadow: 0 4rpx 15rpx rgba(87, 44, 239, 0.3);
+}
+
+.tab.disabled {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.tab-text {
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 500;
+  display: inline-block;
+  pointer-events: none; /* 确保文本不会阻止点击事件传递到tab */
+}
+
+.badge {
+  position: absolute;
+  top: -10rpx;
+  right: -10rpx;
+  background: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  min-width: 36rpx;
+  height: 36rpx;
+  line-height: 36rpx;
+  text-align: center;
+  font-size: 22rpx;
+  box-shadow: 0 2rpx 8rpx rgba(255, 77, 79, 0.5);
+}
+
+/* 果冻动画效果 */
+.jelly-effect {
+  animation: jelly 0.6s ease;
+}
+
+@keyframes jelly {
+  0%, 100% { transform: scale(1, 1); }
+  25% { transform: scale(0.95, 1.05); }
+  50% { transform: scale(1.05, 0.95); }
+  75% { transform: scale(0.98, 1.02); }
+}

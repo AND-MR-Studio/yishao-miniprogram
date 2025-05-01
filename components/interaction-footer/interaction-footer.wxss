@@ -1,0 +1,145 @@
+/* components/interaction-footer/interaction-footer.wxss */
+
+/* 底部控件容器样式 */
+.bottom-controls-container {
+  position: fixed;
+  bottom: calc(240rpx + env(safe-area-inset-bottom)); /* 调整位置，确保在开始喝汤按钮上方 */
+  left: 0;
+  right: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 100; /* 提高z-index确保显示在其他元素上方 */
+  padding: 0;
+  box-sizing: border-box;
+  overflow: hidden; /* 防止内容溢出 */
+}
+
+/* 喝汤状态下强制隐藏底部控件容器 */
+.bottom-controls-container.drinking-hidden {
+  display: none !important;
+}
+
+/* 图标容器样式 */
+.icons-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 60rpx; /* 减小图标之间的间距 */
+  opacity: 1; /* 确保容器本身不影响子元素的透明度 */
+  margin: 0 auto;
+  padding: 40rpx 0;
+  width: 100%; /* 减小宽度，防止溢出 */
+  max-width: 500rpx; /* 设置最大宽度 */
+}
+
+/* 图标包装器样式 */
+.icon-wrapper {
+  width: 30rpx;
+  height: 30rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  opacity: 1; /* 完全不透明 */
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* 收藏图标样式 */
+.favorite-icon {
+  /* 特定于收藏图标的样式 */
+}
+
+/* 点赞图标样式 */
+.like-icon {
+  /* 特定于点赞图标的样式 */
+}
+
+/* 只读图标样式 */
+.like-icon.read-only {
+  cursor: default;
+  pointer-events: none; /* 禁用点击事件 */
+}
+
+/* 图标文本样式 */
+.heart-text {
+  font-size: 48rpx;
+  line-height: 1;
+}
+
+/* 收藏图标文本样式 */
+.favorite-icon .heart-text {
+  color: rgba(158, 46, 255, 0.9); /* 紫色 */
+}
+
+/* 点赞图标文本样式 */
+.like-icon .heart-text {
+  color: rgba(255, 46, 84, 0.9); /* 红色 */
+  text-shadow: 0 2rpx 8rpx rgba(255, 230, 0, 0.4);
+}
+
+/* 计数文本通用样式 */
+.count-text {
+  font-size: 26rpx;
+  margin-top: 10rpx;
+  text-align: center;
+  font-weight: bold;
+  border-radius: 20rpx;
+  padding: 2rpx 10rpx;
+  min-width: 40rpx;
+}
+
+/* 收藏数量样式 */
+.favorite-count {
+  color: var(--color-accent);
+}
+
+/* 点赞数量样式 */
+.like-count {
+  color: var(--color-primary-light);
+}
+
+/* 隐藏的收藏图标 */
+.favorite-icon.hidden {
+  opacity: 0.6; /* 半透明而不是完全隐藏 */
+}
+
+/* 点赞图标激活样式 */
+.like-icon.active {
+  transform: scale(1.2);
+}
+
+/* 收藏图标激活样式 */
+.favorite-icon.active {
+  transform: scale(1.1);
+}
+
+/* 创作者感谢文字样式 */
+.creator-credit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.8;
+  transition: all 0.3s ease;
+  margin-top: 15rpx;
+  width: 100%;
+  text-align: center;
+  padding: 0 20rpx;
+  box-sizing: border-box;
+}
+
+/* 创作者文本样式 */
+.creator-text {
+  font-size: 22rpx;
+  color: var(--color-text-hint);
+  font-weight: 100;
+  letter-spacing: 1rpx;
+  text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.5);
+  white-space: nowrap; /* 防止文本换行 */
+  overflow: hidden;
+  text-overflow: ellipsis; /* 文本溢出时显示省略号 */
+  max-width: 100%;
+}

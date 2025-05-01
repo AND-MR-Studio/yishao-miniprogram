@@ -98,12 +98,12 @@ Component({
 
         if (targetSoupId) {
           // 如果有指定ID，尝试获取指定汤面
-          soupData = await soupService.getSoupById(targetSoupId);
+          soupData = await soupService.getSoup(targetSoupId);
         } else {
           // 如果没有指定ID，获取随机汤面
           soupData = await soupService.getRandomSoup();
           if (soupData) {
-            targetSoupId = soupData.soupId || soupData.id;
+            targetSoupId = soupData.soupId || '';
           }
         }
 
@@ -131,7 +131,7 @@ Component({
               currentSoup: randomSoup,
               title: randomSoup.title || '未知标题',
               truth: randomSoup.truth || '汤底未知',
-              soupId: randomSoup.soupId || randomSoup.id || '',
+              soupId: randomSoup.soupId || '',
               loading: false
             });
             return randomSoup;

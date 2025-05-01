@@ -1,19 +1,47 @@
-<!--pages/index.wxml-->
-<view class="page">
+<!--pages/index.wxml - 海龟汤首页-->
+<view class="page {{swiping ? 'swiping' : ''}}" style="{{gradientStyle ? '--dynamic-gradient: ' + gradientStyle : ''}}">
   <!-- 导航栏 -->
   <nav-bar
+    pageState="{{pageState}}"
     bind:settingchange="handleSettingChange"
     bind:close="onSettingClose"
+    bind:clearcontext="clearContext"
   />
 
   <view class="container">
+    <!-- 标签切换器 -->
+    <tab-switcher
+      wx:if="{{pageState === 'viewing'}}"
+      activeTab="{{activeTab}}"
+      isDrinking="{{pageState === 'drinking'}}"
+      disabled="{{isLoading}}"
+      bind:tabchange="handleTabChange"
+      class="tab-switcher-component"
+    ></tab-switcher>
+
     <!-- 汤面显示区域 -->
-    <soup-display
-      id="soupDisplay"
-      isPeeking="{{isPeeking}}"
-      class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{pageState === 'drinking' && isPeeking ? 'is-peeking' : ''}}"
-      wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
-    ></soup-display>
+    <view class="soup-display-wrapper">
+      <soup-display
+        id="soupDisplay"
+        soupData="{{currentSoup}}"
+        loading="{{isLoading}}"
+        isFavorite="{{isFavorite}}"
+        isPeeking="{{isPeeking}}"
+        isDrinking="{{pageState === 'drinking'}}"
+        pageState="{{pageState}}"
+        blurAmount="{{blurAmount}}"
+        breathingBlur="{{breathingBlur}}"
+        swipeFeedback="{{swipeFeedback}}"
+        swipeDirection="{{swipeDirection}}"
+        class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
+        wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
+        bind:animationComplete="onAnimationComplete"
+        bind:soupchange="handleSoupChange"
+        bind:loading="handleSoupLoading"
+        bind:favoriteChange="handleFavoriteChange"
+        bind:swipe="handleSoupSwipe"
+      ></soup-display>
+    </view>
 
     <!-- 汤底显示区域 -->
     <soup-truth
@@ -22,29 +50,20 @@
       wx:if="{{pageState === 'truth'}}"
     ></soup-truth>
 
-    <!-- 设置卡片已移至nav-bar组件中 -->
-    <!-- 不需要在这里使用setting-card组件 -->
-
     <!-- 按钮区域 -->
     <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
-      <custom-button
-        type="light"
-        text="开始喝汤"
-        width="50%"
-        height="80rpx"
+      <start-soup-button
+        id="startSoupButton"
         bind:tap="onStartSoup"
-        class="start-button"
-        wx:if="{{showButtons}}">
-      </custom-button>
-      <custom-button
-        type="unlight"
-        text="下一个"
+        visible="{{showButtons}}"
         width="50%"
-        height="80rpx"
-        bind:tap="onNextSoup"
-        class="next-button"
-        wx:if="{{showButtons}}">
-      </custom-button>
+        height="80rpx">
+      </start-soup-button>
+    </view>
+
+    <!-- 滑动提示 -->
+    <view class="swipe-hint {{showButtons ? 'show-hint' : ''}}" wx:if="{{pageState === 'viewing'}}">
+      <text>左右滑动切换汤面</text>
     </view>
   </view>
 
@@ -54,8 +73,29 @@
     visible="{{pageState === 'drinking'}}"
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
-    bind:peekSoup="onPeekSoup"
-    bind:messageStatusChange="onMessageStatusChange"
+    bind:clearcontext="clearContext"
   ></dialog-component>
+
+  <!-- 提示模块组件 - 在喝汤状态和汤底状态显示 -->
+  <tip-module
+    visible="{{(pageState === 'drinking' && (tipVisible === undefined ? true : tipVisible)) || pageState === 'truth'}}"
+    bind:close="onTipModuleClose"
+    pageState="{{pageState}}"
+    tipTitle="汤来了！我是陪你熬夜猜谜的小勺🌙"
+    tipContent="{{['只答是、否、不确定，别想套我话哦～', '长按汤面就浮出来咯！']}}"
+  ></tip-module>
+
+  <!-- 登录提示弹窗 -->
+  <popup
+    id="loginPopup"
+    title="侦探大人，想喝海龟汤吗？"
+    content="先去「个人中心」登录一下吧～"
+    confirmText="去登录→"
+    cancelText="再想想"
+    showClose="{{false}}"
+    imageUrl="https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png"
+    bind:confirm="onLoginConfirm"
+    bind:cancel="onLoginCancel"
+  ></popup>
 
 </view>

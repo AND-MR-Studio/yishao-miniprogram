@@ -1,10 +1,10 @@
 /**
- * 海龟汤服务 - RESTful API实现
+ * 海龟汤服务 - RESTful yishao-api实现
  * 提供符合RESTful规范的海龟汤数据CRUD操作
- * 遵循简洁设计原则，只提供必要的API接口
+ * 遵循简洁设计原则，只提供必要的yishao-api接口
  */
 const soupDataAccess = require('../dataAccess/soupDataAccess');
-const { SOUP_TYPES, validateSoup } = require('../models/soupModel');
+const { SOUP_TYPES, SOUP_TAGS, validateSoup } = require('../models/soupModel');
 
 /**
  * 获取客户端IP地址
@@ -12,10 +12,10 @@ const { SOUP_TYPES, validateSoup } = require('../models/soupModel');
  * @returns {string} IP地址
  */
 function getClientIp(req) {
-  return req.ip || 
-         req.headers['x-forwarded-for'] || 
-         req.connection.remoteAddress || 
-         req.socket.remoteAddress || 
+  return req.ip ||
+         req.headers['x-forwarded-for'] ||
+         req.connection.remoteAddress ||
+         req.socket.remoteAddress ||
          '127.0.0.1';
 }
 
@@ -60,7 +60,7 @@ async function createSoup(soupData, req) {
 
     // 获取客户端IP
     const clientIp = getClientIp(req);
-    
+
     // 准备数据
     const newSoupData = {
       ...soupData,
@@ -91,7 +91,7 @@ async function updateSoup(soupId, soupData, req) {
 
     // 获取客户端IP
     const clientIp = getClientIp(req);
-    
+
     // 准备更新数据
     const updateData = {
       ...soupData,
@@ -151,21 +151,27 @@ function sendResponse(res, success, data, statusCode = 200) {
 
 /**
  * 初始化海龟汤服务路由
- * 实现RESTful API规范的路由
- * 简化API设计，只提供必要的接口
+ * 实现RESTful yishao-api规范的路由
+ * 简化yishao-api设计，只提供必要的接口
  */
 function initSoupRoutes(app) {
   // 基础路径
-  const BASE_PATH = '/api/soup';
+  const BASE_PATH = '/yishao-api/soup';
 
   // GET /api/soup - 获取所有海龟汤或根据ID获取特定海龟汤
   app.get(BASE_PATH, async (req, res) => {
     try {
-      const { id, type } = req.query;
+      const { id, type, tags } = req.query;
       let result;
 
+      // 如果指定了标签，按标签筛选
+      if (tags !== undefined) {
+        // 将逗号分隔的标签字符串转换为数组
+        const tagArray = tags.includes(',') ? tags.split(',') : [tags];
+        result = await soupDataAccess.getSoupsByTag(tagArray);
+      }
       // 如果指定了类型，按类型筛选
-      if (type !== undefined) {
+      else if (type !== undefined) {
         result = await soupDataAccess.getSoupsByType(parseInt(type));
       } else if (id) {
         // 如果提供了多个ID，转换为数组
@@ -201,6 +207,16 @@ function initSoupRoutes(app) {
       return sendResponse(res, true, soups[randomIndex]);
     } catch (err) {
       return sendResponse(res, false, '获取随机海龟汤失败: ' + err.message, 500);
+    }
+  });
+
+  // GET /api/soup/tags - 获取所有海龟汤标签
+  app.get(`${BASE_PATH}/tags`, async (_, res) => {
+    try {
+      // 返回所有标签类型
+      return sendResponse(res, true, SOUP_TAGS);
+    } catch (err) {
+      return sendResponse(res, false, '获取海龟汤标签失败: ' + err.message, 500);
     }
   });
 
@@ -243,7 +259,7 @@ function initSoupRoutes(app) {
       return sendResponse(res, false, '更新海龟汤失败: ' + err.message, 500);
     }
   });
-  
+
   // POST /api/soup/:soupId/like - 点赞海龟汤
   app.post(`${BASE_PATH}/:soupId/like`, async (req, res) => {
     try {
@@ -251,11 +267,11 @@ function initSoupRoutes(app) {
       if (!soup) {
         return sendResponse(res, false, '海龟汤不存在', 404);
       }
-      
+
       const updatedData = {
         likeCount: (soup.likeCount || 0) + 1
       };
-      
+
       const result = await updateSoup(req.params.soupId, updatedData, req);
       if (!result) {
         return sendResponse(res, false, '点赞失败', 400);
@@ -265,7 +281,7 @@ function initSoupRoutes(app) {
       return sendResponse(res, false, '点赞失败: ' + err.message, 500);
     }
   });
-  
+
   // POST /api/soup/:soupId/view - 增加阅读数
   app.post(`${BASE_PATH}/:soupId/view`, async (req, res) => {
     try {
@@ -273,11 +289,11 @@ function initSoupRoutes(app) {
       if (!soup) {
         return sendResponse(res, false, '海龟汤不存在', 404);
       }
-      
+
       const updatedData = {
         incrementView: true
       };
-      
+
       const result = await updateSoup(req.params.soupId, updatedData, req);
       if (!result) {
         return sendResponse(res, false, '更新阅读数失败', 400);
@@ -285,6 +301,55 @@ function initSoupRoutes(app) {
       return sendResponse(res, true, { viewCount: result.viewCount });
     } catch (err) {
       return sendResponse(res, false, '更新阅读数失败: ' + err.message, 500);
+    }
+  });
+
+  // POST /api/soup/:soupId/favorite - 收藏海龟汤
+  app.post(`${BASE_PATH}/:soupId/favorite`, async (req, res) => {
+    try {
+      const soup = await getSoup(req.params.soupId);
+      if (!soup) {
+        return sendResponse(res, false, '海龟汤不存在', 404);
+      }
+
+      // 检查是否是取消收藏操作
+      const isUnfavorite = req.query.action === 'unfavorite';
+
+      const updatedData = {
+        favoriteCount: isUnfavorite
+          ? Math.max((soup.favoriteCount || 0) - 1, 0) // 确保不会小于0
+          : (soup.favoriteCount || 0) + 1
+      };
+
+      const result = await updateSoup(req.params.soupId, updatedData, req);
+      if (!result) {
+        return sendResponse(res, false, isUnfavorite ? '取消收藏失败' : '收藏失败', 400);
+      }
+      return sendResponse(res, true, { favoriteCount: result.favoriteCount });
+    } catch (err) {
+      return sendResponse(res, false, '收藏操作失败: ' + err.message, 500);
+    }
+  });
+
+  // POST /api/soup/:soupId/unlike - 不喜欢海龟汤
+  app.post(`${BASE_PATH}/:soupId/unlike`, async (req, res) => {
+    try {
+      const soup = await getSoup(req.params.soupId);
+      if (!soup) {
+        return sendResponse(res, false, '海龟汤不存在', 404);
+      }
+
+      const updatedData = {
+        unlikeCount: (soup.unlikeCount || 0) + 1
+      };
+
+      const result = await updateSoup(req.params.soupId, updatedData, req);
+      if (!result) {
+        return sendResponse(res, false, '操作失败', 400);
+      }
+      return sendResponse(res, true, { unlikeCount: result.unlikeCount });
+    } catch (err) {
+      return sendResponse(res, false, '操作失败: ' + err.message, 500);
     }
   });
 
@@ -346,5 +411,6 @@ module.exports = {
   deleteSoup,
   deleteSoups,
   getClientIp,
-  SOUP_TYPES
+  SOUP_TYPES,
+  SOUP_TAGS
 };

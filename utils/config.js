@@ -5,20 +5,20 @@ const config = {
   //开发版
   'develop': {
     //请求的地址
-    baseUrl: 'http://localhost:8080',
-    ysUrl: 'http://localhost:8080/api/'
+    baseUrl: 'https://and-tech.cn',
+    ysUrl: 'https://and-tech.cn/yishao-api/'
   },
   //体验版
   'trial': {
     //请求的地址
-    baseUrl: 'http://localhost:8080',
-    ysUrl: 'http://14.103.193.11:8081/api/'
+    baseUrl: 'https://and-tech.cn',
+    ysUrl: 'https://and-tech.cn/yishao-api/'
   },
   //正式版
   'release': {
     //请求的地址
-    baseUrl: 'http://14.103.193.11:8081',
-    ysUrl: 'http://14.103.193.11:8081/api/'
+    baseUrl: 'https://and-tech.cn',
+    ysUrl: 'https://and-tech.cn/yishao-api/'
   }
 }[wx.getAccountInfoSync().miniProgram.envVersion];
 

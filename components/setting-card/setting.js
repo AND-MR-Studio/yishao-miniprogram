@@ -14,6 +14,10 @@ Component({
     soupId: {
       type: String,
       value: ''
+    },
+    pageState: {
+      type: String,
+      value: 'viewing' // 默认为viewing状态，可选值：viewing, drinking, truth
     }
   },
 
@@ -23,20 +27,14 @@ Component({
   data: {
     soundOn: true,
     vibrationOn: false,
-    skipAnimation: false, // 跳过动画开关
-    fontSize: 'medium', // 当前选中的字体大小
-    // 字体大小选项
-    fontSizeOptions: [
-      { label: '小', value: 'small', scaleFactor: 0.85 },
-      { label: '中', value: 'medium', scaleFactor: 1.0 },
-      { label: '大', value: 'large', scaleFactor: 1.2 }
-    ],
     statusBarHeight: 0,
     // 拖拽相关变量 - 供panelDrag工具类使用
     moveDistance: 0,
     panelStyle: '',
     isDragging: false,
-    isVibrating: false
+    isVibrating: false,
+    // 防止重复触发标志
+    isProcessingContext: false
   },
 
   lifetimes: {
@@ -89,9 +87,7 @@ Component({
         const settings = wx.getStorageSync('soupSettings') || {};
         this.setData({
           soundOn: settings.soundOn ?? true,
-          vibrationOn: settings.vibrationOn ?? false,
-          skipAnimation: settings.skipAnimation ?? false,
-          fontSize: settings.fontSize || 'medium'
+          vibrationOn: settings.vibrationOn ?? false
         });
       } catch (e) {
         // 读取设置失败
@@ -106,9 +102,7 @@ Component({
       try {
         const settings = {
           soundOn: this.data.soundOn,
-          vibrationOn: this.data.vibrationOn,
-          skipAnimation: this.data.skipAnimation,
-          fontSize: this.data.fontSize
+          vibrationOn: this.data.vibrationOn
         };
         wx.setStorageSync('soupSettings', settings);
       } catch (e) {
@@ -116,53 +110,7 @@ Component({
       }
     },
 
-    // 设置字体大小
-    setFontSize(e) {
-      if (e.detail && e.detail.value) {
-        const option = this.data.fontSizeOptions.find(option => option.value === e.detail.value);
-        if (!option) return;
 
-        this.triggerVibration();
-
-        if (this.data.fontSize !== option.value) {
-          this.setData({ fontSize: option.value }, () => {
-            // 触发事件
-            this.triggerEvent('fontsizechange', {
-              size: option.value,
-              scaleFactor: option.scaleFactor
-            });
-          });
-        }
-      } else {
-        // 兼容原有的点击事件处理方式
-        const index = e.currentTarget.dataset.index;
-        if (index == null || index < 0 || index >= this.data.fontSizeOptions.length) return;
-
-        const option = this.data.fontSizeOptions[index];
-
-        // 触发震动
-        this.triggerVibration();
-
-        // 只有选择不同的值时才更新
-        if (this.data.fontSize !== option.value) {
-          this.setData({ fontSize: option.value });
-
-          // 触发事件，传递字体大小相关信息
-          this.triggerEvent('fontsizechange', {
-            size: option.value,
-            scaleFactor: option.scaleFactor
-          });
-        }
-      }
-    },
-
-    // 获取当前字体大小的缩放因子
-    getCurrentFontScale() {
-      const currentOption = this.data.fontSizeOptions.find(
-        option => option.value === this.data.fontSize
-      );
-      return currentOption ? currentOption.scaleFactor : 1.0;
-    },
 
     // 触发震动反馈
     triggerVibration() {
@@ -206,52 +154,42 @@ Component({
       });
     },
 
-    // 放弃当前海龟汤
-     abandonSoup(){
+
+
+    // 清理对话上下文
+    clearContext() {
+      // 防止重复触发
+      if (this.data.isProcessingContext) {
+        return;
+      }
+
       this.triggerVibration();
 
-      wx.showModal({
-        title: '提示',
-        content: '确定要放弃当前海龟汤吗？这不会重置提问次数哦',
-        success: (res) => {
-          if (res.confirm) {
-            this.triggerVibration();
+      // 设置处理标志
+      this.setData({ isProcessingContext: true });
 
-            // 触发放弃事件通知父组件处理后续逻辑
-            this.triggerEvent('abandon');
+      // 获取当前对话ID
+      const dialogService = require('../../utils/dialogService');
+      const dialogId = dialogService.getCurrentDialogId();
 
-            // 显示提示消息
-            wx.showToast({
-              title: '已放弃当前海龟汤',
-              icon: 'success',
-              duration: 1500
-            });
+      if (dialogId) {
+        // 触发清理上下文事件，传递dialogId
+        this.triggerEvent('clearcontext', { dialogId });
 
-            // 注意：页面跳转和清除对话记录的逻辑已移至dialog.js的handleAbandonSoup中处理
-          }
-        }
-      });
-    },
+        // 延迟重置处理标志，确保不会短时间内重复触发
+        setTimeout(() => {
+          this.setData({ isProcessingContext: false });
+        }, 1000); // 1秒后重置
+      } else {
+        wx.showToast({
+          title: '无对话可清理',
+          icon: 'none',
+          duration: 1500
+        });
 
-    // 清理缓存
-    clearCache() {
-      this.triggerVibration();
-
-      wx.showModal({
-        title: '提示',
-        content: '确定要清理缓存吗？',
-        success: (res) => {
-          if (res.confirm) {
-            this.triggerVibration();
-            this.triggerEvent('clearcache');
-            wx.showToast({
-              title: '缓存已清理',
-              icon: 'success',
-              duration: 1500
-            });
-          }
-        }
-      });
+        // 立即重置处理标志
+        this.setData({ isProcessingContext: false });
+      }
     },
 
     // 下拉开始 - 使用工具类
@@ -308,10 +246,8 @@ Component({
       return false;
     },
 
-    // 阻止事件冒泡
-    stopPropagation() {
-      return false;
-    },
+    // 阻止事件冒泡 - 在微信小程序中，catchtap已经阻止了冒泡，这个函数只是一个空函数
+    stopPropagation() {},
 
     // 处理面板关闭
     handlePanelClose() {

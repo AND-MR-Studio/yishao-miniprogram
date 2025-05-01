@@ -1,13 +1,18 @@
 /* components/nav-bar/index.wxss */
-@import "/static/css/iconfont.wxss";
+@import "/static/css/icon.wxss";
 
 .nav-bar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 999;
-  padding-bottom: 10rpx; 
+  z-index: 1100; /* 提高z-index确保始终在最上层 */
+  padding-bottom: 10rpx;
+  background: linear-gradient(to bottom, rgba(2, 8, 20, 0.85) 0%, rgba(2, 8, 20, 0.6) 80%, rgba(2, 8, 20, 0) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 4rpx 30rpx rgba(0, 0, 0, 0.15);
+  border-bottom: 1rpx solid rgba(76, 0, 255, 0.1);
 }
 
 .nav-bar-content {
@@ -15,7 +20,10 @@
   align-items: center;
   padding: 0 24rpx;
   position: relative;
+  height: 88rpx;
 }
+
+/* 移除紫色光晕效果 */
 
 .nav-bar-left {
   display: flex;
@@ -33,7 +41,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 0 2rpx 8rpx rgba(76, 0, 255, 0.5);
+  letter-spacing: 2rpx;
 }
 
 .nav-icon-wrapper {
@@ -42,12 +54,21 @@
   align-items: center;
   width: 72rpx;
   height: 72rpx;
+  background: rgba(2, 8, 20, 0.3);
+  border-radius: 16rpx;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+  border: 1rpx solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.nav-icon-wrapper:active {
+  transform: scale(0.95);
+  background: rgba(2, 8, 20, 0.5);
 }
 
 .left-icon {
   margin-right: 5rpx;
 }
 
-.font_family {
-  font-size: 36rpx;
-}

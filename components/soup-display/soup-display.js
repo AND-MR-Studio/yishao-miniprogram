@@ -1,127 +1,151 @@
-// components/soup-display/soup-display.js
+/**
+ * 汤面显示组件
+ * 负责汤面内容的渲染
+ */
+
+// 引入交互管理器
+const { createInteractionManager, SWIPE_DIRECTION } = require('../../utils/interactionManager');
+// 引入服务
 const soupService = require('../../utils/soupService');
-const typeAnimation = require('../../utils/typeAnimation');
+const userService = require('../../utils/userService');
 
 Component({
   properties: {
-    soupId: {
-      type: String,
-      value: ''
+    // 汤面数据对象，由页面传入
+    soupData: {
+      type: Object,
+      value: null,
+      observer: function(newVal) {
+        if (newVal && this._isAttached) {
+          // 更新当前汤面数据
+          this.setData({
+            currentSoup: newVal,
+            displayContent: this._formatSoupContent(newVal),
+            favoriteCount: newVal.favoriteCount || 0,
+            likeCount: newVal.likeCount || 0,
+            creatorId: newVal.creatorId || ''
+          });
+
+          // 增加汤面阅读数
+          const soupId = newVal.soupId || '';
+          if (soupId) {
+            this.incrementSoupViewCount(soupId);
+          }
+        }
+      }
     },
-    autoPlay: {
-      type: Boolean,
-      value: true
-    },
-    typeSpeed: {
-      type: Number,
-      value: 60
-    },
-    staticMode: {
+    // 是否加载中
+    loading: {
       type: Boolean,
       value: false
     },
+    // 是否已收藏
+    isFavorite: {
+      type: Boolean,
+      value: false
+    },
+    // 是否处于偷看模式
     isPeeking: {
       type: Boolean,
       value: false
+    },
+    // 收藏数量
+    favoriteCount: {
+      type: Number,
+      value: 0
+    },
+    // 点赞数量
+    likeCount: {
+      type: Number,
+      value: 0
+    },
+    // 是否处于喝汤状态
+    isDrinking: {
+      type: Boolean,
+      value: false
+    },
+    // 模糊程度（0-10px）
+    blurAmount: {
+      type: Number,
+      value: 0
+    },
+    // 是否启用呼吸模糊效果
+    breathingBlur: {
+      type: Boolean,
+      value: false
+    },
+    // 滑动方向反馈
+    swipeFeedback: {
+      type: Boolean,
+      value: false
+    },
+    // 滑动方向
+    swipeDirection: {
+      type: String,
+      value: 'none'
+    },
+    // 页面状态：viewing, drinking, truth
+    pageState: {
+      type: String,
+      value: 'viewing'
     }
   },
 
   options: {
-    styleIsolation: 'shared',
+    styleIsolation: 'isolated',
     addGlobalClass: true
   },
 
-  observers: {
-    'soupId'(newSoupId) {
-      // 确保 newSoupId 不为 null 或 undefined
-      newSoupId = newSoupId || '';
-
-      if (newSoupId && newSoupId !== this.getCurrentSoupId()) {
-        if (this._isAttached && !this._isLoading) {
-          this.loadSoupData(newSoupId);
-        }
-      }
-    },
-    'staticMode'(staticMode) {
-      if (!this.data.currentSoup) return;
-
-      if (staticMode) {
-        this.showCompleteContent();
-      } else if (this.data.autoPlay) {
-        this.resetAnimation();
-        this.startAnimation();
-      }
-    }
-  },
-
   data: {
-    currentSoup: null,
-    displayLines: [],
-    isAnimating: false,
-    loading: false
+    currentSoup: null,  // 当前汤面数据
+    displayContent: '',  // 显示的文本内容
+    creatorId: ''  // 创作者ID
   },
 
   lifetimes: {
+    // 组件初始化
     attached() {
-      this._isLoading = false;
       this._isAttached = true;
-      this._initTypeAnimator();
-
-      // 如果有初始汤面ID，加载数据
-      const initialSoupId = this.properties.soupId;
-      if (initialSoupId) {
-        wx.nextTick(() => {
-          if (this._isAttached && !this.data.currentSoup) {
-            this.loadSoupData(initialSoupId);
-          }
+      if (this.data.currentSoup) {
+        this.setData({
+          displayContent: this._formatSoupContent(this.data.currentSoup)
         });
       }
+
+      // 初始化交互管理器
+      this.initInteractionManager();
     },
 
-    ready() {
-      if (this.data.staticMode && this.data.currentSoup) {
-        this.showCompleteContent();
-      }
-    },
-
+    // 组件卸载
     detached() {
       this._isAttached = false;
-      if (this.typeAnimator) {
-        this.typeAnimator.destroy();
-        this.typeAnimator = null;
+
+      // 销毁交互管理器
+      if (this.interactionManager) {
+        this.interactionManager.destroy();
+        this.interactionManager = null;
       }
     }
   },
 
   methods: {
-    _initTypeAnimator() {
-      this.typeAnimator = typeAnimation.createInstance(this, {
-        typeSpeed: this.data.typeSpeed,
-        onAnimationComplete: () => this.triggerEvent('animationComplete'),
-        formatContent: (content) => this._formatSoupContent(content)
-      });
-    },
-
+    /**
+     * 格式化汤面内容为显示文本
+     * @param {Object} soup 汤面数据
+     * @returns {String} 格式化后的文本
+     * @private
+     */
     _formatSoupContent(soup) {
-      if (!soup) return [];
+      if (!soup) return '';
 
-      const lines = [];
-      if (soup.title) {
-        lines.push(soup.title);
-      }
+      let content = '';
 
+      // 只添加内容，标题单独显示
       if (soup.contentLines && Array.isArray(soup.contentLines)) {
-        lines.push(...soup.contentLines.map(line => String(line)));
-      }
-      else if (soup.content) {
-        if (typeof soup.content === 'string') {
-          lines.push(...soup.content.split(/\r?\n/));
-        } else if (Array.isArray(soup.content)) {
-          lines.push(...soup.content.map(line => String(line)));
-        }
+        content = soup.contentLines.join('\n');
       }
 
-      return lines;
+      return content;
     },
 
     /**
@@ -129,116 +153,153 @@ Component({
      * @returns {string} 当前汤面ID
      */
     getCurrentSoupId() {
-      // 从当前汤面数据中获取ID
       if (this.data.currentSoup) {
-        return this.data.currentSoup.soupId || this.data.currentSoup.id || '';
+        return this.data.currentSoup.soupId || '';
       }
-      // 如果没有当前汤面数据，使用属性中的soupId
-      const propSoupId = this.properties.soupId;
-      return (propSoupId === null || propSoupId === undefined) ? '' : propSoupId;
+      return '';
     },
 
     /**
-     * 加载汤面数据
-     * 根据指定的soupId加载汤面数据
-     * @param {string} soupId 汤面ID，如果不指定则使用当前汤面ID或属性中的soupId
+     * 处理收藏状态变更事件
+     * 从交互底部组件传递上来的事件
      */
-    async loadSoupData(soupId) {
-      if (!this._isAttached || this._isLoading) return;
+    onFavoriteChange(e) {
+      const { isFavorite, favoriteCount } = e.detail;
 
-      this._isLoading = true;
-      this.setData({ loading: true });
-      this.triggerEvent('loadStart');
-
-      try {
-        // 确保 targetSoupId 不为 null 或 undefined
-        let targetSoupId = '';
-        if (soupId) {
-          targetSoupId = soupId;
-        } else {
-          targetSoupId = this.getCurrentSoupId() || '';
-        }
-
-        // 只在ID列表未加载时加载
-        if (!soupService.isIdsLoaded) {
-          await soupService.loadSoupIds();
-        }
-
-        // 获取汤面数据
-        let soupData = null;
-        if (targetSoupId) {
-          soupData = await soupService.getSoupById(targetSoupId);
-        }
-
-        // 如果没有找到指定ID的汤面，获取随机汤面
-        if (!soupData) {
-          soupData = await soupService.getRandomSoup();
-        }
-
-        // 如果仍然没有数据，显示错误
-        if (!soupData) {
-          throw new Error('无法获取有效的汤面数据');
-        }
-
-        // 使用公开方法更新汤面数据
-        this.updateSoupData(soupData, !this.data.autoPlay);
-      } catch (error) {
-        console.error('加载汤面失败:', error);
-        this.setData({ loading: false });
-        this.triggerEvent('loadFail', { error });
-      } finally {
-        this._isLoading = false;
-        this.triggerEvent('loadComplete');
-      }
-    },
-
-    /**
-     * 显示完整内容，跳过打字机动画
-     * 公开方法，可以从外部调用
-     */
-    showCompleteContent() {
-      if (!this.data.currentSoup || !this.typeAnimator) return;
-      this.typeAnimator.showComplete(this.data.currentSoup);
-    },
-
-    startAnimation() {
-      if (this.data.isAnimating || this.data.staticMode || !this.typeAnimator) return;
-      return this.typeAnimator.start(this.data.currentSoup);
-    },
-
-    pauseAnimation() {
-      if (this.typeAnimator) {
-        this.typeAnimator.pause();
-      }
-    },
-
-    resetAnimation() {
-      if (this.typeAnimator) {
-        this.typeAnimator.reset();
-      }
-    },
-
-    /**
-     * 更新汤面数据
-     * 公开方法，用于从外部直接更新汤面数据
-     * @param {Object} soupData 汤面数据
-     * @param {boolean} showComplete 是否显示完整内容，默认为true
-     */
-    updateSoupData(soupData, showComplete = true) {
-      if (!soupData) return;
-
+      // 更新组件状态
       this.setData({
-        currentSoup: soupData,
-        loading: false
+        isFavorite: isFavorite,
+        favoriteCount: favoriteCount
       });
 
-      this.triggerEvent('loadSuccess', { soupData });
+      // 将事件继续向上传递给页面
+      this.triggerEvent('favoriteChange', {
+        isFavorite: isFavorite,
+        favoriteCount: favoriteCount
+      });
+    },
 
-      if (showComplete || this.data.staticMode) {
-        this.showCompleteContent();
-      } else if (this.data.autoPlay) {
-        this.resetAnimation();
-        this.startAnimation();
+    /**
+     * 初始化交互管理器
+     */
+    initInteractionManager() {
+      this.interactionManager = createInteractionManager({
+        setData: this.setData.bind(this),
+        onSwipeLeft: this.handleSwipeLeft.bind(this),
+        onSwipeRight: this.handleSwipeRight.bind(this),
+        onDoubleTap: this.handleDoubleTap.bind(this),
+        onLongPressStart: this.handleLongPressStart.bind(this),
+        onLongPressEnd: this.handleLongPressEnd.bind(this),
+        // 长按相关配置
+        longPressDelay: 300, // 长按触发时间，默认300ms
+        enablePeek: true // 启用偷看功能
+      });
+    },
+
+    /**
+     * 处理左滑事件
+     */
+    handleSwipeLeft() {
+      if (this.canSwitchSoup()) {
+        this.setData({
+          swipeFeedback: true,
+          swipeDirection: SWIPE_DIRECTION.LEFT
+        });
+
+        // 通知页面切换汤面
+        this.triggerEvent('swipe', { direction: 'next' });
+      }
+    },
+
+    /**
+     * 处理右滑事件
+     */
+    handleSwipeRight() {
+      if (this.canSwitchSoup()) {
+        this.setData({
+          swipeFeedback: true,
+          swipeDirection: SWIPE_DIRECTION.RIGHT
+        });
+
+        // 通知页面切换汤面
+        this.triggerEvent('swipe', { direction: 'previous' });
+      }
+    },
+
+    /**
+     * 处理双击事件
+     */
+    handleDoubleTap() {
+      // 调用交互底部组件的收藏方法
+      const interactionFooter = this.selectComponent('#interactionFooter');
+      if (interactionFooter) {
+        interactionFooter.toggleFavorite();
+      }
+    },
+
+    /**
+     * 处理长按开始事件
+     */
+    handleLongPressStart() {
+      // 触发长按开始事件
+      this.triggerEvent('longPressStart');
+    },
+
+    /**
+     * 处理长按结束事件
+     */
+    handleLongPressEnd() {
+      // 触发长按结束事件
+      this.triggerEvent('longPressEnd');
+    },
+
+    /**
+     * 检查是否可以切换汤面
+     * @returns {boolean} 是否可以切换汤面
+     */
+    canSwitchSoup() {
+      return this.properties.pageState === 'viewing' && !this.properties.loading;
+    },
+
+    /**
+     * 触摸开始事件处理
+     */
+    touchStart(e) {
+      const canInteract = this.canSwitchSoup();
+      this.interactionManager?.handleTouchStart(e, canInteract);
+    },
+
+    /**
+     * 触摸移动事件处理
+     */
+    touchMove(e) {
+      const canInteract = this.canSwitchSoup();
+      this.interactionManager?.handleTouchMove(e, canInteract);
+    },
+
+    /**
+     * 触摸结束事件处理
+     */
+    touchEnd(e) {
+      const canInteract = this.canSwitchSoup();
+      this.interactionManager?.handleTouchEnd(e, canInteract);
+    },
+
+    /**
+     * 增加汤面阅读数并更新用户浏览记录
+     * @param {string} soupId 汤面ID
+     */
+    async incrementSoupViewCount(soupId) {
+      if (!soupId) return;
+
+      try {
+        // 增加汤面阅读数
+        await soupService.viewSoup(soupId);
+
+        // 更新用户浏览过的汤记录
+        await userService.updateViewedSoup(soupId);
+      } catch (error) {
+        // 阅读数增加失败不影响用户体验，不显示错误提示
       }
     }
   }

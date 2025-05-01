@@ -1,0 +1,76 @@
+/* components/banner-swiper/banner-swiper.wxss */
+.banner-swiper-container {
+  width: 100%;
+  margin: 20rpx 0;
+}
+
+.banner-swiper {
+  width: 100%;
+  height: 200rpx;
+}
+
+.update-banner {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(92, 232, 33, 0.7), rgba(20, 10, 40, 0.8));
+  border-radius: 16rpx;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+}
+
+.banner-purple {
+  background: linear-gradient(135deg, rgba(87, 44, 239, 0.7), rgba(20, 10, 40, 0.8));
+}
+
+.banner-mix {
+  background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(87, 44, 239, 0.5));
+}
+
+.banner-loading {
+  background: linear-gradient(135deg, rgba(50, 50, 50, 0.7), rgba(20, 10, 40, 0.8));
+}
+
+.banner-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30rpx;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.banner-title {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.banner-title-main {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 10rpx;
+}
+
+.banner-title-sub {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* 图片banner样式 */
+.image-banner {
+  width: 100%;
+  height: 100%;
+  border-radius: 16rpx;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+}
+
+.banner-image-full {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+

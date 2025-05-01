@@ -1,4 +1,21 @@
 /* components/button/index.wxss */
+@import "../../styles/animation.wxss";
+
+/* 呼吸动画 */
+@keyframes breathing {
+  0% {
+    transform: scale(1);
+    box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0rpx 12rpx 24rpx rgba(4, 244, 77, 0.25);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+  }
+}
 
 /* 果冻动画容器样式 */
 .jelly-effect-container {
@@ -28,10 +45,37 @@
   gap: 10rpx;
   width: 100rpx;
   height: 56rpx;
-  background: #5CE821;
+  background:var(--color-accent);
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
-  transition: transform 0.15s ease, background-color 0.15s ease;
+  transition: all 0.3s ease;
+  /* 应用呼吸动画 */
+  animation: breathing 4s ease-in-out infinite;
+}
+
+/* 按下状态的按钮样式 - 圆形 */
+.btn-light.pressed, .btn-light.expand-animation {
+  width: 120rpx !important;
+  height: 120rpx !important;
+  min-width: 120rpx !important;
+  min-height: 120rpx !important;
+  max-width: 120rpx !important;
+  max-height: 120rpx !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  border-radius: 50% !important;
+  background-color:var(--color-accent);
+  box-shadow: 0rpx 10rpx 25rpx rgba(4, 244, 77, 0.3) !important;
+  z-index: 1000 !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; /* 弹性过渡效果 */
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  transform-origin: center center !important;
+  /* 停止呼吸动画 */
+  animation: none !important;
 }
 
 /* 点亮按钮文本 */
@@ -69,17 +113,93 @@
   color:#4a4e57;
 }
 
-/* 保留原有的未点亮文本类，以避免兼容问题 */
-.btn-text-unlight {
-  composes: text-mincho-sm;
+/* 标签切换器样式 */
+.tab-switcher {
+  position: fixed;
+  top: 180rpx; /* 位置固定在顶部，留出导航栏空间 */
+  left: 0;
+  width: 100%;
   display: flex;
-  align-items: center;
   justify-content: center;
-  text-align: center;
-  color:rgb(77, 77, 77);
+  z-index: 10;
+  padding: 20rpx 0;
 }
 
-/* 确定类型按钮 - 完全独立样式 */
+/* 标签容器 */
+.tab-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 80%;
+  height: 70rpx;
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(20rpx);
+  -webkit-backdrop-filter: blur(20rpx);
+  border-radius: 35rpx;
+  border: 1rpx solid rgba(209, 209, 209, 0.1);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  position: relative;
+  padding: 2rpx;
+}
+
+/* 标签样式 */
+.tab {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  transition: all 0.3s ease;
+  z-index: 1;
+  position: relative;
+  overflow: hidden;
+  margin: 4rpx;
+  border-radius: 30rpx;
+}
+
+/* 标签文本 */
+.tab-text {
+  font-size: 24rpx;
+  color: var(--color-text-disabled);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+/* 激活标签的文本 */
+.tab.active .tab-text {
+  color: var(--color-text-primary);
+  font-weight: normal;
+}
+
+/* 激活的标签背景 */
+.tab.active {
+  background: var(--color-primary);
+  opacity: 0.6;
+  border-radius: 30rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.5);
+}
+
+/* 未解决数量徽章 */
+.badge {
+  position: absolute;
+  right: -6rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  padding: 0 6rpx;
+  background: var(--color-primary-light);
+  border-radius: 16rpx;
+  font-size: 20rpx;
+  color: var(--color-text-secondary);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
+  z-index: 3;
+}
+
+/* 确定类型按钮 - 玻璃拟物感样式 */
 .btn-confirm {
   display: flex;
   flex-direction: column;
@@ -88,15 +208,21 @@
   padding: 0;
   width: 102rpx;
   height: 62rpx;
-  border: 1px solid #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 30rpx;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  background: rgba(182, 182, 182, 0.2);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
 }
 
 .btn-confirm:active {
   transform: scale(0.95);
-  background: #5CE821;
+  background: rgba(89, 255, 150, 0.4);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.5);
 }
 
 /* 确定按钮文本 */
@@ -106,7 +232,10 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #FFFFFF;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  overflow: visible;
 }
 
 /* 深色按钮样式 */
@@ -161,8 +290,9 @@
 .item-label {
   composes: text-body-md;
   flex: 1;
-  color: #2A2D32;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+  padding-left: 10rpx;
 }
 
 /* Switch 开关样式 */
@@ -171,15 +301,21 @@
   margin: 0;
   width: 51px;
   height: 31px;
-  background: #E9E9EA;
+  background: rgba(233, 233, 234, 0.3);
   border-radius: 100px;
   flex: none;
   align-self: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
 }
 
 .switch.active {
-  background: #5CE821;
+  background: var(--color-accent);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 10rpx rgba(92, 232, 33, 0.2);
 }
 
 /* 开关圆形按钮 */
@@ -189,15 +325,17 @@
   height: 27px;
   left: 2px;
   top: calc(50% - 27px/2);
-  background: #FFFFFF;
-  border: 0.5px solid rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.95);
+  border: 0.5px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.15);
   border-radius: 50%;
-  transition: left 0.3s ease;
+  transition: all 0.3s ease;
 }
 
 .switch.active .switch-knob {
   left: calc(50% - 27px/2 + 10px);
+  background: #FFFFFF;
+  box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* Radio 单选按钮样式 */
@@ -215,31 +353,34 @@
   box-sizing: border-box;
   width: 48rpx;
   height: 48rpx;
-  background: #F4F4F4;
-  mix-blend-mode: normal;
-  border: 3rpx solid #CACACA;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2rpx solid rgba(255, 255, 255, 0.3);
   border-radius: 100rpx;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
 }
 
 .radio.active {
-  background: #5CE821;
-  border: none;
+  background: rgba(92, 232, 33, 0.6);
+  border: 2rpx solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 10rpx rgba(92, 232, 33, 0.2);
 }
 
 .radio-inner {
   width: 24rpx;
   height: 24rpx;
-  background: #FFFFFF;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 50%;
+  box-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.1);
 }
 
 .option-label {
   composes: text-body-sm;
-  opacity: 0.6;
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
 }
 
 /* 字体大小选择组合样式 */
@@ -253,7 +394,8 @@
 .font-size-label {
   composes: text-body-md;
   width: 100%;
-  opacity: 0.8;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
 }
 
 .font-size-options {
@@ -272,4 +414,49 @@
 .switch.jelly-animate,
 .radio.jelly-animate {
   animation: jelly-animation 0.6s var(--transition-ease);
+}
+
+/* 加载中动画样式 */
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.loading-dots .dot {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #000000;
+  opacity: 0;
+  animation: dot-animation 1.4s infinite;
+  margin: 0 -4rpx;
+}
+
+.loading-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-animation {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

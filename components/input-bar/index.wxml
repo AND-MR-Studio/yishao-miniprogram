@@ -1,22 +1,19 @@
 <!--components/input-bar/index.wxml-->
 <!-- 底部输入区域 -->
-<view class="input-area">
+<view class="input-area {{disabled ? 'disabled-input-area' : ''}}">
   <view class="input-container">
-    <!-- 语音按钮 -->
-    <view class="voice-btn"
-      catchtouchstart="handleVoiceStart"
-      catchtouchend="handleVoiceEnd"
-      catchtouchmove="handleVoiceMove"
-      catchtouchcancel="handleVoiceCancel"
-      hover-class="voice-btn-hover">
-      <text class="font_family icon-voice"></text>
+    <!-- 语音按钮（临时禁用） -->
+    <view class="voice-btn disabled"
+      bindtap="handleVoiceClick"
+      hover-class="{{!disabled ? 'voice-btn-hover' : ''}}">
+      <image class="icon-image" src="/static/images/voice.png" mode="aspectFit"></image>
     </view>
 
     <!-- 输入框 -->
-    <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}}">
+    <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}} {{disabled ? 'disabled-input' : ''}}">
       <input class="input-field"
         value="{{inputValue}}"
-        placeholder="输入你的问题......"
+        placeholder="输入你的问题..."
         placeholder-class="input-placeholder"
         cursor-spacing="20"
         adjust-position="{{true}}"
@@ -27,7 +24,14 @@
         bindconfirm="handleSend"
         focus="{{inputFocus}}"
         hidden="{{isRecording}}"
+        maxlength="50"
+        disabled="{{disabled}}"
       />
+
+      <!-- 字数提示 -->
+      <view class="char-count {{inputValue.length > 45 ? 'char-count-warning' : ''}}" wx:if="{{inputValue.length > 0}}">
+        {{inputValue.length}}/50
+      </view>
 
       <!-- 录音中UI -->
       <view class="recording-ui" wx:if="{{isRecording}}">
@@ -38,11 +42,15 @@
         </view>
         <text class="recording-text">{{isCancelled ? '松开手指，取消发送' : '松开发送，上滑取消'}}</text>
       </view>
+
+      <!-- 移除打字机效果进行中提示 -->
     </view>
 
     <!-- 发送按钮 -->
-    <view class="send-btn {{hasContent ? 'active' : 'inactive'}}" bindtap="handleSend" hover-class="{{hasContent ? 'send-btn-active-hover' : ''}}">
-      <text class="font_family icon-question"></text>
+    <view class="send-btn {{(hasContent || sending) ? 'active' : 'inactive'}} {{(disabled || sending) ? 'loading-btn' : ''}}"
+          bindtap="handleSend"
+          hover-class="{{hasContent && !disabled && !sending ? 'send-btn-active-hover' : ''}}">
+      <image class="icon-image {{(disabled || sending) ? 'rotating' : ''}}" src="/static/images/question.png" mode="aspectFit"></image>
     </view>
   </view>
 </view>

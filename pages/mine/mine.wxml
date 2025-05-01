@@ -1,65 +1,80 @@
 <!--pages/mine/mine.wxml-->
 <view class="page">
+  <view class="page-background"></view>
   <!-- 导航栏 -->
   <nav-bar title="个人中心" />
 
   <view class="container">
-    <!-- 用户信息卡片 -->
-    <view class="user-card">
-      <view class="avatar-container">
-        <image class="avatar" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
-      </view>
-      <view class="user-info">
-        <text class="username">{{userInfo.nickName || '未登录'}}</text>
-        <view class="answer-count">
-          <text class="count-label">剩余回答次数：</text>
-          <text class="count-value">{{remainingAnswers || 0}}次</text>
-        </view>
-      </view>
-    </view>
+    <!-- 用户名片 -->
+    <detective-card
+      id="detective-card"
+      detectiveInfo="{{detectiveInfo}}"
+      defaultAvatarUrl="{{defaultAvatarUrl}}"
+      hasSignedIn="{{hasSignedIn}}"
+      bind:signinresult="handleSignInResult"
+      bind:userinforefreshed="handleUserInfoRefreshed"
+      bind:navigate="handleNavigate"
+      bind:editprofile="openUserInfoModal">
+    </detective-card>
 
-    <!-- 功能列表 -->
+    <!-- Banner轮播组件 -->
+    <banner-swiper
+      page="mine"
+      bind:bannertap="handleBannerTap"
+      autoplay="{{true}}"
+      interval="{{3000}}"
+      duration="{{500}}"
+      indicator-dots="{{true}}"
+      circular="{{true}}">
+    </banner-swiper>
+
+    <!-- 功能菜单 -->
     <view class="function-list">
-      <view class="function-item">
-        <view class="item-icon">
-          <text class="iconfont icon-about"></text>
-        </view>
+      <!-- 关于一勺推理社 -->
+      <view class="function-item" bindtap="navigateToAbout">
         <view class="item-content">
-          <text>关于我们</text>
+          <text>关于一勺推理社</text>
         </view>
-        <view class="item-arrow">
-          <text class="iconfont icon-right"></text>
-        </view>
+        <view class="item-arrow"></view>
       </view>
     </view>
 
     <!-- 登录/退出按钮 -->
     <view class="logout-container">
-      <button-component
-        type="{{userInfo ? 'unlight' : 'light'}}"
-        text="{{userInfo ? '退出登录' : '微信一键登录'}}"
-        width="100%"
-        height="88rpx"
-        bind:tap="{{userInfo ? 'handleLogout' : 'handleLogin'}}"
-      />
+      <view class="login-button-wrapper">
+        <button-component
+          type="{{userInfo ? 'unlight' : 'light'}}"
+          text="{{userInfo ? '退出登录' : '微信一键登录'}}"
+          width="500rpx"
+          height="70rpx"
+          bind:tap="{{userInfo ? 'handleLogout' : 'handleLogin'}}"
+        />
+      </view>
     </view>
   </view>
 
-
-
-  <!-- 用户信息设置弹窗 -->
-  <view class="user-info-modal {{showUserInfoModal ? 'show' : ''}}" catchtouchmove="catchTouchMove">
+  <!-- 用户信息设置弹窗 - 只在showUserInfoModal为true时显示 -->
+  <view class="user-info-modal {{showUserInfoModal ? 'show' : ''}}" catchtouchmove="catchTouchMove" wx:if="{{showUserInfoModal}}">
     <view class="user-info-container">
+      <view class="user-info-container-border"></view>
       <view class="user-info-header">
-        <text class="user-info-title">设置个人信息</text>
+        <text class="user-info-title">设置侦探信息</text>
         <view class="user-info-close" bindtap="closeUserInfoModal">×</view>
       </view>
 
       <view class="user-info-body">
         <!-- 头像选择 - 居中显示 -->
         <view class="avatar-container-centered">
-          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar">
-            <image class="avatar-preview-centered" src="{{userInfo.avatarUrl || defaultAvatarUrl}}" mode="aspectFill"></image>
+          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" hover-class="none">
+            <view class="avatar-btn-centered-before"></view>
+            <image
+              class="avatar-preview-centered"
+              src="{{userInfo.avatarUrl || defaultAvatarUrl}}"
+              mode="aspectFill"
+              binderror="handleAvatarError"
+            ></image>
+            <!-- 点击更换提示 -->
+            <view class="avatar-change-tip">点击更换</view>
           </button>
         </view>
 
@@ -67,10 +82,14 @@
         <view class="nickname-container">
           <input
             type="nickname"
-            class="nickname-input-centered"
-            placeholder="请输入用户昵称"
+            class="nickname-input-centered nickname-input-text"
+            placeholder="请输入昵称"
+            placeholder-style="text-align: center;"
             value="{{userInfo.nickName}}"
             bindinput="onInputNickname"
+            adjust-position="false"
+            maxlength="10"
+            confirm-type="done"
           />
         </view>
       </view>
@@ -78,7 +97,7 @@
       <view class="user-info-footer">
         <button-component
           type="light"
-          text="确认"
+          text="确认信息"
           width="100%"
           height="88rpx"
           bind:tap="confirmUserInfo"
@@ -87,4 +106,12 @@
       </view>
     </view>
   </view>
+
+  <!-- 汤面列表弹窗 -->
+  <soup-list-modal
+    visible="{{showSoupListModal}}"
+    type="{{soupListType}}"
+    userInfo="{{detectiveInfo}}"
+    bind:close="closeSoupListModal"
+  ></soup-list-modal>
 </view>

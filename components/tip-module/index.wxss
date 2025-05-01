@@ -1,0 +1,150 @@
+/* components/tip-module/index.wxss */
+@import "../../styles/animation.wxss";
+
+/* 滚轮动画 - 从下向上滚动 */
+@keyframes scrollUp {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 滚轮动画 - 从上向上滚出 */
+@keyframes scrollOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+/* 提示模块容器 */
+.tip-module-container {
+  position: fixed;
+  top: 200rpx; /* 调整顶部位置，确保在导航栏下方 */
+  left: 0;
+  width: 100%;
+  z-index: 1100; /* 确保在对话框之上但不遮挡导航栏 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.6s var(--transition-decelerated);
+  opacity: 0;
+  transform: translateY(-50rpx);
+  pointer-events: none;
+}
+
+/* 可见状态 */
+.tip-module-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* 隐藏状态 */
+.tip-module-container.hidden {
+  opacity: 0;
+  transform: translateY(-50rpx);
+  pointer-events: none;
+}
+
+
+
+/* 内容区域 */
+.tip-content {
+  width: 80%; /* 增加宽度 */
+  padding: 10rpx 30rpx; /* 调整内边距 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 20rpx; /* 减小圆角 */
+  background-color: rgba(0, 0, 0, 0.29); /* 增加不透明度 */
+  position: relative; /* 确保可以正确定位子元素 */
+  height: 180rpx; /* 减小高度 */
+  border: 1px solid var( --color-primary);
+}
+
+/* 头像容器 */
+.avatar-container {
+  width: 120rpx; /* 减小尺寸 */
+  height: 120rpx; /* 减小尺寸 */
+  margin-bottom: 10rpx;
+  margin-top: -90rpx; /* 让头像部分超出容器顶部 */
+  position: relative;
+  z-index: 1001; /* 确保在tip内容之上 */
+}
+
+/* 头像GIF */
+.avatar-gif {
+  width: 100%;
+  height: 100%;
+}
+
+/* 文本容器 */
+.text-container {
+  width: 100%;
+  padding: 0rpx; /* 减小内边距 */
+  color: var(--color-text-secondary);
+  text-align: left;
+  max-height: 200rpx; /* 确保在固定高度内正确显示 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 提示标题 */
+.text-title {
+  font-size: 32rpx; /* 标题字体大小 */
+  font-weight: bold;
+  margin-bottom: 10rpx; /* 减小下边距 */
+  padding-left: 15rpx; /* 左内边距 */
+  color: var(--color-text-primary);
+}
+
+/* 可滚动区域 */
+.tip-scroll-view {
+  width: 100%;
+  height: 90rpx; /* 固定高度，确保可滚动 */
+  overflow: hidden;
+  position: relative;
+}
+
+/* 文本行容器 */
+.tip-content-container {
+  position: relative;
+  width: 100%;
+  transition: transform 0.5s ease-out;
+}
+
+/* 文本行 */
+.text-line {
+  margin-bottom: 12rpx; /* 减小行间距 */
+  font-size: 28rpx; /* 减小字体大小 */
+  line-height: 1.4; /* 减小行高 */
+  padding-left: 15rpx; /* 减小左内边距 */
+  position: relative;
+  animation: scrollUp 0.5s ease-out forwards;
+}
+
+/* 滚出的文本行 */
+.text-line.scrolling-out {
+  animation: scrollOut 0.5s ease-out forwards;
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+}
+
+

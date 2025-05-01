@@ -4,11 +4,27 @@
 
 .page {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   background-color: var(--color-background);
+  background-image: linear-gradient(135deg, rgba(6, 20, 41, 0.95) 0%, rgba(20, 10, 40, 0.95) 100%);
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  position: fixed;
+  padding: 0;
+  margin: 0;
+}
+
+.page-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 30% 20%, rgba(92, 232, 33, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 70% 60%, rgba(87, 44, 239, 0.1) 0%, transparent 50%);
+  z-index: 0;
 }
 
 .container {
@@ -16,88 +32,75 @@
   width: 100%;
   box-sizing: border-box;
   /* 顶部位置留出导航栏高度 */
-  padding: calc(180rpx + env(safe-area-inset-top)) 30rpx calc(110rpx + env(safe-area-inset-bottom)) 30rpx;
+  padding: calc(120rpx + env(safe-area-inset-top)) 20rpx calc(110rpx + env(safe-area-inset-bottom)) 20rpx;
   /* 底部留出 tabbar 高度 */
   position: relative;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  gap: 30rpx; /* 各板块之间的间距 */
+  overflow-x: hidden;
 }
 
-/* 用户信息卡片样式 */
-.user-card {
+/* 四栏数据样式 */
+.stats-section {
   display: flex;
-  align-items: center;
-  padding: 40rpx 30rpx;
-  background-color: var(--color-background-light);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  margin-bottom: 40rpx;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-sizing: border-box;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 30rpx 0;
   width: 100%;
 }
 
-.avatar-container {
-  margin-right: 30rpx;
-}
-
-/* 头像按钮样式 */
-.avatar-wrapper {
-  background: none !important;
-  padding: 0 !important;
-  width: 120rpx !important;
-  height: 120rpx !important;
-  border-radius: 50% !important;
-  border: none !important;
-  line-height: 1 !important;
-}
-
-.avatar-wrapper::after {
-  border: none;
-}
-
-.avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 50%;
-  border: 2px solid var(--color-primary);
-  box-shadow: var(--glow-primary);
-}
-
-.user-info {
+.stat-item {
   flex: 1;
-}
-
-.username {
-  font-size: var(--font-size-lg);
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
-  margin-bottom: 16rpx;
-  display: block;
-}
-
-.answer-count {
   display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 20rpx 0;
+  transition: all 0.3s ease;
 }
 
-.count-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+.stat-item:active {
+  background-color: rgba(92, 232, 33, 0.1);
 }
 
-.count-value {
-  font-size: var(--font-size-md);
+.stat-item:not(:last-child):after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  height: 60%;
+  width: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.stat-value {
+  font-size: 38rpx;
   color: var(--color-primary);
-  font-weight: var(--font-weight-bold);
+  font-weight: bold;
+  margin-bottom: 12rpx;
+  text-shadow: 0 0 10rpx rgba(92, 232, 33, 0.5);
 }
+
+.stat-label {
+  font-size: 26rpx;
+  color: var(--color-text-secondary);
+  letter-spacing: 1px;
+}
+
+/* Banner样式已移至banner-swiper组件，此处不再重复定义 */
 
 /* 功能列表样式 */
 .function-list {
-  background-color: var(--color-background-light);
+  background-color: rgba(20, 20, 40, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  margin-bottom: 60rpx;
+  margin-bottom: 30rpx;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.3);
 }
 
 .function-item {
@@ -105,46 +108,64 @@
   align-items: center;
   padding: 30rpx;
   position: relative;
+  transition: all 0.3s ease;
 }
 
 .function-item:not(:last-child)::after {
   content: '';
   position: absolute;
-  left: 30rpx;
-  right: 30rpx;
+  left: 40rpx;
+  right: 40rpx;
   bottom: 0;
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.1);
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 15%,
+    rgba(255, 255, 255, 0.1) 85%,
+    transparent 100%);
 }
 
-.item-icon {
-  width: 48rpx;
-  height: 48rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 20rpx;
-  color: var(--color-primary);
+.function-item:active {
+  background-color: rgba(92, 232, 33, 0.1);
 }
 
 .item-content {
   flex: 1;
-  font-size: var(--font-size-md);
+  font-size: 32rpx;
   color: var(--color-text-primary);
+  padding-left: 20rpx;
+  letter-spacing: 0.5px;
+}
+
+.item-count {
+  font-size: 28rpx;
+  color: var(--color-text-secondary);
+  margin-right: 30rpx;
 }
 
 .item-arrow {
-  color: var(--color-text-hint);
-  font-size: var(--font-size-sm);
+  width: 18rpx;
+  height: 18rpx;
+  display: inline-block;
+  border-top: 2rpx solid var(--color-accent);
+  border-right: 2rpx solid var(--color-accent);
+  transform: rotate(45deg);
+  box-shadow: 2rpx -2rpx 0 rgba(92, 232, 33, 0.3);
 }
 
 /* 退出登录按钮容器样式 */
 .logout-container {
-  padding: 20rpx 40rpx;
-  margin-top: 80rpx;
+  padding: 20rpx 0;
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
-
+.login-button-wrapper {
+  transform: scale(0.85);
+  margin: -10rpx 0;
+}
 
 /* 用户信息弹窗样式 */
 .user-info-modal {
@@ -153,7 +174,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   z-index: 999;
   display: flex;
   justify-content: center;
@@ -161,24 +184,42 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0.3s ease;
+  /* 确保内容不会在隐藏时显示 */
+  pointer-events: none;
 }
 
 .user-info-modal.show {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto; /* 恢复交互 */
 }
 
 .user-info-container {
   width: 90%;
   max-width: 650rpx;
-  background-color: var(--color-background-light);
+  background-color: rgba(20, 20, 40, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.5);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   animation: scale-in 0.3s ease forwards;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info-container-border {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(92, 232, 33, 0.3) 15%,
+    rgba(87, 44, 239, 0.3) 85%,
+    transparent 100%);
 }
 
 .user-info-header {
@@ -190,9 +231,10 @@
 }
 
 .user-info-title {
-  font-size: var(--font-size-lg);
+  font-size: 32rpx;
   color: var(--color-text-primary);
-  font-weight: var(--font-weight-medium);
+  font-weight: bold;
+  text-shadow: 0 0 10rpx rgba(92, 232, 33, 0.5);
 }
 
 .user-info-close {
@@ -201,14 +243,14 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  color: var(--color-text-hint);
+  color: var(--color-text-secondary);
   font-size: 40rpx;
   cursor: pointer;
   border-radius: 50%;
 }
 
 .user-info-close:active {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(92, 232, 33, 0.1);
 }
 
 .user-info-body {
@@ -221,65 +263,109 @@
 /* 头像居中样式 */
 .avatar-container-centered {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
   margin-bottom: 40rpx;
   margin-top: 20rpx;
+  position: relative;
 }
 
 .avatar-btn-centered {
-  background: none !important;
-  padding: 0 !important;
-  width: 160rpx !important;
-  height: 160rpx !important;
-  border-radius: 50% !important;
-  border: none !important;
-  line-height: 1 !important;
-}
-
-.avatar-btn-centered::after {
+  padding: 0;
+  background: none;
   border: none;
-}
-
-.avatar-preview-centered {
   width: 160rpx;
   height: 160rpx;
   border-radius: 50%;
-  border: 2px solid var(--color-primary);
-  box-shadow: var(--glow-primary);
-}
-
-/* 昵称输入居中样式 */
-.nickname-container {
-  width: 100%;
+  overflow: visible; /* 修改为visible，允许子元素溢出 */
+  position: relative;
+  box-shadow: 0 0 20rpx rgba(92, 232, 33, 0.3);
+  transition: all 0.3s ease;
   display: flex;
   justify-content: center;
-  margin-bottom: 20rpx;
+  align-items: center;
+  line-height: normal; /* 防止按钮内部文本行高影响布局 */
+}
+
+/* 添加绿紫光晕效果 */
+.avatar-btn-centered-before {
+  content: '';
+  position: absolute;
+  top: -5rpx;
+  left: -5rpx;
+  right: -5rpx;
+  bottom: -5rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(92, 232, 33, 0.5), rgba(87, 44, 239, 0.5));
+  z-index: -1;
+  opacity: 0.7;
+}
+
+/* 点击更换提示 - 使用实际元素替代伪元素 */
+.avatar-change-tip {
+  position: absolute;
+  bottom: 0rpx; /* 调整位置，与头像底部对齐 */
+  left: 10rpx;
+  right: 10rpx;
+  background: rgba(0, 0, 0, 0.7); /* 增加不透明度 */
+  color: white;
+  font-size: 20rpx;
+  padding: 6rpx 0;
+  text-align: center;
+  z-index: 10; /* 提高z-index确保显示在最上层 */
+  border-radius: 0 0 70rpx 70rpx; /* 底部圆角，与头像底部圆角匹配 */
+}
+
+.avatar-preview-centered {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  object-fit: cover;
+  margin: 10rpx; /* 确保头像在容器中居中 */
+  overflow: hidden; /* 确保图片内容不溢出圆形边界 */
+  position: relative; /* 确保定位正确 */
+}
+
+.nickname-container {
+  width: 100%;
+  margin-bottom: 30rpx;
+  display: flex;
+  justify-content: center;
 }
 
 .nickname-input-centered {
-  width: 80%;
+  width: 100%;
   height: 80rpx;
-  background-color: var(--color-background);
+  background-color: rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 0 20rpx;
-  margin-bottom: 16rpx;
-  font-size: var(--font-size-md);
+  padding: 0 30rpx;
   color: var(--color-text-primary);
+  font-size: 28rpx;
+  text-align: center;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 确保输入框中的文本居中显示 - 使用类选择器替代标签选择器 */
+.nickname-input-text {
   text-align: center;
 }
 
 .user-info-footer {
-  padding: 20rpx 30rpx 40rpx;
+  padding: 30rpx;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .skip-btn {
   text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 28rpx;
   margin-top: 20rpx;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-hint);
   padding: 10rpx 0;
 }
 

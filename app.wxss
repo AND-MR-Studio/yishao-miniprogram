@@ -10,3 +10,22 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   box-sizing: border-box;
 }
+
+/* 全局头像样式修复 */
+.avatar-large, .avatar-preview-centered {
+  width: 140rpx !important;
+  height: 140rpx !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  margin: 10rpx !important; /* 确保头像在容器中居中 */
+}
+
+.avatar-section, .avatar-btn-centered {
+  width: 160rpx !important;
+  height: 160rpx !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+}

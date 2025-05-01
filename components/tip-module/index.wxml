@@ -1,0 +1,30 @@
+<!--components/tip-module/index.wxml-->
+<view class="tip-module-container {{visible ? 'visible' : 'hidden'}}">
+  <!-- 内容区域 -->
+  <view class="tip-content">
+    <!-- 顶部GIF动画 -->
+    <view class="avatar-container">
+      <image class="avatar-gif" src="https://i.postimg.cc/ZnNWG8bS/xiaoshao.gif" mode="aspectFit"></image>
+    </view>
+
+    <!-- 文本内容区域 -->
+    <view class="text-container">
+      <!-- 提示标题 -->
+      <view class="text-title">
+        <text>{{tipTitle}}</text>
+      </view>
+      <!-- 提示内容 - 可滚动区域 -->
+      <view class="tip-scroll-view">
+        <view class="tip-content-container">
+          <view
+            wx:for="{{currentTipContent}}"
+            wx:key="index"
+            class="text-line {{item.isScrollingOut ? 'scrolling-out' : ''}}"
+            style="animation-delay: {{index * 100}}ms;">
+            <text>{{item.text || item}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
