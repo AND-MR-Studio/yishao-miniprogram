@@ -2,6 +2,8 @@
 const dialogService = require('../../utils/dialogService');
 const simpleTypeAnimation = require('../../utils/typeAnimation');
 const userService = require('../../utils/userService');
+const soupService = require('../../utils/soupService');
+const agentService = require('../../utils/agentService');
 
 Component({
   properties: {
@@ -336,9 +338,8 @@ Component({
       const messages = [...this.data.messages, userMessageWithStatus];
       this.setData({
         messages,
-        isSending: true // 设置发送状态，使按钮保持激活并旋转
+        isSending: true // 标记为发送中
       }, () => {
-        // 添加消息后滚动到底部
         this.scrollToBottom();
       });
 
@@ -369,17 +370,16 @@ Component({
         };
 
         if (!this.properties.enableTyping) {
-          // 不使用打字机效果时，直接添加完整回复
+          // 不使用打字机效果时，直接完成
           const finalMessages = [...messages, replyMessage];
           this.setData({
             messages: finalMessages,
-            isSending: false, // 重置发送状态
-            scrollToView: 'scrollBottom' // 确保滚动到底部
+            isSending: false // 重置发送状态
           });
           return;
         }
 
-        // 使用打字机效果
+        // 使用打字机效果时，保持isSending为true
         const updatedMessages = [...messages, {
           id: replyMessage.id,
           role: 'agent',
@@ -388,38 +388,31 @@ Component({
           timestamp: replyMessage.timestamp
         }];
 
-        // 一次性设置所有状态，减少setData调用
         this.setData({
           messages: updatedMessages,
           animatingMessageIndex: updatedMessages.length - 1,
           isAnimating: true,
-          typingText: '', // 重置打字机文本
-          scrollToView: 'scrollBottom' // 确保滚动到底部
-        }, () => {
-          // 在状态更新后立即强制滚动到底部
-          wx.nextTick(() => {
-            this.scrollToBottom(true);
-          });
+          // 不重置isSending，因为从用户角度看仍在"发送"过程中
+          typingText: '',
+          scrollToView: 'scrollBottom'
         });
 
-        // 启动简化版打字机动画
+        // 打字机动画完成后才重置isSending
         await this.typeAnimator.start(replyMessage.content);
 
-        // 动画完成后更新消息内容 - 一次性更新所有状态
         const finalMessages = [...updatedMessages];
         finalMessages[finalMessages.length - 1] = replyMessage;
 
         this.setData({
           messages: finalMessages,
           animatingMessageIndex: -1,
-          isSending: false, // 重置发送状态
-          typingText: '' // 清空打字机文本
+          isSending: false, // 动画完成后重置发送状态
+          typingText: ''
         });
       } catch (error) {
         console.error('发送消息失败:', error);
         this.updateMessageStatus(userMessage.id, 'error');
-        // 重置发送状态
-        this.setData({ isSending: false });
+        this.setData({ isSending: false }); // 出错时也要重置状态
       }
     },
 
@@ -480,6 +473,119 @@ Component({
         status: 'recordCancel',
         message: null
       });
+    },
+
+    /**
+     * 处理测试Agent API事件
+     * 使用当前输入内容和汤面数据发送测试请求到Agent API
+     * @param {Object} e 事件对象
+     */
+    async handleTestAgent(e) {
+      // 处理文本消息
+      const { value } = e.detail;
+
+      // 如果正在执行打字机动画，显示提示并返回
+      if (this.data.isAnimating) {
+        // 只有当有内容时才显示提示
+        if (value && value.trim()) {
+          wx.showToast({
+            title: '正在回复中...',
+            icon: 'none',
+            duration: 800
+          });
+        }
+        return;
+      }
+
+      // 检查消息是否为空
+      if (!value || !value.trim()) return;
+
+      // 获取必要参数
+      const soupId = this.properties.soupId || '';
+      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
+      const userId = this.properties.userId || '';
+
+      // 检查必要参数
+      if (!dialogId) {
+        console.error('测试失败: 缺少对话ID');
+        wx.showToast({
+          title: '测试失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      if (!userId) {
+        console.error('测试失败: 缺少用户ID');
+        wx.showToast({
+          title: '测试失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      if (!soupId) {
+        console.error('测试失败: 缺少汤面ID');
+        wx.showToast({
+          title: '测试失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      try {
+        // 显示加载提示
+        wx.showLoading({
+          title: '测试中...',
+          mask: true
+        });
+
+        // 获取汤面数据
+        const soupData = await soupService.getSoup(soupId);
+        if (!soupData) {
+          throw new Error('无法获取汤面数据');
+        }
+
+        // 构建测试消息
+        const testMessages = [
+          {
+            role: 'user',
+            content: value.trim()
+          }
+        ];
+
+        // 调用agentService的sendAgent方法
+        const response = await agentService.sendAgent({
+          messages: testMessages,
+          soup: soupData,
+          userId: userId,
+          dialogId: dialogId
+        });
+
+        // 隐藏加载提示
+        wx.hideLoading();
+
+        // 显示结果
+        wx.showModal({
+          title: 'Agent API 测试结果',
+          content: `请求成功！\n\n回复内容: ${response.content}`,
+          showCancel: false
+        });
+
+        console.log('Agent API 测试结果:', response);
+      } catch (error) {
+        console.error('测试Agent API失败:', error);
+
+        // 隐藏加载提示
+        wx.hideLoading();
+
+        // 显示错误信息
+        wx.showModal({
+          title: '测试失败',
+          content: error.message || '未知错误',
+          showCancel: false
+        });
+      }
     },
 
     // 偷看功能相关方法

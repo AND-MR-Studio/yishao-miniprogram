@@ -64,7 +64,9 @@
     <input-bar
       disabled="{{isAnimating}}"
       sending="{{isSending}}"
+      showTestButton="{{true}}"
       bind:send="handleSend"
+      bind:testAgent="handleTestAgent"
       bind:voiceStart="handleVoiceStart"
       bind:voiceEnd="handleVoiceEnd"
       bind:voiceCancel="handleVoiceCancel"

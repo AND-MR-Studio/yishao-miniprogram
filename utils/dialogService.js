@@ -1,8 +1,9 @@
 /**
  * 对话服务类
  * 处理用户与系统对话的通信、存储与加载
+ * 同时管理与汤面内容相关的对话功能
  */
-const { dialogRequest } = require('./api');
+const { dialogRequest, soupRequest, soup_by_id_url } = require('./api');
 
 // 获取基础 URL
 const getBaseUrl = () => {
@@ -14,10 +15,10 @@ class DialogService {
     constructor() {
         // 存储当前对话状态
         this._dialogState = {
-            messageDirty: false,
             currentSoupId: '',
             currentDialogId: '',
-            isProcessing: false
+            isProcessing: false,
+            currentSoupData: null // 存储当前汤面数据
         };
     }
 
@@ -83,31 +84,56 @@ class DialogService {
     }
 
     /**
-     * 设置对话内容已更改标志
-     * @param {boolean} isDirty 是否已更改
-     */
-    setMessageDirty(isDirty) {
-        this._dialogState.messageDirty = !!isDirty;
-    }
-
-    /**
-     * 获取对话内容是否已更改
-     * @returns {boolean} 是否已更改
-     */
-    isMessageDirty() {
-        return this._dialogState.messageDirty;
-    }
-
-    /**
      * 重置对话状态
      */
     resetDialogState() {
         this._dialogState = {
-            messageDirty: false,
             currentSoupId: '',
             currentDialogId: '',
-            isProcessing: false
+            isProcessing: false,
+            currentSoupData: null
         };
+    }
+
+    /**
+     * 获取汤面数据
+     * @param {string} soupId 汤面ID
+     * @returns {Promise<Object>} 汤面数据
+     */
+    async getSoup(soupId) {
+        // 如果没有提供soupId，使用当前存储的soupId
+        const targetSoupId = soupId || this.getCurrentSoupId();
+
+        if (!targetSoupId) {
+            console.error('获取汤面数据失败: 缺少汤面ID');
+            return null;
+        }
+
+        // 如果当前已缓存了请求的汤面数据，直接返回
+        if (this._dialogState.currentSoupData &&
+            this._dialogState.currentSoupData.soupId === targetSoupId) {
+            return this._dialogState.currentSoupData;
+        }
+
+        try {
+            // 从服务器获取汤面数据
+            const response = await soupRequest({
+                url: `${soup_by_id_url}${targetSoupId}`,
+                method: 'GET'
+            });
+
+            if (response.success && response.data) {
+                // 缓存获取到的汤面数据
+                this._dialogState.currentSoupData = response.data;
+                // 同时更新当前汤面ID
+                this.setCurrentSoupId(targetSoupId);
+                return response.data;
+            }
+            return null;
+        } catch (error) {
+            console.error('获取汤面数据失败:', error);
+            return null;
+        }
     }
 
     /**
@@ -292,79 +318,13 @@ class DialogService {
         }
     }
 
-    /**
-     * 加载或创建对话
-     * 统一处理对话加载和创建逻辑
-     * @param {string} userId 用户ID
-     * @param {string} soupId 汤面ID
-     * @param {string} [dialogId] 可选的对话ID，如果提供则直接加载
-     * @returns {Promise<Object>} 包含对话数据和消息的对象
-     */
-    async loadOrCreateDialog(userId, soupId, dialogId = null) {
-        if (!userId) {
-            throw new Error('加载对话失败: 缺少用户ID');
-        }
 
-        if (!soupId) {
-            throw new Error('加载对话失败: 缺少汤面ID');
-        }
-
-        try {
-            // 设置当前汤面ID
-            this.setCurrentSoupId(soupId);
-
-            let finalDialogId = dialogId;
-            let dialogData = null;
-
-            // 如果提供了对话ID，直接加载
-            if (finalDialogId) {
-                this.setCurrentDialogId(finalDialogId);
-                const messages = await this.getDialogMessages(finalDialogId);
-                return {
-                    dialogId: finalDialogId,
-                    soupId: soupId,
-                    userId: userId,
-                    messages: messages
-                };
-            }
-
-            // 否则，获取或创建对话
-            dialogData = await this.getUserDialog(userId, soupId);
-
-            // 如果没有对话ID，创建新对话
-            if (!dialogData.dialogId) {
-                dialogData = await this.createDialog(userId, soupId);
-            }
-
-            finalDialogId = dialogData.dialogId;
-            this.setCurrentDialogId(finalDialogId);
-
-            // 加载对话消息
-            const messages = await this.getDialogMessages(finalDialogId);
-
-            return {
-                dialogId: finalDialogId,
-                soupId: soupId,
-                userId: userId,
-                messages: messages
-            };
-        } catch (error) {
-            console.error('加载或创建对话失败:', error);
-            // 出错时返回空消息数组
-            return {
-                dialogId: '',
-                soupId: soupId,
-                userId: userId,
-                messages: []
-            };
-        }
-    }
 
     /**
      * 创建新对话
      * @param {string} userId 用户ID
      * @param {string} soupId 汤面ID
-     * @returns {Promise<Object>} 创建的对话数据
+     * @returns {Promise<Object>} 创建的对话数据，包含dialogId和soupData
      */
     async createDialog(userId, soupId) {
         if (!userId) {
@@ -376,6 +336,12 @@ class DialogService {
         }
 
         try {
+            // 先获取汤面数据，确保存在
+            const soupData = await this.getSoup(soupId);
+            if (!soupData) {
+                throw new Error('创建对话失败: 无法获取汤面数据');
+            }
+
             // 构建请求URL
             const url = `${getBaseUrl()}dialog/create`;
 
@@ -396,11 +362,17 @@ class DialogService {
             if (response.data && response.data.dialogId) {
                 this.setCurrentDialogId(response.data.dialogId);
                 this.setCurrentSoupId(soupId);
-                return response.data;
+
+                // 返回包含对话ID和汤面数据的对象
+                return {
+                    ...response.data,
+                    soupData: soupData
+                };
             } else {
                 throw new Error('创建对话失败: 服务器未返回对话ID');
             }
         } catch (error) {
+            console.error('创建对话失败:', error);
             throw error;
         }
     }
@@ -409,7 +381,7 @@ class DialogService {
      * 获取用户特定汤面的对话数据
      * @param {string} userId 用户ID
      * @param {string} soupId 汤面ID
-     * @returns {Promise<Object>} 对话数据
+     * @returns {Promise<Object>} 对话数据，包含dialogId和soupData
      */
     async getUserDialog(userId, soupId) {
         if (!userId) {
@@ -421,6 +393,12 @@ class DialogService {
         }
 
         try {
+            // 先获取汤面数据，确保存在
+            const soupData = await this.getSoup(soupId);
+            if (!soupData) {
+                throw new Error('获取对话失败: 无法获取汤面数据');
+            }
+
             // 构建请求URL
             const url = `${getBaseUrl()}dialog/user/${userId}/soup/${soupId}`;
 
@@ -434,23 +412,28 @@ class DialogService {
             }
 
             // 保存对话ID和汤面ID
-            if (response.data) {
-                if (response.data.dialogId) {
-                    this.setCurrentDialogId(response.data.dialogId);
-                }
-
+            if (response.data && response.data.dialogId) {
+                this.setCurrentDialogId(response.data.dialogId);
                 this.setCurrentSoupId(soupId);
-                return response.data;
+
+                // 返回包含对话数据和汤面数据的对象
+                return {
+                    ...response.data,
+                    soupData: soupData
+                };
             } else {
+                // 没有找到对话，返回空对话数据和汤面数据
                 return {
                     dialogId: '',
                     soupId: soupId,
                     userId: userId,
                     messages: [],
-                    total: 0
+                    total: 0,
+                    soupData: soupData
                 };
             }
         } catch (error) {
+            console.error('获取用户对话失败:', error);
             throw error;
         }
     }
@@ -497,6 +480,8 @@ class DialogService {
             throw error;
         }
     }
+
+
 }
 
 // 导出单例实例

@@ -627,8 +627,14 @@ Page({
       // 获取用户ID（使用抽取的公共方法）
       const userId = await this.ensureUserId();
 
-      // 使用统一的对话加载方法
-      const dialogData = await dialogService.loadOrCreateDialog(userId, currentSoupId);
+      // 获取用户对话，如果不存在则创建新对话
+      let dialogData = await dialogService.getUserDialog(userId, currentSoupId);
+
+      // 如果没有对话ID，创建新对话
+      if (!dialogData.dialogId) {
+        dialogData = await dialogService.createDialog(userId, currentSoupId);
+      }
+
       const dialogId = dialogData.dialogId || dialogService.getCurrentDialogId();
 
       if (!dialogId) {
@@ -846,5 +852,7 @@ Page({
   handleSoupLoading(e) {
     this.eventHandlers.onSoupLoading(e);
   },
+
+
 
 });

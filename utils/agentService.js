@@ -1,0 +1,120 @@
+/**
+ * Agent服务类
+ * 处理与Agent API的通信
+ */
+const { agentRequest } = require('./request');
+const { agent_chat_url } = require('./api');
+const dialogService = require('./dialogService');
+
+class AgentService {
+    constructor() {
+        // 存储当前处理状态
+        this._state = {
+            isProcessing: false
+        };
+    }
+
+    /**
+     * 设置处理状态
+     * @param {boolean} isProcessing 是否正在处理请求
+     */
+    setProcessing(isProcessing) {
+        this._state.isProcessing = !!isProcessing;
+    }
+
+    /**
+     * 获取处理状态
+     * @returns {boolean} 是否正在处理请求
+     */
+    isProcessing() {
+        return this._state.isProcessing;
+    }
+
+    /**
+     * 发送消息到Agent API并获取回复
+     * @param {Object} params 请求参数
+     * @param {Array} params.messages 消息历史数组，每个消息包含role和content
+     * @param {Object} params.soup 汤面数据对象，包含contentLines和truth
+     * @param {string} params.userId 用户ID
+     * @param {string} params.dialogId 对话ID
+     * @returns {Promise<Object>} 回复消息的Promise
+     */
+    async sendAgent(params) {
+        // 防止重复请求
+        if (this.isProcessing()) {
+            throw new Error('正在处理请求，请稍后再试');
+        }
+
+        this.setProcessing(true);
+
+        try {
+            // 必要参数检查
+            if (!params.messages || !Array.isArray(params.messages)) {
+                throw new Error('发送消息失败: 缺少消息历史');
+            }
+
+            if (!params.userId) {
+                throw new Error('发送消息失败: 缺少用户ID');
+            }
+
+            if (!params.dialogId) {
+                throw new Error('发送消息失败: 缺少对话ID');
+            }
+
+            if (!params.soup) {
+                throw new Error('发送消息失败: 缺少汤面数据');
+            }
+
+            // 使用传入的汤面数据
+            const soupData = params.soup;
+
+            // 构建请求数据
+            const requestData = {
+                messages: params.messages,
+                placeholders: {
+                    puzzle_surface: Array.isArray(soupData.contentLines)
+                        ? soupData.contentLines.join('\n')
+                        : soupData.contentLines,
+                    puzzle_truth: soupData.truth
+                }
+            };
+
+            // 发送请求到Agent API
+            const response = await agentRequest({
+                url: agent_chat_url,
+                method: 'POST',
+                data: requestData
+            });
+
+            // 处理响应数据
+            let replyContent = '';
+            let replyId = `msg_${Date.now()}`;
+
+            if (Array.isArray(response.data) && response.data.length > 0) {
+                replyContent = response.data[0].content || '';
+            }
+
+            // 如果是新对话（首次创建），保存对话ID
+            if (response.data && response.data.dialogId) {
+                dialogService.setCurrentDialogId(response.data.dialogId);
+            }
+
+            // 返回回复消息
+            return {
+                id: replyId,
+                role: 'agent',
+                content: replyContent,
+                timestamp: Date.now()
+            };
+        } catch (error) {
+            console.error('发送Agent消息失败:', error);
+            throw error;
+        } finally {
+            this.setProcessing(false);
+        }
+    }
+}
+
+// 导出单例实例
+const agentService = new AgentService();
+module.exports = agentService;
