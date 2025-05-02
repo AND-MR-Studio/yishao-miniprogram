@@ -1,34 +1,16 @@
 /**
  * Agent服务类
  * 处理与Agent API的通信
+ *
+ * 无状态设计：所有方法都接受必要的参数，不在服务中存储状态
  */
 const { agentRequest } = require('./request');
 const { agent_chat_url } = require('./api');
-const dialogService = require('./dialogService');
+
+// 用于防止并发请求的简单锁
+let _isProcessingRequest = false;
 
 class AgentService {
-    constructor() {
-        // 存储当前处理状态
-        this._state = {
-            isProcessing: false
-        };
-    }
-
-    /**
-     * 设置处理状态
-     * @param {boolean} isProcessing 是否正在处理请求
-     */
-    setProcessing(isProcessing) {
-        this._state.isProcessing = !!isProcessing;
-    }
-
-    /**
-     * 获取处理状态
-     * @returns {boolean} 是否正在处理请求
-     */
-    isProcessing() {
-        return this._state.isProcessing;
-    }
 
     /**
      * 发送消息到Agent API并获取回复
@@ -41,11 +23,11 @@ class AgentService {
      */
     async sendAgent(params) {
         // 防止重复请求
-        if (this.isProcessing()) {
+        if (_isProcessingRequest) {
             throw new Error('正在处理请求，请稍后再试');
         }
 
-        this.setProcessing(true);
+        _isProcessingRequest = true;
 
         try {
             // 必要参数检查
@@ -94,11 +76,6 @@ class AgentService {
                 replyContent = response.data[0].content || '';
             }
 
-            // 如果是新对话（首次创建），保存对话ID
-            if (response.data && response.data.dialogId) {
-                dialogService.setCurrentDialogId(response.data.dialogId);
-            }
-
             // 返回回复消息
             return {
                 id: replyId,
@@ -110,7 +87,7 @@ class AgentService {
             console.error('发送Agent消息失败:', error);
             throw error;
         } finally {
-            this.setProcessing(false);
+            _isProcessingRequest = false;
         }
     }
 }

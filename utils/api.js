@@ -23,6 +23,8 @@ const {
 const userBasePath = 'user/';
 const soupBasePath = 'soup/';
 const dialogBasePath = 'dialog/';
+const agentBasePath = 'agent/';
+
 // 资源服务基础路径
 const assetBasePath = 'asset/';
 

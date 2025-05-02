@@ -188,34 +188,24 @@ Component({
       if (this.data.loading) return Promise.resolve(this.data.messages);
 
       // 优先使用组件属性中的 dialogId
-      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
-      const soupId = this.properties.soupId || dialogService.getCurrentSoupId();
+      const dialogId = this.properties.dialogId;
+
+      if (!dialogId) {
+        console.log('缺少 dialogId，返回空消息数组');
+        return [];
+      }
 
       // 设置加载状态
       this.setData({ loading: true });
 
       try {
-        let messages;
-
-        if (!dialogId) {
-          console.log('缺少 dialogId，返回空消息数组');
-          // 返回空消息数组
-          messages = [];
-        } else {
-          // 确保服务层也知道当前的 dialogId 和 soupId
-          dialogService.setCurrentDialogId(dialogId);
-          if (soupId) {
-            dialogService.setCurrentSoupId(soupId);
-          }
-
-          // 从服务器获取对话记录
-          messages = await dialogService.getDialogMessages(dialogId);
-        }
+        // 从服务器获取对话记录
+        const result = await dialogService.getDialogMessages(dialogId);
 
         // 使用Promise包装setData，确保UI更新完成
         await new Promise(resolve => {
           this.setData({
-            messages: messages,
+            messages: result.messages,
             loading: false
           }, resolve);
         });
@@ -223,7 +213,7 @@ Component({
         // 滚动到底部
         this.scrollToBottom();
 
-        return messages;
+        return result.messages;
       } catch (error) {
         console.error('加载对话记录失败:', error);
 
@@ -289,7 +279,7 @@ Component({
 
       // 获取必要参数
       const soupId = this.properties.soupId || '';
-      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
+      const dialogId = this.properties.dialogId || '';
       const userId = this.properties.userId || '';
 
       // 检查必要参数
@@ -310,10 +300,6 @@ Component({
         });
         return;
       }
-
-      // 设置当前海龟汤ID和对话ID
-      dialogService.setCurrentSoupId(soupId);
-      dialogService.setCurrentDialogId(dialogId);
 
       // 更新用户回答过的汤记录
       if (soupId) {
@@ -502,7 +488,7 @@ Component({
 
       // 获取必要参数
       const soupId = this.properties.soupId || '';
-      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
+      const dialogId = this.properties.dialogId || '';
       const userId = this.properties.userId || '';
 
       // 检查必要参数

@@ -312,10 +312,7 @@ Page({
       const soupId = options.soupId || null;
       const dialogId = options.dialogId || null;
 
-      // 如果有dialogId，先设置到dialogService
-      if (dialogId) {
-        dialogService.setCurrentDialogId(dialogId);
-      }
+      // 使用dialogId变量即可，不需要额外保存
 
       // 获取汤面数据
       let soupData = await this.fetchSoupData(soupId);
@@ -363,8 +360,8 @@ Page({
       return;
     }
 
-    // 设置当前汤面ID到dialogService
-    dialogService.setCurrentSoupId(soupId);
+    // 记录当前汤面ID
+    this.currentSoupId = soupId;
 
     // 增加汤面阅读数
     await this.viewSoup(soupId);
@@ -446,10 +443,7 @@ Page({
       // 设置加载状态
       this.setData({ isLoading: true });
 
-      // 如果有dialogId，先设置到dialogService
-      if (data.dialogId) {
-        dialogService.setCurrentDialogId(data.dialogId);
-      }
+      // 使用data.dialogId变量即可
 
       // 获取汤面数据
       const soupData = await this.fetchSoupData(data.soupId);
@@ -635,7 +629,7 @@ Page({
         dialogData = await dialogService.createDialog(userId, currentSoupId);
       }
 
-      const dialogId = dialogData.dialogId || dialogService.getCurrentDialogId();
+      const dialogId = dialogData.dialogId || '';
 
       if (!dialogId) {
         throw new Error('无法获取对话ID');
