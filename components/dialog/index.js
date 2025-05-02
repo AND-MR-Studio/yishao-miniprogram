@@ -23,11 +23,6 @@ Component({
       type: String,
       value: ''
     },
-    // 是否启用打字机效果
-    enableTyping: {
-      type: Boolean,
-      value: true
-    },
     // 打字机速度
     typeSpeed: {
       type: Number,
@@ -355,20 +350,10 @@ Component({
           status: 'sent'
         };
 
-        if (!this.properties.enableTyping) {
-          // 不使用打字机效果时，直接完成
-          const finalMessages = [...messages, replyMessage];
-          this.setData({
-            messages: finalMessages,
-            isSending: false // 重置发送状态
-          });
-          return;
-        }
-
-        // 使用打字机效果时，保持isSending为true
+        // 使用打字机效果，保持isSending为true
         const updatedMessages = [...messages, {
           id: replyMessage.id,
-          role: 'agent',
+          role: 'assistant',
           content: '',
           status: 'typing',
           timestamp: replyMessage.timestamp
@@ -532,8 +517,13 @@ Component({
         return;
       }
 
-      // 使用服务层处理用户输入
-      const { userMessage } = dialogService.handleUserInput(value.trim());
+      // 直接创建用户消息对象，不使用dialogService
+      const userMessage = {
+        id: `msg_${Date.now()}`,
+        role: 'user',
+        content: value.trim(),
+        timestamp: Date.now()
+      };
 
       // 添加状态属性
       const userMessageWithStatus = {
@@ -542,6 +532,7 @@ Component({
       };
 
       // 添加用户消息并设置发送状态
+      // 注意：这里不触发 wx.eventCenter.emit('userSentMessage') 事件，避免其他组件响应
       const messages = [...this.data.messages, userMessageWithStatus];
       this.setData({
         messages,
@@ -557,17 +548,35 @@ Component({
           throw new Error('无法获取汤面数据');
         }
 
-        // 构建测试消息
-        const testMessages = [
-          {
-            role: 'user',
-            content: value.trim()
-          }
-        ];
+        // 构建包含历史对话的消息数组
+        let historyMessages = [];
+
+        // 从当前对话记录中提取历史消息
+        // 只保留用户消息和assistant回复，按时间顺序排列
+        const dialogMessages = this.data.messages.filter(msg =>
+          msg.role === 'user' || msg.role === 'assistant'
+        );
+
+        // 添加历史消息（如果有）
+        if (dialogMessages.length > 0) {
+          // 将历史消息转换为API所需格式
+          historyMessages = dialogMessages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }));
+        }
+
+        // 添加当前用户消息
+        historyMessages.push({
+          role: 'user',
+          content: value.trim()
+        });
+
+        console.log('发送消息历史:', historyMessages);
 
         // 调用agentService的sendAgent方法
         const response = await agentService.sendAgent({
-          messages: testMessages,
+          messages: historyMessages,
           soup: soupData,
           userId: userId,
           dialogId: dialogId
@@ -579,26 +588,16 @@ Component({
         // 创建回复消息
         const replyMessage = {
           id: response.id,
-          role: 'agent',
+          role: 'assistant',
           content: response.content,
           status: 'sent',
           timestamp: response.timestamp
         };
 
-        if (!this.properties.enableTyping) {
-          // 不使用打字机效果时，直接完成
-          const finalMessages = [...messages, replyMessage];
-          this.setData({
-            messages: finalMessages,
-            isSending: false // 重置发送状态
-          });
-          return;
-        }
-
-        // 使用打字机效果时，保持isSending为true
+        // 使用打字机效果，保持isSending为true
         const updatedMessages = [...messages, {
           id: replyMessage.id,
-          role: 'agent',
+          role: 'assistant',
           content: '',
           status: 'typing',
           timestamp: replyMessage.timestamp

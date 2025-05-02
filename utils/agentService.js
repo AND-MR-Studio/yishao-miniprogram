@@ -79,7 +79,7 @@ class AgentService {
             // 返回回复消息
             return {
                 id: replyId,
-                role: 'agent',
+                role: 'assistant',
                 content: replyContent,
                 timestamp: Date.now()
             };

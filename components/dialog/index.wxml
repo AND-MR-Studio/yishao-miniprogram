@@ -38,17 +38,17 @@
         id="msg-{{index}}"
       >{{item.content}}</view>
 
-      <!-- 系统和Agent回复消息 - 正常显示 -->
+      <!-- 系统和Assistant回复消息 - 正常显示 -->
       <view
-        wx:if="{{(item.role === 'system' || item.role === 'agent') && index !== animatingMessageIndex}}"
+        wx:if="{{(item.role === 'system' || item.role === 'assistant') && index !== animatingMessageIndex}}"
         class="message response {{item.status ? item.status : ''}}"
         aria-label="回复消息: {{item.content}}"
         id="msg-{{index}}"
       >> {{item.content}}</view>
 
-      <!-- 系统和Agent回复消息 - 简化版打字机动画 -->
+      <!-- 系统和Assistant回复消息 - 简化版打字机动画 -->
       <view
-        wx:if="{{(item.role === 'system' || item.role === 'agent') && index === animatingMessageIndex}}"
+        wx:if="{{(item.role === 'system' || item.role === 'assistant') && index === animatingMessageIndex}}"
         class="response typing-simple {{item.status ? item.status : ''}}"
         aria-live="polite"
         id="msg-{{index}}"

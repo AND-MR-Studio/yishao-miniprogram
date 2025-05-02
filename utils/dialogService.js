@@ -153,7 +153,7 @@ class DialogService {
             // 返回回复消息
             return {
                 id: replyId,
-                role: 'agent',
+                role: 'assistant',
                 content: replyContent,
                 timestamp: Date.now(),
                 dialogId: response.data?.dialogId || params.dialogId // 返回对话ID，便于调用方更新
