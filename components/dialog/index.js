@@ -397,8 +397,21 @@ Component({
         });
       } catch (error) {
         console.error('发送消息失败:', error);
-        this.updateMessageStatus(userMessage.id, 'error');
-        this.setData({ isSending: false }); // 出错时也要重置状态
+
+        // 从消息列表中移除失败的消息
+        const updatedMessages = this.data.messages.filter(msg => msg.id !== userMessage.id);
+
+        this.setData({
+          messages: updatedMessages,
+          isSending: false // 出错时也要重置状态
+        });
+
+        // 显示错误提示
+        wx.showToast({
+          title: error.message || '发送失败',
+          icon: 'none',
+          duration: 2000
+        });
       }
     },
 
@@ -463,7 +476,7 @@ Component({
 
     /**
      * 处理测试Agent API事件
-     * 使用当前输入内容和汤面数据发送测试请求到Agent API
+     * 使用当前输入内容和汤面数据发送测试请求到Agent API，并将结果直接显示在对话界面中
      * @param {Object} e 事件对象
      */
     async handleTestAgent(e) {
@@ -493,39 +506,51 @@ Component({
 
       // 检查必要参数
       if (!dialogId) {
-        console.error('测试失败: 缺少对话ID');
+        console.error('发送失败: 缺少对话ID');
         wx.showToast({
-          title: '测试失败，请重试',
+          title: '发送失败，请重试',
           icon: 'none'
         });
         return;
       }
 
       if (!userId) {
-        console.error('测试失败: 缺少用户ID');
+        console.error('发送失败: 缺少用户ID');
         wx.showToast({
-          title: '测试失败，请重试',
+          title: '发送失败，请重试',
           icon: 'none'
         });
         return;
       }
 
       if (!soupId) {
-        console.error('测试失败: 缺少汤面ID');
+        console.error('发送失败: 缺少汤面ID');
         wx.showToast({
-          title: '测试失败，请重试',
+          title: '发送失败，请重试',
           icon: 'none'
         });
         return;
       }
 
-      try {
-        // 显示加载提示
-        wx.showLoading({
-          title: '测试中...',
-          mask: true
-        });
+      // 使用服务层处理用户输入
+      const { userMessage } = dialogService.handleUserInput(value.trim());
 
+      // 添加状态属性
+      const userMessageWithStatus = {
+        ...userMessage,
+        status: 'sending'
+      };
+
+      // 添加用户消息并设置发送状态
+      const messages = [...this.data.messages, userMessageWithStatus];
+      this.setData({
+        messages,
+        isSending: true // 标记为发送中
+      }, () => {
+        this.scrollToBottom();
+      });
+
+      try {
         // 获取汤面数据
         const soupData = await soupService.getSoup(soupId);
         if (!soupData) {
@@ -548,28 +573,74 @@ Component({
           dialogId: dialogId
         });
 
-        // 隐藏加载提示
-        wx.hideLoading();
+        // 更新用户消息状态
+        this.updateMessageStatus(userMessage.id, 'sent');
 
-        // 显示结果
-        wx.showModal({
-          title: 'Agent API 测试结果',
-          content: `请求成功！\n\n回复内容: ${response.content}`,
-          showCancel: false
+        // 创建回复消息
+        const replyMessage = {
+          id: response.id,
+          role: 'agent',
+          content: response.content,
+          status: 'sent',
+          timestamp: response.timestamp
+        };
+
+        if (!this.properties.enableTyping) {
+          // 不使用打字机效果时，直接完成
+          const finalMessages = [...messages, replyMessage];
+          this.setData({
+            messages: finalMessages,
+            isSending: false // 重置发送状态
+          });
+          return;
+        }
+
+        // 使用打字机效果时，保持isSending为true
+        const updatedMessages = [...messages, {
+          id: replyMessage.id,
+          role: 'agent',
+          content: '',
+          status: 'typing',
+          timestamp: replyMessage.timestamp
+        }];
+
+        this.setData({
+          messages: updatedMessages,
+          animatingMessageIndex: updatedMessages.length - 1,
+          isAnimating: true,
+          // 不重置isSending，因为从用户角度看仍在"发送"过程中
+          typingText: '',
+          scrollToView: 'scrollBottom'
         });
 
-        console.log('Agent API 测试结果:', response);
+        // 打字机动画完成后才重置isSending
+        await this.typeAnimator.start(replyMessage.content);
+
+        const finalMessages = [...updatedMessages];
+        finalMessages[finalMessages.length - 1] = replyMessage;
+
+        this.setData({
+          messages: finalMessages,
+          animatingMessageIndex: -1,
+          isSending: false, // 动画完成后重置发送状态
+          typingText: ''
+        });
       } catch (error) {
-        console.error('测试Agent API失败:', error);
+        console.error('发送消息失败:', error);
 
-        // 隐藏加载提示
-        wx.hideLoading();
+        // 从消息列表中移除失败的消息
+        const updatedMessages = this.data.messages.filter(msg => msg.id !== userMessage.id);
 
-        // 显示错误信息
-        wx.showModal({
-          title: '测试失败',
-          content: error.message || '未知错误',
-          showCancel: false
+        this.setData({
+          messages: updatedMessages,
+          isSending: false // 出错时也要重置状态
+        });
+
+        // 显示错误提示
+        wx.showToast({
+          title: error.message || '发送失败',
+          icon: 'none',
+          duration: 2000
         });
       }
     },
