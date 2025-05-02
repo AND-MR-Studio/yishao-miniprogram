@@ -552,34 +552,38 @@ Component({
         let historyMessages = [];
 
         // 从当前对话记录中提取历史消息
-        // 只保留用户消息和assistant回复，按时间顺序排列
-        const dialogMessages = this.data.messages.filter(msg =>
+        // 注意：此时this.data.messages已经包含了当前用户消息
+        // 获取除了最后一条消息之外的所有历史消息
+        const previousMessages = this.data.messages.slice(0, -1).filter(msg =>
           msg.role === 'user' || msg.role === 'assistant'
         );
 
         // 添加历史消息（如果有）
-        if (dialogMessages.length > 0) {
+        if (previousMessages.length > 0) {
           // 将历史消息转换为API所需格式
-          historyMessages = dialogMessages.map(msg => ({
+          historyMessages = previousMessages.map(msg => ({
             role: msg.role,
             content: msg.content
           }));
         }
 
-        // 添加当前用户消息
+        // 添加当前用户消息（从this.data.messages的最后一条获取）
+        const currentUserMessage = this.data.messages[this.data.messages.length - 1];
         historyMessages.push({
-          role: 'user',
-          content: value.trim()
+          role: currentUserMessage.role,
+          content: currentUserMessage.content
         });
 
         console.log('发送消息历史:', historyMessages);
 
         // 调用agentService的sendAgent方法
+        // 注意：agentService现在会自动保存对话到云端
         const response = await agentService.sendAgent({
           messages: historyMessages,
           soup: soupData,
           userId: userId,
           dialogId: dialogId
+          // saveToCloud: true  // 默认为true，可以省略
         });
 
         // 更新用户消息状态
@@ -624,6 +628,7 @@ Component({
           isSending: false, // 动画完成后重置发送状态
           typingText: ''
         });
+        
       } catch (error) {
         console.error('发送消息失败:', error);
 
@@ -708,7 +713,6 @@ Component({
             if (res.confirm) {
               try {
                 // 获取用户ID
-                const userService = require('../../utils/userService');
                 const userId = await userService.getUserId();
                 if (!userId) {
                   console.error('清理上下文失败: 无法获取用户ID');
@@ -720,7 +724,6 @@ Component({
 
                 // 保存空消息数组到服务器
                 try {
-                  const dialogService = require('../../utils/dialogService');
                   await dialogService.saveDialogMessages(dialogId, userId, []);
                   console.log('对话上下文已清理');
 

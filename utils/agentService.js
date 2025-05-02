@@ -6,6 +6,7 @@
  */
 const { agentRequest } = require('./request');
 const { agent_chat_url } = require('./api');
+const dialogService = require('./dialogService'); // 添加dialogService引用
 
 // 用于防止并发请求的简单锁
 let _isProcessingRequest = false;
@@ -19,6 +20,7 @@ class AgentService {
      * @param {Object} params.soup 汤面数据对象，包含contentLines和truth
      * @param {string} params.userId 用户ID
      * @param {string} params.dialogId 对话ID
+     * @param {boolean} params.saveToCloud 是否保存到云端，默认为true
      * @returns {Promise<Object>} 回复消息的Promise
      */
     async sendAgent(params) {
@@ -76,13 +78,46 @@ class AgentService {
               replyContent = response[0].content || '';
             }
 
-            // 返回回复消息
-            return {
+            // 创建回复消息对象
+            const replyMessage = {
                 id: replyId,
                 role: 'assistant',
                 content: replyContent,
                 timestamp: Date.now()
             };
+
+            // 保存到云端（如果需要）
+            const saveToCloud = params.saveToCloud !== false; // 默认为true
+            if (saveToCloud) {
+                try {
+                    // 构建完整的消息历史
+                    const allMessages = [...params.messages];
+                    
+                    // 添加最新的回复消息
+                    // 注意：需要确保消息格式与dialogService期望的一致
+                    allMessages.push({
+                        id: replyMessage.id,
+                        role: replyMessage.role,
+                        content: replyMessage.content,
+                        timestamp: replyMessage.timestamp
+                    });
+                    
+                    // 保存到云端
+                    await dialogService.saveDialogMessages(
+                        params.dialogId,
+                        params.userId,
+                        allMessages
+                    );
+                    
+                    console.log('Agent对话已保存到云端');
+                } catch (saveError) {
+                    console.error('保存Agent对话失败:', saveError);
+                    // 保存失败不影响返回结果
+                }
+            }
+
+            // 返回回复消息
+            return replyMessage;
         } catch (error) {
             console.error('发送Agent消息失败:', error);
             throw error;
