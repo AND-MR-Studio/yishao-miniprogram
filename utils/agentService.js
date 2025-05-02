@@ -72,8 +72,8 @@ class AgentService {
             let replyContent = '';
             let replyId = `msg_${Date.now()}`;
 
-            if (Array.isArray(response.data) && response.data.length > 0) {
-                replyContent = response.data[0].content || '';
+            if (Array.isArray(response) ) {
+              replyContent = response[0].content || '';
             }
 
             // 返回回复消息
