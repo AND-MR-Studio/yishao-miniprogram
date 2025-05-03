@@ -38,12 +38,7 @@
               catchtap="onSoupItemTap"
             >
               <view class="soup-item-content">
-                <view class="soup-header">
-                  <view class="soup-title">{{item.title || '未知标题'}}</view>
-                  <view class="soup-tags" wx:if="{{item.tags && item.tags.length > 0}}">
-                    <text class="soup-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="index">{{tag}}</text>
-                  </view>
-                </view>
+                <view class="soup-title">{{item.title || '未知标题'}}</view>
                 <view class="soup-stats">
                   <text class="soup-views">{{item.viewCount || 0}}次浏览</text>
                   <text class="soup-likes">点赞：{{item.likeCount || 0}}</text>
