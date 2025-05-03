@@ -1,4 +1,5 @@
 /* components/soup-truth/soup-truth.wxss */
+@import "../../styles/theme.wxss";
 
 /* 汤底容器 */
 .soup-container {
@@ -73,19 +74,22 @@
   margin: 0 auto;
 }
 
-/* 标题行样式 */
+/* 标题行样式 - 使用明朝体 */
 .text-line-container.title-line .text-line {
-  font-size: var(--font-size-xl, 32rpx);
-  font-weight: var(--font-weight-bold, bold);
+  font-family: var(--font-family-mincho);
+  font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */
+  font-weight: var(--font-weight-medium);
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  color: var(--color-text-primary);
 }
 
-/* 汤底内容行样式 */
+/* 汤底内容行样式 - 使用明朝体 */
 .text-line-container.truth-line .text-line {
-  font-size: 30rpx;
+  font-family: var(--font-family-mincho);
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
   line-height: 2;
-  color: var(--color-text-primary, #333);
+  color: var(--color-text-primary);
   white-space: normal;
   word-wrap: break-word;
   word-break: break-all;
@@ -104,11 +108,12 @@
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-/* 标题样式 */
+/* 标题样式 - 使用明朝体 */
 .soup-title {
-  font-size: var(--font-size-xl, 32rpx);
-  font-weight: var(--font-weight-bold, bold);
-  color: var(--color-text-primary, #333);
+  font-family: var(--font-family-mincho);
+  font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
   text-align: center;
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
@@ -123,11 +128,12 @@
   border-radius: 12rpx;
 }
 
-/* 汤底文本样式 */
+/* 汤底文本样式 - 使用明朝体 */
 .soup-truth {
-  font-size: 30rpx;
+  font-family: var(--font-family-mincho);
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
   line-height: 2;
-  color: var(--color-text-primary, #333);
+  color: var(--color-text-primary);
   text-align: left;
   display: block;
   padding: 20rpx;

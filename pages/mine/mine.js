@@ -315,14 +315,6 @@ Page({
         showUserInfoModal: true
       });
 
-      // 如果需要显示提示，则显示
-      if (showToast) {
-        wx.showToast({
-          title: '加载成功',
-          icon: 'success',
-          duration: 1000
-        });
-      }
     } finally {
       // 重置状态标志
       setTimeout(() => {
@@ -335,7 +327,6 @@ Page({
    * 关闭用户信息设置弹窗
    */
   closeUserInfoModal() {
-    // 简单关闭弹窗，不需要恢复原始信息
     this.setData({ showUserInfoModal: false });
 
     // 刷新页面数据以获取最新的用户信息

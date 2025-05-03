@@ -1,4 +1,5 @@
 /* components/start-soup-button/index.wxss */
+@import "../../styles/theme.wxss";
 
 /* 呼吸动画 */
 @keyframes breathing {
@@ -76,15 +77,16 @@
   animation: none !important;
 }
 
-/* 点亮按钮文本 */
+/* 点亮按钮文本 - 使用明朝体 */
 .btn-text-light {
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   color: #000000;
-  font-size: 32rpx;
-  font-weight: 500;
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-mincho);
 }
 
 /* 加载中动画样式 */

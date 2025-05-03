@@ -50,20 +50,23 @@
   text-align: center;
 }
 
-/* 标题文本样式 */
+/* 标题文本样式 - 使用明朝体 */
 .title-text {
-  font-size: 36rpx;
-  font-weight: 700;
+  font-family: var(--font-family-mincho);
+  font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */
+  font-weight: var(--font-weight-medium);
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
   letter-spacing: 4rpx;
   white-space: nowrap;
   display: inline-block;
+  color: var(--color-text-primary);
 }
 
-/* 汤面文本样式 */
+/* 汤面文本样式 - 使用明朝体 */
 .soup-text {
-  font-size: 28rpx;
+  font-family: var(--font-family-mincho);
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
   line-height: 2.5;
   padding: 50rpx;
   text-align: center;
@@ -73,6 +76,7 @@
   letter-spacing: 5rpx;
   box-sizing: border-box;
   flex: 1;
+  color: var(--color-text-primary);
 }
 
 /* 底部控件样式已移至interaction-footer组件 */

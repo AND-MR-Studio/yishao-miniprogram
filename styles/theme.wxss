@@ -3,6 +3,15 @@
  * 主题变量的集中管理
  */
 
+/* 定义汇文明朝体字体 */
+@font-face {
+  font-family: 'Huiwen-mincho';
+  src: url('https://chinese-font.netlify.app/font-cdn/packages/hwmct/dist/汇文明朝体/result.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* 颜色系统 */
 page {
   /* 主题颜色 */
@@ -41,13 +50,13 @@ page {
   --font-family-mincho: 'Huiwen-mincho', var(--font-family-base);
   --font-family-yahei: 'Microsoft YaHei', var(--font-family-base);
 
-  /* 字号 */
-  --font-size-xs: 24rpx;
-  --font-size-sm: 28rpx;
-  --font-size-md: 32rpx;
-  --font-size-lg: 36rpx;
-  --font-size-xl: 44rpx;
-  --font-size-xxl: 56rpx;
+  /* 字号 - 符合微信小程序设计规范 */
+  --font-size-xs: 20rpx;  /* 主Tab文字/时间 */
+  --font-size-sm: 24rpx;  /* 消息列表时间/昵称 */
+  --font-size-md: 28rpx;  /* 摘要/小按钮文字 */
+  --font-size-lg: 34rpx;  /* 列表标题/导航标题/导航栏 */
+  --font-size-xl: 40rpx;  /* 大标题 */
+  --font-size-xxl: 48rpx;  /* 特大标题 */
 
   /* 行高 */
   --line-height-xs: 1.2;
@@ -127,24 +136,43 @@ page {
   color: var(--color-text-primary);
 }
 
-/* 特殊文本样式 */
+/* 汇文明朝体文本样式 */
 .text-mincho {
   font-family: var(--font-family-mincho);
   font-weight: var(--font-weight-normal);
   letter-spacing: var(--letter-spacing-normal);
 }
 
+/* 大号明朝体 - 适合标题 */
 .text-mincho-lg {
-  composes: text-mincho;
+  font-family: var(--font-family-mincho);
   font-size: var(--font-size-lg);
-  line-height: var(--line-height-lg);
+  line-height: var(--line-height-md);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--color-text-primary);
 }
 
+/* 中号明朝体 - 适合正文 */
 .text-mincho-md {
-  composes: text-mincho;
+  font-family: var(--font-family-mincho);
   font-size: var(--font-size-md);
   line-height: var(--line-height-md);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--color-text-primary);
 }
+
+/* 小号明朝体 - 适合辅助文本 */
+.text-mincho-sm {
+  font-family: var(--font-family-mincho);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  font-weight: var(--font-weight-normal);
+  letter-spacing: var(--letter-spacing-normal);
+  color: var(--color-text-secondary);
+}
+
 
 /* 辅助文本样式 */
 .text-caption {
@@ -179,4 +207,116 @@ page {
   line-height: var(--line-height-sm);
   font-weight: var(--font-weight-medium);
   letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 微信小程序规范样式 */
+
+/* 列表样式 */
+.list-item {
+  padding: 24rpx 30rpx;
+  background-color: #FFFFFF;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.list-item-dark {
+  background-color: var(--color-background-light);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.list-title {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 8rpx;
+}
+
+.list-subtitle {
+  font-size: var(--font-size-md);
+  color: var(--color-text-secondary);
+  margin-bottom: 4rpx;
+}
+
+.list-info {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-hint);
+}
+
+.list-right {
+  margin-left: auto;
+  text-align: right;
+}
+
+/* 按钮状态样式 */
+.btn {
+  font-size: var(--font-size-md);
+  line-height: 2.8;
+  padding: 0 30rpx;
+  border-radius: var(--radius-md);
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.btn-primary:active {
+  background-color: var(--color-primary-dark);
+  opacity: 0.9;
+}
+
+.btn-disabled {
+  background-color: rgba(87, 44, 239, 0.3);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.btn-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30rpx;
+  height: 30rpx;
+  margin: -15rpx 0 0 -15rpx;
+  border: 3rpx solid rgba(255, 255, 255, 0.2);
+  border-top-color: #FFFFFF;
+  border-radius: 50%;
+  animation: btn-loading 0.8s infinite linear;
+}
+
+@keyframes btn-loading {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 图标规范样式 */
+.icon {
+  width: 48rpx;
+  height: 48rpx;
+}
+
+.icon-sm {
+  width: 32rpx;
+  height: 32rpx;
+}
+
+.icon-lg {
+  width: 64rpx;
+  height: 64rpx;
+}
+
+.icon-xl {
+  width: 80rpx;
+  height: 80rpx;
 }
