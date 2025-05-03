@@ -68,6 +68,20 @@
     bind:clearcontext="clearContext"
   ></dialog-component>
 
+  <!-- 输入栏组件 - 在喝汤状态显示 -->
+  <input-bar
+    wx:if="{{pageState === 'drinking'}}"
+    id="inputBar"
+    disabled="{{isAnimating || isSending}}"
+    sending="{{isSending}}"
+    showTestButton="{{true}}"
+    bind:send="handleSend"
+    bind:testAgent="handleTestAgent"
+    bind:voiceStart="handleVoiceStart"
+    bind:voiceEnd="handleVoiceEnd"
+    bind:voiceCancel="handleVoiceCancel"
+  />
+
   <!-- 提示模块组件 - 在喝汤状态和汤底状态显示 -->
   <tip-module
     visible="{{(pageState === 'drinking' && (tipVisible === undefined ? true : tipVisible)) || pageState === 'truth'}}"

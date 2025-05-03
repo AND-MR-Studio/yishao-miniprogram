@@ -1,6 +1,6 @@
 <!--components/input-bar/index.wxml-->
 <!-- 底部输入区域 -->
-<view class="input-area {{disabled ? 'disabled-input-area' : ''}}">
+<view class="input-area {{disabled ? 'disabled-input-area' : ''}}" style="bottom: {{bottom >= 0 ? bottom + 'px' : 'calc(110rpx + env(safe-area-inset-bottom))'}};">
   <view class="input-container">
     <!-- 语音按钮（临时禁用） -->
     <view class="voice-btn disabled"
@@ -16,12 +16,14 @@
         placeholder="输入你的问题..."
         placeholder-class="input-placeholder"
         cursor-spacing="20"
-        adjust-position="{{true}}"
+        adjust-position="{{false}}"
         hold-keyboard="{{false}}"
         confirm-type="send"
         confirm-hold="{{false}}"
         bindinput="handleInput"
         bindconfirm="handleSend"
+        bindfocus="handleInputFocus"
+        bindblur="handleInputBlur"
         focus="{{inputFocus}}"
         hidden="{{isRecording}}"
         maxlength="50"
