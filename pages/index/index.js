@@ -7,6 +7,7 @@ const soupService = require('../../utils/soupService');
 const dialogService = require('../../utils/dialogService');
 const userService = require('../../utils/userService');
 const { SWIPE_DIRECTION } = require('../../utils/interactionManager');
+const eventUtils = require('../../utils/eventUtils');
 
 // ===== 常量定义 =====
 const PAGE_STATE = {
@@ -363,36 +364,30 @@ Page({
    */
   onReady() {
     // 初始化事件中心（如果尚未初始化）
-    if (!wx.eventCenter) {
-      wx.eventCenter = {
-        callbacks: {},
-        on(eventName, callback) {
-          this.callbacks[eventName] = this.callbacks[eventName] || [];
-          this.callbacks[eventName].push(callback);
-        },
-        emit(eventName, data) {
-          const callbacks = this.callbacks[eventName] || [];
-          callbacks.forEach(callback => callback(data));
-        }
-      };
-    }
+    eventUtils.initEventCenter();
 
     // 注册事件监听器
-    wx.eventCenter.on('loadSoupWithDialog', this.handleLoadSoupWithDialog.bind(this));
+    eventUtils.onEvent('loadSoup', this.handleLoadSoup.bind(this));
   },
 
+
+
   /**
-   * 处理加载汤面和对话的事件
-   * @param {Object} data 包含 soupId 和 dialogId 的对象
+   * 处理加载汤面事件
+   * @param {Object} data 包含 soupId 的对象
    */
-  async handleLoadSoupWithDialog(data) {
+  async handleLoadSoup(data) {
     if (!data || !data.soupId) return;
 
     try {
+      // 如果当前处于喝汤状态，先关闭对话框回到查看状态
+      if (this.data.pageState === PAGE_STATE.DRINKING) {
+        // 使用页面状态管理器切换到查看状态
+        this.pageStateManager.switchToViewing();
+      }
+
       // 设置加载状态
       this.setData({ isLoading: true });
-
-      // 使用data.dialogId变量即可
 
       // 获取汤面数据
       const soupData = await this.fetchSoupData(data.soupId);
@@ -402,43 +397,8 @@ Page({
 
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData);
-
-      // 如果有dialogId，预加载对话记录并切换到喝汤状态
-      if (data.dialogId) {
-        try {
-          // 获取用户ID（使用抽取的公共方法）
-          const userId = await this.ensureUserId();
-
-          // 预加载对话记录
-          const dialog = this.selectComponent('#dialog');
-          if (dialog) {
-            // 设置必要的属性
-            dialog.setData({
-              soupId: data.soupId,
-              dialogId: data.dialogId,
-              userId: userId,
-              visible: false
-            });
-
-            // 显式加载对话记录并直接切换到喝汤状态
-            await dialog.loadDialogMessages();
-            // 加载完成后直接切换到喝汤状态
-            this.pageStateManager.switchToDrinking(data.soupId, data.dialogId, userId);
-          }
-        } catch (error) {
-          console.error('预加载对话记录失败:', error);
-          // 即使预加载失败，也尝试切换到喝汤状态
-          try {
-            const userId = await this.ensureUserId();
-            this.pageStateManager.switchToDrinking(data.soupId, data.dialogId, userId);
-          } catch (error) {
-            console.error('切换到喝汤状态失败:', error);
-            this.showErrorToast('无法切换到喝汤状态');
-          }
-        }
-      }
     } catch (error) {
-      console.error('加载汤面和对话失败:', error);
+      console.error('加载汤面失败:', error);
       this.showErrorToast('加载失败，请重试');
       this.setData({
         isLoading: false,
@@ -453,15 +413,7 @@ Page({
    */
   onUnload() {
     // 清理事件监听器
-    if (wx.eventCenter && wx.eventCenter.callbacks) {
-      // 移除当前页面的事件监听
-      if (wx.eventCenter.callbacks['loadSoupWithDialog']) {
-        wx.eventCenter.callbacks['loadSoupWithDialog'] =
-          wx.eventCenter.callbacks['loadSoupWithDialog'].filter(
-            callback => callback !== this.handleLoadSoupWithDialog
-          );
-      }
-    }
+    eventUtils.offEvent('loadSoup', this.handleLoadSoup);
   },
 
   /**
@@ -496,6 +448,15 @@ Page({
    */
   onTipModuleClose() {
     // 提示模块关闭时的处理逻辑
+  },
+
+  /**
+   * 处理提示模块可见性变化事件
+   * @param {Object} e 事件对象
+   */
+  onTipVisibleChange(e) {
+    const { visible } = e.detail;
+    this.setData({ tipVisible: visible });
   },
 
   /**

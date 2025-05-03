@@ -25,9 +25,6 @@
     scroll-into-view="{{scrollToView}}"
     aria-busy="{{loading}}"
   >
-    <!-- 加载提示 -->
-    <view wx:if="{{loading && !messages.length}}" class="message loading">加载中...</view>
-
     <!-- 消息列表 -->
     <block wx:for="{{messages}}" wx:key="index">
       <!-- 用户消息 -->

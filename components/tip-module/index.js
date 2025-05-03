@@ -1,4 +1,6 @@
 // components/tip-module/index.js
+const eventUtils = require('../../utils/eventUtils');
+
 Component({
   /**
    * 组件的属性列表
@@ -77,6 +79,9 @@ Component({
     attached() {
       // 监听用户发送消息事件
       this.watchUserMessages();
+
+      // 监听显示提示事件
+      this.watchTipEvents();
     },
     detached() {
       // 清除计时器
@@ -90,23 +95,45 @@ Component({
   methods: {
     // 监听用户发送消息
     watchUserMessages() {
-      // 创建事件中心（如果不存在）
-      if (!wx.eventCenter) {
-        wx.eventCenter = {
-          callbacks: {},
-          on: function(eventName, callback) {
-            this.callbacks[eventName] = this.callbacks[eventName] || [];
-            this.callbacks[eventName].push(callback);
-          },
-          emit: function(eventName, data) {
-            const callbacks = this.callbacks[eventName] || [];
-            callbacks.forEach(callback => callback(data));
-          }
-        };
+      // 监听用户发送消息事件
+      eventUtils.onEvent('userSentMessage', this.handleUserMessage.bind(this));
+    },
+
+    // 监听提示事件
+    watchTipEvents() {
+      // 监听显示提示事件
+      eventUtils.onEvent('showTip', this.handleShowTip.bind(this));
+
+      // 监听隐藏提示事件
+      eventUtils.onEvent('hideTip', this.handleHideTip.bind(this));
+    },
+
+    // 处理显示提示事件
+    handleShowTip(data) {
+      // 如果正在切换内容，不执行
+      if (this.data.isSwitchingContent) return;
+
+      // 更新标题（如果有）
+      if (data.title) {
+        this.setData({ tipTitle: data.title });
       }
 
-      // 监听用户发送消息事件
-      wx.eventCenter.on('userSentMessage', this.handleUserMessage.bind(this));
+      // 更新内容并显示提示
+      if (data.content && Array.isArray(data.content)) {
+        // 执行滚轮动画
+        this.animateTipChange(data.content);
+      }
+
+      // 确保提示模块可见
+      if (!this.properties.visible) {
+        this.triggerEvent('visibleChange', { visible: true });
+      }
+    },
+
+    // 处理隐藏提示事件
+    handleHideTip() {
+      // 恢复默认提示内容
+      this.resetTipContent();
     },
 
     // 处理用户发送消息

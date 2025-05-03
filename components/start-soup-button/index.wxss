@@ -77,7 +77,7 @@
   animation: none !important;
 }
 
-/* 点亮按钮文本 - 使用明朝体 */
+/* 点亮按钮文本  */
 .btn-text-light {
   display: flex;
   align-items: center;
