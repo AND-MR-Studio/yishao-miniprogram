@@ -38,10 +38,16 @@
               catchtap="onSoupItemTap"
             >
               <view class="soup-item-content">
-                <view class="soup-title">{{item.title || '未知标题'}}</view>
-                <view class="soup-meta">
-                  <text class="soup-type">{{item.soupType === 0 ? '预制' : 'DIY'}}</text>
+                <view class="soup-header">
+                  <view class="soup-title">{{item.title || '未知标题'}}</view>
+                  <view class="soup-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+                    <text class="soup-tag" wx:for="{{item.tags}}" wx:for-item="tag" wx:key="index">{{tag}}</text>
+                  </view>
+                </view>
+                <view class="soup-stats">
                   <text class="soup-views">{{item.viewCount || 0}}次浏览</text>
+                  <text class="soup-likes">点赞：{{item.likeCount || 0}}</text>
+                  <text class="soup-favorites">收藏：{{item.favoriteCount || 0}}</text>
                 </view>
               </view>
               <view class="soup-item-arrow"></view>

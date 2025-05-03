@@ -213,8 +213,9 @@ function initSoupRoutes(app) {
   // GET /api/soup/tags - 获取所有海龟汤标签
   app.get(`${BASE_PATH}/tags`, async (_, res) => {
     try {
-      // 返回所有标签类型
-      return sendResponse(res, true, SOUP_TAGS);
+      // 返回所有标签值的数组，而不是对象
+      const tagValues = Object.values(SOUP_TAGS);
+      return sendResponse(res, true, tagValues);
     } catch (err) {
       return sendResponse(res, false, '获取海龟汤标签失败: ' + err.message, 500);
     }
