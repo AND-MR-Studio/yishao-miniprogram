@@ -46,6 +46,14 @@
       <!-- 移除打字机效果进行中提示 -->
     </view>
 
+    <!-- 测试Agent API按钮 -->
+    <view class="test-btn {{(hasContent || sending) ? 'active' : 'inactive'}} {{(disabled || sending) ? 'loading-btn' : ''}}"
+          bindtap="handleTestAgent"
+          hover-class="{{hasContent && !disabled && !sending ? 'test-btn-active-hover' : ''}}"
+          wx:if="{{showTestButton}}">
+      <image class="icon-image" src="/static/images/question.png" mode="aspectFit"></image>
+    </view>
+
     <!-- 发送按钮 -->
     <view class="send-btn {{(hasContent || sending) ? 'active' : 'inactive'}} {{(disabled || sending) ? 'loading-btn' : ''}}"
           bindtap="handleSend"

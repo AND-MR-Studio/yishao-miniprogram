@@ -13,7 +13,8 @@ const {
   userRequest,
   assetRequest,
   assetRequestOpen,
-  uploadFile
+  uploadFile,
+  agentRequest
 } = require('./request');
 
 // 直接使用字符串常量，避免重复定义
@@ -22,6 +23,8 @@ const {
 const userBasePath = 'user/';
 const soupBasePath = 'soup/';
 const dialogBasePath = 'dialog/';
+const agentBasePath = 'agent/';
+
 // 资源服务基础路径
 const assetBasePath = 'asset/';
 
@@ -101,6 +104,9 @@ const dialog_soup_url = ysUrl + dialogBasePath + 'soup/';
 // 删除对话，后面需要追加dialogId
 const dialog_delete_url = ysUrl + dialogBasePath;
 
+// Agent API URL
+const agent_chat_url = 'https://and-tech.cn/agent/yishao/chat';
+
 module.exports = {
   // 导出请求方法
   request,
@@ -111,6 +117,7 @@ module.exports = {
   assetRequest,
   assetRequestOpen,
   uploadFile,
+  agentRequest,
 
   // 导出基础URL
   baseUrl,
@@ -161,5 +168,8 @@ module.exports = {
   dialog_detail_url,
   dialog_user_url,
   dialog_soup_url,
-  dialog_delete_url
+  dialog_delete_url,
+
+  // Agent相关接口URL
+  agent_chat_url
 };

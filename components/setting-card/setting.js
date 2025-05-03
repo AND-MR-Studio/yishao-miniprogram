@@ -168,9 +168,18 @@ Component({
       // 设置处理标志
       this.setData({ isProcessingContext: true });
 
-      // 获取当前对话ID
-      const dialogService = require('../../utils/dialogService');
-      const dialogId = dialogService.getCurrentDialogId();
+      // 获取当前页面实例
+      const pages = getCurrentPages();
+      const currentPage = pages[pages.length - 1];
+
+      // 从页面获取当前对话ID
+      let dialogId = '';
+      if (currentPage && currentPage.selectComponent) {
+        const dialog = currentPage.selectComponent('#dialog');
+        if (dialog && dialog.properties) {
+          dialogId = dialog.properties.dialogId || '';
+        }
+      }
 
       if (dialogId) {
         // 触发清理上下文事件，传递dialogId

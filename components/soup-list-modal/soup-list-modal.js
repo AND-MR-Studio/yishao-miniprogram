@@ -227,7 +227,7 @@ Component({
      * @param {Object} e - 事件对象
      */
     onSoupItemTap(e) {
-      const { soupid, dialogid } = e.currentTarget.dataset;
+      const { soupid } = e.currentTarget.dataset;
       if (!soupid) return;
 
       // 关闭弹窗
@@ -255,9 +255,10 @@ Component({
           // 跳转成功后发布事件，传递参数
           // 增加延迟时间，确保页面完全准备好接收事件
           setTimeout(() => {
-            wx.eventCenter.emit('loadSoupWithDialog', {
+            // 只发送 soupId，不发送 dialogId，这样页面会停留在 viewing 状态
+            wx.eventCenter.emit('loadSoup', {
               soupId: soupid,
-              dialogId: dialogid || ''
+              dialogId: '' // 不传递 dialogId，确保停留在 viewing 状态
             });
           }, 500); // 增加延迟时间，确保页面已经完成跳转和初始化
         },

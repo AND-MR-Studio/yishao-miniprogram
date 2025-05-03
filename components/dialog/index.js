@@ -2,6 +2,8 @@
 const dialogService = require('../../utils/dialogService');
 const simpleTypeAnimation = require('../../utils/typeAnimation');
 const userService = require('../../utils/userService');
+const soupService = require('../../utils/soupService');
+const agentService = require('../../utils/agentService');
 
 Component({
   properties: {
@@ -20,11 +22,6 @@ Component({
     userId: {
       type: String,
       value: ''
-    },
-    // 是否启用打字机效果
-    enableTyping: {
-      type: Boolean,
-      value: true
     },
     // 打字机速度
     typeSpeed: {
@@ -186,34 +183,24 @@ Component({
       if (this.data.loading) return Promise.resolve(this.data.messages);
 
       // 优先使用组件属性中的 dialogId
-      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
-      const soupId = this.properties.soupId || dialogService.getCurrentSoupId();
+      const dialogId = this.properties.dialogId;
+
+      if (!dialogId) {
+        console.log('缺少 dialogId，返回空消息数组');
+        return [];
+      }
 
       // 设置加载状态
       this.setData({ loading: true });
 
       try {
-        let messages;
-
-        if (!dialogId) {
-          console.log('缺少 dialogId，返回空消息数组');
-          // 返回空消息数组
-          messages = [];
-        } else {
-          // 确保服务层也知道当前的 dialogId 和 soupId
-          dialogService.setCurrentDialogId(dialogId);
-          if (soupId) {
-            dialogService.setCurrentSoupId(soupId);
-          }
-
-          // 从服务器获取对话记录
-          messages = await dialogService.getDialogMessages(dialogId);
-        }
+        // 从服务器获取对话记录
+        const result = await dialogService.getDialogMessages(dialogId);
 
         // 使用Promise包装setData，确保UI更新完成
         await new Promise(resolve => {
           this.setData({
-            messages: messages,
+            messages: result.messages,
             loading: false
           }, resolve);
         });
@@ -221,7 +208,7 @@ Component({
         // 滚动到底部
         this.scrollToBottom();
 
-        return messages;
+        return result.messages;
       } catch (error) {
         console.error('加载对话记录失败:', error);
 
@@ -287,7 +274,7 @@ Component({
 
       // 获取必要参数
       const soupId = this.properties.soupId || '';
-      const dialogId = this.properties.dialogId || dialogService.getCurrentDialogId();
+      const dialogId = this.properties.dialogId || '';
       const userId = this.properties.userId || '';
 
       // 检查必要参数
@@ -308,10 +295,6 @@ Component({
         });
         return;
       }
-
-      // 设置当前海龟汤ID和对话ID
-      dialogService.setCurrentSoupId(soupId);
-      dialogService.setCurrentDialogId(dialogId);
 
       // 更新用户回答过的汤记录
       if (soupId) {
@@ -336,9 +319,8 @@ Component({
       const messages = [...this.data.messages, userMessageWithStatus];
       this.setData({
         messages,
-        isSending: true // 设置发送状态，使按钮保持激活并旋转
+        isSending: true // 标记为发送中
       }, () => {
-        // 添加消息后滚动到底部
         this.scrollToBottom();
       });
 
@@ -368,58 +350,53 @@ Component({
           status: 'sent'
         };
 
-        if (!this.properties.enableTyping) {
-          // 不使用打字机效果时，直接添加完整回复
-          const finalMessages = [...messages, replyMessage];
-          this.setData({
-            messages: finalMessages,
-            isSending: false, // 重置发送状态
-            scrollToView: 'scrollBottom' // 确保滚动到底部
-          });
-          return;
-        }
-
-        // 使用打字机效果
+        // 使用打字机效果，保持isSending为true
         const updatedMessages = [...messages, {
           id: replyMessage.id,
-          role: 'agent',
+          role: 'assistant',
           content: '',
           status: 'typing',
           timestamp: replyMessage.timestamp
         }];
 
-        // 一次性设置所有状态，减少setData调用
         this.setData({
           messages: updatedMessages,
           animatingMessageIndex: updatedMessages.length - 1,
           isAnimating: true,
-          typingText: '', // 重置打字机文本
-          scrollToView: 'scrollBottom' // 确保滚动到底部
-        }, () => {
-          // 在状态更新后立即强制滚动到底部
-          wx.nextTick(() => {
-            this.scrollToBottom(true);
-          });
+          // 不重置isSending，因为从用户角度看仍在"发送"过程中
+          typingText: '',
+          scrollToView: 'scrollBottom'
         });
 
-        // 启动简化版打字机动画
+        // 打字机动画完成后才重置isSending
         await this.typeAnimator.start(replyMessage.content);
 
-        // 动画完成后更新消息内容 - 一次性更新所有状态
         const finalMessages = [...updatedMessages];
         finalMessages[finalMessages.length - 1] = replyMessage;
 
         this.setData({
           messages: finalMessages,
           animatingMessageIndex: -1,
-          isSending: false, // 重置发送状态
-          typingText: '' // 清空打字机文本
+          isSending: false, // 动画完成后重置发送状态
+          typingText: ''
         });
       } catch (error) {
         console.error('发送消息失败:', error);
-        this.updateMessageStatus(userMessage.id, 'error');
-        // 重置发送状态
-        this.setData({ isSending: false });
+
+        // 从消息列表中移除失败的消息
+        const updatedMessages = this.data.messages.filter(msg => msg.id !== userMessage.id);
+
+        this.setData({
+          messages: updatedMessages,
+          isSending: false // 出错时也要重置状态
+        });
+
+        // 显示错误提示
+        wx.showToast({
+          title: error.message || '发送失败',
+          icon: 'none',
+          duration: 2000
+        });
       }
     },
 
@@ -480,6 +457,196 @@ Component({
         status: 'recordCancel',
         message: null
       });
+    },
+
+    /**
+     * 处理测试Agent API事件
+     * 使用当前输入内容和汤面数据发送测试请求到Agent API，并将结果直接显示在对话界面中
+     * @param {Object} e 事件对象
+     */
+    async handleTestAgent(e) {
+      // 处理文本消息
+      const { value } = e.detail;
+
+      // 如果正在执行打字机动画，显示提示并返回
+      if (this.data.isAnimating) {
+        // 只有当有内容时才显示提示
+        if (value && value.trim()) {
+          wx.showToast({
+            title: '正在回复中...',
+            icon: 'none',
+            duration: 800
+          });
+        }
+        return;
+      }
+
+      // 检查消息是否为空
+      if (!value || !value.trim()) return;
+
+      // 获取必要参数
+      const soupId = this.properties.soupId || '';
+      const dialogId = this.properties.dialogId || '';
+      const userId = this.properties.userId || '';
+
+      // 检查必要参数
+      if (!dialogId) {
+        console.error('发送失败: 缺少对话ID');
+        wx.showToast({
+          title: '发送失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      if (!userId) {
+        console.error('发送失败: 缺少用户ID');
+        wx.showToast({
+          title: '发送失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      if (!soupId) {
+        console.error('发送失败: 缺少汤面ID');
+        wx.showToast({
+          title: '发送失败，请重试',
+          icon: 'none'
+        });
+        return;
+      }
+
+      // 直接创建用户消息对象，不使用dialogService
+      const userMessage = {
+        id: `msg_${Date.now()}`,
+        role: 'user',
+        content: value.trim(),
+        timestamp: Date.now()
+      };
+
+      // 添加状态属性
+      const userMessageWithStatus = {
+        ...userMessage,
+        status: 'sending'
+      };
+
+      // 添加用户消息并设置发送状态
+      // 注意：这里不触发 wx.eventCenter.emit('userSentMessage') 事件，避免其他组件响应
+      const messages = [...this.data.messages, userMessageWithStatus];
+      this.setData({
+        messages,
+        isSending: true // 标记为发送中
+      }, () => {
+        this.scrollToBottom();
+      });
+
+      try {
+        // 获取汤面数据
+        const soupData = await soupService.getSoup(soupId);
+        if (!soupData) {
+          throw new Error('无法获取汤面数据');
+        }
+
+        // 构建包含历史对话的消息数组
+        let historyMessages = [];
+
+        // 从当前对话记录中提取历史消息
+        // 注意：此时this.data.messages已经包含了当前用户消息
+        // 获取除了最后一条消息之外的所有历史消息
+        const previousMessages = this.data.messages.slice(0, -1).filter(msg =>
+          msg.role === 'user' || msg.role === 'assistant'
+        );
+
+        // 添加历史消息（如果有）
+        if (previousMessages.length > 0) {
+          // 将历史消息转换为API所需格式
+          historyMessages = previousMessages.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }));
+        }
+
+        // 添加当前用户消息（从this.data.messages的最后一条获取）
+        const currentUserMessage = this.data.messages[this.data.messages.length - 1];
+        historyMessages.push({
+          role: currentUserMessage.role,
+          content: currentUserMessage.content
+        });
+
+        console.log('发送消息历史:', historyMessages);
+
+        // 调用agentService的sendAgent方法
+        // 注意：agentService现在会自动保存对话到云端
+        const response = await agentService.sendAgent({
+          messages: historyMessages,
+          soup: soupData,
+          userId: userId,
+          dialogId: dialogId
+          // saveToCloud: true  // 默认为true，可以省略
+        });
+
+        // 更新用户消息状态
+        this.updateMessageStatus(userMessage.id, 'sent');
+
+        // 创建回复消息
+        const replyMessage = {
+          id: response.id,
+          role: 'assistant',
+          content: response.content,
+          status: 'sent',
+          timestamp: response.timestamp
+        };
+
+        // 使用打字机效果，保持isSending为true
+        const updatedMessages = [...messages, {
+          id: replyMessage.id,
+          role: 'assistant',
+          content: '',
+          status: 'typing',
+          timestamp: replyMessage.timestamp
+        }];
+
+        this.setData({
+          messages: updatedMessages,
+          animatingMessageIndex: updatedMessages.length - 1,
+          isAnimating: true,
+          // 不重置isSending，因为从用户角度看仍在"发送"过程中
+          typingText: '',
+          scrollToView: 'scrollBottom'
+        });
+
+        // 打字机动画完成后才重置isSending
+        await this.typeAnimator.start(replyMessage.content);
+
+        const finalMessages = [...updatedMessages];
+        finalMessages[finalMessages.length - 1] = replyMessage;
+
+        this.setData({
+          messages: finalMessages,
+          animatingMessageIndex: -1,
+          isSending: false, // 动画完成后重置发送状态
+          typingText: ''
+        });
+        
+      } catch (error) {
+        console.error('发送消息失败:', error);
+
+        // 从消息列表中移除失败的消息
+        const updatedMessages = this.data.messages.filter(msg => msg.id !== userMessage.id);
+
+        this.setData({
+          messages: updatedMessages,
+          isSending: false // 出错时也要重置状态
+        });
+
+        // 显示错误提示
+        wx.showToast({
+          title: error.message || '发送失败',
+          icon: 'none',
+          duration: 2000
+        });
+      }
     },
 
     // 偷看功能相关方法
@@ -546,7 +713,6 @@ Component({
             if (res.confirm) {
               try {
                 // 获取用户ID
-                const userService = require('../../utils/userService');
                 const userId = await userService.getUserId();
                 if (!userId) {
                   console.error('清理上下文失败: 无法获取用户ID');
@@ -558,7 +724,6 @@ Component({
 
                 // 保存空消息数组到服务器
                 try {
-                  const dialogService = require('../../utils/dialogService');
                   await dialogService.saveDialogMessages(dialogId, userId, []);
                   console.log('对话上下文已清理');
 

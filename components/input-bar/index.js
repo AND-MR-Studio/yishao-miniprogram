@@ -16,6 +16,10 @@ Component({
     sending: {
       type: Boolean,
       value: false
+    },
+    showTestButton: {
+      type: Boolean,
+      value: true
     }
   },
 
@@ -168,6 +172,44 @@ Component({
       }
 
       this.triggerEvent('send', { value: value.trim() });
+      // 发送后自动清空输入框
+      this.clearInput();
+    },
+
+    // 处理测试Agent API事件
+    handleTestAgent() {
+      // 如果组件被禁用，显示简短提示并返回
+      if (this.properties.disabled) {
+        // 只有当有内容时才显示提示，避免空点击也显示提示
+        if (this.data.hasContent) {
+          wx.showToast({
+            title: '侦探大人，请别急',
+            icon: 'none',
+            duration: 800
+          });
+        }
+        return;
+      }
+
+      const value = this.data.inputValue;
+      if (!value || !value.trim()) {
+        wx.showToast({
+          title: '请输入内容',
+          icon: 'none'
+        });
+        return;
+      }
+
+      // 检查字数是否超过限制
+      if (value.length > 50) {
+        wx.showToast({
+          title: '消息不能超过50个字',
+          icon: 'none'
+        });
+        return;
+      }
+
+      this.triggerEvent('testAgent', { value: value.trim() });
       // 发送后自动清空输入框
       this.clearInput();
     },

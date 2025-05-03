@@ -214,6 +214,19 @@
   margin-left: auto;
 }
 
+/* 测试按钮 */
+.test-btn {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  transition: all 0.3s var(--transition-timing);
+  margin-right: 10rpx;
+}
+
 /* 发送按钮 */
 .send-btn {
   width: 80rpx;
@@ -226,8 +239,8 @@
   transition: all 0.3s var(--transition-timing);
 }
 
-/* 有内容时的发送按钮 */
-.send-btn.active {
+/* 有内容时的按钮 */
+.send-btn.active, .test-btn.active {
   /* 玻璃质感按钮 */
   background: var(--color-accent);
   border: 1rpx solid rgba(255, 255, 255, 0.15);
@@ -236,13 +249,18 @@
   box-shadow: 0 4rpx 16rpx rgba(94, 232, 33, 0.3);
 }
 
-.send-btn-active-hover {
+/* 测试按钮特殊样式 */
+.test-btn.active {
+  background: #4CAF50; /* 绿色 */
+}
+
+.send-btn-active-hover, .test-btn-active-hover {
   transform: scale(0.92);
   box-shadow: 0 2rpx 10rpx rgba(94, 232, 33, 0.25);
 }
 
-/* 无内容时的发送按钮 */
-.send-btn.inactive {
+/* 无内容时的按钮 */
+.send-btn.inactive, .test-btn.inactive {
   background: rgba(41, 55, 79, 0.4);
   border: 1rpx solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);

@@ -11,26 +11,23 @@ const userService = require('../../utils/userService');
 
 Component({
   properties: {
-    // 汤面数据对象，由页面传入
+    // 汤面ID，可选，如果提供则组件自行获取数据
+    soupId: {
+      type: String,
+      value: '',
+      observer: function(newVal) {
+        if (newVal && !this.data.soupData && this._isAttached) {
+          this.fetchSoupData(newVal);
+        }
+      }
+    },
+    // 汤面数据对象，可选，优先级高于soupId
     soupData: {
       type: Object,
       value: null,
       observer: function(newVal) {
         if (newVal && this._isAttached) {
-          // 更新当前汤面数据
-          this.setData({
-            currentSoup: newVal,
-            displayContent: this._formatSoupContent(newVal),
-            favoriteCount: newVal.favoriteCount || 0,
-            likeCount: newVal.likeCount || 0,
-            creatorId: newVal.creatorId || ''
-          });
-
-          // 增加汤面阅读数
-          const soupId = newVal.soupId || '';
-          if (soupId) {
-            this.incrementSoupViewCount(soupId);
-          }
+          this.updateSoupDisplay(newVal);
         }
       }
     },
@@ -300,6 +297,50 @@ Component({
         await userService.updateViewedSoup(soupId);
       } catch (error) {
         // 阅读数增加失败不影响用户体验，不显示错误提示
+      }
+    },
+
+    /**
+     * 更新汤面显示
+     */
+    updateSoupDisplay(soupData) {
+      // 更新当前汤面数据
+      this.setData({
+        currentSoup: soupData,
+        displayContent: this._formatSoupContent(soupData),
+        favoriteCount: soupData.favoriteCount || 0,
+        likeCount: soupData.likeCount || 0,
+        creatorId: soupData.creatorId || ''
+      });
+
+      // 增加汤面阅读数
+      const soupId = soupData.soupId || '';
+      if (soupId) {
+        this.incrementSoupViewCount(soupId);
+      }
+    },
+
+    /**
+     * 获取汤面数据
+     */
+    async fetchSoupData(soupId) {
+      if (!soupId) return;
+      
+      try {
+        // 通知页面组件正在加载
+        this.triggerEvent('loading', { loading: true });
+        
+        // 获取汤面数据
+        const soupData = await soupService.getSoup(soupId);
+        
+        if (soupData) {
+          this.updateSoupDisplay(soupData);
+        }
+      } catch (error) {
+        console.error('获取汤面数据失败:', error);
+      } finally {
+        // 通知页面组件加载完成
+        this.triggerEvent('loading', { loading: false });
       }
     }
   }
