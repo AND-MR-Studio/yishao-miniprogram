@@ -160,55 +160,7 @@ const createSoupOperations = (page) => {
 // ===== 事件处理对象 =====
 const createEventHandlers = (page) => {
   return {
-    /**
-     * 处理标签切换事件
-     * @param {Object} e 事件对象
-     */
-    async onTabChange(e) {
-      const { tab } = e.detail;
 
-      // 更新当前激活的标签
-      page.setData({ activeTab: tab });
-
-      try {
-        // 设置加载状态
-        page.setData({ isLoading: true });
-
-        // 临时保存当前activeTab，以便fetchSoupData使用正确的标签
-        const originalActiveTab = page.data.activeTab;
-        page.setData({ activeTab: tab });
-
-        try {
-          // 使用fetchSoupData获取对应标签的汤面
-          const soupData = await page.fetchSoupData();
-
-          if (soupData) {
-            // 更新对话组件
-            const soupId = soupData.soupId || '';
-            page.selectComponent('#dialog')?.setData({ soupId });
-
-            // 初始化汤面数据和页面状态
-            await page.initSoupData(soupData);
-          } else {
-            wx.showToast({
-              title: '没有找到相关汤',
-              icon: 'none'
-            });
-
-            // 重置加载状态
-            page.setData({ isLoading: false });
-          }
-        } catch (error) {
-          // 如果出错，恢复原来的标签
-          page.setData({ activeTab: originalActiveTab });
-          throw error; // 向上传递错误，由外层catch处理
-        }
-      } catch (error) {
-        console.error('加载汤面失败:', error);
-        page.showErrorToast('加载失败，请重试');
-        page.setData({ isLoading: false });
-      }
-    },
 
     /**
      * 处理汤面滑动事件
@@ -276,9 +228,6 @@ Page({
     breathingBlur: false, // 呈现呼吸模糊效果
     isFavorite: false, // 当前汤面是否已收藏
     isPeeking: false, // 是否处于偷看状态
-
-    // 标签切换相关
-    activeTab: '荒诞', // 当前激活的标签: '荒诞', '搞笑', '惊悚', '变格'，默认显示荒诞汤
 
     // 交互相关 - 由interactionManager管理
     swiping: false, // 是否正在滑动中
@@ -720,8 +669,7 @@ Page({
    * 获取汤面数据的策略方法
    * 按照优先级依次尝试不同的获取方式：
    * 1. 优先使用指定的汤面ID
-   * 2. 如果没有指定ID，则获取与当前标签匹配的汤面
-   * 3. 如果没有找到匹配标签的汤面，则获取第一个可用的汤面
+   * 2. 如果没有指定ID，则随机获取一个汤面
    *
    * @param {string} soupId 可选的汤面ID
    * @returns {Promise<Object>} 汤面数据
@@ -732,15 +680,15 @@ Page({
       return await soupService.getSoup(soupId);
     }
 
-    // 策略2：获取与当前标签匹配的汤面
-    const soups = await soupService.getSoupList({ tags: this.data.activeTab });
+    // 策略2：随机获取汤面
+    const soups = await soupService.getSoupList();
     if (soups && soups.length > 0) {
       // 随机选择一个汤面
       const randomIndex = Math.floor(Math.random() * soups.length);
       return soups[randomIndex];
     }
 
-    // 策略3：如果没有找到对应标签的汤面，获取第一个汤面
+    // 策略3：如果没有找到汤面，获取第一个汤面
     return await soupService.getAdjacentSoup(null, true);
   },
 
@@ -823,13 +771,7 @@ Page({
     }
   },
 
-  /**
-   * 处理标签切换事件
-   * @param {Object} e 事件对象
-   */
-  async handleTabChange(e) {
-    await this.eventHandlers.onTabChange(e);
-  },
+
 
   /**
    * 处理汤数据变更事件

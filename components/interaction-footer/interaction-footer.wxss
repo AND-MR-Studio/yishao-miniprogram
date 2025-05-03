@@ -3,7 +3,7 @@
 /* 底部控件容器样式 */
 .bottom-controls-container {
   position: fixed;
-  bottom: calc(240rpx + env(safe-area-inset-bottom)); /* 调整位置，确保在开始喝汤按钮上方 */
+  bottom: calc(150rpx + env(safe-area-inset-bottom)); /* 调整位置，确保在开始喝汤按钮上方 */
   left: 0;
   right: 0;
   width: 100%;

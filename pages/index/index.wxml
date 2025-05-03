@@ -9,15 +9,7 @@
   />
 
   <view class="container">
-    <!-- 标签切换器 -->
-    <tab-switcher
-      wx:if="{{pageState === 'viewing'}}"
-      activeTab="{{activeTab}}"
-      isDrinking="{{pageState === 'drinking'}}"
-      disabled="{{isLoading}}"
-      bind:tabchange="handleTabChange"
-      class="tab-switcher-component"
-    ></tab-switcher>
+
 
     <!-- 汤面显示区域 -->
     <view class="soup-display-wrapper">
