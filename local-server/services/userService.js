@@ -16,8 +16,8 @@
  */
 const path = require('path');
 
-const userDataAccess = require(__dirname,'../dataAccess/userDataAccess');
-const userModel = require(__dirname,'../models/userModel');
+const userDataAccess = require(path.join(__dirname, '../dataAccess/userDataAccess'));
+const userModel = require(path.join(__dirname, '../models/userModel'));
 
 // 导入辅助模块
 const helpers = require('./userHelpers');
@@ -414,7 +414,26 @@ function initUserRoutes(app) {
     return sendResponse(res, true, result);
   }));
 
-  // 12. (已删除 - 检查用户是否收藏了某个汤)
+  // 12. 更新用户点赞的汤
+  app.post('/yishao-api/user/liked-soup', authMiddleware, asyncHandler(async (req, res) => {
+    logger('info', 'soup', '更新用户点赞汤记录请求', { userId: req.userData.userId });
+    const openid = req.openid;
+    const userData = req.userData;
+
+    // 验证请求参数
+    const validation = validateParams(req.body, ['soupId', 'isLike']);
+    if (!validation.valid) {
+      logger('warn', 'soup', '参数验证失败', { error: validation.message });
+      return sendResponse(res, false, validation.message, 400);
+    }
+
+    const { soupId, isLike } = req.body;
+
+    // 更新点赞记录
+    const result = await updateUserSoupInteraction(openid, userData, soupId, 'liked', { isLike }, CONFIG);
+
+    return sendResponse(res, true, result);
+  }));
 
   // 13. 更新用户已解决的汤
   app.post('/yishao-api/user/solved-soup', authMiddleware, asyncHandler(async (req, res) => {

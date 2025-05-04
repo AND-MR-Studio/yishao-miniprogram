@@ -165,6 +165,40 @@ async function updateSoupInteraction(openid, userData, soupId, interactionType, 
         }
         break;
 
+      case 'liked':
+        arrayName = 'likedSoups';
+        counterName = 'likedCount';
+
+        // 点赞有特殊处理，可以添加或移除
+        if (options.isLike === false) {
+          // 如果是取消点赞，从数组中移除
+          if (Array.isArray(userData[arrayName]) && userData[arrayName].includes(soupId)) {
+            userData[arrayName] = userData[arrayName].filter(id => id !== soupId);
+            userData[counterName] = Math.max((userData[counterName] || 0) - 1, 0);
+
+            // 保存用户数据
+            await userDataAccess.saveUserData(openid, userData);
+
+            return {
+              success: true,
+              message: '取消点赞成功',
+              [arrayName]: userData[arrayName],
+              [counterName]: userData[counterName],
+              isLiked: false
+            };
+          } else {
+            // 如果已经不在点赞列表中，直接返回
+            return {
+              success: true,
+              message: '状态未变化',
+              [arrayName]: userData[arrayName] || [],
+              [counterName]: userData[counterName] || 0,
+              isLiked: false
+            };
+          }
+        }
+        break;
+
       case 'solved':
         arrayName = 'solvedSoups';
         counterName = 'solvedCount';
@@ -217,8 +251,9 @@ async function updateSoupInteraction(openid, userData, soupId, interactionType, 
       userData[arrayName] = [];
     }
 
-    // 如果不是收藏取消操作，且ID不在数组中，则添加
-    if (interactionType !== 'favorite' || options.isFavorite !== false) {
+    // 如果不是收藏或点赞的取消操作，且ID不在数组中，则添加
+    if ((interactionType !== 'favorite' || options.isFavorite !== false) &&
+        (interactionType !== 'liked' || options.isLike !== false)) {
       if (!userData[arrayName].includes(soupId)) {
         userData[arrayName].push(soupId);
         userData[counterName] = (userData[counterName] || 0) + 1;
@@ -242,6 +277,11 @@ async function updateSoupInteraction(openid, userData, soupId, interactionType, 
         // 对于收藏操作，添加isFavorite字段
         if (interactionType === 'favorite') {
           response.isFavorite = true;
+        }
+
+        // 对于点赞操作，添加isLiked字段
+        if (interactionType === 'liked') {
+          response.isLiked = true;
         }
 
         // 对于解决操作，添加等级相关信息

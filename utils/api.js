@@ -47,10 +47,12 @@ const user_answered_soup_url = ysUrl + userBasePath + 'answered-soup';
 const user_created_soup_url = ysUrl + userBasePath + 'created-soup';
 // 更新用户收藏的汤
 const user_favorite_soup_url = ysUrl + userBasePath + 'favorite-soup';
+// 更新用户点赞的汤
+const user_liked_soup_url = ysUrl + userBasePath + 'liked-soup';
 // 更新用户已解决的汤
 const user_solved_soup_url = ysUrl + userBasePath + 'solved-soup';
 
-// 默认头像URL (绝对路径)
+// 默认头像URL (本地绝对路径)
 const default_avatar_url = '/static/images/default-avatar.jpg';
 
 // ===== 系统服务接口 =====
@@ -138,6 +140,7 @@ module.exports = {
   user_answered_soup_url,
   user_created_soup_url,
   user_favorite_soup_url,
+  user_liked_soup_url,
   user_solved_soup_url,
   default_avatar_url,
 
