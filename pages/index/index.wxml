@@ -2,7 +2,7 @@
 <view class="page {{swiping ? 'swiping' : ''}}" style="{{gradientStyle ? '--dynamic-gradient: ' + gradientStyle : ''}}">
   <!-- 导航栏 -->
   <nav-bar
-    pageState="{{pageState}}"
+    pageState="{{soupState || 'viewing'}}"
     bind:settingchange="handleSettingChange"
     bind:close="onSettingClose"
     bind:clearcontext="clearContext"
@@ -18,14 +18,14 @@
         soupData="{{currentSoup}}"
         loading="{{isLoading}}"
         isFavorite="{{isFavorite}}"
-        isDrinking="{{pageState === 'drinking'}}"
-        pageState="{{pageState}}"
+        isDrinking="{{soupState === 'drinking'}}"
+        pageState="{{soupState || 'viewing'}}"
         blurAmount="{{blurAmount}}"
         breathingBlur="{{breathingBlur}}"
         swipeFeedback="{{swipeFeedback}}"
         swipeDirection="{{swipeDirection}}"
-        class="soup-display-component {{pageState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
-        wx:if="{{pageState === 'viewing' || pageState === 'drinking'}}"
+        class="soup-display-component {{soupState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
+        wx:if="{{soupState === 'viewing' || soupState === 'drinking'}}"
         bind:animationComplete="onAnimationComplete"
         bind:soupchange="handleSoupChange"
         bind:loading="handleSoupLoading"
@@ -37,7 +37,7 @@
     <soup-truth
       id="soupTruth"
       soupId="{{truthSoupId || ''}}"
-      wx:if="{{pageState === 'truth'}}"
+      wx:if="{{soupState === 'truth'}}"
     ></soup-truth>
 
     <!-- 按钮区域 -->
@@ -52,7 +52,7 @@
     </view>
 
     <!-- 滑动提示 -->
-    <view class="swipe-hint {{showButtons ? 'show-hint' : ''}}" wx:if="{{pageState === 'viewing'}}">
+    <view class="swipe-hint {{showButtons ? 'show-hint' : ''}}" wx:if="{{soupState === 'viewing'}}">
       <text>左右滑动切换汤面</text>
     </view>
   </view>
@@ -60,7 +60,7 @@
   <!-- 对话组件 -->
   <dialog-component
     id="dialog"
-    visible="{{pageState === 'drinking'}}"
+    visible="{{soupState === 'drinking'}}"
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
     bind:clearcontext="clearContext"
@@ -68,7 +68,7 @@
 
   <!-- 输入栏组件 - 在喝汤状态显示 -->
   <input-bar
-    wx:if="{{pageState === 'drinking'}}"
+    wx:if="{{soupState === 'drinking'}}"
     id="inputBar"
     disabled="{{isAnimating || isSending}}"
     sending="{{isSending}}"
@@ -82,10 +82,10 @@
 
   <!-- 提示模块组件 - 在喝汤状态和汤底状态显示 -->
   <tip-module
-    visible="{{(pageState === 'drinking' && (tipVisible === undefined ? true : tipVisible)) || pageState === 'truth'}}"
+    visible="{{(soupState === 'drinking' && (tipVisible === undefined ? true : tipVisible)) || soupState === 'truth'}}"
     bind:close="onTipModuleClose"
     bind:visibleChange="onTipVisibleChange"
-    pageState="{{pageState}}"
+    pageState="{{soupState || 'drinking'}}"
     tipTitle="汤来了！我是陪你熬夜猜谜的小勺🌙"
     tipContent="{{['只答是、否、不确定，别想套我话哦～', '长按汤面就浮出来咯！']}}"
   ></tip-module>
