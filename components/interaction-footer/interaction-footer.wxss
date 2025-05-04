@@ -76,6 +76,12 @@
   padding-left: 10rpx; /* 左侧内边距 */
 }
 
+/* 未点赞状态的图标和文字样式 */
+.like-item:not(.active) .icon-text,
+.like-item:not(.active) .count-text {
+  color: rgba(255, 255, 255, 0.5); /* 更灰的半透明灰色 */
+}
+
 /* 点赞图标激活样式 */
 .like-item:active {
   transform: scale(1.1);
@@ -93,9 +99,10 @@
   text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.3); /* 添加文本阴影增强可见度 */
 }
 
-/* 隐藏的收藏图标 */
-.favorite-item.hidden {
-  opacity: 0.6; /* 半透明而不是完全隐藏 */
+/* 未收藏状态的图标和文字样式 */
+.favorite-item:not(.active) .icon-text,
+.favorite-item:not(.active) .count-text {
+  color: rgba(255, 255, 255, 0.5); /* 半透明灰色 */
 }
 
 /* 点赞图标激活样式 */

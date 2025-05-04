@@ -11,8 +11,8 @@
     <!-- 胶囊形容器 -->
     <view class="capsule-container">
       <!-- 收藏图标 -->
-      <view class="icon-item favorite-item {{isFavorite ? 'active' : 'hidden'}}" bindtap="handleFavoriteClick">
-        <text class="icon-text iconfont {{isFavorite ? 'icon-favorited' : 'icon-unfavorited'}}"></text>
+      <view class="icon-item favorite-item {{isFavorite ? 'active' : ''}}" bindtap="handleFavoriteClick">
+        <text class="icon-text iconfont icon-favorited"></text>
         <text class="count-text">{{favoriteCount > 0 ? favoriteCount : '收藏'}}</text>
       </view>
 
