@@ -175,16 +175,9 @@ const createEventHandlers = (page) => {
       });
     },
 
-    /**
-     * 处理收藏状态变更事件
-     * @param {Object} e 事件对象
-     */
-    onFavoriteChange(e) {
-      const { isFavorite } = e.detail;
 
-      // 更新页面状态
-      page.setData({ isFavorite: isFavorite });
-    },
+
+
 
     /**
      * 处理汤数据变更事件
@@ -227,8 +220,6 @@ Page({
     // 汤面相关
     currentSoup: null, // 当前汤面数据
     breathingBlur: false, // 呈现呼吸模糊效果
-    isFavorite: false, // 当前汤面是否已收藏
-    isPeeking: false, // 是否处于偷看状态
 
     // 交互相关 - 由interactionManager管理
     swiping: false, // 是否正在滑动中
@@ -316,33 +307,48 @@ Page({
     // 增加汤面阅读数
     await this.viewSoup(soupId);
 
-    // 并行处理收藏状态检查
+    // 并行处理收藏和点赞状态检查
     const favoritePromise = userService.isFavoriteSoup(soupId)
       .catch(error => {
         console.error('检查收藏状态失败:', error);
         return false; // 出错时默认为未收藏
       });
 
-    // 等待收藏状态检查完成
-    const isFavorite = await favoritePromise;
+    const likedPromise = userService.isLikedSoup(soupId)
+      .catch(error => {
+        console.error('检查点赞状态失败:', error);
+        return false; // 出错时默认为未点赞
+      });
+
+    // 等待收藏和点赞状态检查完成
+    const [isFavorite, isLiked] = await Promise.all([favoritePromise, likedPromise]);
 
     // 更新页面状态和数据
     this.setData({
       currentSoup: soupData,
       isLoading: false,
-      showButtons: true,
-      isFavorite: isFavorite
+      showButtons: true
     });
 
-    // 更新汤面显示组件的收藏状态、收藏数和点赞数
+    // 更新汤面显示组件的收藏状态、点赞状态、收藏数和点赞数
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (soupDisplay) {
       soupDisplay.setData({
         isFavorite: isFavorite,
+        isLiked: isLiked,
         favoriteCount: soupData?.favoriteCount || 0,
         likeCount: soupData?.likeCount || 0
       });
     }
+
+    // 通过事件中心发送统一的用户交互状态变更事件
+    eventUtils.emitEvent('userInteractionChange', {
+      soupId: soupId,
+      isFavorite: isFavorite,
+      isLiked: isLiked,
+      likeCount: soupData?.likeCount || 0,
+      favoriteCount: soupData?.favoriteCount || 0
+    });
   },
 
   /**
@@ -368,9 +374,95 @@ Page({
 
     // 注册事件监听器
     eventUtils.onEvent('loadSoup', this.handleLoadSoup.bind(this));
+    eventUtils.onEvent('userInteractionChange', this.handleUserInteractionChange.bind(this));
+    eventUtils.onEvent('peekingStatusChange', this.handlePeekingStatusChange.bind(this));
   },
 
 
+
+
+
+  /**
+   * 统一处理用户交互状态变更事件（点赞、收藏、阅读等）
+   * @param {Object} data 事件数据
+   */
+  handleUserInteractionChange(data) {
+    if (!data || !data.soupId) return;
+
+    // 检查是否是当前汤面
+    const currentSoupId = this.getCurrentSoupId();
+    if (data.soupId !== currentSoupId) return;
+
+    // 获取汤面显示组件
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (!soupDisplay) return;
+
+    // 准备更新数据
+    const updateData = {};
+    const soupUpdateData = {};
+
+    // 处理点赞状态变更
+    if (data.hasOwnProperty('isLiked')) {
+      updateData.isLiked = data.isLiked;
+    }
+
+    if (data.hasOwnProperty('likeCount')) {
+      updateData.likeCount = data.likeCount;
+      soupUpdateData.likeCount = data.likeCount;
+    }
+
+    // 处理收藏状态变更
+    if (data.hasOwnProperty('isFavorite')) {
+      updateData.isFavorite = data.isFavorite;
+    }
+
+    if (data.hasOwnProperty('favoriteCount')) {
+      updateData.favoriteCount = data.favoriteCount;
+      soupUpdateData.favoriteCount = data.favoriteCount;
+    }
+
+    // 处理阅读数变更
+    if (data.hasOwnProperty('viewCount')) {
+      updateData.viewCount = data.viewCount;
+      soupUpdateData.viewCount = data.viewCount;
+    }
+
+    // 更新当前汤面数据
+    if (Object.keys(soupUpdateData).length > 0 && this.data.currentSoup) {
+      const updatedSoup = { ...this.data.currentSoup, ...soupUpdateData };
+      this.setData({ currentSoup: updatedSoup });
+    }
+
+    // 如果有数据需要更新，则更新组件
+    if (Object.keys(updateData).length > 0) {
+      soupDisplay.setData(updateData);
+    }
+  },
+
+
+
+  /**
+   * 处理偷看状态变更事件（通过eventCenter）
+   * @param {Object} data 事件数据
+   */
+  handlePeekingStatusChange(data) {
+    if (!data) return;
+
+    // 更新汤面显示组件的偷看状态
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (soupDisplay) {
+      soupDisplay.setData({
+        isPeeking: data.isPeeking
+      });
+    }
+
+    // 更新提示模块的可见性
+    if (data.isPeeking) {
+      this.setData({
+        tipVisible: false // 偷看时隐藏提示模块
+      });
+    }
+  },
 
   /**
    * 处理加载汤面事件
@@ -414,6 +506,8 @@ Page({
   onUnload() {
     // 清理事件监听器
     eventUtils.offEvent('loadSoup', this.handleLoadSoup);
+    eventUtils.offEvent('userInteractionChange', this.handleUserInteractionChange);
+    eventUtils.offEvent('peekingStatusChange', this.handlePeekingStatusChange);
   },
 
   /**
@@ -677,14 +771,7 @@ Page({
     this.eventHandlers.onSoupSwipe(e);
   },
 
-  /**
-   * 处理收藏状态变更事件
-   * 从soup-display组件传递上来的事件
-   * @param {Object} e 事件对象
-   */
-  handleFavoriteChange(e) {
-    this.eventHandlers.onFavoriteChange(e);
-  },
+
 
   // ===== 辅助方法 =====
   /**
@@ -725,7 +812,16 @@ Page({
   async viewSoup(soupId) {
     if (!soupId) return;
     try {
-      await soupService.viewSoup(soupId);
+      const result = await soupService.viewSoup(soupId);
+
+      // 如果成功获取到阅读数，通过统一的事件系统更新
+      if (result && result.viewCount) {
+        // 通过事件中心发送统一的用户交互状态变更事件
+        eventUtils.emitEvent('userInteractionChange', {
+          soupId: soupId,
+          viewCount: result.viewCount
+        });
+      }
     } catch (error) {
       console.error('增加阅读数失败:', error);
       // 阅读数增加失败不影响用户体验，静默处理

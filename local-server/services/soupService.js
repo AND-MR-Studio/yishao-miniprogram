@@ -269,17 +269,22 @@ function initSoupRoutes(app) {
         return sendResponse(res, false, '海龟汤不存在', 404);
       }
 
+      // 检查是否是取消点赞操作
+      const isUnlike = req.query.action === 'unlike';
+
       const updatedData = {
-        likeCount: (soup.likeCount || 0) + 1
+        likeCount: isUnlike
+          ? Math.max((soup.likeCount || 0) - 1, 0) // 确保不会小于0
+          : (soup.likeCount || 0) + 1
       };
 
       const result = await updateSoup(req.params.soupId, updatedData, req);
       if (!result) {
-        return sendResponse(res, false, '点赞失败', 400);
+        return sendResponse(res, false, isUnlike ? '取消点赞失败' : '点赞失败', 400);
       }
       return sendResponse(res, true, { likeCount: result.likeCount });
     } catch (err) {
-      return sendResponse(res, false, '点赞失败: ' + err.message, 500);
+      return sendResponse(res, false, '点赞操作失败: ' + err.message, 500);
     }
   });
 

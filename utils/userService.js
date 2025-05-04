@@ -139,7 +139,7 @@ async function updateAvatar(avatarUrl) {
   const token = wx.getStorageSync(TOKEN_KEY);
   if (!token) {
     return Promise.reject('用户未登录，请先登录');
-  }  
+  }
 
   try {
     // 获取用户ID
@@ -677,6 +677,69 @@ async function isFavoriteSoup(soupId) {
 }
 
 /**
+ * 更新用户点赞的汤
+ * 将汤ID添加到用户的likedSoups数组中或从中移除
+ * @param {string} soupId - 汤ID
+ * @param {boolean} isLike - 是否点赞
+ * @returns {Promise} - 更新结果
+ */
+async function updateLikedSoup(soupId, isLike) {
+  if (!soupId) return Promise.reject('汤ID为空');
+
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
+    return Promise.resolve({ success: false, message: '用户未登录' });
+  }
+
+  try {
+    // 调用后端接口更新用户点赞的汤
+    const config = {
+      url: api.user_liked_soup_url,
+      method: 'POST',
+      data: {
+        soupId: soupId,
+        isLike: isLike
+      }
+    };
+
+    const res = await api.userRequest(config);
+    return res;
+  } catch (error) {
+    // 点赞记录更新失败不影响用户体验，返回静默失败
+    return { success: false, message: '更新点赞记录失败' };
+  }
+}
+
+/**
+ * 检查用户是否点赞了某个汤
+ * @param {string} soupId - 汤ID
+ * @returns {Promise<boolean>} - 是否点赞
+ */
+async function isLikedSoup(soupId) {
+  if (!soupId) return false;
+
+  // 检查用户是否已登录
+  const token = wx.getStorageSync(TOKEN_KEY);
+  if (!token) {
+    return false;
+  }
+
+  try {
+    // 从服务器获取最新用户信息
+    // 后端已返回扁平化的数据结构
+    const userInfo = await getUserInfo();
+
+    // 检查汤ID是否在点赞列表中
+    return userInfo &&
+           Array.isArray(userInfo.likedSoups) &&
+           userInfo.likedSoups.includes(soupId);
+  } catch (error) {
+    return false;
+  }
+}
+
+/**
  * 更新用户创建的汤
  * 将汤ID添加到用户的createSoups数组中
  * @param {string} soupId - 汤ID
@@ -797,6 +860,8 @@ module.exports = {
   updateAnsweredSoup,
   updateFavoriteSoup,
   isFavoriteSoup,
+  updateLikedSoup,
+  isLikedSoup,
   updateCreatedSoup,
   updateSolvedSoup,
   isSolvedSoup

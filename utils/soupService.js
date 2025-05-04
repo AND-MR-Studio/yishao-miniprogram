@@ -213,22 +213,27 @@ const soupService = {
     /**
      * 点赞海龟汤
      * @param {string} soupId 海龟汤ID
+     * @param {boolean} [isLike=true] 是否点赞，false表示取消点赞
      * @returns {Promise<Object>} 点赞结果，包含更新后的点赞数
      */
-    async likeSoup(soupId) {
+    async likeSoup(soupId, isLike = true) {
         if (!soupId) {
             console.error('点赞海龟汤失败: 缺少海龟汤ID');
             return null;
         }
 
         try {
+            const url = isLike
+                ? `${soup_like_url}${soupId}/like`
+                : `${soup_like_url}${soupId}/like?action=unlike`;
+
             const response = await soupRequest({
-                url: `${soup_like_url}${soupId}/like`,
+                url: url,
                 method: 'POST'
             });
             return response.success ? response.data : null;
         } catch (error) {
-            console.error('点赞海龟汤失败:', error);
+            console.error(isLike ? '点赞海龟汤失败:' : '取消点赞海龟汤失败:', error);
             return null;
         }
     },

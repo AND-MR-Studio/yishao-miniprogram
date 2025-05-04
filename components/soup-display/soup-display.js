@@ -41,6 +41,11 @@ Component({
       type: Boolean,
       value: false
     },
+    // 是否已点赞
+    isLiked: {
+      type: Boolean,
+      value: false
+    },
     // 是否处于偷看模式
     isPeeking: {
       type: Boolean,
@@ -53,6 +58,11 @@ Component({
     },
     // 点赞数量
     likeCount: {
+      type: Number,
+      value: 0
+    },
+    // 阅读数量
+    viewCount: {
       type: Number,
       value: 0
     },
@@ -169,11 +179,22 @@ Component({
         favoriteCount: favoriteCount
       });
 
-      // 将事件继续向上传递给页面
-      this.triggerEvent('favoriteChange', {
-        isFavorite: isFavorite,
-        favoriteCount: favoriteCount
+      // 不再向上传递事件，由eventCenter统一处理
+    },
+
+    /**
+     * 处理点赞状态变更事件
+     * 从交互底部组件传递上来的事件
+     */
+    onLikeChange(e) {
+      const { likeCount } = e.detail;
+
+      // 更新组件状态
+      this.setData({
+        likeCount: likeCount
       });
+
+      // 不再向上传递事件，由eventCenter统一处理
     },
 
     /**
@@ -284,20 +305,12 @@ Component({
 
     /**
      * 增加汤面阅读数并更新用户浏览记录
+     * 注意：此方法已被移至index.js中的viewSoup方法，通过eventCenter统一管理
      * @param {string} soupId 汤面ID
      */
     async incrementSoupViewCount(soupId) {
-      if (!soupId) return;
-
-      try {
-        // 增加汤面阅读数
-        await soupService.viewSoup(soupId);
-
-        // 更新用户浏览过的汤记录
-        await userService.updateViewedSoup(soupId);
-      } catch (error) {
-        // 阅读数增加失败不影响用户体验，不显示错误提示
-      }
+      // 不再直接调用API，由index.js中的viewSoup方法统一处理
+      // 保留此方法是为了向后兼容
     },
 
     /**
@@ -310,6 +323,7 @@ Component({
         displayContent: this._formatSoupContent(soupData),
         favoriteCount: soupData.favoriteCount || 0,
         likeCount: soupData.likeCount || 0,
+        viewCount: soupData.viewCount || 0,
         creatorId: soupData.creatorId || ''
       });
 
@@ -325,14 +339,14 @@ Component({
      */
     async fetchSoupData(soupId) {
       if (!soupId) return;
-      
+
       try {
         // 通知页面组件正在加载
         this.triggerEvent('loading', { loading: true });
-        
+
         // 获取汤面数据
         const soupData = await soupService.getSoup(soupId);
-        
+
         if (soupData) {
           this.updateSoupDisplay(soupData);
         }

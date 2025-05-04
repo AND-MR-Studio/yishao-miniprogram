@@ -145,8 +145,9 @@
 }
 
 @keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
+  0% { opacity: 1; }
   50% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 /* 对话组件内部的输入栏样式 */

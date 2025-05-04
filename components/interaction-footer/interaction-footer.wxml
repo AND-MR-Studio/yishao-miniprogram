@@ -1,23 +1,26 @@
 <!--components/interaction-footer/interaction-footer.wxml-->
-<!-- 底部控件容器 - 包含图标和创作者信息 -->
+<!-- 底部控件容器 - 包含创作者信息和交互图标 -->
 <view class="bottom-controls-container {{isDrinking ? 'drinking-hidden' : ''}}">
-  <!-- 图标容器 - 在喝汤状态下隐藏 -->
-  <view class="icons-container" wx:if="{{!isDrinking}}">
-    <!-- 收藏图标 -->
-    <view class="icon-wrapper favorite-icon {{isFavorite ? 'active' : 'hidden'}}" bindtap="handleFavoriteClick">
-      <text class="heart-text">⭐</text>
-      <text class="count-text favorite-count" wx:if="{{favoriteCount > 0}}">{{favoriteCount}}</text>
-    </view>
-
-    <!-- 点赞图标 - 仅显示，不可点击 -->
-    <view class="icon-wrapper like-icon read-only">
-      <text class="heart-text">💜</text>
-      <text class="count-text like-count" wx:if="{{likeCount > 0}}">{{likeCount}}</text>
-    </view>
-  </view>
-
-  <!-- 创作者感谢文字 -->
+  <!-- 创作者感谢文字 - 放在上面 -->
   <view class="creator-credit" wx:if="{{creatorId && !isDrinking}}">
     <text class="creator-text">感谢创作者：{{creatorId}}</text>
+  </view>
+
+  <!-- 图标容器 - 在喝汤状态下隐藏，放在下面 -->
+  <view class="icons-container" wx:if="{{!isDrinking}}">
+    <!-- 胶囊形容器 -->
+    <view class="capsule-container">
+      <!-- 收藏图标 -->
+      <view class="icon-item favorite-item {{isFavorite ? 'active' : 'hidden'}}" bindtap="handleFavoriteClick">
+        <text class="icon-text iconfont {{isFavorite ? 'icon-favorited' : 'icon-unfavorited'}}"></text>
+        <text class="count-text">{{favoriteCount > 0 ? favoriteCount : '收藏'}}</text>
+      </view>
+
+      <!-- 点赞图标 - 可点击 -->
+      <view class="icon-item like-item {{isLiked ? 'active' : ''}}" bindtap="handleLikeClick">
+        <text class="icon-text iconfont icon-liked"></text>
+        <text class="count-text">{{likeCount > 0 ? likeCount : '点赞'}}</text>
+      </view>
+    </view>
   </view>
 </view>

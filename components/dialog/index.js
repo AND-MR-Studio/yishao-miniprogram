@@ -673,19 +673,9 @@ Component({
       // 设置偷看模式
       this.setData({ peekMode: true });
 
-      // 通知页面处理偷看状态
-      wx.nextTick(() => {
-        // 获取页面实例
-        const pages = getCurrentPages();
-        const currentPage = pages[pages.length - 1];
-
-        // 如果当前页面有设置isPeeking方法，则调用
-        if (currentPage && currentPage.setData) {
-          currentPage.setData({
-            isPeeking: true,
-            tipVisible: false // 隐藏tip模块
-          });
-        }
+      // 使用eventCenter发送偷看状态变更事件
+      eventUtils.emitEvent('peekingStatusChange', {
+        isPeeking: true
       });
     },
 
@@ -694,19 +684,9 @@ Component({
       if (this.data.peekMode) {
         this.setData({ peekMode: false });
 
-        // 通知页面恢复正常显示
-        wx.nextTick(() => {
-          // 获取页面实例
-          const pages = getCurrentPages();
-          const currentPage = pages[pages.length - 1];
-
-          // 如果当前页面有设置isPeeking方法，则调用
-          if (currentPage && currentPage.setData) {
-            currentPage.setData({
-              isPeeking: false,
-              tipVisible: true // 恢复显示tip模块
-            });
-          }
+        // 使用eventCenter发送偷看状态变更事件
+        eventUtils.emitEvent('peekingStatusChange', {
+          isPeeking: false
         });
       }
     },

@@ -1,9 +1,11 @@
 /* components/interaction-footer/interaction-footer.wxss */
+@import "../../styles/theme.wxss";
+@import "../../static/css/icon.wxss";
 
 /* 底部控件容器样式 */
 .bottom-controls-container {
   position: fixed;
-  bottom: calc(150rpx + env(safe-area-inset-bottom)); /* 调整位置，确保在开始喝汤按钮上方 */
+  bottom: calc(140rpx + env(safe-area-inset-bottom)); /* 调整位置，确保在开始喝汤按钮上方有足够间距 */
   left: 0;
   right: 0;
   width: 100%;
@@ -25,97 +27,88 @@
 .icons-container {
   display: flex;
   flex-direction: row;
-  justify-content: center;
+  justify-content: center; /* 居中对齐 */
   align-items: center;
-  gap: 60rpx; /* 减小图标之间的间距 */
   opacity: 1; /* 确保容器本身不影响子元素的透明度 */
   margin: 0 auto;
-  padding: 40rpx 0;
-  width: 100%; /* 减小宽度，防止溢出 */
-  max-width: 500rpx; /* 设置最大宽度 */
+  padding: 10rpx 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* 图标包装器样式 */
-.icon-wrapper {
-  width: 30rpx;
-  height: 30rpx;
+/* 胶囊形容器样式 */
+.capsule-container {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
   align-items: center;
-  opacity: 1; /* 完全不透明 */
+  justify-content: space-between; /* 两端对齐 */
+  background: transparent; /* 透明背景 */
+  border-radius: 100rpx; /* 胶囊形状 */
+  padding: 6rpx 8rpx;
+  border: 1px solid rgba(255, 255, 255, 0.25); /* 更明显的描边 */
+  overflow: hidden; /* 确保内容不溢出圆角 */
+  height: 60rpx; /* 固定高度 */
+  width: 40%; /* 与start-soup-button等宽 */
+  box-sizing: border-box;
+}
+
+/* 图标项样式 */
+.icon-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center; /* 内容居中 */
+  padding: 0;
   transition: all 0.3s ease;
   position: relative;
+  flex: 1; /* 平均分配空间 */
+  height: 100%;
 }
 
-/* 收藏图标样式 */
-.favorite-icon {
-  /* 特定于收藏图标的样式 */
+/* 收藏图标项样式 */
+.favorite-item {
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  padding-right: 10rpx; /* 右侧内边距 */
 }
 
-/* 点赞图标样式 */
-.like-icon {
-  /* 特定于点赞图标的样式 */
+/* 点赞图标项样式 */
+.like-item {
+  padding-left: 10rpx; /* 左侧内边距 */
 }
 
-/* 只读图标样式 */
-.like-icon.read-only {
-  cursor: default;
-  pointer-events: none; /* 禁用点击事件 */
+/* 点赞图标激活样式 */
+.like-item:active {
+  transform: scale(1.1);
 }
 
-/* 图标文本样式 */
-.heart-text {
-  font-size: 48rpx;
-  line-height: 1;
-}
-
-/* 收藏图标文本样式 */
-.favorite-icon .heart-text {
-  color: rgba(158, 46, 255, 0.9); /* 紫色 */
-}
-
-/* 点赞图标文本样式 */
-.like-icon .heart-text {
-  color: rgba(255, 46, 84, 0.9); /* 红色 */
-  text-shadow: 0 2rpx 8rpx rgba(255, 230, 0, 0.4);
-}
+/* 图标样式已移至 icon.wxss */
 
 /* 计数文本通用样式 */
 .count-text {
-  font-size: 26rpx;
-  margin-top: 10rpx;
-  text-align: center;
-  font-weight: bold;
-  border-radius: 20rpx;
-  padding: 2rpx 10rpx;
-  min-width: 40rpx;
-}
-
-/* 收藏数量样式 */
-.favorite-count {
-  color: var(--color-accent);
-}
-
-/* 点赞数量样式 */
-.like-count {
-  color: var(--color-primary-light);
+  font-size: 24rpx;
+  font-weight: normal;
+  color: rgba(255, 255, 255, 0.9); /* 更亮的文本颜色 */
+  white-space: nowrap;
+  letter-spacing: 0.5rpx;
+  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.3); /* 添加文本阴影增强可见度 */
 }
 
 /* 隐藏的收藏图标 */
-.favorite-icon.hidden {
+.favorite-item.hidden {
   opacity: 0.6; /* 半透明而不是完全隐藏 */
 }
 
 /* 点赞图标激活样式 */
-.like-icon.active {
-  transform: scale(1.2);
+.like-item.active {
+  transform: scale(1.05);
 }
 
 /* 收藏图标激活样式 */
-.favorite-icon.active {
-  transform: scale(1.1);
+.favorite-item.active {
+  transform: scale(1.05);
 }
+
+/* 图标颜色样式已移至 icon.wxss */
 
 /* 创作者感谢文字样式 */
 .creator-credit {
@@ -124,7 +117,7 @@
   align-items: center;
   opacity: 0.8;
   transition: all 0.3s ease;
-  margin-top: 15rpx;
+  margin-bottom: 15rpx; /* 改为底部间距，因为现在在上面 */
   width: 100%;
   text-align: center;
   padding: 0 20rpx;
@@ -133,13 +126,18 @@
 
 /* 创作者文本样式 */
 .creator-text {
-  font-size: 22rpx;
+  font-size: 24rpx;
   color: var(--color-text-hint);
-  font-weight: 100;
+  font-weight: 300;
   letter-spacing: 1rpx;
   text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.5);
   white-space: nowrap; /* 防止文本换行 */
   overflow: hidden;
   text-overflow: ellipsis; /* 文本溢出时显示省略号 */
   max-width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6rpx 20rpx;
+  border-radius: 30rpx;
+  /* 使用微信小程序支持的方式实现模糊效果 */
+  background-color: rgba(0, 0, 0, 0.3);
 }

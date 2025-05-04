@@ -21,11 +21,13 @@
       id="interactionFooter"
       isFavorite="{{isFavorite}}"
       favoriteCount="{{favoriteCount}}"
+      isLiked="{{isLiked}}"
       likeCount="{{likeCount}}"
       creatorId="{{creatorId}}"
       isDrinking="{{isDrinking}}"
       soupId="{{currentSoup.soupId || ''}}"
       bind:favoriteChange="onFavoriteChange"
+      bind:likeChange="onLikeChange"
     ></interaction-footer>
   </block>
 </view>
