@@ -8,7 +8,7 @@ const PAGE_STATE = {
 };
 
 // 创建汤面Store
-const soupStore = observable({
+const store = observable({
   // ===== 可观察状态 =====
   // 当前页面状态
   soupState: PAGE_STATE.VIEWING,
@@ -35,37 +35,30 @@ const soupStore = observable({
   },
 
   // ===== Action方法 =====
-  // 切换页面状态
-  switchSoupState: action(function(state) {
-    this.soupState = state;
-  }),
+  // 使用单一的updateState方法来管理状态，避免多种action定义导致的错误
+  updateState: action(function(data) {
+    // 更新状态
+    if (data.soupState !== undefined) {
+      this.soupState = data.soupState;
+    }
 
-  // 设置汤面ID
-  setSoupId: action(function(id) {
-    this.soupId = id;
-  }),
+    // 更新数据
+    if (data.soupId !== undefined) {
+      this.soupId = data.soupId;
+    }
+    if (data.dialogId !== undefined) {
+      this.dialogId = data.dialogId;
+    }
+    if (data.userId !== undefined) {
+      this.userId = data.userId;
+    }
 
-  // 设置对话ID
-  setDialogId: action(function(id) {
-    this.dialogId = id;
-  }),
-
-  // 设置用户ID
-  setUserId: action(function(id) {
-    this.userId = id;
-  }),
-
-  // 更新所有核心数据
-  updateSoupData: action(function(data) {
-    if (data.soupId !== undefined) this.soupId = data.soupId;
-    if (data.dialogId !== undefined) this.dialogId = data.dialogId;
-    if (data.userId !== undefined) this.userId = data.userId;
-    if (data.soupState !== undefined) this.soupState = data.soupState;
+    console.log('状态更新:', data);
   })
 });
 
 // 使用CommonJS语法导出模块
 module.exports = {
-  soupStore,
+  store,
   PAGE_STATE
 };

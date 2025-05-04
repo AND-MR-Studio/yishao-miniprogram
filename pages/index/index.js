@@ -9,76 +9,9 @@ const userService = require('../../utils/userService');
 const { SWIPE_DIRECTION } = require('../../utils/interactionManager');
 const eventUtils = require('../../utils/eventUtils');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { soupStore, PAGE_STATE } = require('../../stores/soupStore');
+const { store, PAGE_STATE } = require('../../stores/soupStore');
 
-// ===== 页面状态管理对象 =====
-const createPageStateManager = (page) => {
-  return {
-    /**
-     * 切换到查看状态
-     */
-    switchToViewing() {
-      page.setData({
-        pageState: PAGE_STATE.VIEWING,
-        showButtons: true
-      });
-
-      // 确保开始喝汤按钮显示并重置到初始状态
-      const startButton = page.selectComponent('#startSoupButton');
-      if (startButton) {
-        startButton.setData({ visible: true });
-        startButton.resetButton();
-      }
-    },
-
-    /**
-     * 切换到喝汤状态
-     * @param {string} soupId 汤面ID
-     * @param {string} dialogId 对话ID
-     * @param {string} userId 用户ID
-     */
-    switchToDrinking(soupId, dialogId, userId) {
-      // 更新页面状态
-      page.setData({
-        pageState: PAGE_STATE.DRINKING,
-        showButtons: false,
-        tipVisible: true // 初始化tip模块为显示状态
-      });
-
-      // 开始喝汤按钮隐藏
-      const startButton = page.selectComponent('#startSoupButton');
-      if (startButton) {
-        startButton.setData({ visible: false });
-      }
-
-      // 显示对话框并设置必要属性
-      const dialog = page.selectComponent('#dialog');
-      if (dialog) {
-        // 对话记录应该已经在onStartSoup中预加载完成
-        // 现在只需要设置visible为true显示对话框
-        dialog.setData({
-          soupId: soupId,
-          dialogId: dialogId,
-          userId: userId,
-          visible: true
-        });
-      }
-    },
-
-    /**
-     * 切换到汤底状态
-     * @param {string} soupId 汤面ID
-     * @param {Object} truthData 汤底数据
-     */
-    switchToTruth(soupId, truthData) {
-      page.setData({
-        pageState: PAGE_STATE.TRUTH,
-        truthSoupId: soupId,
-        truthData: truthData
-      });
-    }
-  };
-};
+// 页面状态管理现在使用MobX，不再需要单独的pageStateManager
 
 // ===== 汤面操作对象 =====
 const createSoupOperations = (page) => {
@@ -238,15 +171,14 @@ Page({
    */
   async onLoad(options) {
     try {
-      // 创建MobX Store绑定，替代传统的页面状态管理器
+      // 创建MobX Store绑定，只使用updateState方法来管理状态
       this.storeBindings = createStoreBindings(this, {
-        store: soupStore,
-        fields: ['soupId', 'dialogId', 'userId', 'soupState'],
-        actions: ['setSoupId', 'setDialogId', 'setUserId', 'switchSoupState', 'updateSoupData']
+        store: store,
+        fields: ['soupId', 'dialogId', 'userId', 'soupState', 'isViewing', 'isDrinking', 'isTruth'],
+        actions: ['updateState']
       });
 
-      // 保留原有的页面状态管理器以兼容现有代码，后续将逐步替换
-      this.pageStateManager = createPageStateManager(this);
+      // 页面状态管理现在使用MobX，不再需要pageStateManager
       this.soupOperations = createSoupOperations(this);
       this.eventHandlers = createEventHandlers(this);
 
@@ -275,15 +207,13 @@ Page({
             const currentSoupId = this.getCurrentSoupId();
 
             // 更新MobX Store
-            this.updateSoupData({
-              soupId: currentSoupId,
+            this.updateState({
               dialogId: dialogId,
-              userId: userId,
               soupState: PAGE_STATE.DRINKING
             });
 
-            // 使用页面状态管理器切换到喝汤状态
-            this.pageStateManager.switchToDrinking(currentSoupId, dialogId, userId);
+            // 切换到喝汤状态
+            this.switchToDrinkingState(currentSoupId, dialogId, userId);
           } catch (error) {
             console.error('切换到喝汤状态失败:', error);
             this.showErrorToast('无法切换到喝汤状态');
@@ -313,7 +243,10 @@ Page({
     }
 
     // 更新MobX store中的soupId
-    this.setSoupId(soupId);
+    this.updateState({
+      soupId: soupId,
+      soupState: PAGE_STATE.VIEWING
+    });
 
     // 记录当前汤面ID (保留这个以兼容现有代码)
     this.currentSoupId = soupId;
@@ -489,7 +422,10 @@ Page({
       // 如果当前处于喝汤状态，先关闭对话框回到查看状态
       if (this.soupState === PAGE_STATE.DRINKING) {
         // 使用MobX更新页面状态
-        this.switchSoupState(PAGE_STATE.VIEWING);
+        this.updateState({
+          dialogId: '',
+          soupState: PAGE_STATE.VIEWING
+        });
 
         // 使用页面状态管理器切换到查看状态（后续可移除）
         this.pageStateManager.switchToViewing();
@@ -549,6 +485,82 @@ Page({
 
   // ===== 页面状态管理 =====
 
+  /**
+   * 切换到查看状态
+   * 使用MobX管理状态，替代旧的pageStateManager
+   */
+  switchToViewingState() {
+    // 更新MobX Store
+    this.updateState({
+      dialogId: '',
+      soupState: PAGE_STATE.VIEWING
+    });
+
+    // 更新页面UI
+    this.setData({
+      showButtons: true
+    });
+
+    // 确保开始喝汤按钮显示并重置到初始状态
+    const startButton = this.selectComponent('#startSoupButton');
+    if (startButton) {
+      startButton.setData({ visible: true });
+      startButton.resetButton();
+    }
+  },
+
+  /**
+   * 切换到喝汤状态
+   * 使用MobX管理状态，替代旧的pageStateManager
+   * @param {string} soupId 汤面ID
+   * @param {string} dialogId 对话ID
+   * @param {string} userId 用户ID
+   */
+  switchToDrinkingState(soupId, dialogId, userId) {
+    // 更新MobX Store (已在调用处更新)
+
+    // 更新页面UI
+    this.setData({
+      showButtons: false,
+      tipVisible: true // 初始化tip模块为显示状态
+    });
+
+    // 开始喝汤按钮隐藏
+    const startButton = this.selectComponent('#startSoupButton');
+    if (startButton) {
+      startButton.setData({ visible: false });
+    }
+
+    // 显示对话框并设置必要属性
+    const dialog = this.selectComponent('#dialog');
+    if (dialog) {
+      // 对话记录应该已经在onStartSoup中预加载完成
+      // 现在只需要设置visible为true显示对话框
+      dialog.setData({
+        soupId: soupId,
+        dialogId: dialogId,
+        userId: userId,
+        visible: true
+      });
+    }
+  },
+
+  /**
+   * 切换到汤底状态
+   * 使用MobX管理状态，替代旧的pageStateManager
+   * @param {string} soupId 汤面ID
+   * @param {Object} truthData 汤底数据
+   */
+  switchToTruthState(soupId, truthData) {
+    // 更新MobX Store (已在调用处更新)
+
+    // 更新页面UI
+    this.setData({
+      truthSoupId: soupId,
+      truthData: truthData
+    });
+  },
+
 
   /**
    * 处理对话组件关闭事件
@@ -556,10 +568,13 @@ Page({
    */
   onDialogClose() {
     // 更新MobX Store
-    this.switchSoupState(PAGE_STATE.VIEWING);
+    this.updateState({
+      dialogId: '',
+      soupState: PAGE_STATE.VIEWING
+    });
 
-    // 使用页面状态管理器切换到查看状态
-    this.pageStateManager.switchToViewing();
+    // 切换到查看状态
+    this.switchToViewingState();
   },
 
   /**
@@ -605,10 +620,7 @@ Page({
       }
 
       // 更新MobX Store
-      this.updateSoupData({
-        soupId: soupId,
-        soupState: PAGE_STATE.TRUTH
-      });
+      this.updateState(PAGE_STATE.TRUTH);
 
       // 使用页面状态管理器切换到汤底状态
       this.pageStateManager.switchToTruth(soupId, truthData);
@@ -692,10 +704,8 @@ Page({
         // 等待一小段时间确保UI更新完成
         setTimeout(() => {
           // 更新MobX Store
-          this.updateSoupData({
-            soupId: currentSoupId,
+          this.updateState({
             dialogId: dialogId,
-            userId: userId,
             soupState: PAGE_STATE.DRINKING
           });
 
@@ -709,10 +719,8 @@ Page({
         }
 
         // 更新MobX Store
-        this.updateSoupData({
-          soupId: currentSoupId,
+        this.updateState({
           dialogId: dialogId,
-          userId: userId,
           soupState: PAGE_STATE.DRINKING
         });
 
