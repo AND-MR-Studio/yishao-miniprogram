@@ -80,8 +80,7 @@
   font-family: var(--font-family-mincho);
   font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */
   font-weight: var(--font-weight-medium);
-  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
-               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58);
   color: var(--color-text-primary);
 }
 
@@ -116,8 +115,7 @@
   font-weight: var(--font-weight-medium);
   color: var(--color-text-primary);
   text-align: center;
-  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
-               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58);
 }
 
 /* 汤底容器 */

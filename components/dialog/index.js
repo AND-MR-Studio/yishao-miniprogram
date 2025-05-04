@@ -685,8 +685,11 @@ Component({
         this.setData({ peekMode: false });
 
         // 使用eventCenter发送偷看状态变更事件
-        eventUtils.emitEvent('peekingStatusChange', {
-          isPeeking: false
+        // 确保在下一个渲染周期发送事件，避免可能的时序问题
+        wx.nextTick(() => {
+          eventUtils.emitEvent('peekingStatusChange', {
+            isPeeking: false
+          });
         });
       }
     },

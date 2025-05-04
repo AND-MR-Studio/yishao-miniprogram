@@ -77,10 +77,13 @@
 }
 
 /* 未点赞状态的图标和文字样式 */
-.like-item:not(.active) .icon-text,
-.like-item:not(.active) .count-text {
+/* 未点赞状态的图标和文字样式 */
+.like-item .icon-text,
+.like-item .count-text {
   color: rgba(255, 255, 255, 0.5); /* 更灰的半透明灰色 */
 }
+
+/* 点赞激活状态会覆盖上面的样式 */
 
 /* 点赞图标激活样式 */
 .like-item:active {
@@ -100,10 +103,13 @@
 }
 
 /* 未收藏状态的图标和文字样式 */
-.favorite-item:not(.active) .icon-text,
-.favorite-item:not(.active) .count-text {
+/* 未收藏状态的图标和文字样式 */
+.favorite-item .icon-text,
+.favorite-item .count-text {
   color: rgba(255, 255, 255, 0.5); /* 半透明灰色 */
 }
+
+/* 收藏激活状态会覆盖上面的样式 */
 
 /* 点赞图标激活样式 */
 .like-item.active {

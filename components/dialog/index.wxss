@@ -134,9 +134,8 @@
   color: var(--color-accent);
 }
 
-/* 添加打字机光标效果 */
-.typing-simple::after {
-  content: '|';
+/* 添加打字机光标效果 - 使用额外的元素代替伪元素 */
+.typing-cursor {
   display: inline-block;
   color: var(--cursor-color);
   animation: cursor-blink 0.8s infinite;

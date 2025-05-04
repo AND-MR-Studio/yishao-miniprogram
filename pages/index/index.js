@@ -216,6 +216,7 @@ Page({
     isLoading: true,
     showButtons: false,
     showSetting: false, // 设置面板显示状态
+    isPeeking: false, // 是否处于偷看模式
 
     // 汤面相关
     currentSoup: null, // 当前汤面数据
@@ -448,18 +449,18 @@ Page({
   handlePeekingStatusChange(data) {
     if (!data) return;
 
+    // 更新页面的偷看状态
+    this.setData({
+      isPeeking: data.isPeeking,
+      // 偷看时隐藏提示模块，结束偷看时在喝汤状态下恢复提示模块
+      tipVisible: data.isPeeking ? false : (this.data.pageState === PAGE_STATE.DRINKING)
+    });
+
     // 更新汤面显示组件的偷看状态
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (soupDisplay) {
       soupDisplay.setData({
         isPeeking: data.isPeeking
-      });
-    }
-
-    // 更新提示模块的可见性
-    if (data.isPeeking) {
-      this.setData({
-        tipVisible: false // 偷看时隐藏提示模块
       });
     }
   },
