@@ -25,7 +25,7 @@
         swipeFeedback="{{swipeFeedback}}"
         swipeDirection="{{swipeDirection}}"
         class="soup-display-component {{soupState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
-        wx:if="{{soupState === 'viewing' || soupState === 'drinking'}}"
+        wx:if="{{shouldShowSoupDisplay}}"
         bind:animationComplete="onAnimationComplete"
         bind:soupchange="handleSoupChange"
         bind:loading="handleSoupLoading"
@@ -41,18 +41,18 @@
     ></soup-truth>
 
     <!-- 按钮区域 -->
-    <view class="button-container {{showButtons ? 'show-buttons' : ''}}">
+    <view class="button-container {{shouldShowButtons ? 'show-buttons' : ''}}">
       <start-soup-button
         id="startSoupButton"
         bind:tap="onStartSoup"
-        visible="{{showButtons}}"
+        visible="{{shouldShowButtons}}"
         width="50%"
         height="80rpx">
       </start-soup-button>
     </view>
 
     <!-- 滑动提示 -->
-    <view class="swipe-hint {{showButtons ? 'show-hint' : ''}}" wx:if="{{soupState === 'viewing'}}">
+    <view class="swipe-hint {{shouldShowButtons ? 'show-hint' : ''}}" wx:if="{{shouldShowInteractionFooter}}">
       <text>左右滑动切换汤面</text>
     </view>
   </view>
@@ -82,7 +82,7 @@
 
   <!-- 提示模块组件 - 在喝汤状态和汤底状态显示 -->
   <tip-module
-    visible="{{(soupState === 'drinking' && (tipVisible === undefined ? true : tipVisible)) || soupState === 'truth'}}"
+    visible="{{shouldShowTip}}"
     bind:close="onTipModuleClose"
     bind:visibleChange="onTipVisibleChange"
     pageState="{{soupState || 'drinking'}}"
