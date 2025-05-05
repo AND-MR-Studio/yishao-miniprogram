@@ -1,4 +1,5 @@
 /* 对话组件容器 */
+@import "../../styles/theme.wxss";
 .dialog-container {
   position: fixed;
   top: 0;
@@ -82,7 +83,7 @@
   filter: blur(5px);
 }
 
-/* 基础消息样式 */
+/* 基础消息样式  */
 .message {
   margin: 0 auto 30rpx auto;
   width: 90%;
@@ -92,32 +93,30 @@
   word-break: break-all;
   text-align: left;
   display: block;
+  font-family: var(--font-family-mincho);
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
+  line-height: var(--line-height-md);
 }
 
-/* 回复消息样式 */
+/* 回复消息样式  */
 .response {
+  font-family: var(--font-family-mincho);
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
+  line-height: var(--line-height-md);
   color: var(--color-accent);
 }
 
-/* 用户消息样式 */
+/* 用户消息样式  */
 .user {
+  font-family: var(--font-family-mincho);
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
+  line-height: var(--line-height-md);
   color: var(--color-text-primary);
 }
 
-/* 加载消息样式 */
-.loading {
-  color: var(--color-text-secondary);
-  opacity: 0.8;
-  animation: pulse 1.5s infinite ease-in-out;
-}
+/* 加载消息样式已移至tip-module组件 */
 
-@keyframes pulse {
-  0% { opacity: 0.5; }
-  50% { opacity: 0.9; }
-  100% { opacity: 0.5; }
-}
-
-/* 简化版打字机样式 */
+/* 简化版打字机样式  */
 .typing-simple {
   /* 确保打字机效果与普通消息有完全相同的样式 */
   position: relative;
@@ -129,11 +128,14 @@
   white-space: pre-wrap;
   word-break: break-all;
   text-align: left;
+  font-family: var(--font-family-mincho);
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
+  line-height: var(--line-height-md);
+  color: var(--color-accent);
 }
 
-/* 添加打字机光标效果 */
-.typing-simple::after {
-  content: '|';
+/* 添加打字机光标效果 - 使用额外的元素代替伪元素 */
+.typing-cursor {
   display: inline-block;
   color: var(--cursor-color);
   animation: cursor-blink 0.8s infinite;
@@ -142,8 +144,9 @@
 }
 
 @keyframes cursor-blink {
-  0%, 100% { opacity: 1; }
+  0% { opacity: 1; }
   50% { opacity: 0; }
+  100% { opacity: 1; }
 }
 
 /* 对话组件内部的输入栏样式 */
@@ -155,22 +158,9 @@
   z-index: 1002;
 }
 
-/* 消息状态样式 */
+/* 消息状态样式 - 错误提示已移至tip-module组件 */
 .message.sending {
   opacity: 0.7;
-}
-
-.message.error {
-  position: relative;
-}
-
-.message.error::after {
-  content: '发送失败';
-  position: absolute;
-  right: 40rpx;
-  bottom: -30rpx;
-  font-size: 24rpx;
-  color: var(--color-accent);
 }
 
 .message.typing {

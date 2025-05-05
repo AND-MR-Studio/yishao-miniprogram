@@ -4,6 +4,7 @@ const simpleTypeAnimation = require('../../utils/typeAnimation');
 const userService = require('../../utils/userService');
 const soupService = require('../../utils/soupService');
 const agentService = require('../../utils/agentService');
+const eventUtils = require('../../utils/eventUtils');
 
 Component({
   properties: {
@@ -193,6 +194,9 @@ Component({
       // 设置加载状态
       this.setData({ loading: true });
 
+      // 通过tip-module显示加载提示
+      eventUtils.showTip('加载中...', ['正在加载对话记录，请稍候...']);
+
       try {
         // 从服务器获取对话记录
         const result = await dialogService.getDialogMessages(dialogId);
@@ -205,12 +209,23 @@ Component({
           }, resolve);
         });
 
+        // 隐藏加载提示
+        eventUtils.hideTip();
+
         // 滚动到底部
         this.scrollToBottom();
 
         return result.messages;
       } catch (error) {
         console.error('加载对话记录失败:', error);
+
+        // 显示错误提示
+        eventUtils.showTip('加载失败', ['无法加载对话记录，请稍后再试']);
+
+        // 3秒后隐藏错误提示
+        setTimeout(() => {
+          eventUtils.hideTip();
+        }, 3000);
 
         // 出错时返回空消息数组
         await new Promise(resolve => {
@@ -251,11 +266,13 @@ Component({
       if (this.data.isAnimating) {
         // 只有当有内容时才显示提示
         if (value && value.trim()) {
-          wx.showToast({
-            title: '正在回复中...',
-            icon: 'none',
-            duration: 800
-          });
+          // 使用tip-module显示提示
+          eventUtils.showTip('请稍等', ['正在回复中，请稍候...']);
+
+          // 2秒后隐藏提示
+          setTimeout(() => {
+            eventUtils.hideTip();
+          }, 2000);
         }
         return;
       }
@@ -325,12 +342,10 @@ Component({
       });
 
       // 触发用户发送消息事件，用于提示模块更新
-      if (wx.eventCenter) {
-        wx.eventCenter.emit('userSentMessage', {
-          messageId: userMessage.id,
-          content: userMessage.content
-        });
-      }
+      eventUtils.emitEvent('userSentMessage', {
+        messageId: userMessage.id,
+        content: userMessage.content
+      });
 
       try {
         // 发送消息到服务器并获取回复
@@ -391,12 +406,13 @@ Component({
           isSending: false // 出错时也要重置状态
         });
 
-        // 显示错误提示
-        wx.showToast({
-          title: error.message || '发送失败',
-          icon: 'none',
-          duration: 2000
-        });
+        // 使用tip-module显示错误提示
+        eventUtils.showTip('发送失败', [error.message || '消息发送失败，请稍后再试']);
+
+        // 3秒后隐藏错误提示
+        setTimeout(() => {
+          eventUtils.hideTip();
+        }, 3000);
       }
     },
 
@@ -472,11 +488,13 @@ Component({
       if (this.data.isAnimating) {
         // 只有当有内容时才显示提示
         if (value && value.trim()) {
-          wx.showToast({
-            title: '正在回复中...',
-            icon: 'none',
-            duration: 800
-          });
+          // 使用tip-module显示提示
+          eventUtils.showTip('请稍等', ['正在回复中，请稍候...']);
+
+          // 2秒后隐藏提示
+          setTimeout(() => {
+            eventUtils.hideTip();
+          }, 2000);
         }
         return;
       }
@@ -628,7 +646,7 @@ Component({
           isSending: false, // 动画完成后重置发送状态
           typingText: ''
         });
-        
+
       } catch (error) {
         console.error('发送消息失败:', error);
 
@@ -640,12 +658,13 @@ Component({
           isSending: false // 出错时也要重置状态
         });
 
-        // 显示错误提示
-        wx.showToast({
-          title: error.message || '发送失败',
-          icon: 'none',
-          duration: 2000
-        });
+        // 使用tip-module显示错误提示
+        eventUtils.showTip('发送失败', [error.message || '消息发送失败，请稍后再试']);
+
+        // 3秒后隐藏错误提示
+        setTimeout(() => {
+          eventUtils.hideTip();
+        }, 3000);
       }
     },
 
@@ -654,19 +673,9 @@ Component({
       // 设置偷看模式
       this.setData({ peekMode: true });
 
-      // 通知页面处理偷看状态
-      wx.nextTick(() => {
-        // 获取页面实例
-        const pages = getCurrentPages();
-        const currentPage = pages[pages.length - 1];
-
-        // 如果当前页面有设置isPeeking方法，则调用
-        if (currentPage && currentPage.setData) {
-          currentPage.setData({
-            isPeeking: true,
-            tipVisible: false // 隐藏tip模块
-          });
-        }
+      // 使用eventCenter发送偷看状态变更事件
+      eventUtils.emitEvent('peekingStatusChange', {
+        isPeeking: true
       });
     },
 
@@ -675,19 +684,12 @@ Component({
       if (this.data.peekMode) {
         this.setData({ peekMode: false });
 
-        // 通知页面恢复正常显示
+        // 使用eventCenter发送偷看状态变更事件
+        // 确保在下一个渲染周期发送事件，避免可能的时序问题
         wx.nextTick(() => {
-          // 获取页面实例
-          const pages = getCurrentPages();
-          const currentPage = pages[pages.length - 1];
-
-          // 如果当前页面有设置isPeeking方法，则调用
-          if (currentPage && currentPage.setData) {
-            currentPage.setData({
-              isPeeking: false,
-              tipVisible: true // 恢复显示tip模块
-            });
-          }
+          eventUtils.emitEvent('peekingStatusChange', {
+            isPeeking: false
+          });
         });
       }
     },

@@ -33,7 +33,8 @@ Component({
     touchStartY: 0,      // 记录触摸开始的Y坐标
     touchStartTime: 0,   // 记录触摸开始的时间
     minRecordDuration: 300, // 最短录音时间（毫秒）
-    recordManager: null
+    recordManager: null,
+    bottom: -1,          // 输入框距离底部的距离（-1表示使用默认位置，正数表示键盘高度，单位px）
   },
 
   observers: {
@@ -91,6 +92,23 @@ Component({
    * 组件的方法列表
    */
   methods: {
+    // 处理输入框获取焦点事件
+    handleInputFocus(e) {
+      // 获取键盘高度，设置输入框距离底部的距离
+      this.setData({
+        bottom: e.detail.height || 0
+      });
+    },
+
+    // 处理输入框失去焦点事件
+    handleInputBlur() {
+      // 使用特殊值-1表示使用CSS中的默认位置
+      // 在WXML中会处理这个特殊值
+      this.setData({
+        bottom: -1
+      });
+    },
+
     // 处理语音按钮点击事件（临时禁用功能）
     handleVoiceClick() {
       wx.showToast({

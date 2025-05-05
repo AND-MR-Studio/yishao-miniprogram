@@ -195,29 +195,23 @@
 .soup-title {
   font-size: 30rpx;
   color: #FFFFFF;
-  margin-bottom: 10rpx;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-bottom: 10rpx;
 }
 
-.soup-meta {
+.soup-stats {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  margin-top: 8rpx;
 }
 
-.soup-type {
+.soup-views, .soup-likes, .soup-favorites {
   font-size: 24rpx;
-  color: rgba(92, 232, 33, 0.9);
-  background-color: rgba(92, 232, 33, 0.1);
-  padding: 4rpx 12rpx;
-  border-radius: 6rpx;
+  color: var(--color-text-secondary);
   margin-right: 15rpx;
-}
-
-.soup-views {
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.5);
 }
 
 .soup-item-arrow {

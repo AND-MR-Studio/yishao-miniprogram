@@ -7,6 +7,7 @@ const soupService = require('../../utils/soupService');
 const dialogService = require('../../utils/dialogService');
 const userService = require('../../utils/userService');
 const { SWIPE_DIRECTION } = require('../../utils/interactionManager');
+const eventUtils = require('../../utils/eventUtils');
 
 // ===== 常量定义 =====
 const PAGE_STATE = {
@@ -160,55 +161,7 @@ const createSoupOperations = (page) => {
 // ===== 事件处理对象 =====
 const createEventHandlers = (page) => {
   return {
-    /**
-     * 处理标签切换事件
-     * @param {Object} e 事件对象
-     */
-    async onTabChange(e) {
-      const { tab } = e.detail;
 
-      // 更新当前激活的标签
-      page.setData({ activeTab: tab });
-
-      try {
-        // 设置加载状态
-        page.setData({ isLoading: true });
-
-        // 临时保存当前activeTab，以便fetchSoupData使用正确的标签
-        const originalActiveTab = page.data.activeTab;
-        page.setData({ activeTab: tab });
-
-        try {
-          // 使用fetchSoupData获取对应标签的汤面
-          const soupData = await page.fetchSoupData();
-
-          if (soupData) {
-            // 更新对话组件
-            const soupId = soupData.soupId || '';
-            page.selectComponent('#dialog')?.setData({ soupId });
-
-            // 初始化汤面数据和页面状态
-            await page.initSoupData(soupData);
-          } else {
-            wx.showToast({
-              title: '没有找到相关汤',
-              icon: 'none'
-            });
-
-            // 重置加载状态
-            page.setData({ isLoading: false });
-          }
-        } catch (error) {
-          // 如果出错，恢复原来的标签
-          page.setData({ activeTab: originalActiveTab });
-          throw error; // 向上传递错误，由外层catch处理
-        }
-      } catch (error) {
-        console.error('加载汤面失败:', error);
-        page.showErrorToast('加载失败，请重试');
-        page.setData({ isLoading: false });
-      }
-    },
 
     /**
      * 处理汤面滑动事件
@@ -222,16 +175,9 @@ const createEventHandlers = (page) => {
       });
     },
 
-    /**
-     * 处理收藏状态变更事件
-     * @param {Object} e 事件对象
-     */
-    onFavoriteChange(e) {
-      const { isFavorite } = e.detail;
 
-      // 更新页面状态
-      page.setData({ isFavorite: isFavorite });
-    },
+
+
 
     /**
      * 处理汤数据变更事件
@@ -270,15 +216,11 @@ Page({
     isLoading: true,
     showButtons: false,
     showSetting: false, // 设置面板显示状态
+    isPeeking: false, // 是否处于偷看模式
 
     // 汤面相关
     currentSoup: null, // 当前汤面数据
     breathingBlur: false, // 呈现呼吸模糊效果
-    isFavorite: false, // 当前汤面是否已收藏
-    isPeeking: false, // 是否处于偷看状态
-
-    // 标签切换相关
-    activeTab: '荒诞', // 当前激活的标签: '荒诞', '搞笑', '惊悚', '变格'，默认显示荒诞汤
 
     // 交互相关 - 由interactionManager管理
     swiping: false, // 是否正在滑动中
@@ -366,33 +308,48 @@ Page({
     // 增加汤面阅读数
     await this.viewSoup(soupId);
 
-    // 并行处理收藏状态检查
+    // 并行处理收藏和点赞状态检查
     const favoritePromise = userService.isFavoriteSoup(soupId)
       .catch(error => {
         console.error('检查收藏状态失败:', error);
         return false; // 出错时默认为未收藏
       });
 
-    // 等待收藏状态检查完成
-    const isFavorite = await favoritePromise;
+    const likedPromise = userService.isLikedSoup(soupId)
+      .catch(error => {
+        console.error('检查点赞状态失败:', error);
+        return false; // 出错时默认为未点赞
+      });
+
+    // 等待收藏和点赞状态检查完成
+    const [isFavorite, isLiked] = await Promise.all([favoritePromise, likedPromise]);
 
     // 更新页面状态和数据
     this.setData({
       currentSoup: soupData,
       isLoading: false,
-      showButtons: true,
-      isFavorite: isFavorite
+      showButtons: true
     });
 
-    // 更新汤面显示组件的收藏状态、收藏数和点赞数
+    // 更新汤面显示组件的收藏状态、点赞状态、收藏数和点赞数
     const soupDisplay = this.selectComponent('#soupDisplay');
     if (soupDisplay) {
       soupDisplay.setData({
         isFavorite: isFavorite,
+        isLiked: isLiked,
         favoriteCount: soupData?.favoriteCount || 0,
         likeCount: soupData?.likeCount || 0
       });
     }
+
+    // 通过事件中心发送统一的用户交互状态变更事件
+    eventUtils.emitEvent('userInteractionChange', {
+      soupId: soupId,
+      isFavorite: isFavorite,
+      isLiked: isLiked,
+      likeCount: soupData?.likeCount || 0,
+      favoriteCount: soupData?.favoriteCount || 0
+    });
   },
 
   /**
@@ -414,36 +371,116 @@ Page({
    */
   onReady() {
     // 初始化事件中心（如果尚未初始化）
-    if (!wx.eventCenter) {
-      wx.eventCenter = {
-        callbacks: {},
-        on(eventName, callback) {
-          this.callbacks[eventName] = this.callbacks[eventName] || [];
-          this.callbacks[eventName].push(callback);
-        },
-        emit(eventName, data) {
-          const callbacks = this.callbacks[eventName] || [];
-          callbacks.forEach(callback => callback(data));
-        }
-      };
-    }
+    eventUtils.initEventCenter();
 
     // 注册事件监听器
-    wx.eventCenter.on('loadSoupWithDialog', this.handleLoadSoupWithDialog.bind(this));
+    eventUtils.onEvent('loadSoup', this.handleLoadSoup.bind(this));
+    eventUtils.onEvent('userInteractionChange', this.handleUserInteractionChange.bind(this));
+    eventUtils.onEvent('peekingStatusChange', this.handlePeekingStatusChange.bind(this));
+  },
+
+
+
+
+
+  /**
+   * 统一处理用户交互状态变更事件（点赞、收藏、阅读等）
+   * @param {Object} data 事件数据
+   */
+  handleUserInteractionChange(data) {
+    if (!data || !data.soupId) return;
+
+    // 检查是否是当前汤面
+    const currentSoupId = this.getCurrentSoupId();
+    if (data.soupId !== currentSoupId) return;
+
+    // 获取汤面显示组件
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (!soupDisplay) return;
+
+    // 准备更新数据
+    const updateData = {};
+    const soupUpdateData = {};
+
+    // 处理点赞状态变更
+    if (data.hasOwnProperty('isLiked')) {
+      updateData.isLiked = data.isLiked;
+    }
+
+    if (data.hasOwnProperty('likeCount')) {
+      updateData.likeCount = data.likeCount;
+      soupUpdateData.likeCount = data.likeCount;
+    }
+
+    // 处理收藏状态变更
+    if (data.hasOwnProperty('isFavorite')) {
+      updateData.isFavorite = data.isFavorite;
+    }
+
+    if (data.hasOwnProperty('favoriteCount')) {
+      updateData.favoriteCount = data.favoriteCount;
+      soupUpdateData.favoriteCount = data.favoriteCount;
+    }
+
+    // 处理阅读数变更
+    if (data.hasOwnProperty('viewCount')) {
+      updateData.viewCount = data.viewCount;
+      soupUpdateData.viewCount = data.viewCount;
+    }
+
+    // 更新当前汤面数据
+    if (Object.keys(soupUpdateData).length > 0 && this.data.currentSoup) {
+      const updatedSoup = { ...this.data.currentSoup, ...soupUpdateData };
+      this.setData({ currentSoup: updatedSoup });
+    }
+
+    // 如果有数据需要更新，则更新组件
+    if (Object.keys(updateData).length > 0) {
+      soupDisplay.setData(updateData);
+    }
+  },
+
+
+
+  /**
+   * 处理偷看状态变更事件（通过eventCenter）
+   * @param {Object} data 事件数据
+   */
+  handlePeekingStatusChange(data) {
+    if (!data) return;
+
+    // 更新页面的偷看状态
+    this.setData({
+      isPeeking: data.isPeeking,
+      // 偷看时隐藏提示模块，结束偷看时在喝汤状态下恢复提示模块
+      tipVisible: data.isPeeking ? false : (this.data.pageState === PAGE_STATE.DRINKING)
+    });
+
+    // 更新汤面显示组件的偷看状态
+    const soupDisplay = this.selectComponent('#soupDisplay');
+    if (soupDisplay) {
+      soupDisplay.setData({
+        isPeeking: data.isPeeking
+      });
+    }
   },
 
   /**
-   * 处理加载汤面和对话的事件
-   * @param {Object} data 包含 soupId 和 dialogId 的对象
+   * 处理加载汤面事件
+   * @param {Object} data 包含 soupId 的对象
    */
-  async handleLoadSoupWithDialog(data) {
+  async handleLoadSoup(data) {
     if (!data || !data.soupId) return;
 
     try {
+      // 如果当前处于喝汤状态，先关闭对话框回到查看状态
+      if (this.data.pageState === PAGE_STATE.DRINKING) {
+        // 使用页面状态管理器切换到查看状态
+        this.pageStateManager.switchToViewing();
+      }
+
       // 设置加载状态
       this.setData({ isLoading: true });
-
-      // 使用data.dialogId变量即可
 
       // 获取汤面数据
       const soupData = await this.fetchSoupData(data.soupId);
@@ -453,43 +490,8 @@ Page({
 
       // 初始化汤面数据和页面状态
       await this.initSoupData(soupData);
-
-      // 如果有dialogId，预加载对话记录并切换到喝汤状态
-      if (data.dialogId) {
-        try {
-          // 获取用户ID（使用抽取的公共方法）
-          const userId = await this.ensureUserId();
-
-          // 预加载对话记录
-          const dialog = this.selectComponent('#dialog');
-          if (dialog) {
-            // 设置必要的属性
-            dialog.setData({
-              soupId: data.soupId,
-              dialogId: data.dialogId,
-              userId: userId,
-              visible: false
-            });
-
-            // 显式加载对话记录并直接切换到喝汤状态
-            await dialog.loadDialogMessages();
-            // 加载完成后直接切换到喝汤状态
-            this.pageStateManager.switchToDrinking(data.soupId, data.dialogId, userId);
-          }
-        } catch (error) {
-          console.error('预加载对话记录失败:', error);
-          // 即使预加载失败，也尝试切换到喝汤状态
-          try {
-            const userId = await this.ensureUserId();
-            this.pageStateManager.switchToDrinking(data.soupId, data.dialogId, userId);
-          } catch (error) {
-            console.error('切换到喝汤状态失败:', error);
-            this.showErrorToast('无法切换到喝汤状态');
-          }
-        }
-      }
     } catch (error) {
-      console.error('加载汤面和对话失败:', error);
+      console.error('加载汤面失败:', error);
       this.showErrorToast('加载失败，请重试');
       this.setData({
         isLoading: false,
@@ -504,15 +506,9 @@ Page({
    */
   onUnload() {
     // 清理事件监听器
-    if (wx.eventCenter && wx.eventCenter.callbacks) {
-      // 移除当前页面的事件监听
-      if (wx.eventCenter.callbacks['loadSoupWithDialog']) {
-        wx.eventCenter.callbacks['loadSoupWithDialog'] =
-          wx.eventCenter.callbacks['loadSoupWithDialog'].filter(
-            callback => callback !== this.handleLoadSoupWithDialog
-          );
-      }
-    }
+    eventUtils.offEvent('loadSoup', this.handleLoadSoup);
+    eventUtils.offEvent('userInteractionChange', this.handleUserInteractionChange);
+    eventUtils.offEvent('peekingStatusChange', this.handlePeekingStatusChange);
   },
 
   /**
@@ -547,6 +543,15 @@ Page({
    */
   onTipModuleClose() {
     // 提示模块关闭时的处理逻辑
+  },
+
+  /**
+   * 处理提示模块可见性变化事件
+   * @param {Object} e 事件对象
+   */
+  onTipVisibleChange(e) {
+    const { visible } = e.detail;
+    this.setData({ tipVisible: visible });
   },
 
   /**
@@ -720,8 +725,7 @@ Page({
    * 获取汤面数据的策略方法
    * 按照优先级依次尝试不同的获取方式：
    * 1. 优先使用指定的汤面ID
-   * 2. 如果没有指定ID，则获取与当前标签匹配的汤面
-   * 3. 如果没有找到匹配标签的汤面，则获取第一个可用的汤面
+   * 2. 如果没有指定ID，则随机获取一个汤面
    *
    * @param {string} soupId 可选的汤面ID
    * @returns {Promise<Object>} 汤面数据
@@ -732,15 +736,15 @@ Page({
       return await soupService.getSoup(soupId);
     }
 
-    // 策略2：获取与当前标签匹配的汤面
-    const soups = await soupService.getSoupList({ tags: this.data.activeTab });
+    // 策略2：随机获取汤面
+    const soups = await soupService.getSoupList();
     if (soups && soups.length > 0) {
       // 随机选择一个汤面
       const randomIndex = Math.floor(Math.random() * soups.length);
       return soups[randomIndex];
     }
 
-    // 策略3：如果没有找到对应标签的汤面，获取第一个汤面
+    // 策略3：如果没有找到汤面，获取第一个汤面
     return await soupService.getAdjacentSoup(null, true);
   },
 
@@ -768,14 +772,7 @@ Page({
     this.eventHandlers.onSoupSwipe(e);
   },
 
-  /**
-   * 处理收藏状态变更事件
-   * 从soup-display组件传递上来的事件
-   * @param {Object} e 事件对象
-   */
-  handleFavoriteChange(e) {
-    this.eventHandlers.onFavoriteChange(e);
-  },
+
 
   // ===== 辅助方法 =====
   /**
@@ -816,20 +813,23 @@ Page({
   async viewSoup(soupId) {
     if (!soupId) return;
     try {
-      await soupService.viewSoup(soupId);
+      const result = await soupService.viewSoup(soupId);
+
+      // 如果成功获取到阅读数，通过统一的事件系统更新
+      if (result && result.viewCount) {
+        // 通过事件中心发送统一的用户交互状态变更事件
+        eventUtils.emitEvent('userInteractionChange', {
+          soupId: soupId,
+          viewCount: result.viewCount
+        });
+      }
     } catch (error) {
       console.error('增加阅读数失败:', error);
       // 阅读数增加失败不影响用户体验，静默处理
     }
   },
 
-  /**
-   * 处理标签切换事件
-   * @param {Object} e 事件对象
-   */
-  async handleTabChange(e) {
-    await this.eventHandlers.onTabChange(e);
-  },
+
 
   /**
    * 处理汤数据变更事件

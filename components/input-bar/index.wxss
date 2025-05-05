@@ -4,6 +4,7 @@
 .input-area {
   position: fixed;
   left: 0;
+  /* bottom值现在由JS动态控制，默认位置为tabbar上方 */
   bottom: calc(110rpx + env(safe-area-inset-bottom)); /* 留出tabbar的高度和安全区域 */
   width: 100%;
   display: flex;
@@ -15,7 +16,8 @@
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.25);
   border-top: 1rpx solid rgba(94, 232, 33, 0.1);
-  z-index: 1002; /* 提高z-index，确保在顶层显示 */
+  z-index: 1005; /* 提高z-index，确保在tabbar之上显示 */
+  transition: bottom 0.3s; /* 添加过渡效果，使位置变化更平滑 */
 }
 
 .input-container {

@@ -7,7 +7,7 @@
     "start-soup-button": "/components/start-soup-button/index",
     "dialog-component": "/components/dialog/index",
     "tip-module": "/components/tip-module/index",
-    "popup": "/components/popup/index",
-    "tab-switcher": "/components/tab-switcher/tab-switcher"
+    "popup": "/components/popup/index"
+    
   }
 }

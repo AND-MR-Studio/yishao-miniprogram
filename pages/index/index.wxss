@@ -86,7 +86,6 @@
   opacity: 1;
   transition: opacity 0.6s var(--transition-decelerated), z-index 0s;
   pointer-events: none; /* 确保不会影响底层组件的交互 */
-  animation: blurToClear 0.6s var(--transition-decelerated); /* 添加模糊到清晰的动画 */
 }
 
 /* 按钮容器样式 */
@@ -129,13 +128,6 @@
 /* 滑动过程中的背景渐变效果 - 根据滑动距离动态计算 */
 .page.swiping::before {
   transition: background 0.15s cubic-bezier(0.4, 0, 0.2, 1); /* 使用更平滑的过渡曲线 */
-  animation: subtle-glow 3s infinite alternate; /* 添加微妙的光晕命中动画 */
-}
-
-/* 微妙的光晕命中动画 */
-@keyframes subtle-glow {
-  0% { opacity: 0.82; }
-  100% { opacity: 0.88; }
 }
 
 .swipe-hint.show-hint {

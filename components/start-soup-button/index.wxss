@@ -1,4 +1,5 @@
 /* components/start-soup-button/index.wxss */
+@import "../../styles/theme.wxss";
 
 /* 呼吸动画 */
 @keyframes breathing {
@@ -52,7 +53,7 @@
 }
 
 /* 按下状态的按钮样式 - 圆形 */
-.btn-light.pressed, .btn-light.expand-animation {
+.btn-light.pressed {
   width: 120rpx !important;
   height: 120rpx !important;
   min-width: 120rpx !important;
@@ -76,15 +77,41 @@
   animation: none !important;
 }
 
-/* 点亮按钮文本 */
+/* 展开动画按钮样式 - 与按下状态相同 */
+.btn-light.expand-animation {
+  width: 120rpx !important;
+  height: 120rpx !important;
+  min-width: 120rpx !important;
+  min-height: 120rpx !important;
+  max-width: 120rpx !important;
+  max-height: 120rpx !important;
+  padding: 0 !important;
+  margin: 0 auto !important;
+  border-radius: 50% !important;
+  background-color: var(--color-accent, #5ce821);
+  box-shadow: 0rpx 10rpx 25rpx rgba(4, 244, 77, 0.3) !important;
+  z-index: 1000 !important;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; /* 弹性过渡效果 */
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+  transform-origin: center center !important;
+  /* 停止呼吸动画 */
+  animation: none !important;
+}
+
+/* 点亮按钮文本  */
 .btn-text-light {
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   color: #000000;
-  font-size: 32rpx;
-  font-weight: 500;
+  font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
+  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family-mincho);
 }
 
 /* 加载中动画样式 */
