@@ -107,7 +107,7 @@ const dialog_soup_url = ysUrl + dialogBasePath + 'soup/';
 const dialog_delete_url = ysUrl + dialogBasePath;
 
 // Agent API URL
-const agent_chat_url = 'https://and-tech.cn/agent/yishao/chat';
+const agent_chat_url = 'https://yavin.and-tech.cn/agent/yishao/chat';
 
 module.exports = {
   // 导出请求方法
