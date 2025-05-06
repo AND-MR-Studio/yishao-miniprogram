@@ -33,13 +33,6 @@
       ></soup-display>
     </view>
 
-    <!-- 汤底显示区域 -->
-    <soup-truth
-      id="soupTruth"
-      soupId="{{truthSoupId || ''}}"
-      wx:if="{{soupState === 'truth'}}"
-    ></soup-truth>
-
     <!-- 按钮区域 -->
     <view class="button-container {{shouldShowButtons ? 'show-buttons' : ''}}">
       <start-soup-button
@@ -57,38 +50,7 @@
     </view>
   </view>
 
-  <!-- 对话组件 -->
-  <dialog-component
-    id="dialog"
-    visible="{{soupState === 'drinking'}}"
-    bind:close="onDialogClose"
-    bind:showTruth="onShowTruth"
-    bind:clearcontext="clearContext"
-  ></dialog-component>
 
-  <!-- 输入栏组件 - 在喝汤状态显示 -->
-  <input-bar
-    wx:if="{{soupState === 'drinking'}}"
-    id="inputBar"
-    disabled="{{isAnimating || isSending}}"
-    sending="{{isSending}}"
-    showTestButton="{{true}}"
-    bind:send="handleSend"
-    bind:testAgent="handleTestAgent"
-    bind:voiceStart="handleVoiceStart"
-    bind:voiceEnd="handleVoiceEnd"
-    bind:voiceCancel="handleVoiceCancel"
-  />
-
-  <!-- 提示模块组件 - 在喝汤状态和汤底状态显示 -->
-  <tip-module
-    visible="{{shouldShowTip}}"
-    bind:close="onTipModuleClose"
-    bind:visibleChange="onTipVisibleChange"
-    pageState="{{soupState || 'drinking'}}"
-    tipTitle="汤来了！我是陪你熬夜猜谜的小勺🌙"
-    tipContent="{{['只答是、否、不确定，别想套我话哦～', '长按汤面就浮出来咯！']}}"
-  ></tip-module>
 
   <!-- 登录提示弹窗 -->
   <popup
