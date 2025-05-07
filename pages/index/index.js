@@ -40,23 +40,21 @@ const createSoupOperations = (page) => {
       });
 
       try {
-        // 获取当前汤面ID并根据方向获取汤面数据
-        const currentSoupId = page.getCurrentSoupId();
+        // 根据方向获取下一个汤面ID
         const isNext = direction === 'next';
 
-        // 从服务器获取汤面数据
-        const soupData = await soupService.getAdjacentSoup(currentSoupId, isNext);
+        // 从服务器获取相邻的汤面ID
+        const soupId = await soupService.getAdjacentSoup(page.soupId, isNext);
 
-        if (!soupData) {
-          throw new Error(`无法获取${isNext ? '下' : '上'}一个汤面数据`);
+        if (!soupId) {
+          throw new Error(`无法获取${isNext ? '下' : '上'}一个汤面ID`);
         }
 
         // 更新对话组件
-        const soupId = soupData.soupId || '';
         page.selectComponent('#dialog')?.setData({ soupId });
 
         // 初始化汤面数据和页面状态
-        await page.initSoupData(soupData);
+        await page.initSoupData(soupId);
 
         // 重置UI状态
         page.setData({
@@ -95,8 +93,8 @@ Page({
     isLoading: true,
     showSetting: false, // 设置面板显示状态
 
-    // 汤面相关
-    currentSoup: null, // 当前汤面数据
+    // 汤面相关 - 使用MobX管理soupId，不再需要currentSoup
+    soupData: null, // 当前汤面完整数据对象
     breathingBlur: false, // 呈现呼吸模糊效果
 
     // 交互相关 - 由interactionManager管理
@@ -140,15 +138,15 @@ Page({
       const soupId = options.soupId || null;
       const dialogId = options.dialogId || null;
 
-      // 获取汤面数据
-      let soupData = await this.fetchSoupData(soupId);
+      // 获取汤面ID
+      let targetSoupId = await this.fetchSoupData(soupId);
 
-      if (!soupData) {
-        throw new Error('无法获取汤面数据');
+      if (!targetSoupId) {
+        throw new Error('无法获取汤面ID');
       }
 
       // 初始化汤面数据和页面状态
-      await this.initSoupData(soupData);
+      await this.initSoupData(targetSoupId);
 
       // 如果有dialogId，自动切换到喝汤状态
       if (dialogId) {
@@ -156,7 +154,6 @@ Page({
         wx.nextTick(async () => {
           try {
             const userId = await this.ensureUserId();
-            const currentSoupId = this.getCurrentSoupId();
 
             // 更新MobX Store
             this.updateState({
@@ -165,7 +162,7 @@ Page({
             });
 
             // 切换到喝汤状态
-            this.switchToDrinkingState(currentSoupId, dialogId, userId);
+            this.switchToDrinkingState(this.soupId, dialogId, userId);
           } catch (error) {
             console.error('切换到喝汤状态失败:', error);
             this.showErrorToast('无法切换到喝汤状态');
@@ -183,11 +180,9 @@ Page({
 
   /**
    * 初始化汤面数据和页面状态
-   * @param {Object} soupData 汤面数据
+   * @param {string} soupId 汤面ID
    */
-  async initSoupData(soupData) {
-    // 获取汤面ID
-    const soupId = soupData.soupId || '';
+  async initSoupData(soupId) {
     if (!soupId) {
       console.error('汤面ID为空，无法初始化');
       return;
@@ -199,50 +194,70 @@ Page({
       soupState: PAGE_STATE.VIEWING
     });
 
-    // 增加汤面阅读数
-    await this.viewSoup(soupId);
+    try {
+      // 使用新的getSoupMap方法获取汤面数据
+      const soupMap = await soupService.getSoupMap(soupId);
 
-    // 并行处理收藏和点赞状态检查
-    const favoritePromise = userService.isFavoriteSoup(soupId)
-      .catch(error => {
-        console.error('检查收藏状态失败:', error);
-        return false; // 出错时默认为未收藏
+      if (!soupMap || !soupMap[soupId]) {
+        console.error('获取汤面数据失败: 未找到指定ID的汤面');
+        this.setData({ isLoading: false });
+        return;
+      }
+
+      // 获取完整的汤面数据
+      const soupData = soupMap[soupId];
+
+      // 更新页面数据
+      this.setData({
+        soupData: soupData,
+        isLoading: false
       });
 
-    const likedPromise = userService.isLikedSoup(soupId)
-      .catch(error => {
-        console.error('检查点赞状态失败:', error);
-        return false; // 出错时默认为未点赞
-      });
+      // 增加汤面阅读数
+      await this.viewSoup(soupId);
 
-    // 等待收藏和点赞状态检查完成
-    const [isFavorite, isLiked] = await Promise.all([favoritePromise, likedPromise]);
+      // 并行处理收藏和点赞状态检查
+      const favoritePromise = userService.isFavoriteSoup(soupId)
+        .catch(error => {
+          console.error('检查收藏状态失败:', error);
+          return false; // 出错时默认为未收藏
+        });
 
-    // 更新页面状态和数据
-    this.setData({
-      currentSoup: soupData,
-      isLoading: false
-    });
+      const likedPromise = userService.isLikedSoup(soupId)
+        .catch(error => {
+          console.error('检查点赞状态失败:', error);
+          return false; // 出错时默认为未点赞
+        });
 
-    // 更新汤面显示组件的收藏状态、点赞状态、收藏数和点赞数
-    const soupDisplay = this.selectComponent('#soupDisplay');
-    if (soupDisplay) {
-      soupDisplay.setData({
+      // 等待收藏和点赞状态检查完成
+      const [isFavorite, isLiked] = await Promise.all([favoritePromise, likedPromise]);
+
+      // 更新汤面显示组件的收藏状态、点赞状态和汤面数据
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      if (soupDisplay) {
+        soupDisplay.setData({
+          soupData: soupData,
+          isFavorite: isFavorite,
+          isLiked: isLiked,
+          favoriteCount: soupData.favoriteCount || 0,
+          likeCount: soupData.likeCount || 0,
+          viewCount: soupData.viewCount || 0
+        });
+      }
+
+      // 通过事件中心发送统一的用户交互状态变更事件
+      eventUtils.emitEvent('userInteractionChange', {
+        soupId: soupId,
         isFavorite: isFavorite,
         isLiked: isLiked,
-        favoriteCount: soupData?.favoriteCount || 0,
-        likeCount: soupData?.likeCount || 0
+        likeCount: soupData.likeCount || 0,
+        favoriteCount: soupData.favoriteCount || 0,
+        viewCount: soupData.viewCount || 0
       });
+    } catch (error) {
+      console.error('初始化汤面数据失败:', error);
+      this.setData({ isLoading: false });
     }
-
-    // 通过事件中心发送统一的用户交互状态变更事件
-    eventUtils.emitEvent('userInteractionChange', {
-      soupId: soupId,
-      isFavorite: isFavorite,
-      isLiked: isLiked,
-      likeCount: soupData?.likeCount || 0,
-      favoriteCount: soupData?.favoriteCount || 0
-    });
   },
 
   /**
@@ -284,8 +299,7 @@ Page({
     if (!data || !data.soupId) return;
 
     // 检查是否是当前汤面
-    const currentSoupId = this.getCurrentSoupId();
-    if (data.soupId !== currentSoupId) return;
+    if (data.soupId !== this.soupId) return;
 
     // 获取汤面显示组件
     const soupDisplay = this.selectComponent('#soupDisplay');
@@ -322,9 +336,9 @@ Page({
     }
 
     // 更新当前汤面数据
-    if (Object.keys(soupUpdateData).length > 0 && this.data.currentSoup) {
-      const updatedSoup = { ...this.data.currentSoup, ...soupUpdateData };
-      this.setData({ currentSoup: updatedSoup });
+    if (Object.keys(soupUpdateData).length > 0 && this.data.soupData) {
+      const updatedSoup = { ...this.data.soupData, ...soupUpdateData };
+      this.setData({ soupData: updatedSoup });
     }
 
     // 如果有数据需要更新，则更新组件
@@ -374,14 +388,14 @@ Page({
       // 设置加载状态
       this.setData({ isLoading: true });
 
-      // 获取汤面数据
-      const soupData = await this.fetchSoupData(data.soupId);
-      if (!soupData) {
-        throw new Error('无法获取汤面数据');
+      // 获取汤面ID
+      const soupId = data.soupId;
+      if (!soupId) {
+        throw new Error('无法获取汤面ID');
       }
 
       // 初始化汤面数据和页面状态
-      await this.initSoupData(soupData);
+      await this.initSoupData(soupId);
     } catch (error) {
       console.error('加载汤面失败:', error);
       this.showErrorToast('加载失败，请重试');
@@ -411,14 +425,9 @@ Page({
    * 分享小程序
    */
   onShareAppMessage() {
-    const currentSoup = this.data.currentSoup;
-    const title = currentSoup && currentSoup.title ?
-      `${currentSoup.title}` :
-      '这个海龟汤太难了来帮帮我！';
-
     return {
-      title: title,
-      path: '/pages/index/index'
+      title: '这个海龟汤太难了来帮帮我！',
+      path: `/pages/index/index?soupId=${this.soupId}`
     };
   },
 
@@ -468,13 +477,11 @@ Page({
    * 切换到汤底状态
    * 使用MobX管理状态，替代旧的pageStateManager
    * @param {string} soupId 汤面ID
-   * @param {Object} truthData 汤底数据
    */
-  switchToTruthState(soupId, truthData) {
+  switchToTruthState(soupId) {
     // 更新页面UI - 其他UI状态会通过MobX计算属性自动更新
     this.setData({
-      truthSoupId: soupId,
-      truthData: truthData
+      truthSoupId: soupId
     });
   },
 
@@ -524,19 +531,13 @@ Page({
     if (!soupId) return;
 
     try {
-      // 获取汤底数据
-      const truthData = await soupService.getSoup(soupId);
-      if (!truthData) {
-        throw new Error('无法获取汤底数据');
-      }
-
       // 更新MobX Store
       this.updateState({
         soupState: PAGE_STATE.TRUTH
       });
 
       // 切换到汤底状态
-      this.switchToTruthState(soupId, truthData);
+      this.switchToTruthState(soupId);
     } catch (error) {
       console.error('获取汤底失败:', error);
       this.showErrorToast('无法获取汤底，请重试');
@@ -568,7 +569,7 @@ Page({
     }
 
     // 获取当前汤面ID
-    const currentSoupId = this.getCurrentSoupId();
+    const currentSoupId = this.soupId;
     if (!currentSoupId) {
       if (startButton) {
         startButton.setLoadingComplete(false);
@@ -680,45 +681,35 @@ Page({
     await this.soupOperations.switchSoup(direction);
   },
 
-  /**
-   * 获取当前汤面ID
-   * @returns {string} 当前汤面ID
-   */
-  getCurrentSoupId() {
-    // 优先使用MobX管理的soupId
-    if (this.soupId) {
-      return this.soupId;
-    }
-    // 兼容旧代码，如果MobX中没有soupId，则从currentSoup中获取
-    return this.data.currentSoup ?
-      (this.data.currentSoup.soupId || '') : '';
-  },
+
 
   /**
-   * 获取汤面数据的策略方法
-   * 按照优先级依次尝试不同的获取方式：
-   * 1. 优先使用指定的汤面ID
-   * 2. 如果没有指定ID，则随机获取一个汤面
+   * 获取汤面ID的简化方法
+   * 按照优先级依次尝试不同的获取方式
    *
    * @param {string} soupId 可选的汤面ID
-   * @returns {Promise<Object>} 汤面数据
+   * @returns {Promise<string>} 汤面ID
    */
   async fetchSoupData(soupId) {
-    // 策略1：如果有指定的汤面ID，直接获取该汤面
-    if (soupId) {
-      return await soupService.getSoup(soupId);
-    }
+    try {
+      // 如果已经提供了ID，直接返回
+      if (soupId) {
+        return soupId;
+      }
 
-    // 策略2：随机获取汤面
-    const soups = await soupService.getSoupList();
-    if (soups && soups.length > 0) {
-      // 随机选择一个汤面
-      const randomIndex = Math.floor(Math.random() * soups.length);
-      return soups[randomIndex];
-    }
+      // 如果没有指定ID，获取随机汤面ID
+      const randomSoupId = await soupService.getRandomSoup();
 
-    // 策略3：如果没有找到汤面，获取第一个汤面
-    return await soupService.getAdjacentSoup(null, true);
+      if (!randomSoupId) {
+        console.error('无法获取有效的汤面ID');
+        return null;
+      }
+
+      return randomSoupId;
+    } catch (error) {
+      console.error('获取汤面ID失败:', error);
+      return null;
+    }
   },
 
   // ===== 设置相关 =====
@@ -821,7 +812,7 @@ Page({
     this.selectComponent('#dialog')?.setData({ soupId });
 
     // 初始化汤面数据和页面状态
-    await this.initSoupData(soup);
+    await this.initSoupData(soupId);
   },
 
   /**

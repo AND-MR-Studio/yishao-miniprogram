@@ -15,7 +15,7 @@
     <view class="soup-display-wrapper">
       <soup-display
         id="soupDisplay"
-        soupData="{{currentSoup}}"
+        soupData="{{soupData}}"
         loading="{{isLoading}}"
         isFavorite="{{isFavorite}}"
         isDrinking="{{soupState === 'drinking'}}"

@@ -17,7 +17,7 @@ class AgentService {
      * 发送消息到Agent API并获取回复
      * @param {Object} params 请求参数
      * @param {Array} params.messages 消息历史数组，每个消息包含role和content
-     * @param {Object} params.soup 汤面数据对象，包含contentLines和truth
+     * @param {string} params.soup 汤面ID
      * @param {string} params.userId 用户ID
      * @param {string} params.dialogId 对话ID
      * @param {boolean} params.saveToCloud 是否保存到云端，默认为true
@@ -46,21 +46,16 @@ class AgentService {
             }
 
             if (!params.soup) {
-                throw new Error('发送消息失败: 缺少汤面数据');
+                throw new Error('发送消息失败: 缺少汤面ID');
             }
 
-            // 使用传入的汤面数据
-            const soupData = params.soup;
+            // 使用传入的汤面ID
+            const soupId = params.soup;
 
             // 构建请求数据
             const requestData = {
                 messages: params.messages,
-                placeholders: {
-                    puzzle_surface: Array.isArray(soupData.contentLines)
-                        ? soupData.contentLines.join('\n')
-                        : soupData.contentLines,
-                    puzzle_truth: soupData.truth
-                }
+                soupId: soupId
             };
 
             // 发送请求到Agent API
@@ -92,7 +87,7 @@ class AgentService {
                 try {
                     // 构建完整的消息历史
                     const allMessages = [...params.messages];
-                    
+
                     // 添加最新的回复消息
                     // 注意：需要确保消息格式与dialogService期望的一致
                     allMessages.push({
@@ -101,14 +96,14 @@ class AgentService {
                         content: replyMessage.content,
                         timestamp: replyMessage.timestamp
                     });
-                    
+
                     // 保存到云端
                     await dialogService.saveDialogMessages(
                         params.dialogId,
                         params.userId,
                         allMessages
                     );
-                    
+
                     console.log('Agent对话已保存到云端');
                 } catch (saveError) {
                     console.error('保存Agent对话失败:', saveError);

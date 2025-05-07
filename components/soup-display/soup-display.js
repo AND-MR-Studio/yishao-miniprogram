@@ -104,7 +104,6 @@ Component({
   },
 
   data: {
-    currentSoup: null,  // 当前汤面数据
     displayContent: '',  // 显示的文本内容
     creatorId: ''  // 创作者ID
   },
@@ -113,9 +112,9 @@ Component({
     // 组件初始化
     attached() {
       this._isAttached = true;
-      if (this.data.currentSoup) {
+      if (this.properties.soupData) {
         this.setData({
-          displayContent: this._formatSoupContent(this.data.currentSoup)
+          displayContent: this._formatSoupContent(this.properties.soupData)
         });
       }
 
@@ -160,8 +159,13 @@ Component({
      * @returns {string} 当前汤面ID
      */
     getCurrentSoupId() {
-      if (this.data.currentSoup) {
-        return this.data.currentSoup.soupId || '';
+      // 直接从properties中获取soupId
+      if (this.properties.soupId) {
+        return this.properties.soupId;
+      }
+      // 如果没有soupId但有soupData，则从soupData中获取
+      if (this.properties.soupData) {
+        return this.properties.soupData.soupId || '';
       }
       return '';
     },
@@ -303,23 +307,14 @@ Component({
       this.interactionManager?.handleTouchEnd(e, canInteract);
     },
 
-    /**
-     * 增加汤面阅读数并更新用户浏览记录
-     * 注意：此方法已被移至index.js中的viewSoup方法，通过eventCenter统一管理
-     * @param {string} soupId 汤面ID
-     */
-    async incrementSoupViewCount(soupId) {
-      // 不再直接调用API，由index.js中的viewSoup方法统一处理
-      // 保留此方法是为了向后兼容
-    },
+    // 移除incrementSoupViewCount方法，完全由页面统一管理
 
     /**
      * 更新汤面显示
      */
     updateSoupDisplay(soupData) {
-      // 更新当前汤面数据
+      // 更新汤面数据
       this.setData({
-        currentSoup: soupData,
         displayContent: this._formatSoupContent(soupData),
         favoriteCount: soupData.favoriteCount || 0,
         likeCount: soupData.likeCount || 0,
@@ -327,15 +322,12 @@ Component({
         creatorId: soupData.creatorId || ''
       });
 
-      // 增加汤面阅读数
-      const soupId = soupData.soupId || '';
-      if (soupId) {
-        this.incrementSoupViewCount(soupId);
-      }
+      // 增加汤面阅读数不再在组件内处理，由页面统一管理
     },
 
     /**
      * 获取汤面数据
+     * 使用新的getSoupMap方法，以soupId为键获取汤面数据
      */
     async fetchSoupData(soupId) {
       if (!soupId) return;
@@ -344,11 +336,14 @@ Component({
         // 通知页面组件正在加载
         this.triggerEvent('loading', { loading: true });
 
-        // 获取汤面数据
-        const soupData = await soupService.getSoup(soupId);
+        // 使用新的getSoupMap方法获取汤面数据
+        const soupMap = await soupService.getSoupMap(soupId);
 
-        if (soupData) {
-          this.updateSoupDisplay(soupData);
+        if (soupMap && soupMap[soupId]) {
+          // 直接使用soupId作为键获取完整的汤面数据
+          this.updateSoupDisplay(soupMap[soupId]);
+        } else {
+          console.error('获取汤面数据失败: 未找到指定ID的汤面');
         }
       } catch (error) {
         console.error('获取汤面数据失败:', error);

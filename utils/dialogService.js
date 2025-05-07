@@ -28,29 +28,30 @@ class DialogService {
     }
 
     /**
-     * 获取汤面数据
+     * 获取汤面ID
      * @param {string} soupId 汤面ID
-     * @returns {Promise<Object>} 汤面数据
+     * @returns {Promise<string>} 汤面ID
      */
     async getSoup(soupId) {
         if (!soupId) {
-            console.error('获取汤面数据失败: 缺少汤面ID');
+            console.error('获取汤面ID失败: 缺少汤面ID');
             return null;
         }
 
         try {
-            // 从服务器获取汤面数据
+            // 从服务器获取汤面ID
             const response = await soupRequest({
                 url: `${soup_by_id_url}${soupId}`,
                 method: 'GET'
             });
 
+            // 根据新接口契约，直接返回soupId
             if (response.success && response.data) {
                 return response.data;
             }
             return null;
         } catch (error) {
-            console.error('获取汤面数据失败:', error);
+            console.error('获取汤面ID失败:', error);
             return null;
         }
     }
