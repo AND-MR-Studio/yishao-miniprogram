@@ -11,14 +11,14 @@ const config = {
   //体验版
   'trial': {
     //请求的地址
-    baseUrl: 'https://and-tech.cn',
-    ysUrl: 'https://and-tech.cn/yishao-api/'
+    baseUrl: 'https://yavin.and-tech.cn',
+    ysUrl: 'https://yavin.and-tech.cn/yishao-api/'
   },
   //正式版
   'release': {
     //请求的地址
-    baseUrl: 'https://and-tech.cn',
-    ysUrl: 'https://and-tech.cn/yishao-api/'
+    baseUrl: 'https://yavin.and-tech.cn',
+    ysUrl: 'https://yavin.and-tech.cn/yishao-api/'
   }
 }[wx.getAccountInfoSync().miniProgram.envVersion];
 

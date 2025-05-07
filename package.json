@@ -21,8 +21,8 @@
   },
   "homepage": "https://github.com/AND-MR-Studio/yishao-miniprogram#readme",
   "dependencies": {
-    "mobx-miniprogram": "^4.13.2",
-    "mobx-miniprogram-bindings": "^2.1.5"
+    "mobx-miniprogram": "^6.12.3",
+    "mobx-miniprogram-bindings": "^5.0.0"
   },
   "description": ""
 }
