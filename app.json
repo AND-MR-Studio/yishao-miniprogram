@@ -1,8 +1,8 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/gensoup/gensoup",
-    "pages/mine/mine"
+    "pages/mine/mine",
+    "pages/chat/chat"
   ],
   "window": {
     "navigationStyle": "custom",
@@ -16,7 +16,7 @@
     "custom": true,
     "list": [
       {
-        "pagePath": "pages/gensoup/gensoup",
+        "pagePath": "pages/chat/chat",
         "text": "煮汤"
       },
       {
@@ -33,5 +33,5 @@
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index"
   },
-   "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents"
 }
