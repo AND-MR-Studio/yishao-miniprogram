@@ -2,6 +2,7 @@
   "pages": [
     "pages/index/index",
     "pages/mine/mine",
+    "pages/upload/upload",
     "pages/chat/chat"
   ],
   "window": {
@@ -16,7 +17,7 @@
     "custom": true,
     "list": [
       {
-        "pagePath": "pages/chat/chat",
+        "pagePath": "pages/upload/upload",
         "text": "煮汤"
       },
       {

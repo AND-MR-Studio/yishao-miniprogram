@@ -93,7 +93,6 @@ const soupService = {
 
             return response.success ? response.data : {};
         } catch (error) {
-            console.error('获取海龟汤映射失败:', error);
             return {};
         }
     },
@@ -104,7 +103,7 @@ const soupService = {
      * 创建新海龟汤
      * @param {Object} soupData 海龟汤数据
      * @param {string} soupData.title 标题
-     * @param {string[]} soupData.contentLines 内容行数组
+     * @param {string} soupData.content 汤面内容
      * @param {string} soupData.truth 汤底
      * @param {number} [soupData.soupType] 海龟汤类型，0表示预制汤，1表示DIY汤
      * @param {string[]} [soupData.tags] 海龟汤标签数组（可包含多个标签）
@@ -280,13 +279,10 @@ const soupService = {
         }
 
         try {
-            // 根据最新接口契约，使用统一的view端点
+            // 根据最新接口契约，使用 /:soupId/view 端点
             const response = await soupRequest({
-                url: api.soup.view,
-                method: 'POST',
-                data: {
-                    soupId: soupId
-                }
+                url: `${api.soup.base}${soupId}/view`,
+                method: 'POST'
             });
             return response.success ? response.data : null;
         } catch (error) {

@@ -4,7 +4,7 @@
  */
 const userService = require('../../utils/userService');
 const soupService = require('../../utils/soupService');
-const eventUtils = require('../../utils/eventUtils');
+const { store } = require('../../stores/soupStore');
 
 Component({
   properties: {
@@ -96,6 +96,9 @@ Component({
               favoriteCount: newFavoriteCount
             });
 
+            // 更新MobX store状态
+            store.updateFavoriteStatus(newFavoriteStatus, newFavoriteCount);
+
             // 显示收藏成功提示
             wx.showToast({
               title: '收藏成功',
@@ -103,8 +106,8 @@ Component({
               duration: 1500
             });
           } else {
-            // 如果是取消收藏，调用取消收藏API减少收藏数
-            const unfavoriteResult = await soupService.unfavoriteSoup(soupId);
+            // 如果是取消收藏，调用收藏API并传入false参数减少收藏数
+            const unfavoriteResult = await soupService.favoriteSoup(soupId, false);
             const newFavoriteCount = unfavoriteResult ? unfavoriteResult.favoriteCount : 0;
 
             // 更新组件状态
@@ -113,6 +116,9 @@ Component({
               favoriteCount: newFavoriteCount
             });
 
+            // 更新MobX store状态
+            store.updateFavoriteStatus(newFavoriteStatus, newFavoriteCount);
+
             // 显示取消收藏提示
             wx.showToast({
               title: '已取消收藏',
@@ -120,13 +126,6 @@ Component({
               duration: 1500
             });
           }
-
-          // 使用eventCenter发送统一的用户交互状态变更事件
-          eventUtils.emitEvent('userInteractionChange', {
-            soupId: soupId,
-            isFavorite: newFavoriteStatus,
-            favoriteCount: this.data.favoriteCount
-          });
         }
       } catch (error) {
         console.error('收藏操作失败:', error);
@@ -187,6 +186,9 @@ Component({
               likeCount: newLikeCount
             });
 
+            // 更新MobX store状态
+            store.updateLikeStatus(newLikeStatus, newLikeCount);
+
             // 显示点赞成功提示
             wx.showToast({
               title: '点赞成功',
@@ -204,6 +206,9 @@ Component({
               likeCount: newLikeCount
             });
 
+            // 更新MobX store状态
+            store.updateLikeStatus(newLikeStatus, newLikeCount);
+
             // 显示取消点赞提示
             wx.showToast({
               title: '已取消点赞',
@@ -211,13 +216,6 @@ Component({
               duration: 1500
             });
           }
-
-          // 使用eventUtils发送统一的用户交互状态变更事件
-          eventUtils.emitEvent('userInteractionChange', {
-            soupId: soupId,
-            isLiked: newLikeStatus,
-            likeCount: this.data.likeCount
-          });
         }
       } catch (error) {
         console.error('点赞操作失败:', error);

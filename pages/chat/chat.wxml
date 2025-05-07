@@ -1,2 +1,68 @@
-<!--pages/chat/chat.wxml-->
-<text>pages/chat/chat.wxml</text>
+<!--pages/chat/chat.wxml - 海龟汤聊天页面-->
+<view class="page">
+  <!-- 导航栏 -->
+  <nav-bar
+    pageState="{{soupState || 'drinking'}}"
+    bind:settingchange="handleSettingChange"
+    bind:close="onDialogClose"
+    bind:clearcontext="clearContext"
+    showBackButton="{{true}}"
+  />
+
+  <view class="container">
+    <!-- 汤面显示区域 - 用于偷看功能 -->
+    <view class="soup-display-wrapper">
+      <soup-display
+        id="soupDisplay"
+        soupData="{{soupData}}"
+        loading="{{isLoading}}"
+        isFavorite="{{isFavorite}}"
+        isDrinking="{{true}}"
+        isPeeking="{{isPeeking}}"
+        pageState="{{soupState || 'drinking'}}"
+        class="soup-display-component {{isPeeking ? 'peeking' : ''}}"
+        bind:longPressStart="onLongPressStart"
+        bind:longPressEnd="onLongPressEnd"
+      ></soup-display>
+    </view>
+
+    <!-- 汤底显示区域 -->
+    <soup-truth
+      id="soupTruth"
+      soupId="{{truthSoupId || ''}}"
+      wx:if="{{soupState === 'truth'}}"
+    ></soup-truth>
+  </view>
+
+  <!-- 对话组件 -->
+  <dialog-component
+    id="dialog"
+    visible="{{true}}"
+    bind:close="onDialogClose"
+    bind:showTruth="onShowTruth"
+    bind:clearcontext="clearContext"
+  ></dialog-component>
+
+  <!-- 输入栏组件 -->
+  <input-bar
+    id="inputBar"
+    disabled="{{isAnimating || isSending}}"
+    sending="{{isSending}}"
+    showTestButton="{{true}}"
+    bind:send="handleSend"
+    bind:testAgent="handleTestAgent"
+    bind:voiceStart="handleVoiceStart"
+    bind:voiceEnd="handleVoiceEnd"
+    bind:voiceCancel="handleVoiceCancel"
+  />
+
+  <!-- 提示模块组件 -->
+  <tip-module
+    visible="{{shouldShowTip}}"
+    bind:close="onTipModuleClose"
+    bind:visibleChange="onTipVisibleChange"
+    pageState="{{soupState || 'drinking'}}"
+    tipTitle="汤来了！我是陪你熬夜猜谜的小勺🌙"
+    tipContent="{{['只答是、否、不确定，别想套我话哦～', '长按汤面就浮出来咯！']}}"
+  ></tip-module>
+</view>

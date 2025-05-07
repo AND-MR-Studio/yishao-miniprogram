@@ -1,17 +1,18 @@
 /**
  * 汤面显示组件
  * 负责汤面内容的渲染
+ * 不包含交互逻辑，交互由父页面控制
  */
 
-// 引入交互管理器
-const { createInteractionManager, SWIPE_DIRECTION } = require('../../utils/interactionManager');
 // 引入服务
 const soupService = require('../../utils/soupService');
-const userService = require('../../utils/userService');
+// 引入MobX store
+const { store } = require('../../stores/soupStore');
 
 Component({
   properties: {
     // 汤面ID，可选，如果提供则组件自行获取数据
+    // 注意：优先使用soupData属性传递完整数据，而不是依赖此属性
     soupId: {
       type: String,
       value: '',
@@ -61,11 +62,7 @@ Component({
       type: Number,
       value: 0
     },
-    // 阅读数量
-    viewCount: {
-      type: Number,
-      value: 0
-    },
+
     // 是否处于喝汤状态
     isDrinking: {
       type: Boolean,
@@ -81,21 +78,13 @@ Component({
       type: Boolean,
       value: false
     },
-    // 滑动方向反馈
-    swipeFeedback: {
-      type: Boolean,
-      value: false
-    },
-    // 滑动方向
-    swipeDirection: {
-      type: String,
-      value: 'none'
-    },
+
     // 页面状态：viewing, drinking, truth
     pageState: {
       type: String,
       value: 'viewing'
-    }
+    },
+
   },
 
   options: {
@@ -104,7 +93,6 @@ Component({
   },
 
   data: {
-    displayContent: '',  // 显示的文本内容
     creatorId: ''  // 创作者ID
   },
 
@@ -112,64 +100,15 @@ Component({
     // 组件初始化
     attached() {
       this._isAttached = true;
-      if (this.properties.soupData) {
-        this.setData({
-          displayContent: this._formatSoupContent(this.properties.soupData)
-        });
-      }
-
-      // 初始化交互管理器
-      this.initInteractionManager();
     },
 
     // 组件卸载
     detached() {
       this._isAttached = false;
-
-      // 销毁交互管理器
-      if (this.interactionManager) {
-        this.interactionManager.destroy();
-        this.interactionManager = null;
-      }
     }
   },
 
   methods: {
-    /**
-     * 格式化汤面内容为显示文本
-     * @param {Object} soup 汤面数据
-     * @returns {String} 格式化后的文本
-     * @private
-     */
-    _formatSoupContent(soup) {
-      if (!soup) return '';
-
-      let content = '';
-
-      // 只添加内容，标题单独显示
-      if (soup.contentLines && Array.isArray(soup.contentLines)) {
-        content = soup.contentLines.join('\n');
-      }
-
-      return content;
-    },
-
-    /**
-     * 获取当前汤面ID
-     * @returns {string} 当前汤面ID
-     */
-    getCurrentSoupId() {
-      // 直接从properties中获取soupId
-      if (this.properties.soupId) {
-        return this.properties.soupId;
-      }
-      // 如果没有soupId但有soupData，则从soupData中获取
-      if (this.properties.soupData) {
-        return this.properties.soupData.soupId || '';
-      }
-      return '';
-    },
-
     /**
      * 处理收藏状态变更事件
      * 从交互底部组件传递上来的事件
@@ -183,7 +122,8 @@ Component({
         favoriteCount: favoriteCount
       });
 
-      // 不再向上传递事件，由eventCenter统一处理
+      // 直接更新MobX store
+      store.updateFavoriteStatus(isFavorite, favoriteCount);
     },
 
     /**
@@ -191,72 +131,24 @@ Component({
      * 从交互底部组件传递上来的事件
      */
     onLikeChange(e) {
-      const { likeCount } = e.detail;
+      const { isLiked, likeCount } = e.detail;
 
       // 更新组件状态
       this.setData({
         likeCount: likeCount
       });
 
-      // 不再向上传递事件，由eventCenter统一处理
+      // 直接更新MobX store
+      store.updateLikeStatus(isLiked, likeCount);
     },
 
     /**
-     * 初始化交互管理器
+     * 设置偷看状态
+     * 由父页面调用，用于控制偷看功能
+     * @param {boolean} isPeeking 是否处于偷看状态
      */
-    initInteractionManager() {
-      this.interactionManager = createInteractionManager({
-        setData: this.setData.bind(this),
-        onSwipeLeft: this.handleSwipeLeft.bind(this),
-        onSwipeRight: this.handleSwipeRight.bind(this),
-        onDoubleTap: this.handleDoubleTap.bind(this),
-        onLongPressStart: this.handleLongPressStart.bind(this),
-        onLongPressEnd: this.handleLongPressEnd.bind(this),
-        // 长按相关配置
-        longPressDelay: 300, // 长按触发时间，默认300ms
-        enablePeek: true // 启用偷看功能
-      });
-    },
-
-    /**
-     * 处理左滑事件
-     */
-    handleSwipeLeft() {
-      if (this.canSwitchSoup()) {
-        this.setData({
-          swipeFeedback: true,
-          swipeDirection: SWIPE_DIRECTION.LEFT
-        });
-
-        // 通知页面切换汤面
-        this.triggerEvent('swipe', { direction: 'next' });
-      }
-    },
-
-    /**
-     * 处理右滑事件
-     */
-    handleSwipeRight() {
-      if (this.canSwitchSoup()) {
-        this.setData({
-          swipeFeedback: true,
-          swipeDirection: SWIPE_DIRECTION.RIGHT
-        });
-
-        // 通知页面切换汤面
-        this.triggerEvent('swipe', { direction: 'previous' });
-      }
-    },
-
-    /**
-     * 处理双击事件
-     */
-    handleDoubleTap() {
-      // 调用交互底部组件的收藏方法
-      const interactionFooter = this.selectComponent('#interactionFooter');
-      if (interactionFooter) {
-        interactionFooter.toggleFavorite();
-      }
+    setPeekingStatus(isPeeking) {
+      this.triggerEvent(isPeeking ? 'longPressStart' : 'longPressEnd');
     },
 
     /**
@@ -275,38 +167,6 @@ Component({
       this.triggerEvent('longPressEnd');
     },
 
-    /**
-     * 检查是否可以切换汤面
-     * @returns {boolean} 是否可以切换汤面
-     */
-    canSwitchSoup() {
-      return this.properties.pageState === 'viewing' && !this.properties.loading;
-    },
-
-    /**
-     * 触摸开始事件处理
-     */
-    touchStart(e) {
-      const canInteract = this.canSwitchSoup();
-      this.interactionManager?.handleTouchStart(e, canInteract);
-    },
-
-    /**
-     * 触摸移动事件处理
-     */
-    touchMove(e) {
-      const canInteract = this.canSwitchSoup();
-      this.interactionManager?.handleTouchMove(e, canInteract);
-    },
-
-    /**
-     * 触摸结束事件处理
-     */
-    touchEnd(e) {
-      const canInteract = this.canSwitchSoup();
-      this.interactionManager?.handleTouchEnd(e, canInteract);
-    },
-
     // 移除incrementSoupViewCount方法，完全由页面统一管理
 
     /**
@@ -315,10 +175,8 @@ Component({
     updateSoupDisplay(soupData) {
       // 更新汤面数据
       this.setData({
-        displayContent: this._formatSoupContent(soupData),
         favoriteCount: soupData.favoriteCount || 0,
         likeCount: soupData.likeCount || 0,
-        viewCount: soupData.viewCount || 0,
         creatorId: soupData.creatorId || ''
       });
 
@@ -328,6 +186,9 @@ Component({
     /**
      * 获取汤面数据
      * 使用新的getSoupMap方法，以soupId为键获取汤面数据
+     *
+     * 注意：此方法仅在组件内部使用，当soupId属性变更时自动调用
+     * 页面应优先使用soupData属性传递完整数据，而不是依赖此方法
      */
     async fetchSoupData(soupId) {
       if (!soupId) return;

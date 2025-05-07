@@ -1,10 +1,7 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container {{loading ? 'loading' : ''}} {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
+  class="soup-container {{loading ? 'loading' : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
   style="filter: blur({{blurAmount}}px);"
-  bindtouchstart="touchStart"
-  bindtouchmove="touchMove"
-  bindtouchend="touchEnd"
 >
   <!-- 汤面内容区域 -->
   <block wx:if="{{!loading}}">
@@ -13,7 +10,7 @@
       <view class="title-container" wx:if="{{soupData.title}}">
         <text class="title-text">{{soupData.title}}</text>
       </view>
-      <text class="soup-text">{{displayContent}}</text>
+      <text class="soup-text">{{soupData.content || ''}}</text>
     </view>
 
     <!-- 使用独立的交互底部组件 -->

@@ -1,5 +1,7 @@
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 const dialogService = require('../utils/dialogService');
+const soupService = require('../utils/soupService');
+const userService = require('../utils/userService');
 
 // 页面状态常量
 const PAGE_STATE = {
@@ -21,6 +23,14 @@ class SoupStore {
 
   // UI状态
   isPeeking = false; // 是否处于偷看模式
+
+  // 汤面交互状态
+  soupData = null;    // 当前汤面数据
+  isLiked = false;    // 是否已点赞
+  isFavorite = false; // 是否已收藏
+  likeCount = 0;      // 点赞数量
+  favoriteCount = 0;  // 收藏数量
+  viewCount = 0;      // 阅读数量
 
   constructor() {
     // 使用makeAutoObservable实现全自动响应式
@@ -109,7 +119,6 @@ class SoupStore {
       this.isPeeking = data.isPeeking;
     }
 
-    console.log('状态更新:', data);
   }
 
   // 开始喝汤 - 异步流程
@@ -191,6 +200,39 @@ class SoupStore {
   // 设置偷看状态
   setPeekingStatus(isPeeking) {
     this.isPeeking = isPeeking;
+  }
+
+  // 更新汤面数据
+  updateSoupData(soupData) {
+    if (!soupData) return;
+
+    this.soupData = soupData;
+
+    // 更新交互状态
+    if (soupData.isLiked !== undefined) this.isLiked = soupData.isLiked;
+    if (soupData.isFavorite !== undefined) this.isFavorite = soupData.isFavorite;
+    if (soupData.likeCount !== undefined) this.likeCount = soupData.likeCount;
+    if (soupData.favoriteCount !== undefined) this.favoriteCount = soupData.favoriteCount;
+    if (soupData.viewCount !== undefined) this.viewCount = soupData.viewCount;
+  }
+
+  // 更新阅读数
+  updateViewCount(viewCount) {
+    if (viewCount !== undefined && viewCount >= 0) {
+      this.viewCount = viewCount;
+    }
+  }
+
+  // 更新点赞状态
+  updateLikeStatus(isLiked, likeCount) {
+    if (isLiked !== undefined) this.isLiked = isLiked;
+    if (likeCount !== undefined && likeCount >= 0) this.likeCount = likeCount;
+  }
+
+  // 更新收藏状态
+  updateFavoriteStatus(isFavorite, favoriteCount) {
+    if (isFavorite !== undefined) this.isFavorite = isFavorite;
+    if (favoriteCount !== undefined && favoriteCount >= 0) this.favoriteCount = favoriteCount;
   }
 }
 

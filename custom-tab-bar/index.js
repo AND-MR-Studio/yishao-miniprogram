@@ -15,7 +15,7 @@ Component({
     selectedColor: "#5ce821",
     list: [
       {
-        pagePath: "/pages/chat/chat",
+        pagePath: "/pages/upload/upload",
         text: "煮汤",
         icon: "/static/images/soup_unlighting.png",
         selectedIcon: "/static/images/soup_lighting.png"
