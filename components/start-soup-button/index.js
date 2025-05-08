@@ -9,11 +9,6 @@ Component({
       type: Boolean,
       value: false
     },
-    // 是否显示按钮（在drinking状态下隐藏）
-    visible: {
-      type: Boolean,
-      value: true
-    },
     // 按钮文本
     text: {
       type: String,

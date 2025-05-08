@@ -1,5 +1,5 @@
 <!--components/start-soup-button/index.wxml-->
-<view class="start-soup-button-container" wx:if="{{visible}}">
+<view class="start-soup-button-container">
   <view class="btn-container" bindtap="handleTap">
     <view class="btn-light {{isExpanding ? 'expand-animation' : ''}} {{isPressed ? 'pressed' : ''}}"
           bindanimationend="handleAnimationEnd">

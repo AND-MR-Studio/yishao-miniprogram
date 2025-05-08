@@ -1,13 +1,13 @@
 <!--components/interaction-footer/interaction-footer.wxml-->
 <!-- 底部控件容器 - 包含创作者信息和交互图标 -->
-<view class="bottom-controls-container {{isDrinking ? 'drinking-hidden' : ''}}">
+<view class="bottom-controls-container">
   <!-- 创作者感谢文字 - 放在上面 -->
-  <view class="creator-credit" wx:if="{{soupData.creatorId && !isDrinking}}">
+  <view class="creator-credit" wx:if="{{soupData.creatorId}}">
     <text class="creator-text">感谢创作者：{{soupData.creatorId}}</text>
   </view>
 
-  <!-- 图标容器 - 在喝汤状态下隐藏，放在下面 -->
-  <view class="icons-container" wx:if="{{!isDrinking}}">
+  <!-- 图标容器 -->
+  <view class="icons-container">
     <!-- 胶囊形容器 -->
     <view class="capsule-container">
       <!-- 收藏图标 - 使用MobX store中的状态 -->

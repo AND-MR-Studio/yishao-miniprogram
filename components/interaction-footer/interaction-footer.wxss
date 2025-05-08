@@ -18,10 +18,7 @@
   overflow: hidden; /* 防止内容溢出 */
 }
 
-/* 喝汤状态下强制隐藏底部控件容器 */
-.bottom-controls-container.drinking-hidden {
-  display: none !important;
-}
+/* 底部控件容器始终显示 */
 
 /* 图标容器样式 */
 .icons-container {

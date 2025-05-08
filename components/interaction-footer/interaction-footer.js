@@ -9,11 +9,6 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
   properties: {
-    // 是否处于喝汤状态
-    isDrinking: {
-      type: Boolean,
-      value: false
-    },
     // 汤面ID - 仅用于API调用，状态从MobX获取
     soupId: {
       type: String,

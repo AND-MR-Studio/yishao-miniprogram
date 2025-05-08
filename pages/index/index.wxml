@@ -37,7 +37,6 @@
       <start-soup-button
         id="startSoupButton"
         bind:tap="onStartSoup"
-        visible="{{true}}"
         width="50%"
         height="80rpx">
       </start-soup-button>
