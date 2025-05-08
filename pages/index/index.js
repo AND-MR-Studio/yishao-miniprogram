@@ -4,7 +4,7 @@
  * 使用MobX管理数据，页面只负责UI交互
  */
 // ===== 导入依赖 =====
-const { SWIPE_DIRECTION } = require('../../utils/interactionManager');
+const { SWIPE_DIRECTION, createInteractionManager } = require('../../utils/interactionManager');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { store } = require('../../stores/soupStore');
 
@@ -29,39 +29,37 @@ Page({
    * @param {Object} options - 页面参数，可能包含soupId
    */
   async onLoad(options) {
-    // 创建MobX Store绑定
+    // 创建MobX Store绑定 - 只绑定需要的字段，不再绑定actions
     this.storeBindings = createStoreBindings(this, {
       store: store,
       fields: [
         'soupId', 'userId', 'isLoading', 'soupData'
-      ],
-      actions: [
-        'initSoup', 'toggleFavorite',
-        'syncUserId', 'getRandomSoup', 'getAdjacentSoup',
-        'viewSoup'
       ]
     });
 
     // 同步用户ID - 确保获取最新的用户状态
-    await this.syncUserId();
+    await store.syncUserId();
 
     // 检查是否有指定的汤面ID
     let targetSoupId = options.soupId || null;
 
     // 如果没有提供ID，则获取随机汤面ID
     if (!targetSoupId) {
-      targetSoupId = await this.getRandomSoup();
+      targetSoupId = await store.getRandomSoup();
     }
 
     if (targetSoupId) {
-      // 初始化汤面数据 - 使用MobX中的userId
-      this.initSoup(targetSoupId, this.userId || '');
+      // 初始化汤面数据 - 直接使用store方法
+      store.initSoup(targetSoupId, store.userId || '');
 
-      // 增加汤面阅读数 - 使用MobX store中的方法
-      this.viewSoup(targetSoupId);
+      // 增加汤面阅读数
+      store.viewSoup(targetSoupId);
     } else {
       this.showErrorToast('加载失败，请重试');
     }
+
+    // 初始化交互管理器
+    this.initInteractionManager();
   },
 
   /**
@@ -76,10 +74,8 @@ Page({
       });
     }
 
-    // 同步用户ID - 从userService获取最新的userId并更新到MobX store
-    if (this.syncUserId) {
-      this.syncUserId();
-    }
+    // 同步用户ID - 直接调用store方法
+    store.syncUserId();
   },
 
   /**
@@ -91,6 +87,12 @@ Page({
     if (this.storeBindings) {
       this.storeBindings.destroyStoreBindings();
     }
+
+    // 清理交互管理器
+    if (this.interactionManager) {
+      this.interactionManager.destroy();
+      this.interactionManager = null;
+    }
   },
 
   /**
@@ -99,13 +101,13 @@ Page({
   onShareAppMessage() {
     return {
       title: '这个海龟汤太难了来帮帮我！',
-      path: `/pages/index/index?soupId=${this.soupId}`
+      path: `/pages/index/index?soupId=${store.soupId}`
     };
   },
 
   /**
    * 开始喝汤按钮点击事件
-   * 简化逻辑，只负责跳转到chat页面
+   * 极简逻辑，只负责跳转到chat页面
    */
   async onStartSoup() {
     // 检查用户是否已登录
@@ -119,16 +121,7 @@ Page({
       return;
     }
 
-    // 检查当前汤面ID
-    if (!store.soupId) {
-      this.showErrorToast('无法获取汤面信息');
-      return;
-    }
-
-    // 确保MobX store中的userId是最新的
-    await this.syncUserId();
-
-    // 直接跳转到chat页面，使用store.soupId
+    // 直接跳转到chat页面
     wx.navigateTo({
       url: `/pages/chat/chat?soupId=${store.soupId}`
     });
@@ -147,7 +140,7 @@ Page({
   // ===== 汤面切换相关 =====
   /**
    * 切换汤面
-   * 简化版本，只负责获取相邻汤面ID并初始化
+   * 极简版本，只负责UI效果和调用store方法
    * @param {string} direction 切换方向，'next' 或 'previous'
    * @returns {Promise<void>}
    */
@@ -165,17 +158,14 @@ Page({
       const isNext = direction === 'next';
 
       // 使用MobX store中的方法获取相邻汤面ID
-      const soupId = await this.getAdjacentSoup(this.soupId, isNext);
+      const soupId = await store.getAdjacentSoup(store.soupId, isNext);
 
       if (soupId) {
-        // 同步用户ID - 确保获取最新的用户状态
-        await this.syncUserId();
+        // 初始化新的汤面数据 - 所有数据管理由store处理
+        store.initSoup(soupId, store.userId || '');
 
-        // 初始化新的汤面数据 - store会自动设置isLoading状态
-        this.initSoup(soupId, this.userId || '');
-
-        // 增加汤面阅读数 - 使用MobX store中的方法
-        this.viewSoup(soupId);
+        // 增加汤面阅读数
+        store.viewSoup(soupId);
       } else {
         this.showErrorToast('切换失败，请重试');
       }
@@ -206,10 +196,9 @@ Page({
    * 直接调用MobX store的toggleFavorite方法
    */
   handleDoubleTap() {
-    if (this.soupId && this.userId) {
-      this.toggleFavorite(this.soupId);
-    } else if (!this.userId) {
-      this.showErrorToast('请先登录');
+    if (store.soupId) {
+      // 直接调用store的方法，store内部会处理登录检查
+      store.toggleFavorite(store.soupId);
     }
   },
 
@@ -228,20 +217,79 @@ Page({
 
   /**
    * 处理汤数据变更事件
-   * 简化版本，只负责初始化新的汤面数据
+   * 极简版本，直接调用store方法
    * @param {Object} e 事件对象
    */
-  async handleSoupChange(e) {
+  handleSoupChange(e) {
     const { soup } = e.detail;
     if (!soup || !soup.soupId) return;
 
-    // 同步用户ID - 确保获取最新的用户状态
-    await this.syncUserId();
+    // 初始化新的汤面数据 - 所有数据管理由store处理
+    store.initSoup(soup.soupId, store.userId || '');
 
-    // 初始化新的汤面数据
-    this.initSoup(soup.soupId, this.userId || '');
+    // 增加汤面阅读数
+    store.viewSoup(soup.soupId);
+  },
 
-    // 增加汤面阅读数 - 使用MobX store中的方法
-    this.viewSoup(soup.soupId);
+  /**
+   * 处理汤面加载状态变化
+   * @param {Object} e 事件对象
+   */
+  handleSoupLoading() {
+    // 这里不需要额外处理，因为isLoading状态已经由MobX管理
+    // 但需要保留这个方法以响应组件的loading事件
+  },
+
+  // ===== 交互管理器相关 =====
+  /**
+   * 初始化交互管理器
+   * 创建交互管理器实例并设置回调函数
+   */
+  initInteractionManager() {
+    // 创建交互管理器实例
+    this.interactionManager = createInteractionManager({
+      // 设置数据更新方法 - 直接传递页面的setData方法
+      setData: this.setData.bind(this),
+
+      // 滑动相关配置
+      threshold: 50, // 滑动触发阈值
+      maxBlur: 10, // 最大模糊程度
+      maxDistance: 100, // 最大滑动距离
+      enableBlurEffect: true, // 启用模糊特效
+      enableBackgroundEffect: true, // 启用背景效果
+
+      // 双击相关配置
+      doubleTapDelay: 300, // 双击间隔时间
+      doubleTapDistance: 30, // 双击允许的位置偏差
+
+      // 回调函数 - 简化为直接调用页面方法
+      onSwipeLeft: () => this.switchSoup('next'),
+      onSwipeRight: () => this.switchSoup('previous'),
+      onDoubleTap: this.handleDoubleTap.bind(this)
+    });
+  },
+
+  /**
+   * 触摸开始事件处理
+   * @param {Object} e 触摸事件对象
+   */
+  handleTouchStart(e) {
+    this.interactionManager?.handleTouchStart(e, !this.isLoading);
+  },
+
+  /**
+   * 触摸移动事件处理
+   * @param {Object} e 触摸事件对象
+   */
+  handleTouchMove(e) {
+    this.interactionManager?.handleTouchMove(e, !this.isLoading);
+  },
+
+  /**
+   * 触摸结束事件处理
+   * @param {Object} e 触摸事件对象
+   */
+  handleTouchEnd(e) {
+    this.interactionManager?.handleTouchEnd(e, !this.isLoading);
   }
 });

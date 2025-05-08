@@ -8,8 +8,10 @@
     bind:clearcontext="clearContext"
   />
 
-  <view class="container">
-
+  <view class="container"
+    bindtouchstart="handleTouchStart"
+    bindtouchmove="handleTouchMove"
+    bindtouchend="handleTouchEnd">
 
     <!-- 汤面显示区域 -->
     <view class="soup-display-wrapper">
