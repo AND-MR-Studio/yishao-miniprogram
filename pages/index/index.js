@@ -134,8 +134,12 @@ Page({
       return;
     }
 
-    // 检查当前汤面ID
-    if (!this.soupId) {
+    // 检查当前汤面ID - 直接使用store.soupId
+    if (!store.soupId) {
+      console.error('开始喝汤时 soupId 为空', {
+        storeId: store.soupId
+      });
+      
       if (startButton) {
         startButton.setLoadingComplete(false);
       }
@@ -152,9 +156,9 @@ Page({
       // 确保MobX store中的userId是最新的
       await this.syncUserId();
 
-      // 直接跳转到chat页面
+      // 直接跳转到chat页面，使用store.soupId
       wx.navigateTo({
-        url: `/pages/chat/chat?soupId=${this.soupId}`
+        url: `/pages/chat/chat?soupId=${store.soupId}`
       });
     } catch (error) {
       console.error('开始喝汤失败:', error);
