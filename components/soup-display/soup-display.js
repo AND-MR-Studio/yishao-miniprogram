@@ -27,11 +27,13 @@ Component({
       type: Boolean,
       value: false
     },
+
     // 模糊程度（0-10px）
     blurAmount: {
       type: Number,
       value: 0
     },
+
     // 是否启用呼吸模糊效果
     breathingBlur: {
       type: Boolean,
@@ -43,7 +45,6 @@ Component({
       type: String,
       value: 'viewing'
     },
-
   },
 
   options: {
@@ -54,6 +55,7 @@ Component({
   data: {
     // 组件内部数据
     soupData: {}, // 汤面数据
+    isInitialized: false // 标记组件是否已初始化
   },
 
   lifetimes: {
@@ -61,12 +63,14 @@ Component({
     attached() {
       this._isAttached = true;
 
-      // 创建MobX Store绑定
+      // 创建MobX Store绑定 - 只读取数据，不更新store
       this.storeBindings = createStoreBindings(this, {
         store: store,
-        fields: ['soupId', 'soupData', 'isLoading'],
-        actions: ['updateInteractionStatus']
+        fields: ['soupData', 'isLoading']
       });
+
+      // 标记组件已初始化
+      this.setData({ isInitialized: true });
     },
 
     // 组件卸载
@@ -82,19 +86,6 @@ Component({
 
   // 属性变化观察者
   observers: {
-    // 当soupId变化时，更新store中的soupId
-    'soupId': function(newSoupId) {
-      if (newSoupId && this._isAttached) {
-        // 将组件的soupId同步到store中
-        console.log('汤面ID已更新:', newSoupId);
-
-        // 确保store中的soupId与组件的soupId一致
-        if (store.soupId !== newSoupId) {
-          store.updateState({ soupId: newSoupId });
-        }
-      }
-    },
-
     // 监听isLoading状态变化
     'isLoading': function(isLoading) {
       if (this._isAttached) {
@@ -112,8 +103,6 @@ Component({
   },
 
   methods: {
-
-
     /**
      * 设置偷看状态
      * 由父页面调用，用于控制偷看功能

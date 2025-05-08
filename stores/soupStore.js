@@ -28,6 +28,9 @@ class SoupStore {
   // 加载状态
   isLoading = false;  // 是否正在加载汤面数据
 
+  // 防止重复请求的标志
+  _fetchingId = null; // 当前正在获取数据的soupId
+
   constructor() {
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
@@ -36,8 +39,8 @@ class SoupStore {
       toggleLike: flow,
       toggleFavorite: flow,
 
-      // 标记updateInteractionStatus为action
-      updateInteractionStatus: true
+      // 标记为非观察属性
+      _fetchingId: false
     });
   }
 
@@ -49,69 +52,108 @@ class SoupStore {
 
   // ===== Action方法 =====
 
-  // 初始化汤面数据
+  /**
+   * 初始化汤面数据
+   * 简化版本，只设置ID和用户ID，然后获取数据
+   * @param {string} soupId 汤面ID
+   * @param {string} userId 用户ID
+   */
   initSoup(soupId, userId = '') {
+    if (!soupId) return;
+
+    console.log('初始化汤面数据:', { soupId, userId });
+
+    // 设置基本数据
     this.soupId = soupId;
     this.userId = userId || '';
     this.soupState = PAGE_STATE.VIEWING;
 
     // 获取汤面数据
-    if (soupId) {
-      this.fetchSoupData(soupId);
-    }
-
-    console.log('初始化汤面数据:', { soupId, userId });
+    this.fetchSoupData(soupId);
   }
 
-  // 更新状态 - 简化版本
-  updateState(data) {
-    // 记录旧的soupId
-    const oldSoupId = this.soupId;
-
+  /**
+   * 更新状态
+   * 简化版本，只更新必要的状态
+   * @param {Object} data 要更新的数据
+   */
+  updateState(data = {}) {
     // 更新状态
     if (data.soupState !== undefined) {
       this.soupState = data.soupState;
     }
 
-    // 更新数据
-    if (data.soupId !== undefined) {
-      this.soupId = data.soupId;
-    }
+    // 更新用户ID
     if (data.userId !== undefined) {
       this.userId = data.userId;
     }
 
-    // 如果soupId发生变化，获取新的汤面数据
-    if (data.soupId !== undefined && data.soupId !== oldSoupId) {
+    // 更新汤面ID并获取数据
+    if (data.soupId !== undefined && data.soupId !== this.soupId) {
+      this.soupId = data.soupId;
       this.fetchSoupData(data.soupId);
     }
   }
 
-  // 切换到新的汤面
-  changeSoup(newSoupId) {
-    if (newSoupId === this.soupId) return;
-
-    // 更新soupId并获取新汤面的数据
-    this.soupId = newSoupId;
-    this.fetchSoupData(newSoupId);
-  }
-
-  // 获取汤面数据 - 异步流程
+  /**
+   * 获取汤面数据 - 异步流程
+   * 优化版本，防止重复请求
+   * @param {string} soupId 汤面ID
+   */
   *fetchSoupData(soupId) {
     if (!soupId) return;
+
+    // 防止重复请求同一个soupId
+    if (this._fetchingId === soupId) {
+      console.log('已有相同ID的请求正在进行中，跳过:', soupId);
+      return;
+    }
+
+    // 设置当前正在获取的ID
+    this._fetchingId = soupId;
 
     try {
       // 设置加载状态
       this.isLoading = true;
       console.log('开始获取汤面数据:', soupId);
 
-      // 直接使用getSoup方法获取汤面数据
-      const soupData = yield soupService.getSoup(soupId, true);
+      // 并行获取汤面数据和用户交互状态
+      const [soupData, isLiked, isFavorite] = yield Promise.all([
+        // 获取汤面数据
+        soupService.getSoup(soupId, true),
+        // 如果有userId，获取点赞状态，否则返回false
+        this.userId ? userService.isLikedSoup(soupId) : Promise.resolve(false),
+        // 如果有userId，获取收藏状态，否则返回false
+        this.userId ? userService.isFavoriteSoup(soupId) : Promise.resolve(false)
+      ]);
+
+      // 检查当前soupId是否仍然是请求的soupId
+      if (this.soupId !== soupId) {
+        console.log('soupId已变更，丢弃过时的响应:', soupId);
+        return;
+      }
 
       if (soupData) {
         console.log('成功获取汤面数据:', soupId);
-        // 更新汤面数据
-        this.updateSoupData(soupData);
+
+        // 更新汤面数据和交互状态
+        this.soupData = soupData;
+
+        // 更新交互状态
+        this.isLiked = isLiked;
+        this.isFavorite = isFavorite;
+        this.likeCount = soupData.likeCount || 0;
+        this.favoriteCount = soupData.favoriteCount || 0;
+        this.viewCount = soupData.viewCount || 0;
+
+        console.log('汤面数据包含交互状态:', {
+          soupId,
+          isLiked,
+          isFavorite,
+          likeCount: this.likeCount,
+          favoriteCount: this.favoriteCount,
+          viewCount: this.viewCount
+        });
       } else {
         console.error('获取汤面数据失败: 未找到指定ID的汤面');
 
@@ -119,7 +161,7 @@ class SoupStore {
         console.log('尝试获取随机汤面');
         const randomSoupId = yield soupService.getRandomSoup();
 
-        if (randomSoupId) {
+        if (randomSoupId && randomSoupId !== this.soupId) {
           console.log('获取随机汤面成功，ID:', randomSoupId);
           // 更新soupId
           this.soupId = randomSoupId;
@@ -131,103 +173,10 @@ class SoupStore {
     } catch (error) {
       console.error('获取汤面数据失败:', error);
     } finally {
-      // 重置加载状态
+      // 重置加载状态和请求标志
       this.isLoading = false;
+      this._fetchingId = null;
     }
-  }
-
-  /**
-   * 更新汤面数据
-   * 更新完整的汤面数据对象，包括内容和交互状态
-   * @param {Object} soupData 汤面数据对象
-   */
-  updateSoupData(soupData) {
-    if (!soupData) return;
-
-    // 更新汤面数据对象
-    this.soupData = soupData;
-
-    // 同时更新交互状态
-    this.updateInteractionStatus({
-      isLiked: soupData.isLiked,
-      isFavorite: soupData.isFavorite,
-      likeCount: soupData.likeCount,
-      favoriteCount: soupData.favoriteCount,
-      viewCount: soupData.viewCount
-    });
-  }
-
-  /**
-   * 更新交互状态
-   * 统一处理所有交互相关的状态更新
-   * @param {Object} status 交互状态对象
-   */
-  updateInteractionStatus(status = {}) {
-    console.log('更新交互状态，传入参数:', status);
-    console.log('更新前状态:', {
-      isLiked: this.isLiked,
-      isFavorite: this.isFavorite,
-      likeCount: this.likeCount,
-      favoriteCount: this.favoriteCount,
-      viewCount: this.viewCount
-    });
-
-    // 更新点赞状态
-    if (status.isLiked !== undefined) {
-      this.isLiked = status.isLiked;
-    }
-
-    // 更新收藏状态
-    if (status.isFavorite !== undefined) {
-      this.isFavorite = status.isFavorite;
-    }
-
-    // 更新计数
-    if (status.likeCount !== undefined && status.likeCount >= 0) {
-      this.likeCount = status.likeCount;
-    }
-
-    if (status.favoriteCount !== undefined && status.favoriteCount >= 0) {
-      this.favoriteCount = status.favoriteCount;
-    }
-
-    if (status.viewCount !== undefined && status.viewCount >= 0) {
-      this.viewCount = status.viewCount;
-    }
-
-    console.log('更新后状态:', {
-      isLiked: this.isLiked,
-      isFavorite: this.isFavorite,
-      likeCount: this.likeCount,
-      favoriteCount: this.favoriteCount,
-      viewCount: this.viewCount
-    });
-  }
-
-  /**
-   * 更新阅读数
-   * @param {number} viewCount 阅读数
-   */
-  updateViewCount(viewCount) {
-    this.updateInteractionStatus({ viewCount });
-  }
-
-  /**
-   * 更新点赞状态
-   * @param {boolean} isLiked 是否已点赞
-   * @param {number} likeCount 点赞数量
-   */
-  updateLikeStatus(isLiked, likeCount) {
-    this.updateInteractionStatus({ isLiked, likeCount });
-  }
-
-  /**
-   * 更新收藏状态
-   * @param {boolean} isFavorite 是否已收藏
-   * @param {number} favoriteCount 收藏数量
-   */
-  updateFavoriteStatus(isFavorite, favoriteCount) {
-    this.updateInteractionStatus({ isFavorite, favoriteCount });
   }
 
   /**
@@ -260,11 +209,9 @@ class SoupStore {
             ? likeResult.likeCount
             : (likeResult.count !== undefined ? likeResult.count : 0);
 
-          // 更新状态
-          this.updateInteractionStatus({
-            isLiked: newLikeStatus,
-            likeCount: newLikeCount
-          });
+          // 直接更新状态
+          this.isLiked = newLikeStatus;
+          this.likeCount = newLikeCount;
 
           return {
             success: true,
@@ -318,11 +265,9 @@ class SoupStore {
             ? favoriteResult.favoriteCount
             : (favoriteResult.count !== undefined ? favoriteResult.count : 0);
 
-          // 更新状态
-          this.updateInteractionStatus({
-            isFavorite: newFavoriteStatus,
-            favoriteCount: newFavoriteCount
-          });
+          // 直接更新状态
+          this.isFavorite = newFavoriteStatus;
+          this.favoriteCount = newFavoriteCount;
 
           return {
             success: true,

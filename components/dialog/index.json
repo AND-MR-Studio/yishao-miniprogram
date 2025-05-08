@@ -1,7 +1,6 @@
 {
   "component": true,
   "usingComponents": {
-    "nav-bar": "/components/nav-bar/index",
     "input-bar": "/components/input-bar/index"
   },
   "styleIsolation": "isolated"

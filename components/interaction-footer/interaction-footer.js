@@ -23,6 +23,10 @@ Component({
 
   data: {
     // 组件内部数据
+    isLiked: false,
+    isFavorite: false,
+    likeCount: 0,
+    favoriteCount: 0
   },
 
   lifetimes: {
@@ -55,6 +59,8 @@ Component({
       }
     }
   },
+
+  // 不需要额外的观察者，MobX会自动处理状态更新
 
   methods: {
     /**
