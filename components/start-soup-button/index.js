@@ -2,6 +2,7 @@
 // 引入MobX store和绑定工具
 const { store } = require('../../stores/soupStore');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
+
 Component({
   /**
    * 组件的属性列表
@@ -38,8 +39,8 @@ Component({
     // 按钮点击事件
     handleTap() {
       // 如果正在加载或已按下，不处理点击
-      // 使用MobX中的isLoading状态
-      if (this.data.isLoading || this.isLoading || this.data.isPressed) {
+      // 完全依赖MobX中的isLoading状态
+      if (this.data.isLoading || this.data.isPressed) {
         return;
       }
 
@@ -54,7 +55,7 @@ Component({
       // 设置最大加载时间，如果超过这个时间还没有收到加载完成的通知，则自动重置按钮
       this._loadingTimeout = setTimeout(() => {
         // 如果还在加载中，自动重置按钮
-        if (this.isLoading) {
+        if (this.data.isPressed) {
           // 重置按钮到原始状态
           this.resetButton();
 
@@ -73,22 +74,6 @@ Component({
       return new Promise(resolve => {
         this.setData(data, resolve);
       });
-    },
-
-    // 设置加载完成状态（由父组件调用） - 异步处理
-    async setLoadingComplete() {
-      // 如果当前没有在加载中，则不处理
-      // 使用MobX中的isLoading状态
-      if (!this.isLoading && !this.data.isPressed) return;
-
-      // 清除加载超时计时器
-      if (this._loadingTimeout) {
-        clearTimeout(this._loadingTimeout);
-        this._loadingTimeout = null;
-      }
-
-      // 无论成功与否，都重置按钮状态
-      await this.resetButton();
     },
 
     // 重置按钮到原始状态 - 异步处理
@@ -116,6 +101,13 @@ Component({
         store: store,
         fields: ['isLoading', 'isViewing', 'soupState'],
       });
+
+      // 监听isLoading状态变化，自动重置按钮
+      this._isLoadingObserver = this.createObserver('isLoading', (isLoading) => {
+        if (!isLoading && this.data.isPressed) {
+          this.resetButton();
+        }
+      });
     },
 
     detached() {
@@ -128,6 +120,23 @@ Component({
       // 清理MobX绑定
       if (this.storeBindings) {
         this.storeBindings.destroyStoreBindings();
+      }
+
+      // 清理观察者
+      if (this._isLoadingObserver) {
+        this._isLoadingObserver.disconnect();
+      }
+    }
+  },
+
+  /**
+   * 监听器
+   */
+  observers: {
+    // 监听isLoading状态变化，自动重置按钮
+    'isLoading': function(isLoading) {
+      if (!isLoading && this.data.isPressed) {
+        this.resetButton();
       }
     }
   }

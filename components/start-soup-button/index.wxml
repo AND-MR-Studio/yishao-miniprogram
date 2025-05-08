@@ -6,7 +6,7 @@
         <text class="btn-text-light">{{text}}</text>
       </block>
       <block wx:else>
-        <view class="loading-dots" wx:if="{{isLoading || data.isLoading}}">
+        <view class="loading-dots" wx:if="{{isLoading}}">
           <text class="dot">.</text>
           <text class="dot">.</text>
           <text class="dot">.</text>

@@ -29,43 +29,37 @@ Page({
    * @param {Object} options - 页面参数，可能包含soupId
    */
   async onLoad(options) {
-    try {
-      // 创建MobX Store绑定
-      this.storeBindings = createStoreBindings(this, {
-        store: store,
-        fields: [
-          'soupId', 'userId', 'isLoading', 'soupData'
-        ],
-        actions: [
-          'initSoup', 'toggleFavorite',
-          'syncUserId', 'getRandomSoup', 'getAdjacentSoup',
-          'viewSoup'
-        ]
-      });
+    // 创建MobX Store绑定
+    this.storeBindings = createStoreBindings(this, {
+      store: store,
+      fields: [
+        'soupId', 'userId', 'isLoading', 'soupData'
+      ],
+      actions: [
+        'initSoup', 'toggleFavorite',
+        'syncUserId', 'getRandomSoup', 'getAdjacentSoup',
+        'viewSoup'
+      ]
+    });
 
-      // 同步用户ID - 确保获取最新的用户状态
-      await this.syncUserId();
+    // 同步用户ID - 确保获取最新的用户状态
+    await this.syncUserId();
 
-      // 检查是否有指定的汤面ID
-      let targetSoupId = options.soupId || null;
+    // 检查是否有指定的汤面ID
+    let targetSoupId = options.soupId || null;
 
-      // 如果没有提供ID，则获取随机汤面ID
-      if (!targetSoupId) {
-        // 使用MobX store中的方法获取随机汤面ID
-        targetSoupId = await this.getRandomSoup();
-      }
+    // 如果没有提供ID，则获取随机汤面ID
+    if (!targetSoupId) {
+      targetSoupId = await this.getRandomSoup();
+    }
 
-      if (!targetSoupId) {
-        throw new Error('无法获取汤面ID');
-      }
-
+    if (targetSoupId) {
       // 初始化汤面数据 - 使用MobX中的userId
       this.initSoup(targetSoupId, this.userId || '');
 
       // 增加汤面阅读数 - 使用MobX store中的方法
       this.viewSoup(targetSoupId);
-    } catch (error) {
-      console.error('页面加载失败:', error);
+    } else {
       this.showErrorToast('加载失败，请重试');
     }
   },
@@ -83,7 +77,6 @@ Page({
     }
 
     // 同步用户ID - 从userService获取最新的userId并更新到MobX store
-    // 这确保了在用户从其他页面（如个人中心）登录后返回时，能获取到正确的用户状态
     if (this.syncUserId) {
       this.syncUserId();
     }
@@ -115,17 +108,9 @@ Page({
    * 简化逻辑，只负责跳转到chat页面
    */
   async onStartSoup() {
-    // 获取开始喝汤按钮组件
-    const startButton = this.selectComponent('#startSoupButton');
-
     // 检查用户是否已登录
     const token = wx.getStorageSync('token');
     if (!token) {
-      // 重置按钮状态
-      if (startButton) {
-        startButton.setLoadingComplete(false);
-      }
-
       // 显示登录提示弹窗
       const loginPopup = this.selectComponent('#loginPopup');
       if (loginPopup) {
@@ -134,43 +119,19 @@ Page({
       return;
     }
 
-    // 检查当前汤面ID - 直接使用store.soupId
+    // 检查当前汤面ID
     if (!store.soupId) {
-      console.error('开始喝汤时 soupId 为空', {
-        storeId: store.soupId
-      });
-      
-      if (startButton) {
-        startButton.setLoadingComplete(false);
-      }
       this.showErrorToast('无法获取汤面信息');
       return;
     }
 
-    try {
-      // 设置按钮加载完成
-      if (startButton) {
-        startButton.setLoadingComplete(true);
-      }
+    // 确保MobX store中的userId是最新的
+    await this.syncUserId();
 
-      // 确保MobX store中的userId是最新的
-      await this.syncUserId();
-
-      // 直接跳转到chat页面，使用store.soupId
-      wx.navigateTo({
-        url: `/pages/chat/chat?soupId=${store.soupId}`
-      });
-    } catch (error) {
-      console.error('开始喝汤失败:', error);
-
-      // 重置按钮状态
-      if (startButton) {
-        startButton.setLoadingComplete(false);
-      }
-
-      // 显示错误提示
-      this.showErrorToast('加载失败，请重试');
-    }
+    // 直接跳转到chat页面，使用store.soupId
+    wx.navigateTo({
+      url: `/pages/chat/chat?soupId=${store.soupId}`
+    });
   },
 
   /**
@@ -206,32 +167,23 @@ Page({
       // 使用MobX store中的方法获取相邻汤面ID
       const soupId = await this.getAdjacentSoup(this.soupId, isNext);
 
-      if (!soupId) {
-        throw new Error(`无法获取${isNext ? '下' : '上'}一个汤面ID`);
+      if (soupId) {
+        // 同步用户ID - 确保获取最新的用户状态
+        await this.syncUserId();
+
+        // 初始化新的汤面数据 - store会自动设置isLoading状态
+        this.initSoup(soupId, this.userId || '');
+
+        // 增加汤面阅读数 - 使用MobX store中的方法
+        this.viewSoup(soupId);
+      } else {
+        this.showErrorToast('切换失败，请重试');
       }
-
-      // 同步用户ID - 确保获取最新的用户状态
-      await this.syncUserId();
-
-      // 初始化新的汤面数据 - store会自动设置isLoading状态
-      this.initSoup(soupId, this.userId || '');
-
-      // 增加汤面阅读数 - 使用MobX store中的方法
-      this.viewSoup(soupId);
-
+    } finally {
       // 重置UI效果
       this.setData({
         swipeFeedback: false,  // 关闭滑动反馈动画
         breathingBlur: false   // 关闭呼吸模糊效果
-      });
-    } catch (error) {
-      console.error('切换汤面失败:', error);
-      this.showErrorToast('切换失败，请重试');
-
-      // 重置UI状态
-      this.setData({
-        swipeFeedback: false,
-        breathingBlur: false
       });
     }
   },
@@ -283,20 +235,13 @@ Page({
     const { soup } = e.detail;
     if (!soup || !soup.soupId) return;
 
-    const soupId = soup.soupId;
+    // 同步用户ID - 确保获取最新的用户状态
+    await this.syncUserId();
 
-    try {
-      // 同步用户ID - 确保获取最新的用户状态
-      await this.syncUserId();
+    // 初始化新的汤面数据
+    this.initSoup(soup.soupId, this.userId || '');
 
-      // 初始化新的汤面数据
-      this.initSoup(soupId, this.userId || '');
-
-      // 增加汤面阅读数 - 使用MobX store中的方法
-      this.viewSoup(soupId);
-    } catch (error) {
-      console.error('加载汤面失败:', error);
-      this.showErrorToast('加载失败，请重试');
-    }
+    // 增加汤面阅读数 - 使用MobX store中的方法
+    this.viewSoup(soup.soupId);
   }
 });
