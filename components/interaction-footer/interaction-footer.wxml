@@ -2,21 +2,21 @@
 <!-- 底部控件容器 - 包含创作者信息和交互图标 -->
 <view class="bottom-controls-container {{isDrinking ? 'drinking-hidden' : ''}}">
   <!-- 创作者感谢文字 - 放在上面 -->
-  <view class="creator-credit" wx:if="{{creatorId && !isDrinking}}">
-    <text class="creator-text">感谢创作者：{{creatorId}}</text>
+  <view class="creator-credit" wx:if="{{store.soupData.creatorId && !isDrinking}}">
+    <text class="creator-text">感谢创作者：{{store.soupData.creatorId}}</text>
   </view>
 
   <!-- 图标容器 - 在喝汤状态下隐藏，放在下面 -->
   <view class="icons-container" wx:if="{{!isDrinking}}">
     <!-- 胶囊形容器 -->
     <view class="capsule-container">
-      <!-- 收藏图标 -->
+      <!-- 收藏图标 - 使用MobX store中的状态 -->
       <view class="icon-item favorite-item {{isFavorite ? 'active' : ''}}" bindtap="handleFavoriteClick">
         <text class="icon-text iconfont icon-favorited"></text>
         <text class="count-text">{{favoriteCount > 0 ? favoriteCount : '收藏'}}</text>
       </view>
 
-      <!-- 点赞图标 - 可点击 -->
+      <!-- 点赞图标 - 使用MobX store中的状态 -->
       <view class="icon-item like-item {{isLiked ? 'active' : ''}}" bindtap="handleLikeClick">
         <text class="icon-text iconfont icon-liked"></text>
         <text class="count-text">{{likeCount > 0 ? likeCount : '点赞'}}</text>

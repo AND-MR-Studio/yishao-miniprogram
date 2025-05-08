@@ -4,10 +4,8 @@
  */
 // ===== 导入依赖 =====
 const soupService = require('../../utils/soupService');
-const dialogService = require('../../utils/dialogService');
 const userService = require('../../utils/userService');
 const { SWIPE_DIRECTION } = require('../../utils/interactionManager');
-const eventUtils = require('../../utils/eventUtils');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { store, PAGE_STATE } = require('../../stores/soupStore');
 
@@ -43,62 +41,51 @@ Page({
   /**
    * 页面加载时执行
    * 获取用户设置并加载汤面
-   * @param {Object} options - 页面参数，可能包含soupId和dialogId
+   * @param {Object} options - 页面参数，可能包含soupId
    */
   async onLoad(options) {
     try {
-      // 创建MobX Store绑定，只使用updateState方法来管理状态
+      // 创建MobX Store绑定，简化后只需要基本字段和方法
       this.storeBindings = createStoreBindings(this, {
         store: store,
         fields: [
-          'soupId', 'dialogId', 'userId', 'soupState',
-          'isPeeking', 'tipVisible', 'showButtons',
-          'isViewing', 'isDrinking', 'isTruth',
-          'shouldShowTip', 'shouldShowButtons',
-          'shouldShowSoupDisplay', 'shouldShowInteractionFooter'
+          'soupId', 'userId', 'soupState', 'isLoading',
+          'isViewing'
         ],
-        actions: ['updateState']
+        actions: ['updateState', 'initSoup']
       });
 
-      // 不再需要初始化页面操作对象
-
+      // 设置加载状态
       this.setData({ isLoading: true });
 
       // 检查是否有指定的汤面ID
       const soupId = options.soupId || null;
-      const dialogId = options.dialogId || null;
 
-      // 获取汤面ID
-      let targetSoupId = await this.fetchSoupData(soupId);
+      // 获取汤面ID - 如果没有提供ID，则获取随机汤面ID
+      let targetSoupId = soupId;
+      if (!targetSoupId) {
+        targetSoupId = await soupService.getRandomSoup();
+        console.log('获取随机汤面ID:', targetSoupId);
+      }
 
       if (!targetSoupId) {
         throw new Error('无法获取汤面ID');
       }
 
-      // 初始化汤面数据和页面状态
-      await this.initSoupData(targetSoupId);
+      // 使用initSoup方法初始化汤面数据
+      // 这会自动调用fetchSoupData获取数据
+      this.initSoup(targetSoupId, '');
 
-      // 如果有dialogId，自动切换到喝汤状态
-      if (dialogId) {
-        // 等待汤面数据加载完成后切换到喝汤状态
-        wx.nextTick(async () => {
-          try {
-            const userId = await this.ensureUserId();
-
-            // 更新MobX Store
-            this.updateState({
-              dialogId: dialogId,
-              soupState: PAGE_STATE.DRINKING
-            });
-
-            // 切换到喝汤状态
-            this.switchToDrinkingState(this.soupId, dialogId, userId);
-          } catch (error) {
-            console.error('切换到喝汤状态失败:', error);
-            this.showErrorToast('无法切换到喝汤状态');
-          }
-        });
+      // 增加汤面阅读数
+      try {
+        await soupService.viewSoup(targetSoupId);
+      } catch (error) {
+        console.error('增加阅读数失败:', error);
+        // 阅读数增加失败不影响用户体验，静默处理
       }
+
+      // 更新页面加载状态
+      this.setData({ isLoading: false });
     } catch (error) {
       console.error('页面加载失败:', error);
       this.showErrorToast('加载失败，请重试');
@@ -110,6 +97,7 @@ Page({
 
   /**
    * 初始化汤面数据和页面状态
+   * 使用MobX的fetchSoupData方法获取汤面数据
    * @param {string} soupId 汤面ID
    */
   async initSoupData(soupId) {
@@ -118,77 +106,24 @@ Page({
       return;
     }
 
-    // 更新MobX store中的soupId
-    this.updateState({
-      soupId: soupId,
-      soupState: PAGE_STATE.VIEWING
-    });
-
     try {
-      // 使用getSoup方法获取汤面数据，并设置detail=true以获取完整数据
-      const soupData = await soupService.getSoup(soupId, true);
+      // 设置加载状态
+      this.setData({ isLoading: true });
 
-      if (!soupData) {
-        console.error('获取汤面数据失败: 未找到指定ID的汤面');
-        this.setData({ isLoading: false });
-        return;
-      }
-
-      // 更新页面数据
-      this.setData({
-        soupData: soupData,
-        isLoading: false
-      });
+      // 使用initSoup方法初始化汤面数据
+      // 这会自动调用fetchSoupData获取数据
+      this.initSoup(soupId, this.userId || '');
 
       // 增加汤面阅读数
       try {
-        const viewResult = await soupService.viewSoup(soupId);
-        // 如果成功获取到阅读数，直接更新MobX store
-        if (viewResult && viewResult.viewCount) {
-          // 更新MobX store中的阅读数
-          this.store.updateViewCount(viewResult.viewCount);
-        }
+        await soupService.viewSoup(soupId);
       } catch (error) {
         console.error('增加阅读数失败:', error);
         // 阅读数增加失败不影响用户体验，静默处理
       }
 
-      // 并行处理收藏和点赞状态检查
-      const favoritePromise = userService.isFavoriteSoup(soupId)
-        .catch(error => {
-          console.error('检查收藏状态失败:', error);
-          return false; // 出错时默认为未收藏
-        });
-
-      const likedPromise = userService.isLikedSoup(soupId)
-        .catch(error => {
-          console.error('检查点赞状态失败:', error);
-          return false; // 出错时默认为未点赞
-        });
-
-      // 等待收藏和点赞状态检查完成
-      const [isFavorite, isLiked] = await Promise.all([favoritePromise, likedPromise]);
-
-      // 更新MobX store中的汤面数据和交互状态
-      const soupDataWithInteractions = {
-        ...soupData,
-        isFavorite: isFavorite,
-        isLiked: isLiked,
-        favoriteCount: soupData.favoriteCount || 0,
-        likeCount: soupData.likeCount || 0,
-        viewCount: soupData.viewCount || 0
-      };
-
-      // 更新MobX store
-      this.store.updateSoupData(soupDataWithInteractions);
-
-      // 更新汤面显示组件的数据
-      const soupDisplay = this.selectComponent('#soupDisplay');
-      if (soupDisplay) {
-        soupDisplay.setData({
-          soupData: soupDataWithInteractions
-        });
-      }
+      // 更新页面加载状态
+      this.setData({ isLoading: false });
     } catch (error) {
       console.error('初始化汤面数据失败:', error);
       this.setData({ isLoading: false });
@@ -210,84 +145,22 @@ Page({
 
   /**
    * 页面加载完成时执行
-   * 注册事件监听器
    */
   onReady() {
-    // 初始化事件中心（如果尚未初始化）
-    eventUtils.initEventCenter();
-
-    // 注册事件监听器
-    // 只保留必要的事件监听器，其他已由MobX替代
-    eventUtils.onEvent('loadSoup', this.handleLoadSoup.bind(this));
-    eventUtils.onEvent('peekingStatusChange', this.handlePeekingStatusChange.bind(this));
+    // 不再需要初始化事件中心和注册事件监听器
+    // 所有状态管理已由MobX处理
   },
 
 
-  /**
-   * 处理偷看状态变更事件（通过eventCenter）
-   * @param {Object} data 事件数据
-   */
-  handlePeekingStatusChange(data) {
-    if (!data) return;
 
-    // 使用MobX更新偷看状态
-    // 提示模块可见性会通过计算属性自动更新
-    this.updateState({
-      isPeeking: data.isPeeking
-    });
 
-    // 不再需要手动更新汤面显示组件，组件会通过属性绑定自动更新
-  },
 
-  /**
-   * 处理加载汤面事件
-   * @param {Object} data 包含 soupId 的对象
-   */
-  async handleLoadSoup(data) {
-    if (!data || !data.soupId) return;
-
-    try {
-      // 如果当前处于喝汤状态，先关闭对话框回到查看状态
-      if (this.soupState === PAGE_STATE.DRINKING) {
-        // 使用MobX更新页面状态
-        this.updateState({
-          dialogId: '',
-          soupState: PAGE_STATE.VIEWING
-        });
-
-        // 切换到查看状态
-        this.switchToViewingState();
-      }
-
-      // 设置加载状态
-      this.setData({ isLoading: true });
-
-      // 获取汤面ID
-      const soupId = data.soupId;
-      if (!soupId) {
-        throw new Error('无法获取汤面ID');
-      }
-
-      // 初始化汤面数据和页面状态
-      await this.initSoupData(soupId);
-    } catch (error) {
-      console.error('加载汤面失败:', error);
-      this.showErrorToast('加载失败，请重试');
-      this.setData({
-        isLoading: false
-      });
-    }
-  },
 
   /**
    * 页面卸载时执行
    * 清理资源
    */
   onUnload() {
-    // 清理事件监听器
-    eventUtils.offEvent('loadSoup', this.handleLoadSoup);
-    eventUtils.offEvent('peekingStatusChange', this.handlePeekingStatusChange);
-
     // 清理MobX绑定
     if (this.storeBindings) {
       this.storeBindings.destroyStoreBindings();
@@ -312,8 +185,8 @@ Page({
    */
   switchToViewingState() {
     // 更新MobX Store - 其他UI状态会通过计算属性自动更新
+    // 由于chat已分离到独立页面，不再需要管理dialogId
     this.updateState({
-      dialogId: '',
       soupState: PAGE_STATE.VIEWING
     });
 
@@ -328,88 +201,18 @@ Page({
    * 切换到喝汤状态
    * 跳转到chat页面
    * @param {string} soupId 汤面ID
-   * @param {string} dialogId 对话ID
-   * @param {string} userId 用户ID
    */
-  switchToDrinkingState(soupId, dialogId, userId) {
-    // 跳转到chat页面
+  switchToDrinkingState(soupId) {
+    // 跳转到chat页面，不再传递dialogId参数
     wx.navigateTo({
-      url: `/pages/chat/chat?soupId=${soupId}&dialogId=${dialogId}`
+      url: `/pages/chat/chat?soupId=${soupId}`
     });
   },
 
-  /**
-   * 切换到汤底状态
-   * 使用MobX管理状态，替代旧的pageStateManager
-   * @param {string} soupId 汤面ID
-   */
-  switchToTruthState(soupId) {
-    // 更新页面UI - 其他UI状态会通过MobX计算属性自动更新
-    this.setData({
-      truthSoupId: soupId
-    });
-  },
-
-
-  /**
-   * 处理对话组件关闭事件
-   * 返回到汤面查看状态
-   */
-  onDialogClose() {
-    // 直接调用切换到查看状态的方法，它会更新MobX Store
-    this.switchToViewingState();
-  },
-
-  /**
-   * 处理提示模块关闭事件
-   */
-  onTipModuleClose() {
-    // 提示模块关闭时的处理逻辑已通过MobX管理，不需要额外处理
-  },
-
-  /**
-   * 处理提示模块可见性变化事件
-   * @param {Object} e 事件对象
-   */
-  onTipVisibleChange(e) {
-    // 不再需要手动更新tipVisible状态，提示模块可见性完全由计算属性控制
-    console.log('提示模块可见性变化:', e.detail.visible);
-  },
-
-  /**
-   * 清理上下文事件
-   * @param {Object} e 事件对象
-   */
-  clearContext(e) {
-    // 该方法已移至chat页面，在index页面不再需要
-    console.log('清理上下文事件已移至chat页面');
-  },
-
-  /**
-   * 处理显示汤底事件
-   * @param {Object} e 事件对象
-   */
-  async onShowTruth(e) {
-    const { soupId } = e.detail;
-    if (!soupId) return;
-
-    try {
-      // 更新MobX Store
-      this.updateState({
-        soupState: PAGE_STATE.TRUTH
-      });
-
-      // 切换到汤底状态
-      this.switchToTruthState(soupId);
-    } catch (error) {
-      console.error('获取汤底失败:', error);
-      this.showErrorToast('无法获取汤底，请重试');
-    }
-  },
 
   /**
    * 开始喝汤按钮点击事件
-   * 处理用户点击开始喝汤按钮的所有逻辑
+   * 简化逻辑，只负责获取用户ID并跳转到chat页面
    */
   async onStartSoup() {
     // 获取开始喝汤按钮组件
@@ -431,9 +234,8 @@ Page({
       return;
     }
 
-    // 获取当前汤面ID
-    const currentSoupId = this.soupId;
-    if (!currentSoupId) {
+    // 检查当前汤面ID
+    if (!this.soupId) {
       if (startButton) {
         startButton.setLoadingComplete(false);
       }
@@ -445,33 +247,19 @@ Page({
       // 获取用户ID
       const userId = await this.ensureUserId();
 
-      // 获取用户对话，如果不存在则创建新对话
-      let dialogData = await dialogService.getUserDialog(userId, currentSoupId);
-
-      // 如果没有对话ID，创建新对话
-      if (!dialogData.dialogId) {
-        dialogData = await dialogService.createDialog(userId, currentSoupId);
-      }
-
-      const dialogId = dialogData.dialogId || '';
-
-      if (!dialogId) {
-        throw new Error('无法获取对话ID');
-      }
+      // 更新MobX Store中的userId
+      this.updateState({
+        userId: userId,
+        soupState: PAGE_STATE.DRINKING
+      });
 
       // 设置按钮加载完成
       if (startButton) {
         startButton.setLoadingComplete(true);
       }
 
-      // 更新MobX Store
-      this.updateState({
-        dialogId: dialogId,
-        soupState: PAGE_STATE.DRINKING
-      });
-
-      // 切换到喝汤状态 - 跳转到chat页面
-      this.switchToDrinkingState(currentSoupId, dialogId, userId);
+      // 直接跳转到chat页面，由chat页面负责创建或获取对话
+      this.switchToDrinkingState(this.soupId);
     } catch (error) {
       console.error('开始喝汤失败:', error);
 
@@ -493,13 +281,6 @@ Page({
     wx.switchTab({
       url: '/pages/mine/mine'
     });
-  },
-
-  /**
-   * 处理登录弹窗取消按钮点击事件
-   */
-  onLoginCancel() {
-    // 弹窗会自动关闭，无需额外处理
   },
 
   // ===== 汤面切换相关 =====
@@ -530,8 +311,16 @@ Page({
 
       // 对话组件已移至chat页面，不再需要更新
 
-      // 初始化汤面数据和页面状态
-      await this.initSoupData(soupId);
+      // 使用initSoup方法初始化汤面数据
+      this.initSoup(soupId, this.userId || '');
+
+      // 增加汤面阅读数
+      try {
+        await soupService.viewSoup(soupId);
+      } catch (error) {
+        console.error('增加阅读数失败:', error);
+        // 阅读数增加失败不影响用户体验，静默处理
+      }
 
       // 重置UI状态
       this.setData({
@@ -552,34 +341,7 @@ Page({
 
 
 
-  /**
-   * 获取汤面ID的简化方法
-   * 如果没有提供ID，则获取随机汤面ID
-   *
-   * @param {string} soupId 可选的汤面ID
-   * @returns {Promise<string>} 汤面ID
-   */
-  async fetchSoupData(soupId) {
-    try {
-      // 如果已提供ID，直接返回
-      if (soupId) {
-        return soupId;
-      }
 
-      // 否则获取随机汤面ID
-      const randomSoupId = await soupService.getRandomSoup();
-
-      if (!randomSoupId) {
-        console.error('无法获取随机汤面ID');
-        return null;
-      }
-
-      return randomSoupId;
-    } catch (error) {
-      console.error('获取汤面ID失败:', error);
-      return null;
-    }
-  },
 
   // ===== 设置相关 =====
   /**
@@ -646,6 +408,8 @@ Page({
 
 
 
+
+
   /**
    * 处理汤数据变更事件
    * @param {Object} e 事件对象
@@ -655,9 +419,37 @@ Page({
     if (!soup) return;
 
     const soupId = soup.soupId || '';
+    if (!soupId) return;
 
-    // 初始化汤面数据和页面状态
-    await this.initSoupData(soupId);
+    try {
+      // 如果当前处于喝汤状态，先切换回查看状态
+      if (this.soupState === PAGE_STATE.DRINKING) {
+        // 使用MobX更新页面状态
+        this.updateState({
+          soupState: PAGE_STATE.VIEWING
+        });
+
+        // 切换到查看状态
+        this.switchToViewingState();
+      }
+
+      // 使用initSoup方法初始化汤面数据
+      this.initSoup(soupId, this.userId || '');
+
+      // 增加汤面阅读数
+      try {
+        await soupService.viewSoup(soupId);
+      } catch (error) {
+        console.error('增加阅读数失败:', error);
+        // 阅读数增加失败不影响用户体验，静默处理
+      }
+    } catch (error) {
+      console.error('加载汤面失败:', error);
+      this.showErrorToast('加载失败，请重试');
+      this.setData({
+        isLoading: false
+      });
+    }
   },
 
   /**

@@ -4,63 +4,22 @@
  * 不包含交互逻辑，交互由父页面控制
  */
 
-// 引入服务
-const soupService = require('../../utils/soupService');
-// 引入MobX store
+// 引入MobX store和绑定工具
 const { store } = require('../../stores/soupStore');
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
   properties: {
-    // 汤面ID，可选，如果提供则组件自行获取数据
-    // 注意：优先使用soupData属性传递完整数据，而不是依赖此属性
+    // 汤面ID
     soupId: {
       type: String,
-      value: '',
-      observer: function(newVal) {
-        if (newVal && !this.data.soupData && this._isAttached) {
-          this.fetchSoupData(newVal);
-        }
-      }
+      value: ''
     },
-    // 汤面数据对象，可选，优先级高于soupId
-    soupData: {
-      type: Object,
-      value: null,
-      observer: function(newVal) {
-        if (newVal && this._isAttached) {
-          this.updateSoupDisplay(newVal);
-        }
-      }
-    },
-    // 是否加载中
-    loading: {
-      type: Boolean,
-      value: false
-    },
-    // 是否已收藏
-    isFavorite: {
-      type: Boolean,
-      value: false
-    },
-    // 是否已点赞
-    isLiked: {
-      type: Boolean,
-      value: false
-    },
+
     // 是否处于偷看模式
     isPeeking: {
       type: Boolean,
       value: false
-    },
-    // 收藏数量
-    favoriteCount: {
-      type: Number,
-      value: 0
-    },
-    // 点赞数量
-    likeCount: {
-      type: Number,
-      value: 0
     },
 
     // 是否处于喝汤状态
@@ -93,54 +52,67 @@ Component({
   },
 
   data: {
-    creatorId: ''  // 创作者ID
+    // 组件内部数据
+    soupData: {}, // 汤面数据
   },
 
   lifetimes: {
     // 组件初始化
     attached() {
       this._isAttached = true;
+
+      // 创建MobX Store绑定
+      this.storeBindings = createStoreBindings(this, {
+        store: store,
+        fields: ['soupId', 'soupData', 'isLoading'],
+        actions: ['updateInteractionStatus']
+      });
     },
 
     // 组件卸载
     detached() {
       this._isAttached = false;
+
+      // 清理MobX绑定
+      if (this.storeBindings) {
+        this.storeBindings.destroyStoreBindings();
+      }
+    }
+  },
+
+  // 属性变化观察者
+  observers: {
+    // 当soupId变化时，更新store中的soupId
+    'soupId': function(newSoupId) {
+      if (newSoupId && this._isAttached) {
+        // 将组件的soupId同步到store中
+        console.log('汤面ID已更新:', newSoupId);
+
+        // 确保store中的soupId与组件的soupId一致
+        if (store.soupId !== newSoupId) {
+          store.updateState({ soupId: newSoupId });
+        }
+      }
+    },
+
+    // 监听isLoading状态变化
+    'isLoading': function(isLoading) {
+      if (this._isAttached) {
+        this.handleLoadingChange(isLoading);
+      }
+    },
+
+    // 监听store.soupData变化
+    'store.soupData': function(soupData) {
+      if (this._isAttached && soupData) {
+        console.log('汤面数据已更新:', soupData.title);
+        this.setData({ soupData });
+      }
     }
   },
 
   methods: {
-    /**
-     * 处理收藏状态变更事件
-     * 从交互底部组件传递上来的事件
-     */
-    onFavoriteChange(e) {
-      const { isFavorite, favoriteCount } = e.detail;
 
-      // 更新组件状态
-      this.setData({
-        isFavorite: isFavorite,
-        favoriteCount: favoriteCount
-      });
-
-      // 直接更新MobX store
-      store.updateFavoriteStatus(isFavorite, favoriteCount);
-    },
-
-    /**
-     * 处理点赞状态变更事件
-     * 从交互底部组件传递上来的事件
-     */
-    onLikeChange(e) {
-      const { isLiked, likeCount } = e.detail;
-
-      // 更新组件状态
-      this.setData({
-        likeCount: likeCount
-      });
-
-      // 直接更新MobX store
-      store.updateLikeStatus(isLiked, likeCount);
-    },
 
     /**
      * 设置偷看状态
@@ -167,51 +139,14 @@ Component({
       this.triggerEvent('longPressEnd');
     },
 
-    // 移除incrementSoupViewCount方法，完全由页面统一管理
-
     /**
-     * 更新汤面显示
+     * 处理加载状态变化
+     * 当MobX store中的isLoading状态变化时触发
+     * @param {boolean} isLoading 是否正在加载
      */
-    updateSoupDisplay(soupData) {
-      // 更新汤面数据
-      this.setData({
-        favoriteCount: soupData.favoriteCount || 0,
-        likeCount: soupData.likeCount || 0,
-        creatorId: soupData.creatorId || ''
-      });
-
-      // 增加汤面阅读数不再在组件内处理，由页面统一管理
-    },
-
-    /**
-     * 获取汤面数据
-     * 使用新的getSoupMap方法，以soupId为键获取汤面数据
-     *
-     * 注意：此方法仅在组件内部使用，当soupId属性变更时自动调用
-     * 页面应优先使用soupData属性传递完整数据，而不是依赖此方法
-     */
-    async fetchSoupData(soupId) {
-      if (!soupId) return;
-
-      try {
-        // 通知页面组件正在加载
-        this.triggerEvent('loading', { loading: true });
-
-        // 使用新的getSoupMap方法获取汤面数据
-        const soupMap = await soupService.getSoupMap(soupId);
-
-        if (soupMap && soupMap[soupId]) {
-          // 直接使用soupId作为键获取完整的汤面数据
-          this.updateSoupDisplay(soupMap[soupId]);
-        } else {
-          console.error('获取汤面数据失败: 未找到指定ID的汤面');
-        }
-      } catch (error) {
-        console.error('获取汤面数据失败:', error);
-      } finally {
-        // 通知页面组件加载完成
-        this.triggerEvent('loading', { loading: false });
-      }
+    handleLoadingChange(isLoading) {
+      // 通知页面组件加载状态变化
+      this.triggerEvent('loading', { loading: isLoading });
     }
   }
 });

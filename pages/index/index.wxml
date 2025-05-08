@@ -15,7 +15,7 @@
     <view class="soup-display-wrapper">
       <soup-display
         id="soupDisplay"
-        soupData="{{soupData}}"
+        soupId="{{soupId}}"
         loading="{{isLoading}}"
         isFavorite="{{isFavorite}}"
         isDrinking="{{soupState === 'drinking'}}"
@@ -25,7 +25,6 @@
         swipeFeedback="{{swipeFeedback}}"
         swipeDirection="{{swipeDirection}}"
         class="soup-display-component {{soupState === 'drinking' ? 'behind-dialog' : ''}} {{isPeeking ? 'peeking' : ''}}"
-        wx:if="{{shouldShowSoupDisplay}}"
         bind:animationComplete="onAnimationComplete"
         bind:soupchange="handleSoupChange"
         bind:loading="handleSoupLoading"
@@ -34,18 +33,18 @@
     </view>
 
     <!-- 按钮区域 -->
-    <view class="button-container {{shouldShowButtons ? 'show-buttons' : ''}}">
+    <view class="button-container show-buttons">
       <start-soup-button
         id="startSoupButton"
         bind:tap="onStartSoup"
-        visible="{{shouldShowButtons}}"
+        visible="{{true}}"
         width="50%"
         height="80rpx">
       </start-soup-button>
     </view>
 
     <!-- 滑动提示 -->
-    <view class="swipe-hint {{shouldShowButtons ? 'show-hint' : ''}}" wx:if="{{shouldShowInteractionFooter}}">
+    <view class="swipe-hint show-hint">
       <text>左右滑动切换汤面</text>
     </view>
   </view>

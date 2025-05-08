@@ -1,10 +1,10 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container {{loading ? 'loading' : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
+  class="soup-container {{isLoading ? 'loading' : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
   style="filter: blur({{blurAmount}}px);"
 >
   <!-- 汤面内容区域 -->
-  <block wx:if="{{!loading}}">
+  <block wx:if="{{!isLoading}}">
     <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
       <!-- 标题和内容分开显示 -->
       <view class="title-container" wx:if="{{soupData.title}}">
@@ -13,18 +13,11 @@
       <text class="soup-text">{{soupData.content || ''}}</text>
     </view>
 
-    <!-- 使用独立的交互底部组件 -->
+    <!-- 使用独立的交互底部组件 - 使用MobX管理状态 -->
     <interaction-footer
       id="interactionFooter"
-      isFavorite="{{isFavorite}}"
-      favoriteCount="{{favoriteCount}}"
-      isLiked="{{isLiked}}"
-      likeCount="{{likeCount}}"
-      creatorId="{{creatorId}}"
+      soupId="{{soupId}}"
       isDrinking="{{isDrinking}}"
-      soupId="{{soupData.soupId || properties.soupId || ''}}"
-      bind:favoriteChange="onFavoriteChange"
-      bind:likeChange="onLikeChange"
     ></interaction-footer>
   </block>
 </view>

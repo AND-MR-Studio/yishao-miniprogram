@@ -8,7 +8,8 @@ const dialogService = require('../../utils/dialogService');
 const userService = require('../../utils/userService');
 const eventUtils = require('../../utils/eventUtils');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { store, PAGE_STATE } = require('../../stores/soupStore');
+const { store } = require('../../stores/soupStore');
+const { chatStore, CHAT_STATE } = require('../../stores/chatStore');
 
 Page({
   // ===== 页面数据 =====
@@ -34,17 +35,25 @@ Page({
    */
   async onLoad(options) {
     try {
-      // 创建MobX Store绑定
-      this.storeBindings = createStoreBindings(this, {
+      // 创建soupStore绑定 - 只用于获取汤面数据
+      this.soupStoreBindings = createStoreBindings(this, {
         store: store,
+        fields: ['isLoading'],
+        actions: ['fetchSoupData']
+      });
+
+      // 创建chatStore绑定 - 管理聊天相关的所有状态
+      this.chatStoreBindings = createStoreBindings(this, {
+        store: chatStore,
         fields: [
-          'soupId', 'dialogId', 'userId', 'soupState',
-          'isPeeking', 'tipVisible', 'showButtons',
-          'isViewing', 'isDrinking', 'isTruth',
-          'shouldShowTip', 'shouldShowButtons',
-          'shouldShowSoupDisplay', 'shouldShowInteractionFooter'
+          'soupId', 'dialogId', 'userId', 'chatState',
+          'isPeeking', 'isSending', 'isReplying', 'tipVisible',
+          'isDrinking', 'isTruth', 'shouldShowTip', 'messages'
         ],
-        actions: ['updateState', 'setPeekingStatus']
+        actions: [
+          'updateState', 'setPeekingStatus', 'setTipVisible',
+          'showTruth', 'createDialog', 'fetchMessages', 'sendMessage'
+        ]
       });
 
       this.setData({ isLoading: true });
@@ -63,24 +72,22 @@ Page({
       // 获取用户ID
       const userId = await this.ensureUserId();
 
-      // 设置为喝汤状态
-      this.updateState({
+      // 设置chatStore的基本数据
+      chatStore.updateState({
         soupId: soupId,
         userId: userId,
-        soupState: PAGE_STATE.DRINKING
+        chatState: CHAT_STATE.DRINKING,
+        dialogId: dialogId
       });
 
-      // 如果有dialogId，使用现有对话
+      // 如果有dialogId，直接初始化对话
       if (dialogId) {
-        this.updateState({
-          dialogId: dialogId
-        });
-
-        // 初始化对话
         this.initDialog(soupId, dialogId, userId);
       } else {
         // 否则创建新对话
-        this.createNewDialog(soupId, userId);
+        await chatStore.createDialog();
+        // 初始化对话
+        this.initDialog(soupId, chatStore.dialogId, userId);
       }
     } catch (error) {
       console.error('页面加载失败:', error);
@@ -236,8 +243,11 @@ Page({
     eventUtils.offEvent('peekingStatusChange', this.handlePeekingStatusChange);
 
     // 清理MobX绑定
-    if (this.storeBindings) {
-      this.storeBindings.destroyStoreBindings();
+    if (this.soupStoreBindings) {
+      this.soupStoreBindings.destroyStoreBindings();
+    }
+    if (this.chatStoreBindings) {
+      this.chatStoreBindings.destroyStoreBindings();
     }
   },
 
@@ -325,15 +335,8 @@ Page({
     if (!soupId) return;
 
     try {
-      // 更新MobX Store
-      this.updateState({
-        soupState: PAGE_STATE.TRUTH
-      });
-
-      // 设置汤底ID
-      this.setData({
-        truthSoupId: soupId
-      });
+      // 使用chatStore显示汤底
+      this.showTruth(soupId);
     } catch (error) {
       console.error('获取汤底失败:', error);
       this.showErrorToast('无法获取汤底，请重试');
@@ -348,14 +351,14 @@ Page({
     const { message } = e.detail;
     if (!message) return;
 
-    this.setData({ isSending: true });
+    // 使用chatStore发送消息
+    await this.sendMessage(message);
 
+    // 更新对话组件
     const dialog = this.selectComponent('#dialog');
     if (dialog) {
-      await dialog.sendMessage(message);
+      dialog.refreshMessages();
     }
-
-    this.setData({ isSending: false });
   },
 
   /**
