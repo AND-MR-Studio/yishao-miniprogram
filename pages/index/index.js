@@ -33,6 +33,11 @@ Page({
       ]
     });
 
+    // 确保soupState有默认值
+    this.setData({
+      soupState: 'viewing' // 设置默认值
+    });
+
     // 同步用户ID - 确保获取最新的用户状态
     await store.syncUserId();
 

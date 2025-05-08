@@ -34,12 +34,6 @@ Component({
       value: 0
     },
 
-    // 是否启用呼吸模糊效果
-    breathingBlur: {
-      type: Boolean,
-      value: false
-    },
-
     // 页面状态：viewing, drinking, truth
     pageState: {
       type: String,
