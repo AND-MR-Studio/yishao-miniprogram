@@ -1,5 +1,6 @@
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 const soupService = require('../utils/soupService');
+const userService = require('../utils/userService');
 
 // 页面状态常量 - 简化后只保留VIEWING状态
 const PAGE_STATE = {
@@ -32,6 +33,8 @@ class SoupStore {
     makeAutoObservable(this, {
       // 标记异步方法为flow
       fetchSoupData: flow,
+      toggleLike: flow,
+      toggleFavorite: flow,
 
       // 标记updateInteractionStatus为action
       updateInteractionStatus: true
@@ -160,6 +163,15 @@ class SoupStore {
    * @param {Object} status 交互状态对象
    */
   updateInteractionStatus(status = {}) {
+    console.log('更新交互状态，传入参数:', status);
+    console.log('更新前状态:', {
+      isLiked: this.isLiked,
+      isFavorite: this.isFavorite,
+      likeCount: this.likeCount,
+      favoriteCount: this.favoriteCount,
+      viewCount: this.viewCount
+    });
+
     // 更新点赞状态
     if (status.isLiked !== undefined) {
       this.isLiked = status.isLiked;
@@ -182,6 +194,14 @@ class SoupStore {
     if (status.viewCount !== undefined && status.viewCount >= 0) {
       this.viewCount = status.viewCount;
     }
+
+    console.log('更新后状态:', {
+      isLiked: this.isLiked,
+      isFavorite: this.isFavorite,
+      likeCount: this.likeCount,
+      favoriteCount: this.favoriteCount,
+      viewCount: this.viewCount
+    });
   }
 
   /**
@@ -208,6 +228,122 @@ class SoupStore {
    */
   updateFavoriteStatus(isFavorite, favoriteCount) {
     this.updateInteractionStatus({ isFavorite, favoriteCount });
+  }
+
+  /**
+   * 切换点赞状态
+   * @param {string} soupId 海龟汤ID
+   * @returns {Promise<Object>} 操作结果，包含成功状态和消息
+   */
+  *toggleLike(soupId) {
+    if (!soupId) {
+      return { success: false, message: '缺少汤面ID' };
+    }
+
+    try {
+      // 获取当前状态的反向值
+      const newLikeStatus = !this.isLiked;
+      console.log('切换点赞状态:', { currentStatus: this.isLiked, newStatus: newLikeStatus });
+
+      // 先更新用户记录
+      const userResult = yield userService.updateLikedSoup(soupId, newLikeStatus);
+      console.log('用户点赞状态更新结果:', userResult);
+
+      if (userResult && userResult.success) {
+        // 再调用汤面API
+        const likeResult = yield soupService.likeSoup(soupId, newLikeStatus);
+        console.log('汤面点赞API结果:', likeResult);
+
+        if (likeResult) {
+          // 确保likeCount字段存在
+          const newLikeCount = likeResult.likeCount !== undefined
+            ? likeResult.likeCount
+            : (likeResult.count !== undefined ? likeResult.count : 0);
+
+          // 更新状态
+          this.updateInteractionStatus({
+            isLiked: newLikeStatus,
+            likeCount: newLikeCount
+          });
+
+          return {
+            success: true,
+            message: newLikeStatus ? '点赞成功' : '已取消点赞',
+            isLiked: newLikeStatus,
+            likeCount: newLikeCount
+          };
+        }
+      }
+
+      return {
+        success: false,
+        message: '操作失败，请重试'
+      };
+    } catch (error) {
+      console.error('点赞操作失败:', error);
+      return {
+        success: false,
+        message: '操作失败: ' + (error.message || '未知错误')
+      };
+    }
+  }
+
+  /**
+   * 切换收藏状态
+   * @param {string} soupId 海龟汤ID
+   * @returns {Promise<Object>} 操作结果，包含成功状态和消息
+   */
+  *toggleFavorite(soupId) {
+    if (!soupId) {
+      return { success: false, message: '缺少汤面ID' };
+    }
+
+    try {
+      // 获取当前状态的反向值
+      const newFavoriteStatus = !this.isFavorite;
+      console.log('切换收藏状态:', { currentStatus: this.isFavorite, newStatus: newFavoriteStatus });
+
+      // 先更新用户记录
+      const userResult = yield userService.updateFavoriteSoup(soupId, newFavoriteStatus);
+      console.log('用户收藏状态更新结果:', userResult);
+
+      if (userResult && userResult.success) {
+        // 再调用汤面API
+        const favoriteResult = yield soupService.favoriteSoup(soupId, newFavoriteStatus);
+        console.log('汤面收藏API结果:', favoriteResult);
+
+        if (favoriteResult) {
+          // 确保favoriteCount字段存在
+          const newFavoriteCount = favoriteResult.favoriteCount !== undefined
+            ? favoriteResult.favoriteCount
+            : (favoriteResult.count !== undefined ? favoriteResult.count : 0);
+
+          // 更新状态
+          this.updateInteractionStatus({
+            isFavorite: newFavoriteStatus,
+            favoriteCount: newFavoriteCount
+          });
+
+          return {
+            success: true,
+            message: newFavoriteStatus ? '收藏成功' : '已取消收藏',
+            isFavorite: newFavoriteStatus,
+            favoriteCount: newFavoriteCount
+          };
+        }
+      }
+
+      return {
+        success: false,
+        message: '操作失败，请重试'
+      };
+    } catch (error) {
+      console.error('收藏操作失败:', error);
+      return {
+        success: false,
+        message: '操作失败: ' + (error.message || '未知错误')
+      };
+    }
   }
 }
 

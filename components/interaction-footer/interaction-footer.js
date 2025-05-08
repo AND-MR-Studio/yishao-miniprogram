@@ -4,7 +4,6 @@
  * 使用MobX管理状态，不再需要通过属性传递交互状态
  */
 const userService = require('../../utils/userService');
-const soupService = require('../../utils/soupService');
 const { store } = require('../../stores/soupStore');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
@@ -34,11 +33,22 @@ Component({
   lifetimes: {
     // 组件初始化
     attached() {
-      // 创建MobX Store绑定
+      // 创建MobX Store绑定 - 只绑定需要的字段，不绑定actions
       this.storeBindings = createStoreBindings(this, {
         store: store,
-        fields: ['soupId', 'isLiked', 'isFavorite', 'likeCount', 'favoriteCount'],
-        actions: ['updateInteractionStatus']
+        fields: ['soupId', 'isLiked', 'isFavorite', 'likeCount', 'favoriteCount', 'soupData']
+      });
+
+      // 将store保存为组件属性，以便在方法中直接调用
+      this.store = store;
+
+      console.log('组件初始化，绑定MobX状态:', {
+        soupId: this.data.soupId,
+        isLiked: this.data.isLiked,
+        isFavorite: this.data.isFavorite,
+        likeCount: this.data.likeCount,
+        favoriteCount: this.data.favoriteCount,
+        soupData: this.data.soupData
       });
     },
 
@@ -58,7 +68,7 @@ Component({
      */
     async handleFavoriteClick() {
       // 从MobX store获取soupId
-      const soupId = this.soupId || this.properties.soupId || '';
+      const soupId = this.data.soupId || this.properties.soupId || '';
       if (!soupId.trim()) {
         console.error('收藏失败：缺少汤面ID');
         return;
@@ -76,27 +86,19 @@ Component({
       }
 
       try {
-        // 获取当前收藏状态的反向值 - 从MobX store获取
-        const newFavoriteStatus = !this.isFavorite;
+        // 调用store中的toggleFavorite方法
+        // 注意：MobX的flow方法需要使用generator语法，所以这里不能使用await
+        const result = await new Promise((resolve) => {
+          this.store.toggleFavorite(soupId).then(res => resolve(res));
+        });
+        console.log('收藏操作结果:', result);
 
-        // 调用用户服务更新收藏状态
-        const result = await userService.updateFavoriteSoup(soupId, newFavoriteStatus);
-
-        if (result && result.success) {
-          // 调用收藏/取消收藏API
-          const favoriteResult = await soupService.favoriteSoup(soupId, newFavoriteStatus);
-          const newFavoriteCount = favoriteResult ? favoriteResult.favoriteCount : 0;
-
-          // 直接更新MobX store状态 - 组件会自动响应变化
-          store.updateFavoriteStatus(newFavoriteStatus, newFavoriteCount);
-
-          // 显示操作成功提示
-          wx.showToast({
-            title: newFavoriteStatus ? '收藏成功' : '已取消收藏',
-            icon: 'none',
-            duration: 1500
-          });
-        }
+        // 显示操作结果提示
+        wx.showToast({
+          title: result.message,
+          icon: result.success ? 'none' : 'error',
+          duration: 1500
+        });
       } catch (error) {
         console.error('收藏操作失败:', error);
         wx.showToast({
@@ -121,7 +123,7 @@ Component({
      */
     async handleLikeClick() {
       // 从MobX store获取soupId
-      const soupId = this.soupId || this.properties.soupId || '';
+      const soupId = this.data.soupId || this.properties.soupId || '';
       if (!soupId.trim()) {
         console.error('点赞失败：缺少汤面ID');
         return;
@@ -139,27 +141,19 @@ Component({
       }
 
       try {
-        // 获取当前点赞状态的反向值 - 从MobX store获取
-        const newLikeStatus = !this.isLiked;
+        // 调用store中的toggleLike方法
+        // 注意：MobX的flow方法需要使用generator语法，所以这里不能使用await
+        const result = await new Promise((resolve) => {
+          this.store.toggleLike(soupId).then(res => resolve(res));
+        });
+        console.log('点赞操作结果:', result);
 
-        // 调用用户服务更新点赞状态
-        const result = await userService.updateLikedSoup(soupId, newLikeStatus);
-
-        if (result && result.success) {
-          // 调用点赞/取消点赞API
-          const likeResult = await soupService.likeSoup(soupId, newLikeStatus);
-          const newLikeCount = likeResult ? likeResult.likeCount : 0;
-
-          // 直接更新MobX store状态 - 组件会自动响应变化
-          store.updateLikeStatus(newLikeStatus, newLikeCount);
-
-          // 显示操作成功提示
-          wx.showToast({
-            title: newLikeStatus ? '点赞成功' : '已取消点赞',
-            icon: 'none',
-            duration: 1500
-          });
-        }
+        // 显示操作结果提示
+        wx.showToast({
+          title: result.message,
+          icon: result.success ? 'none' : 'error',
+          duration: 1500
+        });
       } catch (error) {
         console.error('点赞操作失败:', error);
         wx.showToast({

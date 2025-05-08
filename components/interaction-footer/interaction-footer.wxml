@@ -2,8 +2,8 @@
 <!-- 底部控件容器 - 包含创作者信息和交互图标 -->
 <view class="bottom-controls-container {{isDrinking ? 'drinking-hidden' : ''}}">
   <!-- 创作者感谢文字 - 放在上面 -->
-  <view class="creator-credit" wx:if="{{store.soupData.creatorId && !isDrinking}}">
-    <text class="creator-text">感谢创作者：{{store.soupData.creatorId}}</text>
+  <view class="creator-credit" wx:if="{{soupData.creatorId && !isDrinking}}">
+    <text class="creator-text">感谢创作者：{{soupData.creatorId}}</text>
   </view>
 
   <!-- 图标容器 - 在喝汤状态下隐藏，放在下面 -->

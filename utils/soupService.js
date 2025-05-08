@@ -175,7 +175,7 @@ const soupService = {
      * 点赞/取消点赞海龟汤
      * @param {string} soupId 海龟汤ID
      * @param {boolean} [isLike=true] 是否点赞，false表示取消点赞
-     * @returns {Promise<Object>} 点赞结果，包含liked状态和count数量
+     * @returns {Promise<Object>} 点赞结果，包含liked状态和likeCount数量
      */
     async likeSoup(soupId, isLike = true) {
         if (!soupId) {
@@ -193,7 +193,21 @@ const soupService = {
                     liked: isLike
                 }
             });
-            return response.success ? response.data : null;
+
+            // 检查响应格式并进行适当处理
+            if (response.success) {
+                // 确保返回对象包含必要的字段
+                const result = response.data || {};
+
+                // 如果后端返回的是count而不是likeCount，进行转换
+                if (result.count !== undefined && result.likeCount === undefined) {
+                    result.likeCount = result.count;
+                }
+
+                console.log('点赞/取消点赞结果:', result);
+                return result;
+            }
+            return null;
         } catch (error) {
             console.error(isLike ? '点赞海龟汤失败:' : '取消点赞海龟汤失败:', error);
             return null;
@@ -204,7 +218,7 @@ const soupService = {
      * 收藏/取消收藏海龟汤
      * @param {string} soupId 海龟汤ID
      * @param {boolean} [isFavorite=true] 是否收藏，false表示取消收藏
-     * @returns {Promise<Object>} 结果，包含favorite状态和count数量
+     * @returns {Promise<Object>} 结果，包含favorite状态和favoriteCount数量
      */
     async favoriteSoup(soupId, isFavorite = true) {
         if (!soupId) {
@@ -222,7 +236,21 @@ const soupService = {
                     favorite: isFavorite
                 }
             });
-            return response.success ? response.data : null;
+
+            // 检查响应格式并进行适当处理
+            if (response.success) {
+                // 确保返回对象包含必要的字段
+                const result = response.data || {};
+
+                // 如果后端返回的是count而不是favoriteCount，进行转换
+                if (result.count !== undefined && result.favoriteCount === undefined) {
+                    result.favoriteCount = result.count;
+                }
+
+                console.log('收藏/取消收藏结果:', result);
+                return result;
+            }
+            return null;
         } catch (error) {
             console.error(isFavorite ? '收藏海龟汤失败:' : '取消收藏海龟汤失败:', error);
             return null;
