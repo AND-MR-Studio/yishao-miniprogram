@@ -37,7 +37,7 @@ Page({
           'soupId', 'userId', 'isLoading', 'soupData'
         ],
         actions: [
-          'updateState', 'initSoup', 'toggleFavorite',
+          'initSoup', 'toggleFavorite',
           'syncUserId', 'getRandomSoup', 'getAdjacentSoup',
           'viewSoup'
         ]

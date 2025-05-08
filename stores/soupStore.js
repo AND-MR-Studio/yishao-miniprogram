@@ -74,28 +74,6 @@ class SoupStore {
     this.fetchSoupData(soupId);
   }
 
-  /**
-   * 更新状态
-   * 简化版本，只更新必要的状态
-   * @param {Object} data 要更新的数据
-   */
-  updateState(data = {}) {
-    // 更新状态
-    if (data.soupState !== undefined) {
-      this.soupState = data.soupState;
-    }
-
-    // 更新用户ID
-    if (data.userId !== undefined) {
-      this.userId = data.userId;
-    }
-
-    // 更新汤面ID并获取数据
-    if (data.soupId !== undefined && data.soupId !== this.soupId) {
-      this.soupId = data.soupId;
-      this.fetchSoupData(data.soupId);
-    }
-  }
 
   /**
    * 获取汤面数据 - 异步流程
