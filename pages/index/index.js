@@ -38,7 +38,7 @@ Page({
         fields: [
           'soupId', 'userId', 'isLoading', 'soupData'
         ],
-        actions: ['updateState', 'initSoup', 'toggleFavorite']
+        actions: ['updateState', 'initSoup', 'toggleFavorite', 'syncUserId']
       });
 
       // 检查是否有指定的汤面ID
@@ -54,12 +54,11 @@ Page({
         throw new Error('无法获取汤面ID');
       }
 
-      // 获取用户ID
-      const userId = await userService.getUserId();
-      console.log('获取用户ID:', userId || '未登录');
+      // 同步用户ID - 确保获取最新的用户状态
+      await this.syncUserId();
 
-      // 初始化汤面数据
-      this.initSoup(targetSoupId, userId || '');
+      // 初始化汤面数据 - 使用MobX中的userId
+      this.initSoup(targetSoupId, this.userId || '');
 
       // 增加汤面阅读数 - 异步执行，不阻塞UI
       soupService.viewSoup(targetSoupId).catch(error => {
@@ -73,7 +72,7 @@ Page({
 
   /**
    * 页面显示时执行
-   * 设置底部TabBar选中状态
+   * 设置底部TabBar选中状态并同步用户ID
    */
   onShow() {
     // 设置底部TabBar选中状态
@@ -81,6 +80,12 @@ Page({
       this.getTabBar().setData({
         selected: 1  // 第二个tab是喝汤页面
       });
+    }
+
+    // 同步用户ID - 从userService获取最新的userId并更新到MobX store
+    // 这确保了在用户从其他页面（如个人中心）登录后返回时，能获取到正确的用户状态
+    if (this.syncUserId) {
+      this.syncUserId();
     }
   },
 
@@ -139,16 +144,13 @@ Page({
     }
 
     try {
-      // 获取用户ID
-      const userId = await userService.getUserId();
-
-      // 更新MobX Store中的userId
-      this.updateState({ userId: userId });
-
       // 设置按钮加载完成
       if (startButton) {
         startButton.setLoadingComplete(true);
       }
+
+      // 确保MobX store中的userId是最新的
+      await this.syncUserId();
 
       // 直接跳转到chat页面
       wx.navigateTo({
@@ -201,6 +203,9 @@ Page({
       if (!soupId) {
         throw new Error(`无法获取${isNext ? '下' : '上'}一个汤面ID`);
       }
+
+      // 同步用户ID - 确保获取最新的用户状态
+      await this.syncUserId();
 
       // 初始化新的汤面数据 - store会自动设置isLoading状态
       this.initSoup(soupId, this.userId || '');
@@ -278,6 +283,9 @@ Page({
     const soupId = soup.soupId;
 
     try {
+      // 同步用户ID - 确保获取最新的用户状态
+      await this.syncUserId();
+
       // 初始化新的汤面数据
       this.initSoup(soupId, this.userId || '');
 

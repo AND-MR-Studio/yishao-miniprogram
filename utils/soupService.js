@@ -172,26 +172,36 @@ const soupService = {
     },
 
     /**
-     * 点赞/取消点赞海龟汤
+     * 通用方法：更新汤面交互状态（点赞/收藏）
      * @param {string} soupId 海龟汤ID
-     * @param {boolean} [isLike=true] 是否点赞，false表示取消点赞
-     * @returns {Promise<Object>} 点赞结果，包含liked状态和likeCount数量
+     * @param {boolean} status 交互状态（true/false）
+     * @param {string} type 交互类型（'like'/'favorite'）
+     * @returns {Promise<Object>} 交互结果
      */
-    async likeSoup(soupId, isLike = true) {
+    async updateInteractionStatus(soupId, status, type) {
         if (!soupId) {
-            console.error('点赞海龟汤失败: 缺少海龟汤ID');
             return null;
         }
 
         try {
-            // 根据最新接口契约，使用统一的like端点
+            // 根据交互类型确定API和参数
+            let url, data;
+
+            if (type === 'like') {
+                url = api.soup.like;
+                data = { soupId, liked: status };
+            } else if (type === 'favorite') {
+                url = api.soup.favorite;
+                data = { soupId, favorite: status };
+            } else {
+                return Promise.reject('不支持的交互类型');
+            }
+
+            // 调用API
             const response = await soupRequest({
-                url: api.soup.like,
+                url,
                 method: 'POST',
-                data: {
-                    soupId: soupId,
-                    liked: isLike
-                }
+                data
             });
 
             // 检查响应格式并进行适当处理
@@ -199,19 +209,29 @@ const soupService = {
                 // 确保返回对象包含必要的字段
                 const result = response.data || {};
 
-                // 如果后端返回的是count而不是likeCount，进行转换
-                if (result.count !== undefined && result.likeCount === undefined) {
+                // 统一字段名称
+                if (type === 'like' && result.count !== undefined && result.likeCount === undefined) {
                     result.likeCount = result.count;
+                } else if (type === 'favorite' && result.count !== undefined && result.favoriteCount === undefined) {
+                    result.favoriteCount = result.count;
                 }
 
-                console.log('点赞/取消点赞结果:', result);
                 return result;
             }
             return null;
         } catch (error) {
-            console.error(isLike ? '点赞海龟汤失败:' : '取消点赞海龟汤失败:', error);
             return null;
         }
+    },
+
+    /**
+     * 点赞/取消点赞海龟汤
+     * @param {string} soupId 海龟汤ID
+     * @param {boolean} [isLike=true] 是否点赞，false表示取消点赞
+     * @returns {Promise<Object>} 点赞结果，包含liked状态和likeCount数量
+     */
+    async likeSoup(soupId, isLike = true) {
+        return this.updateInteractionStatus(soupId, isLike, 'like');
     },
 
     /**
@@ -221,40 +241,7 @@ const soupService = {
      * @returns {Promise<Object>} 结果，包含favorite状态和favoriteCount数量
      */
     async favoriteSoup(soupId, isFavorite = true) {
-        if (!soupId) {
-            console.error('收藏海龟汤失败: 缺少海龟汤ID');
-            return null;
-        }
-
-        try {
-            // 根据最新接口契约，使用统一的favorite端点
-            const response = await soupRequest({
-                url: api.soup.favorite,
-                method: 'POST',
-                data: {
-                    soupId: soupId,
-                    favorite: isFavorite
-                }
-            });
-
-            // 检查响应格式并进行适当处理
-            if (response.success) {
-                // 确保返回对象包含必要的字段
-                const result = response.data || {};
-
-                // 如果后端返回的是count而不是favoriteCount，进行转换
-                if (result.count !== undefined && result.favoriteCount === undefined) {
-                    result.favoriteCount = result.count;
-                }
-
-                console.log('收藏/取消收藏结果:', result);
-                return result;
-            }
-            return null;
-        } catch (error) {
-            console.error(isFavorite ? '收藏海龟汤失败:' : '取消收藏海龟汤失败:', error);
-            return null;
-        }
+        return this.updateInteractionStatus(soupId, isFavorite, 'favorite');
     },
 
     /**
@@ -272,7 +259,6 @@ const soupService = {
      */
     async getAdjacentSoup(soupId, isNext = true) {
         if (!soupId) {
-            console.error('获取相邻海龟汤失败: 缺少当前海龟汤ID');
             return null;
         }
 
@@ -290,7 +276,6 @@ const soupService = {
             // 直接返回soupId
             return response.success ? response.data : null;
         } catch (error) {
-            console.error(`获取${isNext ? '下' : '上'}一个海龟汤失败:`, error);
             return null;
         }
     },
@@ -302,7 +287,6 @@ const soupService = {
      */
     async viewSoup(soupId) {
         if (!soupId) {
-            console.error('增加阅读数失败: 缺少海龟汤ID');
             return null;
         }
 
@@ -314,7 +298,6 @@ const soupService = {
             });
             return response.success ? response.data : null;
         } catch (error) {
-            console.error('增加阅读数失败:', error);
             return null;
         }
     }

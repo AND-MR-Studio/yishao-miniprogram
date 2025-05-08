@@ -614,13 +614,13 @@ async function updateAnsweredSoup(soupId) {
 }
 
 /**
- * 更新用户收藏的汤
- * 将汤ID添加到用户的favoriteSoups数组中或从中移除
+ * 通用方法：更新用户与汤的交互状态
  * @param {string} soupId - 汤ID
- * @param {boolean} isFavorite - 是否收藏
+ * @param {boolean} status - 交互状态（true/false）
+ * @param {string} type - 交互类型（'favorite'/'like'）
  * @returns {Promise} - 更新结果
  */
-async function updateFavoriteSoup(soupId, isFavorite) {
+async function updateSoupInteraction(soupId, status, type) {
   if (!soupId) return Promise.reject('汤ID为空');
 
   // 检查用户是否已登录
@@ -630,22 +630,46 @@ async function updateFavoriteSoup(soupId, isFavorite) {
   }
 
   try {
-    // 调用后端接口更新用户收藏的汤
+    // 根据交互类型确定API和参数
+    let url, data;
+
+    if (type === 'favorite') {
+      url = api.user_favorite_soup_url;
+      data = { soupId, isFavorite: status };
+    } else if (type === 'like') {
+      url = api.user_liked_soup_url;
+      data = { soupId, isLike: status };
+    } else {
+      return Promise.reject('不支持的交互类型');
+    }
+
+    // 调用后端接口更新用户交互状态
     const config = {
-      url: api.user_favorite_soup_url,
+      url,
       method: 'POST',
-      data: {
-        soupId: soupId,
-        isFavorite: isFavorite
-      }
+      data
     };
 
     const res = await api.userRequest(config);
     return res;
   } catch (error) {
-    // 收藏记录更新失败不影响用户体验，返回静默失败
-    return { success: false, message: '更新收藏记录失败' };
+    // 交互记录更新失败不影响用户体验，返回静默失败
+    return {
+      success: false,
+      message: `更新${type === 'favorite' ? '收藏' : '点赞'}记录失败`
+    };
   }
+}
+
+/**
+ * 更新用户收藏的汤
+ * 将汤ID添加到用户的favoriteSoups数组中或从中移除
+ * @param {string} soupId - 汤ID
+ * @param {boolean} isFavorite - 是否收藏
+ * @returns {Promise} - 更新结果
+ */
+async function updateFavoriteSoup(soupId, isFavorite) {
+  return updateSoupInteraction(soupId, isFavorite, 'favorite');
 }
 
 /**
@@ -664,7 +688,6 @@ async function isFavoriteSoup(soupId) {
 
   try {
     // 从服务器获取最新用户信息
-    // 后端已返回扁平化的数据结构
     const userInfo = await getUserInfo();
 
     // 检查汤ID是否在收藏列表中
@@ -684,31 +707,7 @@ async function isFavoriteSoup(soupId) {
  * @returns {Promise} - 更新结果
  */
 async function updateLikedSoup(soupId, isLike) {
-  if (!soupId) return Promise.reject('汤ID为空');
-
-  // 检查用户是否已登录
-  const token = wx.getStorageSync(TOKEN_KEY);
-  if (!token) {
-    return Promise.resolve({ success: false, message: '用户未登录' });
-  }
-
-  try {
-    // 调用后端接口更新用户点赞的汤
-    const config = {
-      url: api.user_liked_soup_url,
-      method: 'POST',
-      data: {
-        soupId: soupId,
-        isLike: isLike
-      }
-    };
-
-    const res = await api.userRequest(config);
-    return res;
-  } catch (error) {
-    // 点赞记录更新失败不影响用户体验，返回静默失败
-    return { success: false, message: '更新点赞记录失败' };
-  }
+  return updateSoupInteraction(soupId, isLike, 'like');
 }
 
 /**
@@ -727,7 +726,6 @@ async function isLikedSoup(soupId) {
 
   try {
     // 从服务器获取最新用户信息
-    // 后端已返回扁平化的数据结构
     const userInfo = await getUserInfo();
 
     // 检查汤ID是否在点赞列表中

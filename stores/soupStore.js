@@ -38,6 +38,7 @@ class SoupStore {
       fetchSoupData: flow,
       toggleLike: flow,
       toggleFavorite: flow,
+      syncUserId: flow,
 
       // 标记为非观察属性
       _fetchingId: false
@@ -60,8 +61,6 @@ class SoupStore {
    */
   initSoup(soupId, userId = '') {
     if (!soupId) return;
-
-    console.log('初始化汤面数据:', { soupId, userId });
 
     // 设置基本数据
     this.soupId = soupId;
@@ -105,7 +104,6 @@ class SoupStore {
 
     // 防止重复请求同一个soupId
     if (this._fetchingId === soupId) {
-      console.log('已有相同ID的请求正在进行中，跳过:', soupId);
       return;
     }
 
@@ -115,7 +113,6 @@ class SoupStore {
     try {
       // 设置加载状态
       this.isLoading = true;
-      console.log('开始获取汤面数据:', soupId);
 
       // 并行获取汤面数据和用户交互状态
       const [soupData, isLiked, isFavorite] = yield Promise.all([
@@ -129,13 +126,10 @@ class SoupStore {
 
       // 检查当前soupId是否仍然是请求的soupId
       if (this.soupId !== soupId) {
-        console.log('soupId已变更，丢弃过时的响应:', soupId);
         return;
       }
 
       if (soupData) {
-        console.log('成功获取汤面数据:', soupId);
-
         // 更新汤面数据和交互状态
         this.soupData = soupData;
 
@@ -145,24 +139,11 @@ class SoupStore {
         this.likeCount = soupData.likeCount || 0;
         this.favoriteCount = soupData.favoriteCount || 0;
         this.viewCount = soupData.viewCount || 0;
-
-        console.log('汤面数据包含交互状态:', {
-          soupId,
-          isLiked,
-          isFavorite,
-          likeCount: this.likeCount,
-          favoriteCount: this.favoriteCount,
-          viewCount: this.viewCount
-        });
       } else {
-        console.error('获取汤面数据失败: 未找到指定ID的汤面');
-
         // 如果失败，尝试获取随机汤面
-        console.log('尝试获取随机汤面');
         const randomSoupId = yield soupService.getRandomSoup();
 
         if (randomSoupId && randomSoupId !== this.soupId) {
-          console.log('获取随机汤面成功，ID:', randomSoupId);
           // 更新soupId
           this.soupId = randomSoupId;
 
@@ -189,19 +170,21 @@ class SoupStore {
       return { success: false, message: '缺少汤面ID' };
     }
 
+    // 检查用户是否已登录
+    if (!userService.checkLoginStatus(false)) {
+      return { success: false, message: '请先登录' };
+    }
+
     try {
       // 获取当前状态的反向值
       const newLikeStatus = !this.isLiked;
-      console.log('切换点赞状态:', { currentStatus: this.isLiked, newStatus: newLikeStatus });
 
       // 先更新用户记录
       const userResult = yield userService.updateLikedSoup(soupId, newLikeStatus);
-      console.log('用户点赞状态更新结果:', userResult);
 
       if (userResult && userResult.success) {
         // 再调用汤面API
         const likeResult = yield soupService.likeSoup(soupId, newLikeStatus);
-        console.log('汤面点赞API结果:', likeResult);
 
         if (likeResult) {
           // 确保likeCount字段存在
@@ -227,11 +210,35 @@ class SoupStore {
         message: '操作失败，请重试'
       };
     } catch (error) {
-      console.error('点赞操作失败:', error);
       return {
         success: false,
         message: '操作失败: ' + (error.message || '未知错误')
       };
+    }
+  }
+
+  /**
+   * 同步用户ID
+   * 从userService获取最新的userId并更新到store中
+   * 在页面显示时调用，确保用户登录状态变化时数据同步
+   * @returns {Promise<void>}
+   */
+  *syncUserId() {
+    try {
+      // 获取最新的用户ID
+      const userId = yield userService.getUserId();
+
+      // 如果userId发生变化，更新store中的userId
+      if (userId !== this.userId) {
+        this.userId = userId || '';
+
+        // 如果有soupId，重新获取汤面数据（包括点赞、收藏状态）
+        if (this.soupId) {
+          yield this.fetchSoupData(this.soupId);
+        }
+      }
+    } catch (error) {
+      console.error('同步用户ID失败:', error);
     }
   }
 
@@ -245,19 +252,21 @@ class SoupStore {
       return { success: false, message: '缺少汤面ID' };
     }
 
+    // 检查用户是否已登录
+    if (!userService.checkLoginStatus(false)) {
+      return { success: false, message: '请先登录' };
+    }
+
     try {
       // 获取当前状态的反向值
       const newFavoriteStatus = !this.isFavorite;
-      console.log('切换收藏状态:', { currentStatus: this.isFavorite, newStatus: newFavoriteStatus });
 
       // 先更新用户记录
       const userResult = yield userService.updateFavoriteSoup(soupId, newFavoriteStatus);
-      console.log('用户收藏状态更新结果:', userResult);
 
       if (userResult && userResult.success) {
         // 再调用汤面API
         const favoriteResult = yield soupService.favoriteSoup(soupId, newFavoriteStatus);
-        console.log('汤面收藏API结果:', favoriteResult);
 
         if (favoriteResult) {
           // 确保favoriteCount字段存在
@@ -283,7 +292,6 @@ class SoupStore {
         message: '操作失败，请重试'
       };
     } catch (error) {
-      console.error('收藏操作失败:', error);
       return {
         success: false,
         message: '操作失败: ' + (error.message || '未知错误')
