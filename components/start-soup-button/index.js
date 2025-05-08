@@ -2,7 +2,6 @@
 // 引入MobX store和绑定工具
 const { store } = require('../../stores/soupStore');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-
 Component({
   /**
    * 组件的属性列表
@@ -29,7 +28,7 @@ Component({
    * 组件的初始数据
    */
   data: {
-    isPressed: false,     // 是否处于按下状态
+    buttonLoading: false // 按钮自身的加载状态，独立于MobX的isLoading
   },
 
   /**
@@ -38,56 +37,25 @@ Component({
   methods: {
     // 按钮点击事件
     handleTap() {
-      // 如果正在加载或已按下，不处理点击
-      // 完全依赖MobX中的isLoading状态
-      if (this.data.isLoading || this.data.isPressed) {
+      // 如果正在加载，不处理点击
+      if (this.isLoading || this.data.buttonLoading) {
         return;
       }
 
-      // 设置按下状态，显示圆形按钮和加载动画
+      // 立即设置按钮为加载状态
       this.setData({
-        isPressed: true
+        buttonLoading: true
       });
 
       // 触发tap事件，由父组件处理业务逻辑
       this.triggerEvent('tap');
 
-      // 设置最大加载时间，如果超过这个时间还没有收到加载完成的通知，则自动重置按钮
+      // 设置一个超时，如果5秒后仍在加载，则自动重置
       this._loadingTimeout = setTimeout(() => {
-        // 如果还在加载中，自动重置按钮
-        if (this.data.isPressed) {
-          // 重置按钮到原始状态
-          this.resetButton();
-
-          // 显示超时提示
-          wx.showToast({
-            title: '加载超时，请重试',
-            icon: 'none',
-            duration: 2000
-          });
-        }
-      }, 5000); // 最大等待5秒
-    },
-
-    // 异步setData封装，返回Promise
-    _asyncSetData(data) {
-      return new Promise(resolve => {
-        this.setData(data, resolve);
-      });
-    },
-
-    // 重置按钮到原始状态 - 异步处理
-    async resetButton() {
-      // 清除所有计时器
-      if (this._loadingTimeout) {
-        clearTimeout(this._loadingTimeout);
-        this._loadingTimeout = null;
-      }
-
-      // 重置按钮状态 - 不再设置isLoading，由MobX管理
-      await this._asyncSetData({
-        isPressed: false
-      });
+        this.setData({
+          buttonLoading: false
+        });
+      }, 5000);
     }
   },
 
@@ -101,17 +69,10 @@ Component({
         store: store,
         fields: ['isLoading', 'isViewing', 'soupState'],
       });
-
-      // 监听isLoading状态变化，自动重置按钮
-      this._isLoadingObserver = this.createObserver('isLoading', (isLoading) => {
-        if (!isLoading && this.data.isPressed) {
-          this.resetButton();
-        }
-      });
     },
 
     detached() {
-      // 清除所有计时器，避免内存泄漏
+      // 清理超时计时器
       if (this._loadingTimeout) {
         clearTimeout(this._loadingTimeout);
         this._loadingTimeout = null;
@@ -120,23 +81,6 @@ Component({
       // 清理MobX绑定
       if (this.storeBindings) {
         this.storeBindings.destroyStoreBindings();
-      }
-
-      // 清理观察者
-      if (this._isLoadingObserver) {
-        this._isLoadingObserver.disconnect();
-      }
-    }
-  },
-
-  /**
-   * 监听器
-   */
-  observers: {
-    // 监听isLoading状态变化，自动重置按钮
-    'isLoading': function(isLoading) {
-      if (!isLoading && this.data.isPressed) {
-        this.resetButton();
       }
     }
   }

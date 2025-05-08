@@ -20,8 +20,6 @@
         soupId="{{soupId}}"
         pageState="{{soupState}}"
         blurAmount="{{blurAmount}}"
-        breathingBlur="{{breathingBlur}}"
-        swipeFeedback="{{swipeFeedback}}"
         swipeDirection="{{swipeDirection}}"
         class="soup-display-component"
         bind:loading="handleSoupLoading"

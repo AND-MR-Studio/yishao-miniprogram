@@ -55,7 +55,8 @@ Component({
   data: {
     // 组件内部数据
     soupData: {}, // 汤面数据
-    isInitialized: false // 标记组件是否已初始化
+    isInitialized: false, // 标记组件是否已初始化
+    breathingBlur: false // 呼吸模糊效果，由isLoading状态控制
   },
 
   lifetimes: {
@@ -89,7 +90,13 @@ Component({
     // 监听isLoading状态变化
     'isLoading': function(isLoading) {
       if (this._isAttached) {
-        this.handleLoadingChange(isLoading);
+        // 通知页面组件加载状态变化
+        this.triggerEvent('loading', { loading: isLoading });
+
+        // 直接控制breathingBlur动画
+        this.setData({
+          breathingBlur: isLoading // 加载中时启用呼吸模糊效果
+        });
       }
     },
 
@@ -131,11 +138,10 @@ Component({
     /**
      * 处理加载状态变化
      * 当MobX store中的isLoading状态变化时触发
-     * @param {boolean} isLoading 是否正在加载
+     * @deprecated 已在observer中直接处理，保留此方法以兼容现有代码
      */
-    handleLoadingChange(isLoading) {
-      // 通知页面组件加载状态变化
-      this.triggerEvent('loading', { loading: isLoading });
+    handleLoadingChange() {
+      // 已在observer中直接处理，此方法保留以兼容现有代码
     }
   }
 });

@@ -11,13 +11,9 @@ const { store } = require('../../stores/soupStore');
 Page({
   // ===== 页面数据 =====
   data: {
-    // 汤面相关
-    breathingBlur: false, // 呈现呼吸模糊效果
-
     // 交互相关 - 由interactionManager管理
     swiping: false, // 是否正在滑动中
     swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
-    swipeFeedback: false, // 滑动反馈动画
     swipeStarted: false, // 是否开始滑动
     blurAmount: 0, // 模糊程度（0-10px）
   },
@@ -148,11 +144,6 @@ Page({
     // 如果正在加载，不执行切换
     if (this.isLoading) return;
 
-    // 设置UI效果
-    this.setData({
-      breathingBlur: true // 启用呼吸模糊效果
-    });
-
     try {
       // 根据方向获取下一个汤面ID
       const isNext = direction === 'next';
@@ -162,6 +153,7 @@ Page({
 
       if (soupId) {
         // 初始化新的汤面数据 - 所有数据管理由store处理
+        // 这会自动设置isLoading状态，MobX会触发观察者更新breathingBlur
         store.initSoup(soupId, store.userId || '');
 
         // 增加汤面阅读数
@@ -169,12 +161,9 @@ Page({
       } else {
         this.showErrorToast('切换失败，请重试');
       }
-    } finally {
-      // 重置UI效果
-      this.setData({
-        swipeFeedback: false,  // 关闭滑动反馈动画
-        breathingBlur: false   // 关闭呼吸模糊效果
-      });
+    } catch (error) {
+      console.error('切换汤面失败:', error);
+      this.showErrorToast('切换失败，请重试');
     }
   },
 
@@ -239,6 +228,8 @@ Page({
     // 这里不需要额外处理，因为isLoading状态已经由MobX管理
     // 但需要保留这个方法以响应组件的loading事件
   },
+
+  // 移除对breathingBlur的控制代码，由soup-display组件自己处理
 
   // ===== 交互管理器相关 =====
   /**
