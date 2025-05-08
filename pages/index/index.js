@@ -1,10 +1,9 @@
 ﻿/**
  * 首页 - 海龟汤展示与交互
  * 负责展示汤面内容、处理滑动交互、切换汤面、双击收藏
+ * 使用MobX管理数据，页面只负责UI交互
  */
 // ===== 导入依赖 =====
-const soupService = require('../../utils/soupService');
-const userService = require('../../utils/userService');
 const { SWIPE_DIRECTION } = require('../../utils/interactionManager');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { store } = require('../../stores/soupStore');
@@ -12,7 +11,6 @@ const { store } = require('../../stores/soupStore');
 Page({
   // ===== 页面数据 =====
   data: {
-
     // 汤面相关
     breathingBlur: false, // 呈现呼吸模糊效果
 
@@ -38,32 +36,34 @@ Page({
         fields: [
           'soupId', 'userId', 'isLoading', 'soupData'
         ],
-        actions: ['updateState', 'initSoup', 'toggleFavorite', 'syncUserId']
+        actions: [
+          'updateState', 'initSoup', 'toggleFavorite',
+          'syncUserId', 'getRandomSoup', 'getAdjacentSoup',
+          'viewSoup'
+        ]
       });
+
+      // 同步用户ID - 确保获取最新的用户状态
+      await this.syncUserId();
 
       // 检查是否有指定的汤面ID
       let targetSoupId = options.soupId || null;
 
       // 如果没有提供ID，则获取随机汤面ID
       if (!targetSoupId) {
-        targetSoupId = await soupService.getRandomSoup();
-        console.log('获取随机汤面ID:', targetSoupId);
+        // 使用MobX store中的方法获取随机汤面ID
+        targetSoupId = await this.getRandomSoup();
       }
 
       if (!targetSoupId) {
         throw new Error('无法获取汤面ID');
       }
 
-      // 同步用户ID - 确保获取最新的用户状态
-      await this.syncUserId();
-
       // 初始化汤面数据 - 使用MobX中的userId
       this.initSoup(targetSoupId, this.userId || '');
 
-      // 增加汤面阅读数 - 异步执行，不阻塞UI
-      soupService.viewSoup(targetSoupId).catch(error => {
-        console.error('增加阅读数失败:', error);
-      });
+      // 增加汤面阅读数 - 使用MobX store中的方法
+      this.viewSoup(targetSoupId);
     } catch (error) {
       console.error('页面加载失败:', error);
       this.showErrorToast('加载失败，请重试');
@@ -198,7 +198,9 @@ Page({
     try {
       // 根据方向获取下一个汤面ID
       const isNext = direction === 'next';
-      const soupId = await soupService.getAdjacentSoup(this.soupId, isNext);
+
+      // 使用MobX store中的方法获取相邻汤面ID
+      const soupId = await this.getAdjacentSoup(this.soupId, isNext);
 
       if (!soupId) {
         throw new Error(`无法获取${isNext ? '下' : '上'}一个汤面ID`);
@@ -210,10 +212,8 @@ Page({
       // 初始化新的汤面数据 - store会自动设置isLoading状态
       this.initSoup(soupId, this.userId || '');
 
-      // 增加汤面阅读数 - 异步执行，不阻塞UI
-      soupService.viewSoup(soupId).catch(error => {
-        console.error('增加阅读数失败:', error);
-      });
+      // 增加汤面阅读数 - 使用MobX store中的方法
+      this.viewSoup(soupId);
 
       // 重置UI效果
       this.setData({
@@ -231,7 +231,6 @@ Page({
       });
     }
   },
-
 
   // ===== 交互相关 =====
   /**
@@ -289,10 +288,8 @@ Page({
       // 初始化新的汤面数据
       this.initSoup(soupId, this.userId || '');
 
-      // 增加汤面阅读数 - 异步执行，不阻塞UI
-      soupService.viewSoup(soupId).catch(error => {
-        console.error('增加阅读数失败:', error);
-      });
+      // 增加汤面阅读数 - 使用MobX store中的方法
+      this.viewSoup(soupId);
     } catch (error) {
       console.error('加载汤面失败:', error);
       this.showErrorToast('加载失败，请重试');

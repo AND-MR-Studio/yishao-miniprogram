@@ -39,6 +39,9 @@ class SoupStore {
       toggleLike: flow,
       toggleFavorite: flow,
       syncUserId: flow,
+      getRandomSoup: false, // 普通异步方法，不需要flow
+      getAdjacentSoup: false, // 普通异步方法，不需要flow
+      viewSoup: false, // 普通异步方法，不需要flow
 
       // 标记为非观察属性
       _fetchingId: false
@@ -296,6 +299,62 @@ class SoupStore {
         success: false,
         message: '操作失败: ' + (error.message || '未知错误')
       };
+    }
+  }
+
+  /**
+   * 获取随机汤面ID
+   * 直接调用soupService的getRandomSoup方法
+   * @returns {Promise<string>} 随机汤面ID
+   */
+  async getRandomSoup() {
+    try {
+      return await soupService.getRandomSoup();
+    } catch (error) {
+      console.error('获取随机汤面失败:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 获取相邻汤面ID
+   * 直接调用soupService的getAdjacentSoup方法
+   * @param {string} soupId 当前汤面ID
+   * @param {boolean} isNext 是否获取下一个，false表示获取上一个
+   * @returns {Promise<string>} 相邻汤面ID
+   */
+  async getAdjacentSoup(soupId, isNext = true) {
+    if (!soupId) return null;
+
+    try {
+      return await soupService.getAdjacentSoup(soupId, isNext);
+    } catch (error) {
+      console.error('获取相邻汤面失败:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 增加汤面阅读数
+   * 直接调用soupService的viewSoup方法
+   * @param {string} soupId 汤面ID
+   * @returns {Promise<Object>} 结果，包含更新后的阅读数
+   */
+  async viewSoup(soupId) {
+    if (!soupId) return null;
+
+    try {
+      const result = await soupService.viewSoup(soupId);
+
+      // 如果当前显示的就是这个汤面，更新阅读数
+      if (result && this.soupId === soupId) {
+        this.viewCount = result.viewCount || (result.count || 0);
+      }
+
+      return result;
+    } catch (error) {
+      console.error('增加阅读数失败:', error);
+      return null;
     }
   }
 }
