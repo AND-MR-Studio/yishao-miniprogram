@@ -62,16 +62,31 @@ class SoupStore {
    * @param {string} soupId 汤面ID
    * @param {string} userId 用户ID
    */
-  initSoup(soupId, userId = "") {
+  initSoupWithId(soupId, userId = "") {
     if (!soupId) return;
-
+    let soupData = soupService.getSoup(soupId);
     // 设置基本数据
     this.soupId = soupId;
     this.userId = userId || "";
     this.soupState = PAGE_STATE.VIEWING;
-
     // 获取汤面数据
-    this.fetchSoupData(soupId);
+    this.fetchSoupDataAndStore(soupData);
+  }
+
+  /**
+   * 初始化汤面数据
+   * 简化版本，只设置ID和用户ID，然后获取数据
+   * @param {Object} soupData 汤面数据
+   * @param {string} userId 用户ID
+   */
+  initSoupWithData(soupData, userId = "") {
+    if (!soupData) return;
+    // 设置基本数据
+    this.soupId = soupData.id;
+    this.userId = userId || "";
+    this.soupState = PAGE_STATE.VIEWING;
+    // 获取汤面数据
+    this.fetchSoupDataAndStore(soupData);
   }
 
   /**
@@ -79,7 +94,7 @@ class SoupStore {
    * 优化版本，防止重复请求
    * @param {string} soupId 汤面ID
    */
-  *fetchSoupData(soupId) {
+  *fetchSoupDataAndStore(soupId) {
     if (!soupId) return;
 
     // 防止重复请求同一个soupId
@@ -97,7 +112,73 @@ class SoupStore {
       // 并行获取汤面数据和用户交互状态
       const [soupData, isLiked, isFavorite] = yield Promise.all([
         // 获取汤面数据
-        soupService.getSoup(soupId, true),
+        soupService.getSoup(soupId),
+        // 如果有userId，获取点赞状态，否则返回false
+        this.userId ? userService.isLikedSoup(soupId) : Promise.resolve(false),
+        // 如果有userId，获取收藏状态，否则返回false
+        this.userId
+          ? userService.isFavoriteSoup(soupId)
+          : Promise.resolve(false),
+      ]);
+
+      // 检查当前soupId是否仍然是请求的soupId
+      if (this.soupId !== soupId) {
+        return;
+      }
+
+      if (soupData) {
+        // 更新汤面数据和交互状态
+        this.soupData = soupData;
+
+        // 更新交互状态
+        this.isLiked = isLiked;
+        this.isFavorite = isFavorite;
+        this.likeCount = soupData.likes || 0;
+        this.favoriteCount = soupData.favorites || 0;
+        this.viewCount = soupData.views || 0;
+      } else {
+        // 如果失败，尝试获取随机汤面
+        const randomSoup = yield soupService.getRandomSoup();
+
+        if (randomSoup.id && randomSoup.id !== this.soupId) {
+          // 更新soupId
+          this.soupId = randomSoup.id;
+
+          // 重新获取汤面数据
+          yield randomSoup;
+        }
+      }
+    } catch (error) {
+      console.error("获取汤面数据失败:", error);
+    } finally {
+      // 重置加载状态和请求标志
+      this.isLoading = false;
+      this._fetchingId = null;
+    }
+  }
+
+  /**
+   * 获取汤面数据 - 异步流程
+   * 优化版本，防止重复请求
+   * @param {Object} soupData 汤面ID
+   */
+  *initSoupAndStore(soupData) {
+    if (!soupData) return;
+    let soupId = soupData.id;
+    // 防止重复请求同一个soupId
+    if (this._fetchingId === soupId) {
+      return;
+    }
+
+    // 设置当前正在获取的ID
+    this._fetchingId = soupId;
+
+    try {
+      // 设置加载状态
+      this.isLoading = true;
+
+      // 并行获取汤面数据和用户交互状态
+      const [isLiked, isFavorite] = yield Promise.all([
         // 如果有userId，获取点赞状态，否则返回false
         this.userId ? userService.isLikedSoup(soupId) : Promise.resolve(false),
         // 如果有userId，获取收藏状态，否则返回false
@@ -276,7 +357,7 @@ class SoupStore {
 
         // 如果有soupId，重新获取汤面数据（包括点赞、收藏状态）
         if (this.soupId) {
-          yield this.fetchSoupData(this.soupId);
+          yield this.fetchSoupDataAndStore(this.soupId);
         }
       }
     } catch (error) {
