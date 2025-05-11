@@ -7,21 +7,21 @@ const config = {
     //请求的地址
     baseUrl: "https://yavin.and-tech.cn",
     ysUrl: "https://yavin.and-tech.cn/yishao-api/",
-    memory: "https://yavin.and-tech.cn/memory-api/",
+    memory: "http://alex.and-tech.cn/memory",
   },
   //体验版
   trial: {
     //请求的地址
     baseUrl: "https://yavin.and-tech.cn",
     ysUrl: "https://yavin.and-tech.cn/yishao-api/",
-    memory: "https://yavin.and-tech.cn/memory-api/",
+    memory: "http://alex.and-tech.cn/memory",
   },
   //正式版
   release: {
     //请求的地址
     baseUrl: "https://yavin.and-tech.cn",
     ysUrl: "https://yavin.and-tech.cn/yishao-api/",
-    memory: "https://yavin.and-tech.cn/memory-api/",
+    memory: "http://alex.and-tech.cn/memory",
   },
 }[wx.getAccountInfoSync().miniProgram.envVersion];
 
