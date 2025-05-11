@@ -57,6 +57,7 @@ const api = {
   soup: {
     base: memoryUrl + paths.soup,
     random: memoryUrl + '/api/soups/random',
+    get: (soupId) => `${memoryUrl}/api/soups/${soupId}`,
     view: (soupId) => `${memoryUrl}/api/soups/${soupId}/view`,
     like: (soupId) => `${memoryUrl}/api/soups/${soupId}/like`,
     unlike: (soupId) => `${memoryUrl}/api/soups/${soupId}/unlike`,

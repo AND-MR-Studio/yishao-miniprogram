@@ -118,9 +118,9 @@ class SoupStore {
         // 更新交互状态
         this.isLiked = isLiked;
         this.isFavorite = isFavorite;
-        this.likeCount = soupData.likeCount || 0;
-        this.favoriteCount = soupData.favoriteCount || 0;
-        this.viewCount = soupData.viewCount || 0;
+        this.likeCount = soupData.likes || 0;
+        this.favoriteCount = soupData.favorites || 0;
+        this.viewCount = soupData.views || 0;
       } else {
         // 如果失败，尝试获取随机汤面
         const randomSoup = yield soupService.getRandomSoup();

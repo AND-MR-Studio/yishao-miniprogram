@@ -30,5 +30,5 @@ const config = {
  */
 module.exports = {
   config,
-  memory,
+  memory: config.memory,
 };

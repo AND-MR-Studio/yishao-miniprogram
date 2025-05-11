@@ -72,42 +72,29 @@ const request = (options) => {
       header: header,
       success: (res) => {
         const { data } = res;
-
         // 请求成功
-        if (res.statusCode === 200) {
-          resolve(data);
-        }
-        // token过期
-        else if (res.statusCode === 401) {
-          // 清除本地存储的用户信息和token
-          wx.removeStorageSync("userInfo");
-          wx.removeStorageSync("token");
-          wx.removeStorageSync("loginTimestamp");
-
-          // 跳转到登录页或重新登录
-          reject(new Error("登录已过期，请重新登录"));
-        }
-        // 处理400错误 - 通常是业务逻辑错误，如"今日已签到"
-        else if (res.statusCode === 400) {
-          // 从响应中获取错误信息
-          const errorMsg = data.error || data.message || "请求参数错误";
-          reject(new Error(errorMsg));
-        }
-        // 其他错误
-        else {
-          reject(new Error(data.error || data.message || "请求失败"));
+        switch (res.statusCode) {
+          case 200:
+            resolve(data);
+            break;
+          case 401:
+            // 清除本地存储的用户信息和token
+            wx.removeStorageSync("userInfo");
+            wx.removeStorageSync("token");
+            wx.removeStorageSync("loginTimestamp");
+            reject(new Error("登录已过期，请重新登录"));
+            break;
+          default:
+            reject(
+              new Error(`请求失败：\n 
+              res ${JSON.stringify(data)} \n 
+              req ${JSON.stringify(options)}`)
+            );
         }
       },
       fail: (err) => {
         // 根据错误类型提供更具体的错误信息
-        let errorMsg = "网络请求失败";
-
-        if (err.errMsg && err.errMsg.includes("ERR_CONNECTION_REFUSED")) {
-          errorMsg = "无法连接到服务器，请确保服务器已启动";
-        } else if (err.errMsg && err.errMsg.includes("timeout")) {
-          errorMsg = "请求超时，请检查网络连接";
-        }
-
+        let errorMsg = err.errMsg;
         // 显示错误提示
         wx.showToast({
           title: errorMsg,

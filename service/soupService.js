@@ -23,42 +23,26 @@ const { get, post } = require("../utils/request");
 const soupService = {
   /**
    * 获取海龟汤
-   * @param {string|string[]|null} [soupId] 海龟汤ID或ID数组，如果不提供或为空数组则获取所有海龟汤
-   * @param {boolean} [detail=false] 是否返回完整详情，默认false只返回ID
-   * @returns {Promise<string|string[]|Object|Object[]>} 海龟汤ID或完整数据
+   * @param {string} [soupId] 海龟汤ID或ID数组，如果不提供或为空数组则获取所有海龟汤
+   * @returns {Promise<Object>} 海龟汤ID或完整数据
    */
-  async getSoup(soupId, detail = false) {
+  async getSoup(soupId) {
     try {
-      // 如果没有提供参数或提供了空数组，获取所有海龟汤
-      if (!soupId || (Array.isArray(soupId) && soupId.length === 0)) {
-        const response = await soupRequest({
-          url: `${api.soup.base}${detail ? "?detail=true" : ""}`,
-          method: "GET",
-        });
-        return response.success ? response.data : [];
+      // todo: 这里有个问题，soupId会传入soupdata
+      // 原因是index onLoad处，随机获取的时候返回的是soupdata，而不是soupId
+      // 得全盘梳理下soupid和soupdata的传递关系
+      if (soupId && typeof soupId === "object") {
+        return soupId;
       }
 
-      // 如果是非空数组，获取多个海龟汤
-      if (Array.isArray(soupId)) {
-        // 使用逗号分隔的ID列表进行查询
-        const response = await soupRequest({
-          url: `${api.soup.base}?id=${soupId.join(",")}${
-            detail ? "&detail=true" : ""
-          }`,
-          method: "GET",
-        });
-        return response.success ? response.data : [];
-      }
-
-      // 如果是单个ID，获取单个海龟汤
-      const response = await soupRequest({
-        url: `${api.soup.base}${soupId}${detail ? "?detail=true" : ""}`,
-        method: "GET",
+      // 获取单个海龟汤
+      const response = await get("get_soup_by_id", {
+        url: api.soup.get(soupId),
       });
-      return response.success ? response.data : null;
+      return response ? response : null;
     } catch (error) {
       console.error("获取海龟汤失败:", error);
-      return Array.isArray(soupId) ? [] : null;
+      return null;
     }
   },
 
@@ -139,7 +123,7 @@ const soupService = {
         url: api.soup.random,
       });
       // 根据新接口契约，直接返回soupId
-      return response.success ? response.data : null;
+      return response ? response : null;
     } catch (error) {
       console.error("获取随机海龟汤失败:", error);
       return null;
@@ -179,7 +163,6 @@ const soupService = {
     if (!soupId) {
       return null;
     }
-
     try {
       // 根据交互类型确定API和参数
       let url;
@@ -275,7 +258,11 @@ const soupService = {
     if (!soupId) {
       return null;
     }
-
+    // todo: 这里有个问题，soupId会传入soupdata
+    // 得全盘梳理下soupid和soupdata的传递关系
+    if (soupId && typeof soupId === "object" && !Array.isArray(soupId)) {
+      soupId = soupId.id;
+    }
     try {
       // 根据最新接口契约，使用 /:soupId/view 端点
       const response = await await post("soup_view", {
