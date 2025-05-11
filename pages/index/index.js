@@ -154,7 +154,7 @@ Page({
       const isNext = direction === 'next';
 
       // 使用MobX store中的方法获取相邻汤面ID
-      const soupId = await store.getAdjacentSoup(store.soupId, isNext);
+      const soupId = await store.getRandomSoup();
 
       if (soupId) {
         // 初始化新的汤面数据 - 所有数据管理由store处理

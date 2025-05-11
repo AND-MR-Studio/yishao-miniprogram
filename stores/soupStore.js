@@ -330,7 +330,7 @@ class SoupStore {
 
       // 如果当前显示的就是这个汤面，更新阅读数
       if (result && this.soupId === soupId) {
-        this.viewCount = result.viewCount || result.count || 0;
+        this.viewCount = result.views || 0;
       }
 
       return result;

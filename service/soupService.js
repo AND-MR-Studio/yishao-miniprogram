@@ -278,11 +278,10 @@ const soupService = {
 
     try {
       // 根据最新接口契约，使用 /:soupId/view 端点
-      const response = await soupRequest({
-        url: `${api.soup.base}${soupId}/view`,
-        method: "POST",
+      const response = await await post("soup_view", {
+        url: api.soup.view(soupId),
       });
-      return response.success ? response.data : null;
+      return response ? response.views : null;
     } catch (error) {
       return null;
     }
