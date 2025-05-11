@@ -1,5 +1,5 @@
 // components/banner-swiper/banner-swiper.js
-const { requestOpen, asset_by_type_url } = require('../../utils/api');
+const { requestOpen, asset_by_type_url } = require('../../config/api');
 
 Component({
   /**

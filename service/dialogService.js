@@ -5,7 +5,7 @@
  *
  * 无状态设计：所有方法都接受必要的参数，不在服务中存储状态
  */
-const { dialogRequest, soupRequest, soup_by_id_url } = require('./api');
+const { dialogRequest, soupRequest, soup_by_id_url } = require('../config/api');
 
 // 获取基础 URL
 const getBaseUrl = () => {

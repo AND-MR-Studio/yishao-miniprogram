@@ -1,6 +1,6 @@
 // components/detective-card/detective-card.js
-const api = require('../../utils/api');
-const userService = require('../../utils/userService');
+const api = require('../../config/api');
+const userService = require('../../service/userService');
 
 Component({
   /**

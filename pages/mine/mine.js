@@ -1,8 +1,8 @@
 // pages/mine/mine.js
 // 引入用户服务模块
-const userService = require('../../utils/userService');
+const userService = require('../../service/userService');
 // 引入API模块
-const api = require('../../utils/api');
+const api = require('../../config/api');
 
 Page({
 

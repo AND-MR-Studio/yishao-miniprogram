@@ -1,5 +1,5 @@
 {
-  "appid": "wxda7c1552de0ae78f",
+  "appid": "wx83ee6933726db54d",
   "projectname": "yishao-miniprogram-demo",
   "compileType": "miniprogram",
   "libVersion": "3.7.12",
@@ -39,5 +39,6 @@
     "tabIndent": "auto",
     "tabSize": 2
   },
-  "simulatorPluginLibVersion": {}
+  "simulatorPluginLibVersion": {},
+  "condition": {}
 }

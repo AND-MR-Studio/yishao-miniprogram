@@ -1,9 +1,9 @@
 // components/dialog/index.js
-const dialogService = require('../../utils/dialogService');
+const dialogService = require('../../service/dialogService');
 const simpleTypeAnimation = require('../../utils/typeAnimation');
-const userService = require('../../utils/userService');
-const soupService = require('../../utils/soupService');
-const agentService = require('../../utils/agentService');
+const userService = require('../../service/userService');
+const soupService = require('../../service/soupService');
+const agentService = require('../../service/agentService');
 const eventUtils = require('../../utils/eventUtils');
 
 Component({
