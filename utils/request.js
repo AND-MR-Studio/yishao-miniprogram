@@ -70,6 +70,7 @@ const request = (options) => {
       method: options.method || "GET",
       data: options.data,
       header: header,
+      timeout: 5000,
       success: (res) => {
         const { data } = res;
         // 请求成功

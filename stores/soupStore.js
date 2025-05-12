@@ -70,7 +70,7 @@ class SoupStore {
     this.userId = userId || "";
     this.soupState = PAGE_STATE.VIEWING;
     // 获取汤面数据
-    this.fetchSoupDataAndStore(soupData);
+    this.initSoupAndStore(soupData);
   }
 
   /**
@@ -86,7 +86,7 @@ class SoupStore {
     this.userId = userId || "";
     this.soupState = PAGE_STATE.VIEWING;
     // 获取汤面数据
-    this.fetchSoupDataAndStore(soupData);
+    this.initSoupAndStore(soupData);
   }
 
   /**
@@ -96,7 +96,7 @@ class SoupStore {
    */
   *fetchSoupDataAndStore(soupId) {
     if (!soupId) return;
-
+    console.info("[fetchSoupDataAndStore]获取汤面数据", JSON.stringify(soupData));
     // 防止重复请求同一个soupId
     if (this._fetchingId === soupId) {
       return;
@@ -139,7 +139,7 @@ class SoupStore {
       } else {
         // 如果失败，尝试获取随机汤面
         const randomSoup = yield soupService.getRandomSoup();
-
+        console.info("[fetchSoupDataAndStore]获取随机汤面", JSON.stringify(randomSoup));
         if (randomSoup.id && randomSoup.id !== this.soupId) {
           // 更新soupId
           this.soupId = randomSoup.id;
@@ -164,6 +164,7 @@ class SoupStore {
    */
   *initSoupAndStore(soupData) {
     if (!soupData) return;
+    console.info("[initSoupAndStore]获取汤面数据", JSON.stringify(soupData));
     let soupId = soupData.id;
     // 防止重复请求同一个soupId
     if (this._fetchingId === soupId) {
@@ -195,7 +196,6 @@ class SoupStore {
       if (soupData) {
         // 更新汤面数据和交互状态
         this.soupData = soupData;
-
         // 更新交互状态
         this.isLiked = isLiked;
         this.isFavorite = isFavorite;
@@ -205,6 +205,7 @@ class SoupStore {
       } else {
         // 如果失败，尝试获取随机汤面
         const randomSoup = yield soupService.getRandomSoup();
+        console.info("[initSoupAndStore]获取随机汤面", JSON.stringify(randomSoup));
 
         if (randomSoup.id && randomSoup.id !== this.soupId) {
           // 更新soupId
