@@ -48,12 +48,13 @@ Page({
       // 如果没有提供ID，则获取随机汤面ID
       if (!targetSoupId) {
         const soupData = await store.getRandomSoup();
-        if (!soupData || !soupData.soupId) {
+        if (!soupData) {
+          console.error("加载随机汤面失败: ${soupData}");
           this.showErrorToast("加载失败，请重试");
           return; // 提前返回，避免后续操作
         }
         store.initSoupWithData(soupData, store.userId || "");
-        targetSoupId = soupData.soupId;
+        targetSoupId = soupData.id;
       } else {
         // 初始化汤面数据 - 直接使用store方法
         store.initSoupWithId(targetSoupId, store.userId || "");
@@ -63,6 +64,7 @@ Page({
       if (targetSoupId) {
         store.viewSoup(targetSoupId);
       } else {
+        console.error("加载汤面失败: ${soupData}");
         // 如果此时 targetSoupId 仍然无效，说明加载失败
         this.showErrorToast("加载汤面信息失败，请稍后重试");
         return;
@@ -168,15 +170,15 @@ Page({
       const isNext = direction === "next";
 
       // 使用MobX store中的方法获取相邻汤面ID
-      const soupId = await store.getRandomSoup();
+      const soupData = await store.getRandomSoup();
 
-      if (soupId) {
+      if (soupData) {
         // 初始化新的汤面数据 - 所有数据管理由store处理
         // 这会自动设置isLoading状态，MobX会触发观察者更新breathingBlur
-        store.initSoupWithId(soupId, store.userId || "");
+        store.initSoupWithData(soupData, store.userId || "");
 
         // 增加汤面阅读数
-        store.viewSoup(soupId);
+        store.viewSoup(soupData.id);
       } else {
         this.showErrorToast("切换失败，请重试");
       }
