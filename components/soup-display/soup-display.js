@@ -49,7 +49,7 @@ Component({
       // 创建MobX Store绑定 - 只读取数据，不更新store
       this.storeBindings = createStoreBindings(this, {
         store: store,
-        fields: ['soupData', 'isLoading']
+        fields: ['soupData', 'isLoading'] // 不再需要单独绑定soupId
       });
 
       // 标记组件已初始化

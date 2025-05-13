@@ -31,7 +31,7 @@ Page({
     // 创建MobX Store绑定 - 只绑定需要的字段，不再绑定actions
     this.storeBindings = createStoreBindings(this, {
       store: store,
-      fields: ["soupId", "userId", "isLoading", "soupData"],
+      fields: ["userId", "isLoading", "soupData"], // 移除soupId，直接使用soupData.id
     });
 
     // 同步用户ID - 确保获取最新的用户状态
@@ -60,7 +60,9 @@ Page({
       }
 
       // 增加汤面阅读数
-      store.viewSoup(store.soupId);
+      if (store.soupData?.id) {
+        store.viewSoup(store.soupData.id);
+      }
     } catch (error) {
       console.error("加载汤面过程中发生错误:", error);
       this.showErrorToast("加载失败，请检查网络或稍后重试");
@@ -109,7 +111,7 @@ Page({
   onShareAppMessage() {
     return {
       title: "这个海龟汤太难了来帮帮我！",
-      path: `/pages/index/index?soupId=${store.soupId}`,
+      path: `/pages/index/index?soupId=${store.soupData?.id || ''}`,
     };
   },
 
@@ -131,7 +133,7 @@ Page({
 
     // 直接跳转到chat页面
     wx.navigateTo({
-      url: `/pages/chat/chat?soupId=${store.soupId}`,
+      url: `/pages/chat/chat?soupId=${store.soupData?.id || ''}`,
     });
   },
 
@@ -166,7 +168,9 @@ Page({
         await store.initSoupWithData(randomSoup, store.userId || "");
 
         // 增加汤面阅读数
-        store.viewSoup(store.soupId);
+        if (store.soupData?.id) {
+          store.viewSoup(store.soupData.id);
+        }
       } else {
         this.showErrorToast("切换失败，请重试");
       }
@@ -194,9 +198,9 @@ Page({
    * 直接调用MobX store的toggleFavorite方法
    */
   handleDoubleTap() {
-    if (store.soupId) {
+    if (store.soupData?.id) {
       // 直接调用store的方法，store内部会处理登录检查
-      store.toggleFavorite(store.soupId);
+      store.toggleFavorite(store.soupData.id);
     }
   },
 

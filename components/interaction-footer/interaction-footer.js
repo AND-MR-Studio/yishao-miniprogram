@@ -8,11 +8,7 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
   properties: {
-    // 汤面ID - 仅用于API调用，状态从MobX获取
-    soupId: {
-      type: String,
-      value: ''
-    }
+    // 不再需要单独的soupId属性，直接从MobX的soupData中获取
   },
 
   options: {
@@ -53,36 +49,23 @@ Component({
      * 触发store中的action并处理结果提示
      */
     async handleFavoriteClick() {
-      const soupId = store.soupId;
-      if (!soupId) {
-        wx.showToast({ title: '缺少汤面ID', icon: 'error', duration: 1500 });
-        return;
-      }
+      // 从soupData中获取soupId
+      const soupId = this.data.soupData?.id || '';
 
       try {
         // 调用store的action并处理结果
         const result = await store.toggleFavorite(soupId);
 
-        // 显示操作结果提示
+        // 只显示成功操作的提示
         if (result && result.success) {
           wx.showToast({
             title: result.message,
             icon: 'none',
             duration: 1500
           });
-        } else {
-          wx.showToast({
-            title: result?.message || '操作失败，请重试',
-            icon: 'error',
-            duration: 1500
-          });
         }
       } catch (error) {
-        wx.showToast({
-          title: '操作失败，请重试',
-          icon: 'error',
-          duration: 1500
-        });
+        console.error('收藏操作失败:', error);
       }
     },
 
@@ -99,36 +82,23 @@ Component({
      * 触发store中的action并处理结果提示
      */
     async handleLikeClick() {
-      const soupId = store.soupId;
-      if (!soupId) {
-        wx.showToast({ title: '缺少汤面ID', icon: 'error', duration: 1500 });
-        return;
-      }
+      // 从soupData中获取soupId
+      const soupId = this.data.soupData?.id || '';
 
       try {
         // 调用store的action并处理结果
         const result = await store.toggleLike(soupId);
 
-        // 显示操作结果提示
+        // 只显示成功操作的提示
         if (result && result.success) {
           wx.showToast({
             title: result.message,
             icon: 'none',
             duration: 1500
           });
-        } else {
-          wx.showToast({
-            title: result?.message || '操作失败，请重试',
-            icon: 'error',
-            duration: 1500
-          });
         }
       } catch (error) {
-        wx.showToast({
-          title: '操作失败，请重试',
-          icon: 'error',
-          duration: 1500
-        });
+        console.error('点赞操作失败:', error);
       }
     },
 

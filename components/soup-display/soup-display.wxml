@@ -16,7 +16,6 @@
     <!-- 使用独立的交互底部组件 - 使用MobX管理状态 -->
     <interaction-footer
       id="interactionFooter"
-      soupId="{{soupId}}"
       isDrinking="{{isDrinking}}"
     ></interaction-footer>
   </block>

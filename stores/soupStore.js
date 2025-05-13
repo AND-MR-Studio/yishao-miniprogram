@@ -14,11 +14,12 @@ class SoupStore {
   // soupState = PAGE_STATE.VIEWING;
 
   // 核心数据
-  soupId = ""; // 当前汤面ID
+  //soupId = ""; // 当前汤面ID - 始终保持为字符串，即使是空字符串
+  soupData = null; // 当前汤面数据
   userId = ""; // 当前用户ID
 
   // 汤面交互状态
-  soupData = null; // 当前汤面数据
+
   isLiked = false; // 是否已点赞
   isFavorite = false; // 是否已收藏
   likeCount = 0; // 点赞数量

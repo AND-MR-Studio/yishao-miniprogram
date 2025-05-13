@@ -198,8 +198,33 @@ const soupService = {
    * @returns {Promise<Object>} 点赞结果，包含likes数量
    */
   async likeSoup(soupId, isLike = true) {
-    type = isLike ? "like" : "unlike";
-    return this.updateInteractionStatus(soupId, type);
+    if (!soupId) {
+      return { success: false, message: "缺少汤面ID" };
+    }
+    try {
+      // 直接使用API，不依赖this或soupService
+      const url = isLike ? api.soup.like(soupId) : api.soup.unlike(soupId);
+      const response = await post("soup_status", { url: url });
+
+      // 确保返回格式正确
+      if (response) {
+        return {
+          success: true,
+          likes: response.likes || 0,
+          message: isLike ? "点赞成功" : "取消点赞成功"
+        };
+      } else {
+        return {
+          success: false,
+          message: "点赞操作失败，请重试"
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: "点赞操作失败: " + (error.message || "未知错误")
+      };
+    }
   },
 
   /**
@@ -209,8 +234,33 @@ const soupService = {
    * @returns {Promise<Object>} 结果，包含favorites数量
    */
   async favoriteSoup(soupId, isFavorite = true) {
-    type = isFavorite ? "favorite" : "unfavorite";
-    return this.updateInteractionStatus(soupId, type);
+    if (!soupId) {
+      return { success: false, message: "缺少汤面ID" };
+    }
+    try {
+      // 直接使用API，不依赖this或soupService
+      const url = isFavorite ? api.soup.favorite(soupId) : api.soup.unfavorite(soupId);
+      const response = await post("soup_status", { url: url });
+
+      // 确保返回格式正确
+      if (response) {
+        return {
+          success: true,
+          favorites: response.favorites || 0,
+          message: isFavorite ? "收藏成功" : "取消收藏成功"
+        };
+      } else {
+        return {
+          success: false,
+          message: "收藏操作失败，请重试"
+        };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        message: "收藏操作失败: " + (error.message || "未知错误")
+      };
+    }
   },
 
   /**
