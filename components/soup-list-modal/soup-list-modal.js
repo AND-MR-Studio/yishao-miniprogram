@@ -1,7 +1,7 @@
 // components/soup-list-modal/soup-list-modal.js
-const userService = require('../../utils/userService');
-const soupService = require('../../utils/soupService');
-const dialogService = require('../../utils/dialogService');
+const userService = require('../../service/userService');
+const soupService = require('../../service/soupService');
+const dialogService = require('../../service/dialogService');
 const eventUtils = require('../../utils/eventUtils');
 
 // 定义列表类型配置

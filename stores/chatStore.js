@@ -1,5 +1,5 @@
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
-const dialogService = require('../utils/dialogService');
+const dialogService = require('../service/dialogService');
 
 // 聊天状态常量
 const CHAT_STATE = {

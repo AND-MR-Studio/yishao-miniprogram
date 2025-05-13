@@ -1,5 +1,5 @@
 // utils/userService.js
-const api = require('./api');
+const api = require('../config/api');
 
 // 定义常量
 const TOKEN_KEY = 'token'; // 使用token作为唯一的本地存储键

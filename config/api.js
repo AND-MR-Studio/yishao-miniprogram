@@ -6,6 +6,7 @@
 const App = getApp();
 const baseUrl = App.globalData.config.baseUrl;
 const ysUrl = App.globalData.config.ysUrl;
+const memoryUrl = App.globalData.config.memory;
 const {
   request,
   requestOpen,
@@ -16,7 +17,7 @@ const {
   assetRequestOpen,
   uploadFile,
   agentRequest
-} = require('./request');
+} = require('../utils/request');
 
 // 基础路径
 const paths = {
@@ -54,12 +55,15 @@ const api = {
 
   // 海龟汤服务
   soup: {
-    base: ysUrl + paths.soup,
-    random: ysUrl + paths.soup + 'random',
-    view: ysUrl + paths.soup + 'view',
-    like: ysUrl + paths.soup + 'like',
-    favorite: ysUrl + paths.soup + 'favorite',
-    map: ysUrl + paths.soup + 'map'
+    base: memoryUrl + paths.soup,
+    random: memoryUrl + '/api/soups/random',
+    get: (soupId) => `${memoryUrl}/api/soups/${soupId}`,
+    view: (soupId) => `${memoryUrl}/api/soups/${soupId}/view`,
+    like: (soupId) => `${memoryUrl}/api/soups/${soupId}/like`,
+    unlike: (soupId) => `${memoryUrl}/api/soups/${soupId}/unlike`,
+    favorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/favor`,
+    unfavorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/unfavor`,
+    map: memoryUrl + paths.soup + 'map'
   },
 
   // 对话服务

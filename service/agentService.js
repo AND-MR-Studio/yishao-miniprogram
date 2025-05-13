@@ -4,8 +4,8 @@
  *
  * 无状态设计：所有方法都接受必要的参数，不在服务中存储状态
  */
-const { agentRequest } = require('./request');
-const { agent_chat_url } = require('./api');
+const { agentRequest } = require('../utils/request');
+const { agent_chat_url } = require('../config/api');
 const dialogService = require('./dialogService'); // 添加dialogService引用
 
 // 用于防止并发请求的简单锁

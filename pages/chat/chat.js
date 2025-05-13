@@ -3,9 +3,9 @@
  * 负责处理喝汤状态下的对话、提示和输入功能
  */
 // ===== 导入依赖 =====
-const soupService = require('../../utils/soupService');
-const dialogService = require('../../utils/dialogService');
-const userService = require('../../utils/userService');
+const soupService = require('../../service/soupService');
+const dialogService = require('../../service/dialogService');
+const userService = require('../../service/userService');
 const eventUtils = require('../../utils/eventUtils');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { store } = require('../../stores/soupStore');
