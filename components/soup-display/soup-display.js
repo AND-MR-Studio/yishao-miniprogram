@@ -5,7 +5,7 @@
  */
 
 // 引入MobX store和绑定工具
-const { store } = require('../../stores/soupStore');
+const { soupStore } = require('../../stores/soupStore');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
@@ -46,10 +46,10 @@ Component({
     attached() {
       this._isAttached = true;
 
-      // 创建MobX Store绑定 - 只读取数据，不更新store
+      // 创建MobX Store绑定 - 确保使用正确的store对象
       this.storeBindings = createStoreBindings(this, {
-        store: store,
-        fields: ['soupData', 'isLoading'] // 不再需要单独绑定soupId
+        store: soupStore, // 确保这里使用的是soupStore而不是store
+        fields: ['soupData', 'isLoading']
       });
 
       // 标记组件已初始化
@@ -82,8 +82,8 @@ Component({
       }
     },
 
-    // 监听store.soupData变化
-    'store.soupData': function(soupData) {
+    // 监听soupstore.soupData变化
+    'soupStore.soupData': function(soupData) {
       if (this._isAttached && soupData) {
         console.log('汤面数据已更新:', soupData.title);
         this.setData({ soupData });
@@ -115,15 +115,6 @@ Component({
     handleLongPressEnd() {
       // 触发长按结束事件
       this.triggerEvent('longPressEnd');
-    },
-
-    /**
-     * 处理加载状态变化
-     * 当MobX store中的isLoading状态变化时触发
-     * @deprecated 已在observer中直接处理，保留此方法以兼容现有代码
-     */
-    handleLoadingChange() {
-      // 已在observer中直接处理，此方法保留以兼容现有代码
     }
   }
 });

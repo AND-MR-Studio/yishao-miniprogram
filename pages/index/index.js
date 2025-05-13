@@ -9,7 +9,7 @@ const {
   createInteractionManager,
 } = require("../../utils/interactionManager");
 const { createStoreBindings } = require("mobx-miniprogram-bindings");
-const { store } = require("../../stores/soupStore");
+const { soupStore } = require("../../stores/soupStore");
 
 Page({
   // ===== 页面数据 =====
@@ -30,38 +30,38 @@ Page({
   async onLoad(options) {
     // 创建MobX Store绑定 - 只绑定需要的字段，不再绑定actions
     this.storeBindings = createStoreBindings(this, {
-      store: store,
+      store: soupStore,
       fields: ["userId", "isLoading", "soupData"], // 移除soupId，直接使用soupData.id
     });
 
     // 同步用户ID - 确保获取最新的用户状态
-    await store.syncUserId();
+    await soupStore.syncUserId();
 
     try {
       // 统一数据获取路径：无论是否有soupId，都通过store方法获取数据
       if (options.soupId) {
         // 如果有指定的soupId，直接通过store获取
-        await store.fetchSoupDataAndStore(options.soupId);
+        await soupStore.fetchSoupDataAndStore(options.soupId);
       } else {
         // 获取随机汤面并初始化
-        const randomSoup = await store.getRandomSoup();
+        const randomSoup = await soupStore.getRandomSoup();
         if (randomSoup && randomSoup.id) {
-          await store.initSoupWithData(randomSoup, store.userId || "");
+          await soupStore.initSoupWithData(randomSoup, soupStore.userId || "");
         } else {
           throw new Error("获取随机汤面失败");
         }
       }
 
       // 检查数据有效性
-      if (!store.soupData) {
+      if (!soupStore.soupData) {
         console.error("加载汤面失败");
         this.showErrorToast("加载失败，请重试");
         return;
       }
 
       // 增加汤面阅读数
-      if (store.soupData?.id) {
-        store.viewSoup(store.soupData.id);
+      if (soupStore.soupData?.id) {
+        soupStore.viewSoup(soupStore.soupData.id);
       }
     } catch (error) {
       console.error("加载汤面过程中发生错误:", error);
@@ -85,7 +85,7 @@ Page({
     }
 
     // 同步用户ID - 直接调用store方法
-    store.syncUserId();
+    soupStore.syncUserId();
   },
 
   /**
@@ -111,7 +111,7 @@ Page({
   onShareAppMessage() {
     return {
       title: "这个海龟汤太难了来帮帮我！",
-      path: `/pages/index/index?soupId=${store.soupData?.id || ''}`,
+      path: `/pages/index/index?soupId=${soupStore.soupData?.id || ''}`,
     };
   },
 
@@ -133,7 +133,7 @@ Page({
 
     // 直接跳转到chat页面
     wx.navigateTo({
-      url: `/pages/chat/chat?soupId=${store.soupData?.id || ''}`,
+      url: `/pages/chat/chat?soupId=${soupStore.soupData?.id || ''}`,
     });
   },
 
@@ -160,16 +160,16 @@ Page({
 
     try {
       // 使用MobX store中的方法获取随机汤面
-      const randomSoup = await store.getRandomSoup();
+      const randomSoup = await soupStore.getRandomSoup();
 
       if (randomSoup && randomSoup.id) {
         // 初始化新的汤面数据 - 所有数据管理由store处理
         // 这会自动设置isLoading状态，MobX会触发观察者更新breathingBlur
-        await store.initSoupWithData(randomSoup, store.userId || "");
+        await soupStore.initSoupWithData(randomSoup, soupStore.userId || "");
 
         // 增加汤面阅读数
-        if (store.soupData?.id) {
-          store.viewSoup(store.soupData.id);
+        if (soupStore.soupData?.id) {
+          soupStore.viewSoup(soupStore.soupData.id);
         }
       } else {
         this.showErrorToast("切换失败，请重试");
@@ -198,9 +198,9 @@ Page({
    * 直接调用MobX store的toggleFavorite方法
    */
   handleDoubleTap() {
-    if (store.soupData?.id) {
+    if (soupStore.soupData?.id) {
       // 直接调用store的方法，store内部会处理登录检查
-      store.toggleFavorite(store.soupData.id);
+      soupStore.toggleFavorite(soupStore.soupData.id);
     }
   },
 

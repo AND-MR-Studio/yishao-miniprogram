@@ -456,8 +456,8 @@ class SoupStore {
 }
 
 // 创建单例实例
-const store = new SoupStore();
+const soupStore = new SoupStore();
 
 module.exports = {
-  store,
+  soupStore,
 };

@@ -8,7 +8,7 @@ const dialogService = require('../../service/dialogService');
 const userService = require('../../service/userService');
 const eventUtils = require('../../utils/eventUtils');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { store } = require('../../stores/soupStore');
+const { soupStore } = require('../../stores/soupStore');
 const { chatStore, CHAT_STATE } = require('../../stores/chatStore');
 
 Page({
@@ -37,7 +37,7 @@ Page({
     try {
       // 创建soupStore绑定 - 只用于获取汤面数据
       this.soupStoreBindings = createStoreBindings(this, {
-        store: store,
+        store: soupStore,
         fields: ['isLoading'],
         actions: ['fetchSoupData']
       });
