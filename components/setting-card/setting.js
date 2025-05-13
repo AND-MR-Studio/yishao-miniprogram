@@ -15,10 +15,6 @@ Component({
       type: String,
       value: ''
     },
-    pageState: {
-      type: String,
-      value: 'viewing' // 默认为viewing状态，可选值：viewing, drinking, truth
-    }
   },
 
   /**

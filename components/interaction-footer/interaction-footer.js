@@ -53,7 +53,7 @@ Component({
      * 触发store中的action并处理结果提示
      */
     async handleFavoriteClick() {
-      const soupId = this.data.soupId || this.properties.soupId || '';
+      const soupId = store.soupId;
       if (!soupId.trim()) {
         wx.showToast({ title: '缺少汤面ID', icon: 'error', duration: 1500 });
         return;
@@ -99,7 +99,7 @@ Component({
      * 触发store中的action并处理结果提示
      */
     async handleLikeClick() {
-      const soupId = this.data.soupId || this.properties.soupId || '';
+      const soupId = store.soupId;
       if (!soupId.trim()) {
         wx.showToast({ title: '缺少汤面ID', icon: 'error', duration: 1500 });
         return;

@@ -34,47 +34,39 @@ Page({
       fields: ["soupId", "userId", "isLoading", "soupData"],
     });
 
-    // 确保soupState有默认值
-    this.setData({
-      soupState: "viewing", // 设置默认值
-    });
-
     // 同步用户ID - 确保获取最新的用户状态
     await store.syncUserId();
 
     let targetSoupId = options.soupId;
 
     try {
-      // 如果没有提供ID，则获取随机汤面ID
+      let soupData;
+      
       if (!targetSoupId) {
-        const soupData = await store.getRandomSoup();
-        if (!soupData) {
-          console.error("加载随机汤面失败: ${soupData}");
-          this.showErrorToast("加载失败，请重试");
-          return; // 提前返回，避免后续操作
-        }
-        store.initSoupWithData(soupData, store.userId || "");
-        targetSoupId = soupData.id;
+        // 获取随机汤面
+        soupData = await store.getRandomSoup();
       } else {
-        // 初始化汤面数据 - 直接使用store方法
-        store.initSoupWithId(targetSoupId, store.userId || "");
+        // 通过ID获取汤面数据
+        soupData = await soupService.getSoup(targetSoupId);
       }
-
-      // 确保 targetSoupId 有效后再调用 viewSoup
-      if (targetSoupId) {
-        store.viewSoup(targetSoupId);
-      } else {
-        console.error("加载汤面失败: ${soupData}");
-        // 如果此时 targetSoupId 仍然无效，说明加载失败
-        this.showErrorToast("加载汤面信息失败，请稍后重试");
+      
+      // 检查数据有效性
+      if (!soupData) {
+        console.error("加载汤面失败");
+        this.showErrorToast("加载失败，请重试");
         return;
       }
+      
+      // 初始化汤面数据
+      await store.initSoupWithData(soupData, store.userId || "");
+      
+      // 增加汤面阅读数
+      store.viewSoup(soupData.id);
     } catch (error) {
       console.error("加载汤面过程中发生错误:", error);
       this.showErrorToast("加载失败，请检查网络或稍后重试");
-      // 即使出错，也尝试初始化交互管理器，以保证基本交互可用
     } finally {
-      // 初始化交互管理器，无论加载成功与否都执行
+      // 初始化交互管理器
       this.initInteractionManager();
     }
   },

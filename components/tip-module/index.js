@@ -36,7 +36,7 @@ Component({
     // 页面状态
     pageState: {
       type: String,
-      value: 'viewing',
+      value: 'drinking',
       observer: function(newVal, oldVal) {
         // 当页面状态变为truth时，显示祝贺消息
         if (newVal === 'truth' && oldVal !== 'truth') {

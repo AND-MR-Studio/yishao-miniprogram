@@ -10,12 +10,6 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
   properties: {
-    // 汤面ID
-    soupId: {
-      type: String,
-      value: ''
-    },
-
     // 是否处于偷看模式
     isPeeking: {
       type: Boolean,
@@ -32,12 +26,6 @@ Component({
     blurAmount: {
       type: Number,
       value: 0
-    },
-
-    // 页面状态：viewing, drinking, truth
-    pageState: {
-      type: String,
-      value: 'viewing'
     },
   },
 

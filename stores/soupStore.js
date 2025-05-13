@@ -3,15 +3,15 @@ const soupService = require("../service/soupService");
 const userService = require("../service/userService");
 
 // 页面状态常量 - 简化后只保留VIEWING状态
-const PAGE_STATE = {
-  VIEWING: "viewing", // 看汤状态
-};
+// const PAGE_STATE = {
+//   VIEWING: "viewing", // 看汤状态
+// };
 
 // 创建汤面Store - 简化后只关注汤面数据和交互状态
 class SoupStore {
   // ===== 可观察状态 =====
   // 当前页面状态
-  soupState = PAGE_STATE.VIEWING;
+  // soupState = PAGE_STATE.VIEWING;
 
   // 核心数据
   soupId = ""; // 当前汤面ID
@@ -49,44 +49,58 @@ class SoupStore {
   }
 
   // ===== 计算属性 =====
-  // 判断当前是否为查看状态 - 保留此属性以兼容现有代码
-  get isViewing() {
-    return this.soupState === PAGE_STATE.VIEWING;
-  }
 
   // ===== Action方法 =====
 
   /**
    * 初始化汤面数据
-   * 简化版本，只设置ID和用户ID，然后获取数据
-   * @param {string} soupId 汤面ID
+   * @param {Object} soupData 汤面数据对象
    * @param {string} userId 用户ID
    */
-  initSoupWithId(soupId, userId = "") {
-    if (!soupId) return;
-    let soupData = soupService.getSoup(soupId);
-    // 设置基本数据
-    this.soupId = soupId;
-    this.userId = userId || "";
-    this.soupState = PAGE_STATE.VIEWING;
-    // 获取汤面数据
-    this.initSoupAndStore(soupData);
-  }
-
-  /**
-   * 初始化汤面数据
-   * 简化版本，只设置ID和用户ID，然后获取数据
-   * @param {Object} soupData 汤面数据
-   * @param {string} userId 用户ID
-   */
-  initSoupWithData(soupData, userId = "") {
-    if (!soupData) return;
+  async initSoupWithData(soupData, userId = "") {
+    // 参数校验
+    if (!soupData || !soupData.id) {
+      console.error("初始化汤面数据失败: 无效的汤面数据");
+      return;
+    }
+    
     // 设置基本数据
     this.soupId = soupData.id;
     this.userId = userId || "";
-    this.soupState = PAGE_STATE.VIEWING;
-    // 获取汤面数据
-    this.initSoupAndStore(soupData);
+    // 删除状态设置
+    // this.soupState = PAGE_STATE.VIEWING;
+    this.soupData = soupData;
+    
+    // 设置加载状态
+    this.isLoading = true;
+    
+    try {
+      // 只有在用户已登录的情况下获取交互状态
+      if (this.userId) {
+        // 并行获取用户交互状态
+        const [isLiked, isFavorite] = await Promise.all([
+          userService.isLikedSoup(soupData.id),
+          userService.isFavoriteSoup(soupData.id)
+        ]);
+        
+        // 更新交互状态
+        this.isLiked = isLiked;
+        this.isFavorite = isFavorite;
+      } else {
+        // 用户未登录，默认未点赞和未收藏
+        this.isLiked = false;
+        this.isFavorite = false;
+      }
+      
+      // 更新计数
+      this.likeCount = soupData.likes || 0;
+      this.favoriteCount = soupData.favorites || 0;
+      this.viewCount = soupData.views || 0;
+    } catch (error) {
+      console.error("获取交互状态失败:", error);
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   /**
@@ -376,24 +390,6 @@ class SoupStore {
       return await soupService.getRandomSoup();
     } catch (error) {
       console.error("获取随机汤面失败:", error);
-      return null;
-    }
-  }
-
-  /**
-   * 获取相邻汤面ID
-   * 直接调用soupService的getAdjacentSoup方法
-   * @param {string} soupId 当前汤面ID
-   * @param {boolean} isNext 是否获取下一个，false表示获取上一个
-   * @returns {Promise<string>} 相邻汤面ID
-   */
-  async getAdjacentSoup(soupId, isNext = true) {
-    if (!soupId) return null;
-
-    try {
-      return await soupService.getAdjacentSoup(soupId, isNext);
-    } catch (error) {
-      console.error("获取相邻汤面失败:", error);
       return null;
     }
   }

@@ -234,8 +234,6 @@ Component({
       // 关闭弹窗
       this.closeModal();
 
-      // 使用事件通信方式，发布一个自定义事件
-
       // 跳转到海龟汤详情页（Tab页面）
       wx.switchTab({
         url: '/pages/index/index',
