@@ -15,6 +15,7 @@ class ChatStore {
 
   // 核心数据
   soupId = '';      // 当前汤面ID
+  soupData = null;  // 当前汤面完整数据
   dialogId = '';    // 当前对话ID
   userId = '';      // 当前用户ID
   truthSoupId = ''; // 汤底ID
@@ -69,6 +70,9 @@ class ChatStore {
     // 更新数据
     if (data.soupId !== undefined) {
       this.soupId = data.soupId;
+    }
+    if (data.soupData !== undefined) {
+      this.soupData = data.soupData;
     }
     if (data.dialogId !== undefined) {
       this.dialogId = data.dialogId;

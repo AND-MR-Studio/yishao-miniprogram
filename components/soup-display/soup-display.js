@@ -10,6 +10,12 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
   properties: {
+    // 汤面数据对象
+    soupData: {
+      type: Object,
+      value: null
+    },
+
     // 是否处于偷看模式
     isPeeking: {
       type: Boolean,
@@ -27,6 +33,12 @@ Component({
       type: Number,
       value: 0
     },
+
+    // 是否正在加载
+    loading: {
+      type: Boolean,
+      value: false
+    }
   },
 
   options: {
@@ -36,9 +48,10 @@ Component({
 
   data: {
     // 组件内部数据
-    soupData: {}, // 汤面数据
+    localSoupData: {}, // 本地汤面数据，用于存储从属性或store获取的数据
     isInitialized: false, // 标记组件是否已初始化
-    breathingBlur: false // 呼吸模糊效果，由isLoading状态控制
+    breathingBlur: false, // 呼吸模糊效果，由isLoading状态控制
+    isLoading: false // 加载状态
   },
 
   lifetimes: {
@@ -69,24 +82,34 @@ Component({
 
   // 属性变化观察者
   observers: {
-    // 监听isLoading状态变化
-    'isLoading': function(isLoading) {
+    // 监听loading状态变化
+    'loading': function(loading) {
       if (this._isAttached) {
         // 通知页面组件加载状态变化
-        this.triggerEvent('loading', { loading: isLoading });
+        this.triggerEvent('loading', { loading: loading });
 
         // 直接控制breathingBlur动画
         this.setData({
-          breathingBlur: isLoading // 加载中时启用呼吸模糊效果
+          breathingBlur: loading, // 加载中时启用呼吸模糊效果
+          isLoading: loading
         });
+      }
+    },
+
+    // 监听传入的soupData属性变化
+    'soupData': function(soupData) {
+      if (this._isAttached && soupData) {
+        console.log('从属性接收汤面数据:', soupData.title);
+        this.setData({ localSoupData: soupData });
       }
     },
 
     // 监听soupstore.soupData变化
     'soupStore.soupData': function(soupData) {
-      if (this._isAttached && soupData) {
-        console.log('汤面数据已更新:', soupData.title);
-        this.setData({ soupData });
+      if (this._isAttached && soupData && !this.properties.soupData) {
+        // 只有当没有通过属性传入soupData时，才使用store中的数据
+        console.log('从store获取汤面数据:', soupData.title);
+        this.setData({ localSoupData: soupData });
       }
     }
   },

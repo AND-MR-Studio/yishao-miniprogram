@@ -7,10 +7,10 @@
   <block wx:if="{{!isLoading}}">
     <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
       <!-- 标题和内容分开显示 -->
-      <view class="title-container" wx:if="{{soupData.title}}">
-        <text class="title-text">{{soupData.title}}</text>
+      <view class="title-container" wx:if="{{localSoupData.title}}">
+        <text class="title-text">{{localSoupData.title}}</text>
       </view>
-      <text class="soup-text">{{soupData.soup_surface || ''}}</text>
+      <text class="soup-text">{{localSoupData.soup_surface || ''}}</text>
     </view>
 
     <!-- 使用独立的交互底部组件 - 使用MobX管理状态 -->

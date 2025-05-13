@@ -3,9 +3,6 @@
  * 负责处理喝汤状态下的对话、提示和输入功能
  */
 // ===== 导入依赖 =====
-const soupService = require('../../service/soupService');
-const dialogService = require('../../service/dialogService');
-const userService = require('../../service/userService');
 const eventUtils = require('../../utils/eventUtils');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { soupStore } = require('../../stores/soupStore');
@@ -17,12 +14,10 @@ Page({
     // 页面状态
     isLoading: true,
 
-    // 汤面相关
-    soupData: null, // 当前汤面完整数据对象
-    breathingBlur: false, // 呈现呼吸模糊效果
+    // 汤面数据 - 仅用于传递给soup-display组件
+    soupData: null,
 
     // 交互相关
-    blurAmount: 0, // 模糊程度（0-10px）
     isSending: false, // 是否正在发送消息
     isAnimating: false, // 是否正在动画中
   },
@@ -35,18 +30,18 @@ Page({
    */
   async onLoad(options) {
     try {
-      // 创建soupStore绑定 - 只用于获取汤面数据
+      // 创建soupStore绑定 - 用于获取汤面数据和用户ID
       this.soupStoreBindings = createStoreBindings(this, {
         store: soupStore,
-        fields: ['isLoading'],
-        actions: ['fetchSoupData']
+        fields: ['isLoading', 'userId'],
+        actions: ['fetchSoupById']
       });
 
       // 创建chatStore绑定 - 管理聊天相关的所有状态
       this.chatStoreBindings = createStoreBindings(this, {
         store: chatStore,
         fields: [
-          'soupId', 'dialogId', 'userId', 'chatState',
+          'soupId', 'soupData', 'dialogId', 'userId', 'chatState',
           'isPeeking', 'isSending', 'isReplying', 'tipVisible',
           'isDrinking', 'isTruth', 'shouldShowTip', 'messages'
         ],
@@ -58,7 +53,7 @@ Page({
 
       this.setData({ isLoading: true });
 
-      // 检查是否有指定的汤面ID
+      // 获取页面参数
       const soupId = options.soupId || '';
       const dialogId = options.dialogId || '';
 
@@ -66,28 +61,38 @@ Page({
         throw new Error('缺少汤面ID参数');
       }
 
-      // 初始化汤面数据
-      await this.initSoupData(soupId);
+      // 使用soupStore中的userId
+      const userId = soupStore.userId || '';
 
-      // 获取用户ID
-      const userId = await this.ensureUserId();
+      // 获取汤面数据并初始化
+      const soupData = await this.fetchSoupById(soupId);
+
+      if (!soupData) {
+        throw new Error('获取汤面数据失败');
+      }
+
+      // 更新页面数据
+      this.setData({
+        soupData: soupData,
+        isLoading: false
+      });
 
       // 设置chatStore的基本数据
       chatStore.updateState({
         soupId: soupId,
+        soupData: soupData,
         userId: userId,
         chatState: CHAT_STATE.DRINKING,
         dialogId: dialogId
       });
 
-      // 如果有dialogId，直接初始化对话
+      // 初始化对话
       if (dialogId) {
-        this.initDialog(soupId, dialogId, userId);
+        this.initDialog(dialogId);
       } else {
-        // 否则创建新对话
+        // 创建新对话
         await chatStore.createDialog();
-        // 初始化对话
-        this.initDialog(soupId, chatStore.dialogId, userId);
+        this.initDialog(chatStore.dialogId);
       }
     } catch (error) {
       console.error('页面加载失败:', error);
@@ -99,87 +104,15 @@ Page({
   },
 
   /**
-   * 初始化汤面数据
-   * @param {string} soupId 汤面ID
-   */
-  async initSoupData(soupId) {
-    if (!soupId) {
-      console.error('汤面ID为空，无法初始化');
-      return;
-    }
-
-    try {
-      // 使用getSoup方法获取汤面数据，并设置detail=true以获取完整数据
-      const soupData = await soupService.getSoup(soupId, true);
-
-      if (!soupData) {
-        console.error('获取汤面数据失败: 未找到指定ID的汤面');
-        this.setData({ isLoading: false });
-        return;
-      }
-
-      // 更新页面数据
-      this.setData({
-        soupData: soupData,
-        isLoading: false
-      });
-
-      // 并行处理收藏和点赞状态检查
-      const favoritePromise = userService.isFavoriteSoup(soupId)
-        .catch(error => {
-          console.error('检查收藏状态失败:', error);
-          return false; // 出错时默认为未收藏
-        });
-
-      const likedPromise = userService.isLikedSoup(soupId)
-        .catch(error => {
-          console.error('检查点赞状态失败:', error);
-          return false; // 出错时默认为未点赞
-        });
-
-      // 等待收藏和点赞状态检查完成
-      const [isFavorite, isLiked] = await Promise.all([favoritePromise, likedPromise]);
-
-      // 更新MobX store中的汤面数据和交互状态
-      const soupDataWithInteractions = {
-        ...soupData,
-        isFavorite: isFavorite,
-        isLiked: isLiked,
-        favoriteCount: soupData.favoriteCount || 0,
-        likeCount: soupData.likeCount || 0,
-        viewCount: soupData.viewCount || 0
-      };
-
-      // 更新MobX store
-      store.updateSoupData(soupDataWithInteractions);
-
-      // 更新汤面显示组件的数据
-      const soupDisplay = this.selectComponent('#soupDisplay');
-      if (soupDisplay) {
-        soupDisplay.setData({
-          soupData: soupDataWithInteractions
-        });
-      }
-    } catch (error) {
-      console.error('初始化汤面数据失败:', error);
-      this.setData({ isLoading: false });
-    }
-  },
-
-  /**
    * 初始化对话
-   * @param {string} soupId 汤面ID
    * @param {string} dialogId 对话ID
-   * @param {string} userId 用户ID
    */
-  initDialog(soupId, dialogId, userId) {
+  initDialog(dialogId) {
     // 显示对话框并设置必要属性
     const dialog = this.selectComponent('#dialog');
     if (dialog) {
       dialog.setData({
-        soupId: soupId,
         dialogId: dialogId,
-        userId: userId,
         visible: true
       });
 
@@ -190,32 +123,18 @@ Page({
 
   /**
    * 创建新对话
-   * @param {string} soupId 汤面ID
-   * @param {string} userId 用户ID
    */
-  async createNewDialog(soupId, userId) {
+  async createNewDialog() {
     try {
-      // 获取用户对话，如果不存在则创建新对话
-      let dialogData = await dialogService.getUserDialog(userId, soupId);
+      // 使用chatStore创建对话
+      const success = await chatStore.createDialog();
 
-      // 如果没有对话ID，创建新对话
-      if (!dialogData.dialogId) {
-        dialogData = await dialogService.createDialog(userId, soupId);
+      if (!success) {
+        throw new Error('无法创建对话');
       }
-
-      const dialogId = dialogData.dialogId || '';
-
-      if (!dialogId) {
-        throw new Error('无法获取对话ID');
-      }
-
-      // 更新MobX Store
-      this.updateState({
-        dialogId: dialogId
-      });
 
       // 初始化对话
-      this.initDialog(soupId, dialogId, userId);
+      this.initDialog(chatStore.dialogId);
     } catch (error) {
       console.error('创建对话失败:', error);
       this.showErrorToast('无法创建对话，请重试');
@@ -417,21 +336,5 @@ Page({
     });
   },
 
-  /**
-   * 确保获取用户ID
-   * 如果没有用户ID，尝试刷新用户信息
-   * @returns {Promise<string>} 用户ID
-   * @throws {Error} 如果无法获取用户ID
-   */
-  async ensureUserId() {
-    let userId = await userService.getUserId();
-    if (!userId) {
-      await userService.refreshUserInfo();
-      userId = await userService.getUserId();
-      if (!userId) {
-        throw new Error('无法获取用户ID');
-      }
-    }
-    return userId;
-  }
+
 });

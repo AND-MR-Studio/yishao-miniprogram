@@ -16,10 +16,8 @@
         id="soupDisplay"
         soupData="{{soupData}}"
         loading="{{isLoading}}"
-        isFavorite="{{isFavorite}}"
         isDrinking="{{true}}"
         isPeeking="{{isPeeking}}"
-        pageState="{{'drinking'}}"
         class="soup-display-component {{isPeeking ? 'peeking' : ''}}"
         bind:longPressStart="onLongPressStart"
         bind:longPressEnd="onLongPressEnd"
@@ -30,7 +28,7 @@
     <soup-truth
       id="soupTruth"
       soupId="{{truthSoupId || ''}}"
-      wx:if="{{soupState === 'truth'}}"
+      wx:if="{{isTruth}}"
     ></soup-truth>
   </view>
 
@@ -61,7 +59,7 @@
     visible="{{shouldShowTip}}"
     bind:close="onTipModuleClose"
     bind:visibleChange="onTipVisibleChange"
-    pageState="{{soupState || 'drinking'}}"
+    pageState="{{chatState || 'drinking'}}"
     tipTitle="汤来了！我是陪你熬夜猜谜的小勺🌙"
     tipContent="{{['只答是、否、不确定，别想套我话哦～', '长按汤面就浮出来咯！']}}"
   ></tip-module>
