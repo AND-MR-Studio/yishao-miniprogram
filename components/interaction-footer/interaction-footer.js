@@ -30,7 +30,7 @@ Component({
       // 创建MobX Store绑定 - 只绑定需要的字段，不绑定actions
       this.storeBindings = createStoreBindings(this, {
         store: store,
-        fields: ['soupId', 'isLiked', 'isFavorite', 'likeCount', 'favoriteCount', 'soupData']
+        fields: ['isLiked', 'isFavorite', 'likeCount', 'favoriteCount', 'soupData']
       });
     },
 

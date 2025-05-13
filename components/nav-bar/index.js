@@ -35,11 +35,6 @@ Component({
       type: String,
       value: ''
     },
-    // 当前海龟汤ID
-    soupId: {
-      type: String,
-      value: ''
-    },
   },
 
   /**

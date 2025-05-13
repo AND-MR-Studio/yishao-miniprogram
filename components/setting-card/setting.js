@@ -11,10 +11,6 @@ Component({
       type: Boolean,
       value: false
     },
-    soupId: {
-      type: String,
-      value: ''
-    },
   },
 
   /**
@@ -144,9 +140,6 @@ Component({
             this.triggerVibration();
           }, 10);
         }
-
-        // 触发事件通知父组件
-        this.triggerEvent('switchchange', { type, value: checked });
       });
     },
 
