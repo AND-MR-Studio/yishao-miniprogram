@@ -424,5 +424,4 @@ const store = new SoupStore();
 
 module.exports = {
   store,
-  PAGE_STATE,
 };
