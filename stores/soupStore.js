@@ -63,17 +63,17 @@ class SoupStore {
       console.error("初始化汤面数据失败: 无效的汤面数据");
       return;
     }
-    
+
     // 设置基本数据
     this.soupId = soupData.id;
     this.userId = userId || "";
     // 删除状态设置
     // this.soupState = PAGE_STATE.VIEWING;
     this.soupData = soupData;
-    
+
     // 设置加载状态
     this.isLoading = true;
-    
+
     try {
       // 只有在用户已登录的情况下获取交互状态
       if (this.userId) {
@@ -82,7 +82,7 @@ class SoupStore {
           userService.isLikedSoup(soupData.id),
           userService.isFavoriteSoup(soupData.id)
         ]);
-        
+
         // 更新交互状态
         this.isLiked = isLiked;
         this.isFavorite = isFavorite;
@@ -91,7 +91,7 @@ class SoupStore {
         this.isLiked = false;
         this.isFavorite = false;
       }
-      
+
       // 更新计数
       this.likeCount = soupData.likes || 0;
       this.favoriteCount = soupData.favorites || 0;
@@ -110,7 +110,7 @@ class SoupStore {
    */
   *fetchSoupDataAndStore(soupId) {
     if (!soupId) return;
-    console.info("[fetchSoupDataAndStore]获取汤面数据", JSON.stringify(soupData));
+    console.info("[fetchSoupDataAndStore]获取汤面数据", soupId);
     // 防止重复请求同一个soupId
     if (this._fetchingId === soupId) {
       return;
@@ -381,9 +381,9 @@ class SoupStore {
   }
 
   /**
-   * 获取随机汤面ID
+   * 获取随机汤面数据
    * 直接调用soupService的getRandomSoup方法
-   * @returns {Promise<string>} 随机汤面ID
+   * @returns {Promise<Object>} 随机汤面数据
    */
   async getRandomSoup() {
     try {
@@ -391,6 +391,41 @@ class SoupStore {
     } catch (error) {
       console.error("获取随机汤面失败:", error);
       return null;
+    }
+  }
+
+  /**
+   * 通过ID获取汤面数据
+   * 统一的汤面数据获取入口
+   * @param {string} soupId 汤面ID
+   * @returns {Promise<Object>} 汤面数据
+   */
+  async fetchSoupById(soupId) {
+    if (!soupId) {
+      console.error("获取汤面数据失败: 缺少汤面ID");
+      return null;
+    }
+
+    try {
+      // 设置加载状态
+      this.isLoading = true;
+
+      // 获取汤面数据
+      const soupData = await soupService.getSoup(soupId);
+
+      if (soupData) {
+        // 初始化汤面数据
+        await this.initSoupWithData(soupData, this.userId || "");
+        return soupData;
+      } else {
+        console.error("获取汤面数据失败: 未找到指定ID的汤面");
+        return null;
+      }
+    } catch (error) {
+      console.error("获取汤面数据失败:", error);
+      return null;
+    } finally {
+      this.isLoading = false;
     }
   }
 

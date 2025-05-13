@@ -54,7 +54,7 @@ Component({
      */
     async handleFavoriteClick() {
       const soupId = store.soupId;
-      if (!soupId.trim()) {
+      if (!soupId) {
         wx.showToast({ title: '缺少汤面ID', icon: 'error', duration: 1500 });
         return;
       }
@@ -100,7 +100,7 @@ Component({
      */
     async handleLikeClick() {
       const soupId = store.soupId;
-      if (!soupId.trim()) {
+      if (!soupId) {
         wx.showToast({ title: '缺少汤面ID', icon: 'error', duration: 1500 });
         return;
       }

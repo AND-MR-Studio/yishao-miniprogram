@@ -37,31 +37,30 @@ Page({
     // 同步用户ID - 确保获取最新的用户状态
     await store.syncUserId();
 
-    let targetSoupId = options.soupId;
-
     try {
-      let soupData;
-      
-      if (!targetSoupId) {
-        // 获取随机汤面
-        soupData = await store.getRandomSoup();
+      // 统一数据获取路径：无论是否有soupId，都通过store方法获取数据
+      if (options.soupId) {
+        // 如果有指定的soupId，直接通过store获取
+        await store.fetchSoupDataAndStore(options.soupId);
       } else {
-        // 通过ID获取汤面数据
-        soupData = await soupService.getSoup(targetSoupId);
+        // 获取随机汤面并初始化
+        const randomSoup = await store.getRandomSoup();
+        if (randomSoup && randomSoup.id) {
+          await store.initSoupWithData(randomSoup, store.userId || "");
+        } else {
+          throw new Error("获取随机汤面失败");
+        }
       }
-      
+
       // 检查数据有效性
-      if (!soupData) {
+      if (!store.soupData) {
         console.error("加载汤面失败");
         this.showErrorToast("加载失败，请重试");
         return;
       }
-      
-      // 初始化汤面数据
-      await store.initSoupWithData(soupData, store.userId || "");
-      
+
       // 增加汤面阅读数
-      store.viewSoup(soupData.id);
+      store.viewSoup(store.soupId);
     } catch (error) {
       console.error("加载汤面过程中发生错误:", error);
       this.showErrorToast("加载失败，请检查网络或稍后重试");
@@ -155,22 +154,19 @@ Page({
    */
   async switchSoup(direction) {
     // 如果正在加载，不执行切换
-    if (this.isLoading) return;
+    if (this.data.isLoading) return;
 
     try {
-      // 根据方向获取下一个汤面ID
-      const isNext = direction === "next";
+      // 使用MobX store中的方法获取随机汤面
+      const randomSoup = await store.getRandomSoup();
 
-      // 使用MobX store中的方法获取相邻汤面ID
-      const soupData = await store.getRandomSoup();
-
-      if (soupData) {
+      if (randomSoup && randomSoup.id) {
         // 初始化新的汤面数据 - 所有数据管理由store处理
         // 这会自动设置isLoading状态，MobX会触发观察者更新breathingBlur
-        store.initSoupWithData(soupData, store.userId || "");
+        await store.initSoupWithData(randomSoup, store.userId || "");
 
         // 增加汤面阅读数
-        store.viewSoup(soupData.id);
+        store.viewSoup(store.soupId);
       } else {
         this.showErrorToast("切换失败，请重试");
       }
@@ -215,22 +211,6 @@ Page({
       icon: "none",
       duration: 2000,
     });
-  },
-
-  /**
-   * 处理汤数据变更事件
-   * 极简版本，直接调用store方法
-   * @param {Object} e 事件对象
-   */
-  handleSoupChange(e) {
-    const { soup } = e.detail;
-    if (!soup || !soup.soupId) return;
-
-    // 初始化新的汤面数据 - 所有数据管理由store处理
-    store.initSoupWithId(soup.soupId, store.userId || "");
-
-    // 增加汤面阅读数
-    store.viewSoup(soup.soupId);
   },
 
   /**

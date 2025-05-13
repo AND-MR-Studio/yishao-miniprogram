@@ -2,7 +2,6 @@
 <view class="page {{swiping ? 'swiping' : ''}}" style="{{gradientStyle ? '--dynamic-gradient: ' + gradientStyle : ''}}">
   <!-- 导航栏 -->
   <nav-bar
-    pageState="{{soupState || 'viewing'}}"
     bind:settingchange="handleSettingChange"
     bind:close="onSettingClose"
     bind:clearcontext="clearContext"
@@ -18,7 +17,6 @@
       <soup-display
         id="soupDisplay"
         soupId="{{soupId}}"
-        pageState="{{soupState}}"
         blurAmount="{{blurAmount}}"
         swipeDirection="{{swipeDirection}}"
         class="soup-display-component"

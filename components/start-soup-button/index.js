@@ -67,7 +67,7 @@ Component({
       // 创建MobX Store绑定
       this.storeBindings = createStoreBindings(this, {
         store: store,
-        fields: ['isLoading', 'soupState'],
+        fields: ['isLoading'],
       });
     },
 

@@ -2,7 +2,7 @@
 <view class="page">
   <!-- 导航栏 -->
   <nav-bar
-    pageState="{{soupState || 'drinking'}}"
+    pageState="{{'drinking'}}"
     bind:settingchange="handleSettingChange"
     bind:close="onDialogClose"
     bind:clearcontext="clearContext"
@@ -19,7 +19,7 @@
         isFavorite="{{isFavorite}}"
         isDrinking="{{true}}"
         isPeeking="{{isPeeking}}"
-        pageState="{{soupState || 'drinking'}}"
+        pageState="{{'drinking'}}"
         class="soup-display-component {{isPeeking ? 'peeking' : ''}}"
         bind:longPressStart="onLongPressStart"
         bind:longPressEnd="onLongPressEnd"
