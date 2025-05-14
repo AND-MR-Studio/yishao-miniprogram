@@ -167,11 +167,12 @@ Page({
    * 分享小程序
    */
   onShareAppMessage() {
-    // 从soupStore获取当前汤面ID
+    // 直接从store获取当前汤面ID和对话ID
     const soupId = soupStore.soupData ? soupStore.soupData.id : '';
+    const dialogId = chatStore.dialogId || '';
     return {
       title: '这个海龟汤太难了来帮帮我！',
-      path: `/pages/chat/chat?soupId=${soupId}&dialogId=${this.dialogId}`
+      path: `/pages/chat/chat?soupId=${soupId}&dialogId=${dialogId}`
     };
   },
 
@@ -342,14 +343,20 @@ Page({
     this.setSendingStatus(true);
 
     try {
-      // 获取必要参数
+      // 直接从store获取必要参数
       const soupId = soupStore.soupData ? soupStore.soupData.id : '';
-      const dialogId = this.dialogId;
-      const userId = this.userId;
+      const dialogId = chatStore.dialogId;
+      const userId = rootStore.userId;
 
       // 检查必要参数
-      if (!dialogId || !userId || !soupId) {
-        throw new Error('缺少必要参数');
+      if (!dialogId) {
+        throw new Error('缺少必要参数: dialogId (chatStore.dialogId)');
+      }
+      if (!userId) {
+        throw new Error('缺少必要参数: userId (rootStore.userId)');
+      }
+      if (!soupId) {
+        throw new Error('缺少必要参数: soupId (soupStore.soupData.id)');
       }
 
       // 更新用户回答过的汤记录
@@ -413,18 +420,38 @@ Page({
     }
 
     // 设置发送状态
-    this.setData({ isSending: true });
+    this.setData({
+      isSending: true,
+      isAnimating: false
+    });
 
     try {
-      // 获取必要参数
+      // 直接从store获取必要参数
       const soupId = soupStore.soupData ? soupStore.soupData.id : '';
-      const dialogId = this.dialogId;
-      const userId = this.userId;
-      const soupData = this.soupData;
+      const dialogId = chatStore.dialogId;
+      const userId = rootStore.userId;
+      const soupData = soupStore.soupData;
+
+      // 详细日志，帮助调试
+      console.log('调试参数(从store获取):', {
+        soupId,
+        dialogId,
+        userId,
+        soupData: soupData ? '存在' : '不存在'
+      });
 
       // 检查必要参数
-      if (!dialogId || !userId || !soupId || !soupData) {
-        throw new Error('缺少必要参数');
+      if (!dialogId) {
+        throw new Error('缺少必要参数: dialogId (chatStore.dialogId)');
+      }
+      if (!userId) {
+        throw new Error('缺少必要参数: userId (rootStore.userId)');
+      }
+      if (!soupId) {
+        throw new Error('缺少必要参数: soupId (soupStore.soupData.id)');
+      }
+      if (!soupData) {
+        throw new Error('缺少必要参数: soupData (soupStore.soupData)');
       }
 
       // 创建用户消息对象
@@ -435,19 +462,56 @@ Page({
         timestamp: Date.now()
       };
 
+      // 直接调用agentService发送请求
+      const agentService = require('../../service/agentService');
+
+      // 构建历史消息数组
+      const historyMessages = chatStore.messages
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
+      // 添加当前用户消息
+      historyMessages.push({
+        role: userMessage.role,
+        content: userMessage.content
+      });
+
+      // 先将用户消息添加到消息列表
+      const messagesWithUser = [...chatStore.messages, userMessage];
+      chatStore.updateState({ messages: messagesWithUser });
+
+      // 调用Agent API
+      const response = await agentService.sendAgent({
+        messages: historyMessages,
+        soup: soupStore.soupData, // 直接使用soupStore.soupData
+        userId: userId,
+        dialogId: dialogId
+      });
+
+      // 创建回复消息
+      const replyMessage = {
+        id: response.id,
+        role: 'assistant',
+        content: response.content,
+        status: 'sent',
+        timestamp: response.timestamp
+      };
+
+      // 更新消息列表，添加回复消息
+      const updatedMessages = [...messagesWithUser, replyMessage];
+      chatStore.updateState({ messages: updatedMessages });
+
       // 获取对话组件
       const dialog = this.selectComponent('#dialog');
-      if (!dialog) {
-        throw new Error('无法获取对话组件');
+      if (dialog) {
+        // 如果启用了打字机效果，为最后一条消息添加动画
+        this.setData({ isAnimating: true });
+        await dialog.animateMessage(updatedMessages.length - 1);
+        this.setData({ isAnimating: false });
       }
-
-      // 处理Agent请求
-      await dialog.processAgentRequest({
-        userMessage,
-        soupData,
-        userId,
-        dialogId
-      });
 
     } catch (error) {
       console.error('处理Agent请求失败:', error);
@@ -471,5 +535,51 @@ Page({
     });
   },
 
+  /**
+   * 处理消息点击事件
+   * @param {Object} e 事件对象
+   */
+  handleMessageTap(e) {
+    const { message, index } = e.detail;
+    console.log('消息被点击:', message, index);
+    // 可以在这里添加点击消息的处理逻辑
+  },
+
+  /**
+   * 处理消息长按事件
+   * @param {Object} e 事件对象
+   */
+  handleMessageLongPress(e) {
+    const { message, index } = e.detail;
+    console.log('消息被长按:', message, index);
+    // 可以在这里添加长按消息的处理逻辑，如复制文本等
+    wx.showActionSheet({
+      itemList: ['复制文本'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          // 复制文本
+          wx.setClipboardData({
+            data: message.content,
+            success: () => {
+              wx.showToast({
+                title: '已复制到剪贴板',
+                icon: 'success'
+              });
+            }
+          });
+        }
+      }
+    });
+  },
+
+  /**
+   * 处理动画完成事件
+   * @param {Object} e 事件对象
+   */
+  handleAnimationComplete(e) {
+    const { messageIndex, success } = e.detail;
+    console.log('动画完成:', messageIndex, success);
+    // 动画完成后的处理逻辑
+  }
 
 });

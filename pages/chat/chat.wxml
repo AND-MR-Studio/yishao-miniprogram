@@ -35,10 +35,15 @@
   <!-- 对话组件 -->
   <dialog-component
     id="dialog"
+    mode="single"
+    messages="{{chatStore.messages}}"
     isPeeking="{{isPeeking}}"
+    loading="{{isLoading}}"
+    enableTypeAnimation="{{true}}"
     bind:close="onDialogClose"
-    bind:showTruth="onShowTruth"
-    bind:clearContextConfirm="handleClearContextConfirm"
+    bind:messageTap="handleMessageTap"
+    bind:messageLongPress="handleMessageLongPress"
+    bind:animationComplete="handleAnimationComplete"
   ></dialog-component>
 
   <!-- 输入栏组件 -->

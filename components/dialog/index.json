@@ -1,5 +1,7 @@
 {
   "component": true,
-  "usingComponents": {},
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index"
+  },
   "styleIsolation": "isolated"
 }

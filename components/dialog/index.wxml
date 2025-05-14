@@ -1,5 +1,5 @@
 <!--components/dialog/index.wxml-->
-<view class="dialog-container {{peekMode ? 'peek-mode' : ''}}">
+<view class="dialog-container {{peekMode ? 'peek-mode' : ''}} {{mode}}">
   <!-- 导航栏 -->
   <view class="nav-bar-container" catchtap="handleClose">
     <nav-bar
@@ -26,31 +26,52 @@
     aria-busy="{{loading}}"
   >
     <!-- 消息列表 -->
-    <block wx:for="{{messages}}" wx:key="index">
-      <!-- 用户消息 -->
+    <block wx:for="{{messages}}" wx:key="id">
+      <!-- 消息容器 -->
       <view
-        wx:if="{{item.role === 'user'}}"
-        class="message user {{item.status ? item.status : ''}}"
-        aria-label="用户消息: {{item.content}}"
+        class="message-wrapper {{getMessageClass(item)}}"
         id="msg-{{index}}"
-      >{{item.content}}</view>
+        data-index="{{index}}"
+        bindtap="handleMessageTap"
+        bindlongpress="handleMessageLongPress"
+      >
+        <!-- 双人模式下显示头像 -->
+        <block wx:if="{{mode === 'double'}}">
+          <view class="avatar-container">
+            <image class="avatar" src="{{item.avatarUrl || '/static/images/default-avatar.png'}}" mode="aspectFill"></image>
+          </view>
+        </block>
 
-      <!-- 系统和Assistant回复消息 - 正常显示 -->
-      <view
-        wx:if="{{(item.role === 'system' || item.role === 'assistant') && index !== animatingMessageIndex}}"
-        class="message response {{item.status ? item.status : ''}}"
-        aria-label="回复消息: {{item.content}}"
-        id="msg-{{index}}"
-      >> {{item.content}}</view>
+        <view class="message-content">
+          <!-- 双人模式下显示用户名 -->
+          <block wx:if="{{mode === 'double'}}">
+            <view class="username">{{item.nickName || '用户'}}</view>
+          </block>
 
-      <!-- 系统和Assistant回复消息 - 简化版打字机动画 -->
-      <view
-        wx:if="{{(item.role === 'system' || item.role === 'assistant') && index === animatingMessageIndex}}"
-        class="response typing-simple {{item.status ? item.status : ''}}"
-        aria-live="polite"
-        id="msg-{{index}}"
-      >> {{typingText}}</view>
+          <!-- 消息内容 - 正常显示 -->
+          <view class="message-text" wx:if="{{index !== animatingMessageIndex}}">
+            <block wx:if="{{(item.role === 'system' || item.role === 'assistant') && mode === 'single'}}">></block> {{item.content}}
+          </view>
+
+          <!-- 消息内容 - 打字机动画 -->
+          <view class="message-text typing" wx:if="{{index === animatingMessageIndex}}">
+            <block wx:if="{{(item.role === 'system' || item.role === 'assistant') && mode === 'single'}}">></block> {{typingText}}
+          </view>
+
+          <!-- 消息时间 -->
+          <view class="message-time">{{formatTime(item.timestamp)}}</view>
+        </view>
+      </view>
     </block>
+
+    <!-- 加载指示器 -->
+    <view class="loading-indicator" wx:if="{{loading}}">
+      <view class="loading-dots">
+        <view class="dot"></view>
+        <view class="dot"></view>
+        <view class="dot"></view>
+      </view>
+    </view>
 
     <!-- 滚动锚点 -->
     <view id="scrollBottom" style="height: 10rpx;"></view>
