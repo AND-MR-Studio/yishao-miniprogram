@@ -7,7 +7,7 @@ const userService = require("../service/userService");
 //   VIEWING: "viewing", // 看汤状态
 // };
 
-// 创建汤面Store - 简化后只关注汤面数据和交互状态
+// 创建汤面Store类 - 简化后只关注汤面数据和交互状态
 class SoupStore {
   // ===== 可观察状态 =====
   // 当前页面状态
@@ -15,10 +15,9 @@ class SoupStore {
 
   // 核心数据
   soupData = null; // 当前汤面数据
-  userId = ""; // 当前用户ID
+  // userId从rootStore获取，不再在此存储
 
   // 汤面交互状态
-
   isLiked = false; // 是否已点赞
   isFavorite = false; // 是否已收藏
   likeCount = 0; // 点赞数量
@@ -31,21 +30,32 @@ class SoupStore {
   // 防止重复请求的标志
   _fetchingId = null; // 当前正在获取数据的soupId
 
-  constructor() {
+  // 引用rootStore
+  rootStore = null;
+
+  constructor(rootStore) {
+    // 保存rootStore引用
+    this.rootStore = rootStore;
+
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
       // 标记异步方法为flow
-      fetchSoupData: flow,
+      fetchSoupDataAndStore: flow,
+      initSoupAndStore: flow,
       toggleLike: flow,
       toggleFavorite: flow,
-      syncUserId: flow,
       getRandomSoup: false, // 普通异步方法，不需要flow
-      getAdjacentSoup: false, // 普通异步方法，不需要flow
       viewSoup: false, // 普通异步方法，不需要flow
 
       // 标记为非观察属性
       _fetchingId: false,
+      rootStore: false,
     });
+  }
+
+  // 获取用户ID的计算属性
+  get userId() {
+    return this.rootStore.userId;
   }
 
   // ===== 计算属性 =====
@@ -64,8 +74,10 @@ class SoupStore {
       return;
     }
 
-    // 设置基本数据
-    this.userId = userId || "";
+    // 设置基本数据 - 不再直接设置userId，而是通过rootStore
+    if (userId) {
+      this.rootStore.setUserId(userId);
+    }
     // 删除状态设置
     // this.soupState = PAGE_STATE.VIEWING;
     this.soupData = soupData;
@@ -354,30 +366,7 @@ class SoupStore {
     );
   }
 
-  /**
-   * 同步用户ID
-   * 从userService获取最新的userId并更新到store中
-   * 在页面显示时调用，确保用户登录状态变化时数据同步
-   * @returns {Promise<void>}
-   */
-  *syncUserId() {
-    try {
-      // 获取最新的用户ID
-      const userId = yield userService.getUserId();
-
-      // 如果userId发生变化，更新store中的userId
-      if (userId !== this.userId) {
-        this.userId = userId || "";
-
-        // 如果有soupData，重新获取汤面数据（包括点赞、收藏状态）
-        if (this.soupData && this.soupData.id) {
-          yield this.fetchSoupDataAndStore(this.soupData.id);
-        }
-      }
-    } catch (error) {
-      console.error("同步用户ID失败:", error);
-    }
-  }
+  // 移除syncUserId方法，由rootStore负责同步用户ID
 
   /**
    * 获取随机汤面数据
@@ -441,7 +430,7 @@ class SoupStore {
       const result = await soupService.viewSoup(soupId);
 
       // 如果当前显示的就是这个汤面，更新阅读数
-      if (result && this.soupId === soupId) {
+      if (result && this.soupData && this.soupData.id === soupId) {
         this.viewCount = result.views || 0;
       }
 
@@ -453,9 +442,8 @@ class SoupStore {
   }
 }
 
-// 创建单例实例
-const soupStore = new SoupStore();
-
+// 导出类和创建实例的工厂函数
+// 注意：不再直接创建单例实例，而是由rootStore创建
 module.exports = {
-  soupStore,
+  SoupStoreClass: SoupStore,
 };

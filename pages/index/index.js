@@ -9,7 +9,7 @@ const {
   createInteractionManager,
 } = require("../../utils/interactionManager");
 const { createStoreBindings } = require("mobx-miniprogram-bindings");
-const { soupStore } = require("../../stores/soupStore");
+const { rootStore, soupStore } = require("../../stores/index");
 
 Page({
   // ===== 页面数据 =====
@@ -28,14 +28,21 @@ Page({
    * @param {Object} options - 页面参数，可能包含soupId
    */
   async onLoad(options) {
-    // 创建MobX Store绑定 - 只绑定需要的字段，不再绑定actions
-    this.storeBindings = createStoreBindings(this, {
+    // 创建rootStore绑定 - 用于获取用户ID
+    this.rootStoreBindings = createStoreBindings(this, {
+      store: rootStore,
+      fields: ["userId"],
+      actions: ["syncUserId"]
+    });
+
+    // 创建soupStore绑定 - 只绑定需要的字段
+    this.soupStoreBindings = createStoreBindings(this, {
       store: soupStore,
-      fields: ["userId", "isLoading", "soupData"], // 移除soupId，直接使用soupData.id
+      fields: ["isLoading", "soupData"],
     });
 
     // 同步用户ID - 确保获取最新的用户状态
-    await soupStore.syncUserId();
+    await this.syncUserId();
 
     try {
       // 统一数据获取路径：无论是否有soupId，都通过store方法获取数据
@@ -84,8 +91,8 @@ Page({
       });
     }
 
-    // 同步用户ID - 直接调用store方法
-    soupStore.syncUserId();
+    // 同步用户ID - 使用绑定的方法
+    this.syncUserId();
   },
 
   /**
@@ -94,8 +101,11 @@ Page({
    */
   onUnload() {
     // 清理MobX绑定
-    if (this.storeBindings) {
-      this.storeBindings.destroyStoreBindings();
+    if (this.rootStoreBindings) {
+      this.rootStoreBindings.destroyStoreBindings();
+    }
+    if (this.soupStoreBindings) {
+      this.soupStoreBindings.destroyStoreBindings();
     }
 
     // 清理交互管理器

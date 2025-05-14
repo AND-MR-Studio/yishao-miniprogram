@@ -5,7 +5,7 @@
  */
 const { makeAutoObservable } = require('mobx-miniprogram');
 
-// 创建提示信息Store
+// 创建提示信息Store类
 class TipStore {
   // ===== 可观察状态 =====
   // 提示可见性
@@ -40,13 +40,25 @@ class TipStore {
   // 闲置计时器ID
   _idleTimer = null;
 
-  constructor() {
+  // 引用rootStore
+  rootStore = null;
+
+  constructor(rootStore) {
+    // 保存rootStore引用
+    this.rootStore = rootStore;
+
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
       // 标记为非观察属性
       _autoHideTimer: false,
       _idleTimer: false,
+      rootStore: false,
     });
+  }
+
+  // 获取用户ID的计算属性
+  get userId() {
+    return this.rootStore.userId;
   }
 
   // ===== Action方法 =====
@@ -236,9 +248,8 @@ class TipStore {
   }
 }
 
-// 创建单例实例
-const tipStore = new TipStore();
-
+// 导出类
+// 注意：不再直接创建单例实例，而是由rootStore创建
 module.exports = {
-  tipStore
+  TipStoreClass: TipStore
 };

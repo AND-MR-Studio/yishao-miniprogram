@@ -3,7 +3,7 @@
  * 包含点赞、收藏和感谢作者功能
  * 使用MobX管理状态，组件负责渲染状态和处理用户交互
  */
-const { soupStore } = require('../../stores/soupStore');
+const { soupStore } = require('../../stores/index');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({

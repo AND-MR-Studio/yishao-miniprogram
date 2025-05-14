@@ -4,9 +4,7 @@
  */
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { soupStore } = require('../../stores/soupStore');
-const { chatStore, CHAT_STATE } = require('../../stores/chatStore');
-const { tipStore } = require('../../stores/tipStore');
+const { rootStore, soupStore, chatStore, tipStore, CHAT_STATE } = require('../../stores/index');
 const dialogService = require('../../service/dialogService');
 const userService = require('../../service/userService');
 
@@ -32,10 +30,17 @@ Page({
    */
   async onLoad(options) {
     try {
-      // 创建soupStore绑定 - 用于获取汤面数据和用户ID
+      // 创建rootStore绑定 - 用于获取用户ID
+      this.rootStoreBindings = createStoreBindings(this, {
+        store: rootStore,
+        fields: ['userId'],
+        actions: ['syncUserId']
+      });
+
+      // 创建soupStore绑定 - 用于获取汤面数据
       this.soupStoreBindings = createStoreBindings(this, {
         store: soupStore,
-        fields: ['isLoading', 'userId'],
+        fields: ['isLoading', 'soupData'],
         actions: ['fetchSoupById']
       });
 
@@ -43,7 +48,7 @@ Page({
       this.chatStoreBindings = createStoreBindings(this, {
         store: chatStore,
         fields: [
-          'soupData', 'dialogId', 'userId', 'chatState',
+          'dialogId', 'chatState', 'soupId',
           'isPeeking', 'isSending', 'isReplying', 'isAnimating',
           'isDrinking', 'isTruth', 'messages', 'inputValue'
         ],
@@ -71,8 +76,8 @@ Page({
         throw new Error('缺少汤面ID参数');
       }
 
-      // 使用soupStore中的userId
-      const userId = soupStore.userId || '';
+      // 同步用户ID
+      await this.syncUserId();
 
       // 获取汤面数据并初始化
       const soupData = await this.fetchSoupById(soupId);
@@ -89,8 +94,7 @@ Page({
 
       // 设置chatStore的基本数据
       chatStore.updateState({
-        soupData: soupData,
-        userId: userId,
+        soupId: soupData.id,
         chatState: CHAT_STATE.DRINKING,
         dialogId: dialogId
       });
@@ -167,6 +171,9 @@ Page({
    */
   onUnload() {
     // 清理MobX绑定
+    if (this.rootStoreBindings) {
+      this.rootStoreBindings.destroyStoreBindings();
+    }
     if (this.soupStoreBindings) {
       this.soupStoreBindings.destroyStoreBindings();
     }

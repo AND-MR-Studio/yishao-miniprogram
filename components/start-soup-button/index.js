@@ -1,6 +1,6 @@
 // components/start-soup-button/index.js
 // 引入MobX store和绑定工具
-const { soupStore } = require('../../stores/soupStore');
+const { soupStore } = require('../../stores/index');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 Component({
   /**

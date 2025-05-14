@@ -7,17 +7,16 @@ const CHAT_STATE = {
   TRUTH: 'truth'         // 汤底状态
 };
 
-// 创建聊天Store
+// 创建聊天Store类
 class ChatStore {
   // ===== 可观察状态 =====
   // 当前聊天状态
   chatState = CHAT_STATE.DRINKING;
 
   // 核心数据
-  soupData = null;  // 当前汤面完整数据
-  dialogId = '';    // 当前对话ID
-  userId = '';      // 当前用户ID
-  truthSoupId = ''; // 汤底ID
+  soupId = '';       // 当前汤面ID（不再存储完整soupData）
+  dialogId = '';     // 当前对话ID
+  truthSoupId = '';  // 汤底ID
 
   // UI状态
   isPeeking = false;   // 是否处于偷看模式
@@ -32,14 +31,33 @@ class ChatStore {
   // 加载状态
   isLoading = false;   // 是否正在加载数据
 
-  constructor() {
+  // 引用rootStore
+  rootStore = null;
+
+  constructor(rootStore) {
+    // 保存rootStore引用
+    this.rootStore = rootStore;
+
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
       // 标记异步方法为flow
       createDialog: flow,
       fetchMessages: flow,
-      sendMessage: flow
+      sendMessage: flow,
+
+      // 标记为非观察属性
+      rootStore: false
     });
+  }
+
+  // 获取用户ID的计算属性
+  get userId() {
+    return this.rootStore.userId;
+  }
+
+  // 获取当前汤面数据的计算属性
+  get soupData() {
+    return this.rootStore.soupStore.soupData;
   }
 
   // ===== 计算属性 =====
@@ -62,15 +80,13 @@ class ChatStore {
     }
 
     // 更新数据
-    if (data.soupData !== undefined) {
-      this.soupData = data.soupData;
+    if (data.soupId !== undefined) {
+      this.soupId = data.soupId;
     }
     if (data.dialogId !== undefined) {
       this.dialogId = data.dialogId;
     }
-    if (data.userId !== undefined) {
-      this.userId = data.userId;
-    }
+    // 不再更新userId，由rootStore管理
     if (data.truthSoupId !== undefined) {
       this.truthSoupId = data.truthSoupId;
     }
@@ -133,9 +149,8 @@ class ChatStore {
 
   // 创建对话 - 异步流程
   *createDialog() {
-    // 从soupStore获取当前汤面ID
-    const { soupStore } = require('./soupStore');
-    const soupId = soupStore.soupData ? soupStore.soupData.id : '';
+    // 使用当前soupId或从soupStore获取
+    const soupId = this.soupId || (this.rootStore.soupStore.soupData ? this.rootStore.soupStore.soupData.id : '');
 
     if (!this.userId || !soupId) {
       console.error('无法创建对话: 缺少用户ID或汤面ID');
@@ -235,10 +250,9 @@ class ChatStore {
   }
 }
 
-// 创建单例实例
-const chatStore = new ChatStore();
-
+// 导出类和常量
+// 注意：不再直接创建单例实例，而是由rootStore创建
 module.exports = {
-  chatStore,
+  ChatStoreClass: ChatStore,
   CHAT_STATE
 };

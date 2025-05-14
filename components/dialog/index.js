@@ -4,7 +4,7 @@ const simpleTypeAnimation = require('../../utils/typeAnimation');
 const userService = require('../../service/userService');
 const agentService = require('../../service/agentService');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { tipStore } = require('../../stores/tipStore');
+const { tipStore } = require('../../stores/index');
 
 Component({
   properties: {
