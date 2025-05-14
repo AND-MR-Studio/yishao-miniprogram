@@ -382,8 +382,8 @@ class SoupStore {
   /**
    * 通过ID获取汤面数据
    * 统一的汤面数据获取入口
-   * @param {string} soupId 汤面ID
-   * @returns {Promise<Object>} 汤面数据
+   * @param {string|string[]} soupId 汤面ID或ID数组
+   * @returns {Promise<Object|Array>} 汤面数据或数组
    */
   async fetchSoupById(soupId) {
     if (!soupId) {
@@ -398,14 +398,13 @@ class SoupStore {
       // 获取汤面数据
       const soupData = await soupService.getSoup(soupId);
 
-      if (soupData) {
+      // 如果是单个ID请求，并且获取到了数据，更新当前显示的汤面
+      if (!Array.isArray(soupId) && soupData && !Array.isArray(soupData)) {
         // 初始化汤面数据 - 不再传递userId参数
         await this.initSoupWithData(soupData);
-        return soupData;
-      } else {
-        console.error("获取汤面数据失败: 未找到指定ID的汤面");
-        return null;
       }
+
+      return soupData;
     } catch (error) {
       console.error("获取汤面数据失败:", error);
       return null;

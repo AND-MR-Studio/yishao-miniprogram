@@ -1,7 +1,6 @@
 // components/soup-list-modal/soup-list-modal.js
-const soupService = require('../../service/soupService');
-const dialogService = require('../../service/dialogService');
-const eventUtils = require('../../utils/eventUtils');
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { rootStore, soupStore } = require('../../stores/index');
 
 // 定义列表类型配置
 const TYPE_CONFIG = {
@@ -86,13 +85,37 @@ Component({
           emptyText: config.emptyText
         });
 
-
-
         // 加载数据
         this.loadSoupList();
       } else {
         // 重置数据
         this.resetData();
+      }
+    }
+  },
+
+  lifetimes: {
+    attached() {
+      // 创建MobX Store绑定
+      this.storeBindings = createStoreBindings(this, {
+        store: rootStore,
+        fields: ['userId', 'isLoggedIn'],
+      });
+
+      this.soupStoreBindings = createStoreBindings(this, {
+        store: soupStore,
+        fields: ['isLoading'],
+        actions: ['fetchSoupById', 'fetchSoupDataAndStore']
+      });
+    },
+
+    detached() {
+      // 清理MobX绑定
+      if (this.storeBindings) {
+        this.storeBindings.destroyStoreBindings();
+      }
+      if (this.soupStoreBindings) {
+        this.soupStoreBindings.destroyStoreBindings();
       }
     }
   },
@@ -140,8 +163,8 @@ Component({
           return;
         }
 
-        // 获取海龟汤详细信息
-        let soupList = await soupService.getSoup(soupIds);
+        // 使用soupStore获取海龟汤详细信息
+        let soupList = await soupStore.fetchSoupById(soupIds);
 
         // 确保 soupList 是数组
         if (!Array.isArray(soupList)) {
@@ -151,27 +174,6 @@ Component({
           } else {
             soupList = [];
           }
-        }
-
-        // 获取用户ID
-        const userId = userInfo.userId;
-
-        // 为每个汤面获取对应的对话ID
-        if (userId && soupList.length > 0) {
-          // 使用Promise.all并行处理所有请求
-          await Promise.all(soupList.map(async (soup) => {
-            try {
-              // 获取用户与该汤面的对话
-              const dialogData = await dialogService.getUserDialog(userId, soup.soupId);
-              // 将对话ID添加到汤面数据中
-              if (dialogData && dialogData.dialogId) {
-                soup.dialogId = dialogData.dialogId;
-              }
-            } catch (error) {
-              console.error(`获取汤面${soup.soupId}的对话ID失败:`, error);
-              // 失败时不设置dialogId，不影响列表显示
-            }
-          }));
         }
 
         // 更新数据
@@ -230,14 +232,9 @@ Component({
       wx.switchTab({
         url: '/pages/index/index',
         success: () => {
-          // 跳转成功后发布事件，传递参数
-          // 增加延迟时间，确保页面完全准备好接收事件
+          // 使用soupStore加载汤面，不再使用eventUtils
           setTimeout(() => {
-            // 只发送 soupId，不发送 dialogId，这样页面会停留在 viewing 状态
-            eventUtils.emitEvent('loadSoup', {
-              soupId: soupid
-            });
-            console.log('发送loadSoup事件，soupId:', soupid);
+            soupStore.fetchSoupDataAndStore(soupid);
           }, 500); // 增加延迟时间，确保页面已经完成跳转和初始化
         },
         fail: () => {
