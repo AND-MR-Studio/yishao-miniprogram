@@ -1,5 +1,5 @@
 <!--pages/chat/chat.wxml - 海龟汤聊天页面-->
-<view class="page">
+<view class="page" bindlongpress="onLongPressStart" bindtouchend="onLongPressEnd" bindtouchcancel="onLongPressEnd">
   <!-- 导航栏 -->
   <nav-bar
     pageState="{{'drinking'}}"
@@ -39,8 +39,6 @@
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
     bind:clearContextConfirm="handleClearContextConfirm"
-    bind:peekingStatusChange="handlePeekingStatusChange"
-    bind:messagesUpdated="handleMessagesUpdated"
   ></dialog-component>
 
   <!-- 输入栏组件 -->

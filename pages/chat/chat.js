@@ -103,11 +103,11 @@ Page({
 
       // 初始化对话
       if (dialogId) {
-        this.initDialog(dialogId);
+        // 使用现有对话ID，直接从chatStore加载消息
+        await chatStore.fetchMessages();
       } else {
         // 创建新对话
         await chatStore.createDialog();
-        this.initDialog(chatStore.dialogId);
       }
     } catch (error) {
       console.error('页面加载失败:', error);
@@ -115,23 +115,6 @@ Page({
       this.setData({
         isLoading: false
       });
-    }
-  },
-
-  /**
-   * 初始化对话
-   * @param {string} dialogId 对话ID
-   */
-  initDialog(dialogId) {
-    // 设置对话框必要属性
-    const dialog = this.selectComponent('#dialog');
-    if (dialog) {
-      dialog.setData({
-        dialogId: dialogId
-      });
-
-      // 加载对话记录
-      dialog.loadDialogMessages();
     }
   },
 
@@ -146,9 +129,6 @@ Page({
       if (!success) {
         throw new Error('无法创建对话');
       }
-
-      // 初始化对话
-      this.initDialog(chatStore.dialogId);
     } catch (error) {
       console.error('创建对话失败:', error);
       this.showErrorToast('无法创建对话，请重试');
@@ -196,55 +176,36 @@ Page({
   },
 
   // ===== 事件处理 =====
-  /**
-   * 处理偷看状态变更事件
-   * @param {Object} e 事件对象
-   */
-  handlePeekingStatusChange(e) {
-    const { isPeeking } = e.detail;
-    if (isPeeking === undefined) return;
+  // 偷看状态现在由页面直接管理，不再需要处理组件事件
 
-    // 使用MobX更新偷看状态
-    this.setPeekingStatus(isPeeking);
-  },
-
-  /**
-   * 处理消息更新事件
-   * @param {Object} e 事件对象
-   */
-  handleMessagesUpdated(e) {
-    const { messages } = e.detail;
-    if (!messages || !Array.isArray(messages)) return;
-
-    // 使用chatStore更新消息
-    chatStore.updateState({ messages });
-  },
+  // 消息更新现在由chatStore直接管理，不再需要处理组件事件
 
   /**
    * 处理长按开始事件
-   * 用于偷看功能
+   * 用于偷看功能 - 页面级别管理
    */
   onLongPressStart() {
     // 使用MobX更新偷看状态
     this.setPeekingStatus(true);
+
+    // 同时隐藏提示模块
+    tipStore.visible = false;
   },
 
   /**
    * 处理长按结束事件
-   * 用于偷看功能
+   * 用于偷看功能 - 页面级别管理
    */
   onLongPressEnd() {
     // 使用MobX更新偷看状态
     this.setPeekingStatus(false);
-  },
 
-  /**
-   * 处理对话组件关闭事件
-   * 返回到汤面查看状态
-   */
-  onDialogClose() {
-    // 返回到index页面
-    wx.navigateBack();
+    // 恢复提示模块可见性 - 使用延迟确保状态更新后再显示提示
+    setTimeout(() => {
+      tipStore.visible = true;
+      // 重置提示内容为默认值
+      tipStore.resetTipContent();
+    }, 100);
   },
 
   /**
@@ -322,14 +283,7 @@ Page({
       // 刷新chatStore中的消息
       await this.fetchMessages();
 
-      // 获取对话组件并刷新消息
-      const dialog = this.selectComponent('#dialog');
-      if (dialog) {
-        // 清空本地消息显示
-        dialog.setData({ messages: [] });
-        // 刷新消息
-        dialog.refreshMessages();
-      }
+      // 不再需要手动刷新对话组件，chatStore的变化会自动通知组件
 
       // 显示成功提示
       wx.showToast({
@@ -423,11 +377,7 @@ Page({
         throw new Error('发送消息失败');
       }
 
-      // 获取对话组件并刷新消息
-      const dialog = this.selectComponent('#dialog');
-      if (dialog) {
-        dialog.refreshMessages();
-      }
+      // 不再需要手动刷新对话组件，chatStore的变化会自动通知组件
 
     } catch (error) {
       console.error('发送消息失败:', error);
@@ -498,9 +448,6 @@ Page({
         userId,
         dialogId
       });
-
-      // 更新chatStore中的消息
-      await this.fetchMessages();
 
     } catch (error) {
       console.error('处理Agent请求失败:', error);

@@ -63,19 +63,16 @@ Component({
         actions: ['showTip', 'hideTip', 'trackUserMessage']
       });
 
-      // 创建chatStore绑定
+      // 创建chatStore绑定 - 只绑定需要的字段和操作
       this.chatStoreBindings = createStoreBindings(this, {
         store: chatStore,
-        fields: ['messages', 'dialogId', 'userId'],
-        actions: ['fetchMessages']
+        fields: ['messages', 'dialogId', 'userId', 'isLoading'],
+        actions: []
       });
 
       // 将store实例保存到this中，方便直接访问
       this.tipStore = tipStore;
       this.chatStore = chatStore;
-
-      // 加载对话记录
-      this.loadDialogMessages();
     },
 
     detached() {
@@ -96,16 +93,9 @@ Component({
   },
 
   observers: {
-    'dialogId, messages': function(dialogId, messages) {
-      // 当dialogId或messages变化时，更新组件的消息列表
-      if (dialogId && dialogId !== this.data._previousDialogId) {
-        console.log('dialogId变化，加载对话记录:', dialogId);
-        this.data._previousDialogId = dialogId;
-
-        // 从chatStore加载消息
-        this.loadDialogMessages();
-      } else if (messages && messages.length > 0) {
-        // 当messages变化且不为空时，更新组件的消息列表
+    'messages': function(messages) {
+      // 当messages变化且不为空时，更新组件的消息列表
+      if (messages && messages.length > 0) {
         this.setData({
           messages: messages,
           scrollToView: 'scrollBottom'
@@ -117,70 +107,22 @@ Component({
     'isPeeking': function(isPeeking) {
       // 当isPeeking属性变化时，更新组件的peekMode状态
       this.setData({ peekMode: isPeeking });
+    },
+    'isLoading': function(isLoading) {
+      // 当isLoading状态变化时，更新组件的loading状态
+      this.setData({ loading: isLoading });
+
+      // 显示或隐藏加载提示
+      if (isLoading) {
+        this.showTip('加载中...', ['正在加载对话记录，请稍候...'], 0, true);
+      } else {
+        // 重置提示内容为默认内容
+        this.tipStore.resetTipContent();
+      }
     }
   },
 
   methods: {
-    // 加载对话记录 - 从chatStore获取
-    async loadDialogMessages() {
-      // 如果正在加载，不重复加载
-      if (this.data.loading) return Promise.resolve(this.data.messages);
-
-      // 优先使用组件属性中的 dialogId
-      const dialogId = this.properties.dialogId || this.dialogId;
-
-      if (!dialogId) {
-        console.log('缺少 dialogId，返回空消息数组');
-        return [];
-      }
-
-      // 设置加载状态
-      this.setData({ loading: true });
-
-      // 通过tipStore显示加载提示
-      this.showTip('加载中...', ['正在加载对话记录，请稍候...'], 0, true);
-
-      try {
-        // 从chatStore获取对话记录
-        const success = await this.fetchMessages();
-
-        if (!success) {
-          throw new Error('获取消息失败');
-        }
-
-        // 使用Promise包装setData，确保UI更新完成
-        await new Promise(resolve => {
-          this.setData({
-            messages: this.messages || [],
-            loading: false
-          }, resolve);
-        });
-
-        // 不再隐藏加载提示，保持提示可见
-        // 只更新提示内容为默认内容
-        this.tipStore.resetTipContent();
-
-        // 滚动到底部
-        this.scrollToBottom();
-
-        return this.messages || [];
-      } catch (error) {
-        console.error('加载对话记录失败:', error);
-
-        // 显示错误提示
-        this.showTip('加载失败', ['无法加载对话记录，请稍后再试'], 3000, true);
-
-        // 出错时返回空消息数组
-        await new Promise(resolve => {
-          this.setData({
-            messages: [],
-            loading: false
-          }, resolve);
-        });
-
-        return [];
-      }
-    },
 
     // 滚动到底部 - 优化版，减少setData调用
     scrollToBottom(force = false) {
@@ -259,9 +201,9 @@ Component({
           });
         });
 
-        // 通知父组件更新chatStore
+        // 直接更新chatStore（如果需要）
         if (notifyStore) {
-          this.triggerEvent('messagesUpdated', { messages });
+          this.chatStore.updateState({ messages });
         }
 
         return messages;
@@ -286,9 +228,9 @@ Component({
             this.scrollToBottom(true);
           });
 
-          // 即使出错也尝试通知父组件
+          // 即使出错也尝试更新chatStore
           if (notifyStore) {
-            this.triggerEvent('messagesUpdated', { messages: fallbackMessages });
+            this.chatStore.updateState({ messages: fallbackMessages });
           }
 
           return fallbackMessages;
@@ -351,7 +293,7 @@ Component({
           }, resolve);
         });
 
-        // 通知父组件更新chatStore
+        // 通知父组件更新chatStore（如果需要）
         if (notifyStore) {
           this.triggerEvent('messagesUpdated', { messages: finalMessages });
         }
@@ -374,7 +316,7 @@ Component({
           this.scrollToBottom(true);
         });
 
-        // 即使动画失败也通知父组件
+        // 即使动画失败也通知父组件（如果需要）
         if (notifyStore) {
           this.triggerEvent('messagesUpdated', { messages: fallbackMessages });
         }
@@ -415,7 +357,7 @@ Component({
 
     /**
      * 刷新消息列表
-     * 从chatStore获取最新消息并更新组件
+     * 直接使用chatStore中的消息更新组件
      * @returns {Promise<Array>} 更新后的消息数组
      */
     async refreshMessages() {
@@ -426,8 +368,15 @@ Component({
           return this.data.messages;
         }
 
-        // 使用addMessages方法更新消息列表，但不通知父组件（避免循环）
-        return await this.addMessages(this.chatStore.messages, { notifyStore: false });
+        // 直接使用chatStore中的消息更新组件
+        this.setData({
+          messages: this.chatStore.messages,
+          scrollToView: 'scrollBottom'
+        }, () => {
+          this.scrollToBottom(true);
+        });
+
+        return this.chatStore.messages;
       } catch (error) {
         console.error('刷新消息列表失败:', error);
         return this.data.messages;
@@ -502,12 +451,16 @@ Component({
           timestamp: response.timestamp
         };
 
-        // 使用_animateReply方法显示带打字机效果的回复
+        // 将消息添加到chatStore - 确保使用最新的chatStore.messages
+        const updatedMessages = [...this.chatStore.messages, userMessageWithStatus, replyMessage];
+        this.chatStore.updateState({ messages: updatedMessages });
+
+        // 使用_animateReply方法显示带打字机效果的回复，但不再通知父组件
         await this._animateReply(
           messages,
           replyMessage,
           'assistant',
-          true // 通知父组件更新chatStore
+          false // 不再通知父组件更新chatStore，直接更新chatStore
         );
 
         // 重置发送状态
@@ -536,31 +489,8 @@ Component({
       }
     },
 
-    // 偷看功能相关方法
-    handleLongPress() {
-      // 设置偷看模式
-      this.setData({ peekMode: true });
-
-      // 直接触发事件通知父组件
-      this.triggerEvent('peekingStatusChange', {
-        isPeeking: true
-      });
-    },
-
-    handleTouchEnd() {
-      // 如果当前处于偷看模式，恢复正常显示
-      if (this.data.peekMode) {
-        this.setData({ peekMode: false });
-
-        // 直接触发事件通知父组件
-        // 确保在下一个渲染周期发送事件，避免可能的时序问题
-        wx.nextTick(() => {
-          this.triggerEvent('peekingStatusChange', {
-            isPeeking: false
-          });
-        });
-      }
-    },
+    // 偷看功能相关方法已移至页面级别管理
+    // 组件只负责根据isPeeking属性更新UI状态
 
 
   }

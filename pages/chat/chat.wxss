@@ -36,5 +36,5 @@
 
 .soup-display-component.peeking {
   opacity: 1;
-  z-index: 100;
+  z-index: 1500; /* 确保高于dialog组件的z-index 1000 */
 }
