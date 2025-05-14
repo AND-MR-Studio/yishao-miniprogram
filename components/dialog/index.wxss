@@ -7,18 +7,11 @@
   right: 0;
   bottom: 0;
   z-index: 1000;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none; /* 默认不捕获点击事件 */
-  display: none; /* 默认不显示 */
-  background-color: transparent;
-}
-
-.dialog-container.visible {
   opacity: 1;
-  pointer-events: auto; /* 可见时捕获点击事件 */
-  display: flex; /* 可见时显示为flex布局 */
+  display: flex;
   flex-direction: column;
+  background-color: transparent;
+  transition: opacity 0.6s var(--transition-decelerated);
 }
 
 /* 导航栏容器 */

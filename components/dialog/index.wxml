@@ -1,5 +1,5 @@
 <!--components/dialog/index.wxml-->
-<view class="dialog-container {{visible ? 'visible' : 'hidden'}} {{peekMode ? 'peek-mode' : ''}}" animation="{{animationData}}" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
+<view class="dialog-container {{peekMode ? 'peek-mode' : ''}}" bindlongpress="handleLongPress" bindtouchend="handleTouchEnd" bindtouchcancel="handleTouchEnd">
   <!-- 导航栏 -->
   <view class="nav-bar-container" catchtap="handleClose">
     <nav-bar

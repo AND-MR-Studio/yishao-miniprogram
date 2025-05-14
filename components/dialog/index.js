@@ -1,25 +1,12 @@
 // components/dialog/index.js
-const dialogService = require('../../service/dialogService');
 const simpleTypeAnimation = require('../../utils/typeAnimation');
 const agentService = require('../../service/agentService');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { tipStore } = require('../../stores/index');
+const { tipStore, chatStore } = require('../../stores/index');
 
 Component({
   properties: {
-    visible: {
-      type: Boolean,
-      value: false
-    },
-    soupId: {
-      type: String,
-      value: ''
-    },
     dialogId: {
-      type: String,
-      value: ''
-    },
-    userId: {
       type: String,
       value: ''
     },
@@ -38,10 +25,8 @@ Component({
   data: {
     messages: [],
     keyboardHeight: 0,
-    animationData: {},
-    isFullyVisible: false,
     loading: false,
-    isAnimating: false,
+    isAnimating: false, // 用于打字机动画
     isSending: false, // 是否正在发送消息
     typingText: '', // 简化版打字机文本
     animatingMessageIndex: -1, // 当前正在执行动画的消息索引
@@ -56,15 +41,10 @@ Component({
         this.setData({ keyboardHeight: res.height });
       });
 
-      this.animation = wx.createAnimation({
-        duration: 300,
-        timingFunction: 'ease',
-      });
-
       // 初始化简化版打字机动画实例
       this.typeAnimator = simpleTypeAnimation.createInstance(this, {
         typeSpeed: this.properties.typeSpeed,
-        batchSize: 1, // 每5个字符触发一次setData，平衡性能和动画效果
+        batchSize: 1, // 每个字符触发一次setData，平衡性能和动画效果
         onComplete: () => {
           this.setData({ isAnimating: false });
           // 动画完成后确保滚动到底部
@@ -83,8 +63,19 @@ Component({
         actions: ['showTip', 'hideTip', 'trackUserMessage']
       });
 
-      // 将tipStore实例保存到this中，方便直接访问
+      // 创建chatStore绑定
+      this.chatStoreBindings = createStoreBindings(this, {
+        store: chatStore,
+        fields: ['messages', 'dialogId', 'userId'],
+        actions: ['fetchMessages']
+      });
+
+      // 将store实例保存到this中，方便直接访问
       this.tipStore = tipStore;
+      this.chatStore = chatStore;
+
+      // 加载对话记录
+      this.loadDialogMessages();
     },
 
     detached() {
@@ -97,31 +88,30 @@ Component({
       if (this.tipStoreBindings) {
         this.tipStoreBindings.destroyStoreBindings();
       }
+
+      if (this.chatStoreBindings) {
+        this.chatStoreBindings.destroyStoreBindings();
+      }
     }
   },
 
   observers: {
-    'visible': function(visible) {
-      if (this.data.isAnimating) return;
-
-      if (visible) {
-        this.showDialog();
-        // 不再自动加载消息，由外部控制加载时机
-      } else {
-        this.hideDialog();
-      }
-    },
-    'dialogId': function(dialogId) {
-      // 只有当dialogId变化且有效且对话框可见时，才重新加载对话记录
-      if (dialogId &&
-          dialogId !== this.data._previousDialogId &&
-          this.data.visible &&
-          !this.data.isAnimating) {
-
+    'dialogId, messages': function(dialogId, messages) {
+      // 当dialogId或messages变化时，更新组件的消息列表
+      if (dialogId && dialogId !== this.data._previousDialogId) {
         console.log('dialogId变化，加载对话记录:', dialogId);
         this.data._previousDialogId = dialogId;
 
+        // 从chatStore加载消息
         this.loadDialogMessages();
+      } else if (messages && messages.length > 0) {
+        // 当messages变化且不为空时，更新组件的消息列表
+        this.setData({
+          messages: messages,
+          scrollToView: 'scrollBottom'
+        }, () => {
+          this.scrollToBottom();
+        });
       }
     },
     'isPeeking': function(isPeeking) {
@@ -131,83 +121,13 @@ Component({
   },
 
   methods: {
-    async showDialog() {
-      if (this.data.isAnimating) return;
-      this.setData({ isAnimating: true });
-
-      if (!this.animation) {
-        this.animation = wx.createAnimation({
-          duration: 300,
-          timingFunction: 'ease',
-        });
-      }
-
-      try {
-        // 一次性设置所有状态，减少重绘
-        this.animation.opacity(0).step({ duration: 0 });
-        this.setData({
-          animationData: this.animation.export(),
-          visible: true
-        });
-
-        // 执行显示动画
-        setTimeout(() => {
-          this.animation.opacity(1).step();
-          this.setData({
-            animationData: this.animation.export(),
-            isFullyVisible: true,
-            isAnimating: false
-          });
-        }, 50);
-      } catch (error) {
-        console.error('显示对话组件出错:', error);
-        this.setData({ isAnimating: false });
-      }
-    },
-
-    async hideDialog() {
-      if (this.data.isAnimating || !this.data.isFullyVisible) return;
-      this.setData({ isAnimating: true });
-
-      if (!this.animation) return;
-
-      try {
-        this.setData({ isFullyVisible: false });
-
-        // 执行隐藏动画 - 只使用透明度动画
-        this.animation.opacity(0).step();
-        this.setData({ animationData: this.animation.export() });
-
-        // 等待动画完成
-        await new Promise(resolve => setTimeout(resolve, 300));
-
-        // 完全隐藏元素，确保不会阻挡点击
-        this.setData({
-          isAnimating: false,
-          visible: false
-        });
-        this.triggerEvent('close');
-      } catch (error) {
-        console.error('隐藏对话组件出错:', error);
-        this.setData({
-          isAnimating: false,
-          visible: false
-        });
-        this.triggerEvent('close');
-      }
-    },
-
-    handleClose() {
-      this.triggerEvent('close');
-    },
-
-    // 加载对话记录
+    // 加载对话记录 - 从chatStore获取
     async loadDialogMessages() {
       // 如果正在加载，不重复加载
       if (this.data.loading) return Promise.resolve(this.data.messages);
 
       // 优先使用组件属性中的 dialogId
-      const dialogId = this.properties.dialogId;
+      const dialogId = this.properties.dialogId || this.dialogId;
 
       if (!dialogId) {
         console.log('缺少 dialogId，返回空消息数组');
@@ -217,17 +137,21 @@ Component({
       // 设置加载状态
       this.setData({ loading: true });
 
-      // 通过tipStore显示加载提示，并同步到chatStore
+      // 通过tipStore显示加载提示
       this.showTip('加载中...', ['正在加载对话记录，请稍候...'], 0, true);
 
       try {
-        // 从服务器获取对话记录
-        const result = await dialogService.getDialogMessages(dialogId);
+        // 从chatStore获取对话记录
+        const success = await this.fetchMessages();
+
+        if (!success) {
+          throw new Error('获取消息失败');
+        }
 
         // 使用Promise包装setData，确保UI更新完成
         await new Promise(resolve => {
           this.setData({
-            messages: result.messages,
+            messages: this.messages || [],
             loading: false
           }, resolve);
         });
@@ -239,11 +163,11 @@ Component({
         // 滚动到底部
         this.scrollToBottom();
 
-        return result.messages;
+        return this.messages || [];
       } catch (error) {
         console.error('加载对话记录失败:', error);
 
-        // 显示错误提示，并同步到chatStore
+        // 显示错误提示
         this.showTip('加载失败', ['无法加载对话记录，请稍后再试'], 3000, true);
 
         // 出错时返回空消息数组
@@ -277,32 +201,119 @@ Component({
       }, 100);
     },
 
-    // 添加消息到对话
-    addMessage(message) {
-      if (!message) return;
+    /**
+     * 添加消息到对话并处理动画效果
+     *
+     * @param {Object|Array} messageData - 单个消息对象或消息数组
+     * @param {Object} [options] - 配置选项
+     * @param {boolean} [options.animate=false] - 是否使用打字机动画效果
+     * @param {boolean} [options.notifyStore=true] - 是否通知父组件更新chatStore
+     * @param {string} [options.replyRole='assistant'] - 回复消息的角色
+     * @returns {Promise<Array>} 更新后的消息数组
+     */
+    async addMessages(messageData, options = {}) {
+      // 默认选项
+      const defaultOptions = {
+        animate: false,
+        notifyStore: true,
+        replyRole: 'assistant'
+      };
 
-      const messages = [...this.data.messages, message];
-      this.setData({
-        messages,
-        scrollToView: 'scrollBottom'
-      }, () => {
-        this.scrollToBottom();
-      });
+      const { animate, notifyStore, replyRole } = { ...defaultOptions, ...options };
 
-      return messages;
+      try {
+        // 处理单个消息或消息对
+        let userMessage, replyMessage, messages;
+
+        if (Array.isArray(messageData)) {
+          // 处理消息数组
+          messages = [...this.data.messages, ...messageData];
+        } else if (messageData.userMessage && messageData.replyMessage) {
+          // 处理消息对
+          userMessage = messageData.userMessage;
+          replyMessage = messageData.replyMessage;
+
+          // 添加用户消息
+          messages = [...this.data.messages, userMessage];
+
+          if (animate) {
+            // 使用打字机动画效果
+            return await this._animateReply(messages, replyMessage, replyRole, notifyStore);
+          } else {
+            // 直接添加回复消息
+            messages = [...messages, replyMessage];
+          }
+        } else {
+          // 处理单个消息
+          messages = [...this.data.messages, messageData];
+        }
+
+        // 更新组件状态
+        await new Promise(resolve => {
+          this.setData({
+            messages,
+            scrollToView: 'scrollBottom'
+          }, () => {
+            this.scrollToBottom(true);
+            resolve();
+          });
+        });
+
+        // 通知父组件更新chatStore
+        if (notifyStore) {
+          this.triggerEvent('messagesUpdated', { messages });
+        }
+
+        return messages;
+      } catch (error) {
+        console.error('添加消息失败:', error);
+
+        // 错误处理 - 优雅降级
+        // 确保至少显示消息，即使没有动画效果
+        if (messageData.userMessage) {
+          const fallbackMessages = [...this.data.messages, messageData.userMessage];
+
+          if (messageData.replyMessage) {
+            fallbackMessages.push(messageData.replyMessage);
+          }
+
+          this.setData({
+            messages: fallbackMessages,
+            isAnimating: false,
+            animatingMessageIndex: -1,
+            scrollToView: 'scrollBottom'
+          }, () => {
+            this.scrollToBottom(true);
+          });
+
+          // 即使出错也尝试通知父组件
+          if (notifyStore) {
+            this.triggerEvent('messagesUpdated', { messages: fallbackMessages });
+          }
+
+          return fallbackMessages;
+        }
+
+        // 如果连降级处理也失败，则返回当前消息
+        return this.data.messages;
+      }
     },
 
-    // 添加用户消息和回复
-    async addUserMessageAndReply(userMessage, replyMessage) {
-      if (!userMessage || !replyMessage) return;
-
-      // 添加用户消息
-      const messages = this.addMessage(userMessage);
-
+    /**
+     * 使用打字机动画效果显示回复消息
+     *
+     * @private
+     * @param {Array} messages - 当前消息数组
+     * @param {Object} replyMessage - 回复消息对象
+     * @param {string} replyRole - 回复消息的角色
+     * @param {boolean} notifyStore - 是否通知父组件更新chatStore
+     * @returns {Promise<Array>} 更新后的消息数组
+     */
+    async _animateReply(messages, replyMessage, replyRole, notifyStore) {
       // 准备回复消息的打字机效果
       const typingMessage = {
         id: replyMessage.id,
-        role: 'assistant',
+        role: replyRole,
         content: '',
         status: 'typing',
         timestamp: replyMessage.timestamp
@@ -310,28 +321,69 @@ Component({
 
       // 添加打字机效果的空消息
       const updatedMessages = [...messages, typingMessage];
-      this.setData({
-        messages: updatedMessages,
-        animatingMessageIndex: updatedMessages.length - 1,
-        isAnimating: true,
-        typingText: '',
-        scrollToView: 'scrollBottom'
+
+      // 更新状态，开始动画
+      await new Promise(resolve => {
+        this.setData({
+          messages: updatedMessages,
+          animatingMessageIndex: updatedMessages.length - 1,
+          isAnimating: true,
+          typingText: '',
+          scrollToView: 'scrollBottom'
+        }, resolve);
       });
 
-      // 执行打字机动画
-      await this.typeAnimator.start(replyMessage.content);
+      try {
+        // 执行打字机动画
+        await this.typeAnimator.start(replyMessage.content);
 
-      // 更新为完整回复消息
-      const finalMessages = [...updatedMessages];
-      finalMessages[finalMessages.length - 1] = replyMessage;
+        // 更新为完整回复消息
+        const finalMessages = [...updatedMessages];
+        finalMessages[finalMessages.length - 1] = replyMessage;
 
-      this.setData({
-        messages: finalMessages,
-        animatingMessageIndex: -1,
-        isAnimating: false,
-        typingText: ''
-      });
+        // 更新状态，结束动画
+        await new Promise(resolve => {
+          this.setData({
+            messages: finalMessages,
+            animatingMessageIndex: -1,
+            isAnimating: false,
+            typingText: ''
+          }, resolve);
+        });
+
+        // 通知父组件更新chatStore
+        if (notifyStore) {
+          this.triggerEvent('messagesUpdated', { messages: finalMessages });
+        }
+
+        return finalMessages;
+      } catch (error) {
+        console.error('打字机动画失败:', error);
+
+        // 错误处理 - 优雅降级
+        // 直接显示完整消息，跳过动画
+        const fallbackMessages = [...messages, replyMessage];
+
+        this.setData({
+          messages: fallbackMessages,
+          animatingMessageIndex: -1,
+          isAnimating: false,
+          typingText: '',
+          scrollToView: 'scrollBottom'
+        }, () => {
+          this.scrollToBottom(true);
+        });
+
+        // 即使动画失败也通知父组件
+        if (notifyStore) {
+          this.triggerEvent('messagesUpdated', { messages: fallbackMessages });
+        }
+
+        return fallbackMessages;
+      }
     },
+
+
 
     // 更新消息状态
     updateMessageStatus(messageId, newStatus) {
@@ -364,57 +416,22 @@ Component({
     /**
      * 刷新消息列表
      * 从chatStore获取最新消息并更新组件
+     * @returns {Promise<Array>} 更新后的消息数组
      */
-    refreshMessages() {
+    async refreshMessages() {
       try {
-        // 获取chatStore
-        const { chatStore } = require('../../stores/chatStore');
-        if (!chatStore || !chatStore.messages) {
+        // 使用已绑定的chatStore
+        if (!this.chatStore || !this.chatStore.messages) {
           console.error('无法获取chatStore或消息列表');
-          return;
+          return this.data.messages;
         }
 
-        // 更新消息列表
-        this.setData({
-          messages: chatStore.messages,
-          scrollToView: 'scrollBottom'
-        }, () => {
-          this.scrollToBottom();
-        });
+        // 使用addMessages方法更新消息列表，但不通知父组件（避免循环）
+        return await this.addMessages(this.chatStore.messages, { notifyStore: false });
       } catch (error) {
         console.error('刷新消息列表失败:', error);
+        return this.data.messages;
       }
-    },
-
-    // 语音相关处理函数
-    handleVoiceStart() {
-      // 开始录音时的处理
-      console.log('开始录音');
-      this.triggerEvent('messageStatusChange', {
-        status: 'recording',
-        message: null
-      });
-    },
-
-    handleVoiceEnd(e) {
-      // 结束录音时的处理
-      console.log('结束录音', e.detail);
-      this.triggerEvent('messageStatusChange', {
-        status: 'recordEnd',
-        message: null
-      });
-
-      // 在当前实现中，我们不处理语音消息
-      // 文本消息和语音消息统一处理
-    },
-
-    handleVoiceCancel() {
-      // 取消录音时的处理
-      console.log('取消录音');
-      this.triggerEvent('messageStatusChange', {
-        status: 'recordCancel',
-        message: null
-      });
     },
 
     /**
@@ -446,12 +463,12 @@ Component({
           isSending: true // 标记为发送中
         });
 
-        const messages = this.addMessage(userMessageWithStatus);
+        const messages = await this.addMessages(userMessageWithStatus, { notifyStore: false });
 
-        // 构建历史消息数组
-        const previousMessages = this.data.messages.slice(0, -1).filter(msg =>
-          msg.role === 'user' || msg.role === 'assistant'
-        );
+        // 构建历史消息数组 - 使用chatStore中的消息或当前组件的消息
+        const previousMessages = (this.chatStore.messages.length > 0 ? this.chatStore.messages : this.data.messages)
+          .slice(0, -1)
+          .filter(msg => msg.role === 'user' || msg.role === 'assistant');
 
         // 转换为API所需格式
         const historyMessages = previousMessages.map(msg => ({
@@ -485,36 +502,17 @@ Component({
           timestamp: response.timestamp
         };
 
-        // 使用打字机效果显示回复
-        const typingMessage = {
-          id: replyMessage.id,
-          role: 'assistant',
-          content: '',
-          status: 'typing',
-          timestamp: replyMessage.timestamp
-        };
+        // 使用_animateReply方法显示带打字机效果的回复
+        await this._animateReply(
+          messages,
+          replyMessage,
+          'assistant',
+          true // 通知父组件更新chatStore
+        );
 
-        const updatedMessages = [...messages, typingMessage];
+        // 重置发送状态
         this.setData({
-          messages: updatedMessages,
-          animatingMessageIndex: updatedMessages.length - 1,
-          isAnimating: true,
-          typingText: '',
-          scrollToView: 'scrollBottom'
-        });
-
-        // 执行打字机动画
-        await this.typeAnimator.start(replyMessage.content);
-
-        // 更新为完整回复消息
-        const finalMessages = [...updatedMessages];
-        finalMessages[finalMessages.length - 1] = replyMessage;
-
-        this.setData({
-          messages: finalMessages,
-          animatingMessageIndex: -1,
-          isSending: false,
-          typingText: ''
+          isSending: false
         });
 
         return true;
@@ -564,59 +562,6 @@ Component({
       }
     },
 
-    /**
-     * 处理清理上下文事件
-     * 清空当前对话的所有消息记录
-     * @param {Object} e 事件对象
-     */
-    async clearContext(e) {
-      try {
-        const dialogId = e?.detail?.dialogId || this.properties.dialogId;
-        if (!dialogId) {
-          console.error('清理上下文失败: 缺少对话ID');
-          return;
-        }
 
-        // 显示确认弹窗
-        wx.showModal({
-          title: '提示',
-          content: '确定要清理当前对话上下文吗？这将删除当前对话的所有记录。',
-          success: async (res) => {
-            if (res.confirm) {
-              try {
-                // 从组件属性中获取用户ID
-                const userId = this.properties.userId;
-                if (!userId) {
-                  console.error('清理上下文失败: 缺少用户ID');
-                  return;
-                }
-
-                // 清空对话消息
-                this.setData({ messages: [] });
-
-                // 保存空消息数组到服务器
-                try {
-                  await dialogService.saveDialogMessages(dialogId, userId, []);
-                  console.log('对话上下文已清理');
-
-                  // 显示成功提示
-                  wx.showToast({
-                    title: '对话已清理',
-                    icon: 'success',
-                    duration: 1500
-                  });
-                } catch (error) {
-                  console.error('保存清空的对话记录失败:', error);
-                }
-              } catch (error) {
-                console.error('清理上下文失败:', error);
-              }
-            }
-          }
-        });
-      } catch (error) {
-        console.error('清理上下文失败:', error);
-      }
-    }
   }
 });

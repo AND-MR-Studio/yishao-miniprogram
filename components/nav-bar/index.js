@@ -35,6 +35,11 @@ Component({
       type: String,
       value: ''
     },
+    // 页面状态，用于设置面板显示不同内容
+    pageState: {
+      type: String,
+      value: ''
+    },
   },
 
   /**
@@ -114,12 +119,12 @@ Component({
 
     // 处理清理上下文事件
     onClearContext(e) {
-      // 获取对话ID
-      const { dialogId } = e.detail;
-      if (!dialogId) return;
+      // 获取对话ID和用户ID
+      const { dialogId, userId } = e.detail;
+      if (!dialogId || !userId) return;
 
       // 触发清理上下文事件给页面处理
-      this.triggerEvent('clearcontext', { dialogId });
+      this.triggerEvent('clearcontext', { dialogId, userId });
     }
   }
 })

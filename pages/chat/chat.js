@@ -5,7 +5,6 @@
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { rootStore, soupStore, chatStore, tipStore, CHAT_STATE } = require('../../stores/index');
-const dialogService = require('../../service/dialogService');
 const userService = require('../../service/userService');
 
 Page({
@@ -124,12 +123,11 @@ Page({
    * @param {string} dialogId 对话ID
    */
   initDialog(dialogId) {
-    // 显示对话框并设置必要属性
+    // 设置对话框必要属性
     const dialog = this.selectComponent('#dialog');
     if (dialog) {
       dialog.setData({
-        dialogId: dialogId,
-        visible: true
+        dialogId: dialogId
       });
 
       // 加载对话记录
@@ -211,6 +209,18 @@ Page({
   },
 
   /**
+   * 处理消息更新事件
+   * @param {Object} e 事件对象
+   */
+  handleMessagesUpdated(e) {
+    const { messages } = e.detail;
+    if (!messages || !Array.isArray(messages)) return;
+
+    // 使用chatStore更新消息
+    chatStore.updateState({ messages });
+  },
+
+  /**
    * 处理长按开始事件
    * 用于偷看功能
    */
@@ -263,13 +273,73 @@ Page({
   },
 
   /**
-   * 转发清理上下文事件到对话组件
+   * 处理清理上下文确认事件
    * @param {Object} e 事件对象
    */
-  clearContext(e) {
-    const dialog = this.selectComponent('#dialog');
-    if (dialog) {
-      dialog.clearContext(e);
+  async handleClearContextConfirm(e) {
+    try {
+      const { dialogId, userId } = e.detail;
+      if (!dialogId || !userId) {
+        console.error('清理上下文失败: 缺少必要参数');
+        return;
+      }
+
+      // 使用dialogService清空对话消息
+      const dialogService = require('../../service/dialogService');
+      await dialogService.saveDialogMessages(dialogId, userId, []);
+
+      // 刷新chatStore中的消息
+      await this.fetchMessages();
+
+      // 显示成功提示
+      wx.showToast({
+        title: '对话已清理',
+        icon: 'success',
+        duration: 1500
+      });
+    } catch (error) {
+      console.error('清理上下文失败:', error);
+      this.showErrorToast('清理失败，请重试');
+    }
+  },
+
+  /**
+   * 处理清理上下文事件
+   * @param {Object} e 事件对象
+   */
+  async clearContext(e) {
+    try {
+      const { dialogId, userId } = e.detail;
+      if (!dialogId || !userId) {
+        console.error('清理上下文失败: 缺少必要参数');
+        return;
+      }
+
+      // 使用dialogService清空对话消息
+      const dialogService = require('../../service/dialogService');
+      await dialogService.saveDialogMessages(dialogId, userId, []);
+
+      // 刷新chatStore中的消息
+      await this.fetchMessages();
+
+      // 获取对话组件并刷新消息
+      const dialog = this.selectComponent('#dialog');
+      if (dialog) {
+        // 清空本地消息显示
+        dialog.setData({ messages: [] });
+        // 刷新消息
+        dialog.refreshMessages();
+      }
+
+      // 显示成功提示
+      wx.showToast({
+        title: '对话已清理',
+        icon: 'success',
+        duration: 1500
+      });
+    } catch (error) {
+      console.error('清理上下文失败:', error);
+      this.showErrorToast('清理失败，请重试');
     }
   },
 
@@ -315,6 +385,7 @@ Page({
 
     // 设置发送状态
     this.setData({ isSending: true });
+    this.setSendingStatus(true);
 
     try {
       // 获取必要参数
@@ -336,19 +407,8 @@ Page({
       }
 
       // 使用dialogService处理用户输入
+      const dialogService = require('../../service/dialogService');
       const { userMessage } = dialogService.handleUserInput(value.trim());
-
-      // 添加状态属性
-      const userMessageWithStatus = {
-        ...userMessage,
-        status: 'sending'
-      };
-
-      // 获取对话组件
-      const dialog = this.selectComponent('#dialog');
-      if (!dialog) {
-        throw new Error('无法获取对话组件');
-      }
 
       // 使用tipStore跟踪用户消息
       tipStore.trackUserMessage({
@@ -356,25 +416,18 @@ Page({
         content: userMessage.content
       });
 
-      // 发送消息到服务器并获取回复
-      const reply = await dialogService.sendMessage({
-        message: userMessage.content,
-        userId: userId,
-        dialogId: dialogId,
-        messageId: userMessage.id
-      });
+      // 直接使用chatStore发送消息
+      const success = await chatStore.sendMessage(userMessage.content);
 
-      // 创建回复消息
-      const replyMessage = {
-        ...reply,
-        status: 'sent'
-      };
+      if (!success) {
+        throw new Error('发送消息失败');
+      }
 
-      // 添加消息到对话组件
-      await dialog.addUserMessageAndReply(userMessageWithStatus, replyMessage);
-
-      // 更新chatStore中的消息
-      await this.fetchMessages();
+      // 获取对话组件并刷新消息
+      const dialog = this.selectComponent('#dialog');
+      if (dialog) {
+        dialog.refreshMessages();
+      }
 
     } catch (error) {
       console.error('发送消息失败:', error);
@@ -382,6 +435,7 @@ Page({
     } finally {
       // 重置发送状态
       this.setData({ isSending: false });
+      this.setSendingStatus(false);
     }
   },
 

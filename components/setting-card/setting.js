@@ -1,5 +1,7 @@
 // components/setting-card/setting.js
 const { createPanelDragManager } = require('../../utils/panelDrag');
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { chatStore } = require('../../stores/index');
 
 Component({
 
@@ -10,6 +12,10 @@ Component({
     show: {
       type: Boolean,
       value: false
+    },
+    pageState: {
+      type: String,
+      value: ''
     },
   },
 
@@ -46,6 +52,12 @@ Component({
         onVibrate: this.triggerVibration.bind(this),
         setData: this.setData.bind(this)
       });
+
+      // 创建chatStore绑定
+      this.storeBindings = createStoreBindings(this, {
+        store: chatStore,
+        fields: ['dialogId', 'userId'],
+      });
     },
 
     detached() {
@@ -62,6 +74,11 @@ Component({
       if (this.panelDragManager) {
         this.panelDragManager.destroy();
         this.panelDragManager = null;
+      }
+
+      // 清理MobX绑定
+      if (this.storeBindings) {
+        this.storeBindings.destroyStoreBindings();
       }
     }
   },
@@ -157,27 +174,40 @@ Component({
       // 设置处理标志
       this.setData({ isProcessingContext: true });
 
-      // 获取当前页面实例
-      const pages = getCurrentPages();
-      const currentPage = pages[pages.length - 1];
+      // 检查当前页面状态
+      const isChatPage = this.properties.pageState === 'drinking';
 
-      // 从页面获取当前对话ID
-      let dialogId = '';
-      if (currentPage && currentPage.selectComponent) {
-        const dialog = currentPage.selectComponent('#dialog');
-        if (dialog && dialog.properties) {
-          dialogId = dialog.properties.dialogId || '';
-        }
+      if (!isChatPage) {
+        wx.showToast({
+          title: '仅在聊天页面可用',
+          icon: 'none',
+          duration: 1500
+        });
+
+        // 立即重置处理标志
+        this.setData({ isProcessingContext: false });
+        return;
       }
 
-      if (dialogId) {
-        // 触发清理上下文事件，传递dialogId
-        this.triggerEvent('clearcontext', { dialogId });
+      // 直接从chatStore获取dialogId和userId
+      const dialogId = this.dialogId;
+      const userId = this.userId;
 
-        // 延迟重置处理标志，确保不会短时间内重复触发
-        setTimeout(() => {
-          this.setData({ isProcessingContext: false });
-        }, 1000); // 1秒后重置
+      if (dialogId && userId) {
+        // 显示确认弹窗
+        wx.showModal({
+          title: '提示',
+          content: '确定要清理当前对话上下文吗？这将删除当前对话的所有记录。',
+          success: (res) => {
+            if (res.confirm) {
+              // 触发清理上下文事件，传递dialogId和userId
+              this.triggerEvent('clearcontext', { dialogId, userId });
+            }
+
+            // 重置处理标志
+            this.setData({ isProcessingContext: false });
+          }
+        });
       } else {
         wx.showToast({
           title: '无对话可清理',
