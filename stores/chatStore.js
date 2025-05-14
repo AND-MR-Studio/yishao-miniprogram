@@ -14,7 +14,6 @@ class ChatStore {
   chatState = CHAT_STATE.DRINKING;
 
   // 核心数据
-  soupId = '';      // 当前汤面ID
   soupData = null;  // 当前汤面完整数据
   dialogId = '';    // 当前对话ID
   userId = '';      // 当前用户ID
@@ -26,7 +25,6 @@ class ChatStore {
   isReplying = false;  // 是否正在回复
   isAnimating = false; // 是否正在执行动画
   inputValue = '';     // 输入框的值
-  tipVisible = true;   // 提示是否可见
 
   // 对话数据
   messages = [];       // 对话消息列表
@@ -55,11 +53,6 @@ class ChatStore {
     return this.chatState === CHAT_STATE.TRUTH;
   }
 
-  // 提示模块是否应该可见
-  get shouldShowTip() {
-    return this.tipVisible && !this.isPeeking;
-  }
-
   // ===== Action方法 =====
   // 更新状态
   updateState(data) {
@@ -69,9 +62,6 @@ class ChatStore {
     }
 
     // 更新数据
-    if (data.soupId !== undefined) {
-      this.soupId = data.soupId;
-    }
     if (data.soupData !== undefined) {
       this.soupData = data.soupData;
     }
@@ -101,9 +91,6 @@ class ChatStore {
     if (data.inputValue !== undefined) {
       this.inputValue = data.inputValue;
     }
-    if (data.tipVisible !== undefined) {
-      this.tipVisible = data.tipVisible;
-    }
 
     // 更新对话数据
     if (data.messages !== undefined) {
@@ -119,11 +106,6 @@ class ChatStore {
   // 设置偷看状态
   setPeekingStatus(isPeeking) {
     this.isPeeking = isPeeking;
-  }
-
-  // 设置提示可见性
-  setTipVisible(visible) {
-    this.tipVisible = visible;
   }
 
   // 设置输入框的值
@@ -151,7 +133,11 @@ class ChatStore {
 
   // 创建对话 - 异步流程
   *createDialog() {
-    if (!this.userId || !this.soupId) {
+    // 从soupStore获取当前汤面ID
+    const { soupStore } = require('./soupStore');
+    const soupId = soupStore.soupData ? soupStore.soupData.id : '';
+
+    if (!this.userId || !soupId) {
       console.error('无法创建对话: 缺少用户ID或汤面ID');
       return false;
     }
@@ -160,11 +146,11 @@ class ChatStore {
       this.isLoading = true;
 
       // 先尝试获取用户对话
-      let dialogData = yield dialogService.getUserDialog(this.userId, this.soupId);
+      let dialogData = yield dialogService.getUserDialog(this.userId, soupId);
 
       // 如果没有对话ID，创建新对话
       if (!dialogData || !dialogData.dialogId) {
-        dialogData = yield dialogService.createDialog(this.userId, this.soupId);
+        dialogData = yield dialogService.createDialog(this.userId, soupId);
       }
 
       if (!dialogData || !dialogData.dialogId) {

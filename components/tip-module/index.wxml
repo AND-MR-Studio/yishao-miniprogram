@@ -1,5 +1,5 @@
 <!--components/tip-module/index.wxml-->
-<view class="tip-module-container {{visible || tipStore.visible ? 'visible' : 'hidden'}}">
+<view class="tip-module-container {{(visible || tipStore.visible) && !isPeeking ? 'visible' : 'hidden'}}">
   <!-- 内容区域 -->
   <view class="tip-content">
     <!-- 顶部GIF动画 -->

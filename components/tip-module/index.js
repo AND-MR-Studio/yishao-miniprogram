@@ -1,6 +1,7 @@
 // components/tip-module/index.js
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { tipStore } = require('../../stores/tipStore');
+const { chatStore } = require('../../stores/chatStore');
 
 Component({
   /**
@@ -70,6 +71,19 @@ Component({
     },
     'visible': function(newVisible) {
       this.handleVisibleChange(newVisible);
+    },
+    'isPeeking': function(isPeeking) {
+      // 当偷看状态变化时，触发可见性变化事件
+      if (isPeeking) {
+        // 如果开始偷看，清除闲置计时器
+        this.clearIdleTimer();
+      } else if (this.visible || this.data.visible) {
+        // 如果结束偷看且提示应该可见，重新启动闲置计时器
+        this.startIdleTimer();
+      }
+
+      // 触发可见性变化事件
+      this.triggerEvent('visibleChange', { visible: !isPeeking && (this.visible || this.data.visible) });
     }
   },
 
@@ -86,8 +100,8 @@ Component({
    */
   lifetimes: {
     attached() {
-      // 创建MobX Store绑定
-      this.storeBindings = createStoreBindings(this, {
+      // 创建tipStore绑定
+      this.tipStoreBindings = createStoreBindings(this, {
         store: tipStore,
         fields: [
           'visible', 'title', 'content',
@@ -98,6 +112,12 @@ Component({
           'startIdleTimer', 'resetIdleTimer', 'clearIdleTimer',
           'showIdleTip', 'showCongratulationTip', 'showSpecialTip'
         ]
+      });
+
+      // 创建chatStore绑定 - 仅获取isPeeking状态
+      this.chatStoreBindings = createStoreBindings(this, {
+        store: chatStore,
+        fields: ['isPeeking']
       });
 
       // 设置默认提示内容
@@ -115,8 +135,13 @@ Component({
       this.clearIdleTimer();
 
       // 清理MobX绑定
-      if (this.storeBindings) {
-        this.storeBindings.destroyStoreBindings();
+      if (this.tipStoreBindings) {
+        this.tipStoreBindings.destroyStoreBindings();
+      }
+
+      // 清理chatStore绑定
+      if (this.chatStoreBindings) {
+        this.chatStoreBindings.destroyStoreBindings();
       }
     }
   },

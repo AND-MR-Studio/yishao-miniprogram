@@ -2,7 +2,6 @@
 const dialogService = require('../../service/dialogService');
 const simpleTypeAnimation = require('../../utils/typeAnimation');
 const userService = require('../../service/userService');
-const soupService = require('../../service/soupService');
 const agentService = require('../../service/agentService');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { tipStore } = require('../../stores/tipStore');

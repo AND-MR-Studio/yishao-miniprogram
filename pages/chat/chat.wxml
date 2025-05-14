@@ -60,11 +60,8 @@
 
   <!-- 提示模块组件 -->
   <tip-module
-    visible="{{shouldShowTip}}"
+    pageState="{{chatState || 'drinking'}}"
     bind:close="onTipModuleClose"
     bind:visibleChange="onTipVisibleChange"
-    pageState="{{chatState || 'drinking'}}"
-    tipTitle="汤来了！我是陪你熬夜猜谜的小勺🌙"
-    tipContent="{{['只答是、否、不确定，别想套我话哦～', '长按汤面就浮出来咯！']}}"
   ></tip-module>
 </view>

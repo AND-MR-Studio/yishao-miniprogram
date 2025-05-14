@@ -55,9 +55,8 @@ class TipStore {
    * @param {string} title 提示标题
    * @param {string[]} content 提示内容数组
    * @param {number} autoHideDelay 自动隐藏延迟时间（毫秒），0表示不自动隐藏
-   * @param {boolean} syncWithChatStore 是否同步状态到chatStore
    */
-  showTip(title, content, autoHideDelay = 0, syncWithChatStore = false) {
+  showTip(title, content, autoHideDelay = 0) {
     // 清除可能存在的自动隐藏计时器
     this.clearAutoHideTimer();
 
@@ -73,48 +72,23 @@ class TipStore {
     // 显示提示
     this.visible = true;
 
-    // 同步状态到chatStore
-    if (syncWithChatStore && require) {
-      try {
-        const { chatStore } = require('./chatStore');
-        if (chatStore && typeof chatStore.setTipVisible === 'function') {
-          chatStore.setTipVisible(true);
-        }
-      } catch (error) {
-        console.error('同步状态到chatStore失败:', error);
-      }
-    }
-
     // 如果设置了自动隐藏延迟，启动自动隐藏计时器
     if (autoHideDelay > 0) {
       this._autoHideTimer = setTimeout(() => {
-        this.hideTip(syncWithChatStore);
+        this.hideTip();
       }, autoHideDelay);
     }
   }
 
   /**
    * 隐藏提示
-   * @param {boolean} syncWithChatStore 是否同步状态到chatStore
    */
-  hideTip(syncWithChatStore = false) {
+  hideTip() {
     // 清除自动隐藏计时器
     this.clearAutoHideTimer();
 
     // 隐藏提示
     this.visible = false;
-
-    // 同步状态到chatStore
-    if (syncWithChatStore && require) {
-      try {
-        const { chatStore } = require('./chatStore');
-        if (chatStore && typeof chatStore.setTipVisible === 'function') {
-          chatStore.setTipVisible(false);
-        }
-      } catch (error) {
-        console.error('同步状态到chatStore失败:', error);
-      }
-    }
 
     // 重置提示内容为默认值
     this.resetTipContent();
@@ -161,9 +135,9 @@ class TipStore {
   /**
    * 跟踪用户消息
    * 增加消息计数，并在达到特定条件时显示特殊提示
-   * @param {Object} message 用户消息对象
+   * @param {Object} _ 用户消息对象（当前未使用）
    */
-  trackUserMessage(message) {
+  trackUserMessage(_) {
     // 重置闲置计时器
     this.resetIdleTimer();
 
@@ -186,8 +160,8 @@ class TipStore {
     // 标记正在切换内容
     this.isSwitchingContent = true;
 
-    // 显示特殊提示，并同步到chatStore
-    this.showTip('小提示', ['你再多问问，', '说不定我也会给你点提示~嘿嘿'], 3000, true);
+    // 显示特殊提示
+    this.showTip('小提示', ['你再多问问，', '说不定我也会给你点提示~嘿嘿'], 3000);
 
     // 动画完成后重置状态
     setTimeout(() => {
@@ -240,8 +214,8 @@ class TipStore {
     // 标记正在显示闲置提示
     this.showingIdleTip = true;
 
-    // 显示闲置提示，并同步到chatStore
-    this.showTip('小提示', ['侦探大人，还在烧脑吗~','cpu别烧坏咯。'], 0, true);
+    // 显示闲置提示
+    this.showTip('小提示', ['侦探大人，还在烧脑吗~','cpu别烧坏咯。'], 0);
   }
 
   /**
@@ -257,8 +231,8 @@ class TipStore {
       `只推理了${this.messageCount}次就猜对啦，佩服佩服~`
     ];
 
-    // 显示祝贺提示，并同步到chatStore
-    this.showTip('🎉 推理成功！', congratsMessage, 0, true);
+    // 显示祝贺提示
+    this.showTip('🎉 推理成功！', congratsMessage, 0);
   }
 }
 

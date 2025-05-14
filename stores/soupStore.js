@@ -14,7 +14,6 @@ class SoupStore {
   // soupState = PAGE_STATE.VIEWING;
 
   // 核心数据
-  //soupId = ""; // 当前汤面ID - 始终保持为字符串，即使是空字符串
   soupData = null; // 当前汤面数据
   userId = ""; // 当前用户ID
 
@@ -66,7 +65,6 @@ class SoupStore {
     }
 
     // 设置基本数据
-    this.soupId = soupData.id;
     this.userId = userId || "";
     // 删除状态设置
     // this.soupState = PAGE_STATE.VIEWING;
@@ -136,8 +134,8 @@ class SoupStore {
           : Promise.resolve(false),
       ]);
 
-      // 检查当前soupId是否仍然是请求的soupId
-      if (this.soupId !== soupId) {
+      // 检查当前soupData.id是否仍然是请求的soupId
+      if (this.soupData && this.soupData.id !== soupId) {
         return;
       }
 
@@ -155,9 +153,9 @@ class SoupStore {
         // 如果失败，尝试获取随机汤面
         const randomSoup = yield soupService.getRandomSoup();
         console.info("[fetchSoupDataAndStore]获取随机汤面", JSON.stringify(randomSoup));
-        if (randomSoup.id && randomSoup.id !== this.soupId) {
-          // 更新soupId
-          this.soupId = randomSoup.id;
+        if (randomSoup.id && (!this.soupData || randomSoup.id !== this.soupData.id)) {
+          // 更新soupData
+          this.soupData = randomSoup;
 
           // 重新获取汤面数据
           yield randomSoup;
@@ -203,8 +201,8 @@ class SoupStore {
           : Promise.resolve(false),
       ]);
 
-      // 检查当前soupId是否仍然是请求的soupId
-      if (this.soupId !== soupId) {
+      // 检查当前soupData.id是否仍然是请求的soupId
+      if (this.soupData && this.soupData.id !== soupId) {
         return;
       }
 
@@ -222,9 +220,9 @@ class SoupStore {
         const randomSoup = yield soupService.getRandomSoup();
         console.info("[initSoupAndStore]获取随机汤面", JSON.stringify(randomSoup));
 
-        if (randomSoup.id && randomSoup.id !== this.soupId) {
-          // 更新soupId
-          this.soupId = randomSoup.id;
+        if (randomSoup.id && (!this.soupData || randomSoup.id !== this.soupData.id)) {
+          // 更新soupData
+          this.soupData = randomSoup;
 
           // 重新获取汤面数据
           yield randomSoup;
@@ -371,9 +369,9 @@ class SoupStore {
       if (userId !== this.userId) {
         this.userId = userId || "";
 
-        // 如果有soupId，重新获取汤面数据（包括点赞、收藏状态）
-        if (this.soupId) {
-          yield this.fetchSoupDataAndStore(this.soupId);
+        // 如果有soupData，重新获取汤面数据（包括点赞、收藏状态）
+        if (this.soupData && this.soupData.id) {
+          yield this.fetchSoupDataAndStore(this.soupData.id);
         }
       }
     } catch (error) {

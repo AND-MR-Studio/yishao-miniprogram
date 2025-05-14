@@ -43,12 +43,12 @@ Page({
       this.chatStoreBindings = createStoreBindings(this, {
         store: chatStore,
         fields: [
-          'soupId', 'soupData', 'dialogId', 'userId', 'chatState',
-          'isPeeking', 'isSending', 'isReplying', 'isAnimating', 'tipVisible',
-          'isDrinking', 'isTruth', 'shouldShowTip', 'messages', 'inputValue'
+          'soupData', 'dialogId', 'userId', 'chatState',
+          'isPeeking', 'isSending', 'isReplying', 'isAnimating',
+          'isDrinking', 'isTruth', 'messages', 'inputValue'
         ],
         actions: [
-          'updateState', 'setPeekingStatus', 'setTipVisible', 'setInputValue',
+          'updateState', 'setPeekingStatus', 'setInputValue',
           'setAnimatingStatus', 'setSendingStatus', 'showTruth',
           'createDialog', 'fetchMessages', 'sendMessage'
         ]
@@ -89,12 +89,10 @@ Page({
 
       // 设置chatStore的基本数据
       chatStore.updateState({
-        soupId: soupId,
         soupData: soupData,
         userId: userId,
         chatState: CHAT_STATE.DRINKING,
-        dialogId: dialogId,
-        tipVisible: true // 确保提示可见
+        dialogId: dialogId
       });
 
       // 确保tipStore的visible状态为true
@@ -184,9 +182,11 @@ Page({
    * 分享小程序
    */
   onShareAppMessage() {
+    // 从soupStore获取当前汤面ID
+    const soupId = soupStore.soupData ? soupStore.soupData.id : '';
     return {
       title: '这个海龟汤太难了来帮帮我！',
-      path: `/pages/chat/chat?soupId=${this.soupId}&dialogId=${this.dialogId}`
+      path: `/pages/chat/chat?soupId=${soupId}&dialogId=${this.dialogId}`
     };
   },
 
@@ -311,7 +311,7 @@ Page({
 
     try {
       // 获取必要参数
-      const soupId = this.soupId;
+      const soupId = soupStore.soupData ? soupStore.soupData.id : '';
       const dialogId = this.dialogId;
       const userId = this.userId;
 
@@ -406,7 +406,7 @@ Page({
 
     try {
       // 获取必要参数
-      const soupId = this.soupId;
+      const soupId = soupStore.soupData ? soupStore.soupData.id : '';
       const dialogId = this.dialogId;
       const userId = this.userId;
       const soupData = this.soupData;
@@ -448,33 +448,6 @@ Page({
       // 重置发送状态
       this.setData({ isSending: false });
     }
-  },
-
-  /**
-   * 处理语音开始事件
-   * @param {Object} e 事件对象
-   */
-  handleVoiceStart(e) {
-    // 语音功能暂未实现
-    console.log('语音开始:', e);
-  },
-
-  /**
-   * 处理语音结束事件
-   * @param {Object} e 事件对象
-   */
-  handleVoiceEnd(e) {
-    // 语音功能暂未实现
-    console.log('语音结束:', e);
-  },
-
-  /**
-   * 处理语音取消事件
-   * @param {Object} e 事件对象
-   */
-  handleVoiceCancel(e) {
-    // 语音功能暂未实现
-    console.log('语音取消:', e);
   },
 
   // ===== 辅助方法 =====
