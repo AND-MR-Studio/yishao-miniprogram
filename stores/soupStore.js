@@ -65,19 +65,15 @@ class SoupStore {
   /**
    * 初始化汤面数据
    * @param {Object} soupData 汤面数据对象
-   * @param {string} userId 用户ID
    */
-  async initSoupWithData(soupData, userId = "") {
+  async initSoupWithData(soupData) {
     // 参数校验
     if (!soupData || !soupData.id) {
       console.error("初始化汤面数据失败: 无效的汤面数据");
       return;
     }
 
-    // 设置基本数据 - 不再直接设置userId，而是通过rootStore
-    if (userId) {
-      this.rootStore.setUserId(userId);
-    }
+    // 设置基本数据 - userId只从rootStore获取，不再接受外部传入
     // 删除状态设置
     // this.soupState = PAGE_STATE.VIEWING;
     this.soupData = soupData;
@@ -402,8 +398,8 @@ class SoupStore {
       const soupData = await soupService.getSoup(soupId);
 
       if (soupData) {
-        // 初始化汤面数据
-        await this.initSoupWithData(soupData, this.userId || "");
+        // 初始化汤面数据 - 不再传递userId参数
+        await this.initSoupWithData(soupData);
         return soupData;
       } else {
         console.error("获取汤面数据失败: 未找到指定ID的汤面");

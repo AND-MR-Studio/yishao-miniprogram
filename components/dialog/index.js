@@ -1,7 +1,6 @@
 // components/dialog/index.js
 const dialogService = require('../../service/dialogService');
 const simpleTypeAnimation = require('../../utils/typeAnimation');
-const userService = require('../../service/userService');
 const agentService = require('../../service/agentService');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { tipStore } = require('../../stores/index');
@@ -585,10 +584,10 @@ Component({
           success: async (res) => {
             if (res.confirm) {
               try {
-                // 获取用户ID
-                const userId = await userService.getUserId();
+                // 从组件属性中获取用户ID
+                const userId = this.properties.userId;
                 if (!userId) {
-                  console.error('清理上下文失败: 无法获取用户ID');
+                  console.error('清理上下文失败: 缺少用户ID');
                   return;
                 }
 

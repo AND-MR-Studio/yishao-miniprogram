@@ -12,7 +12,6 @@ module.exports = {
   rootStore,
   userId: rootStore.userId,
   syncUserId: rootStore.syncUserId.bind(rootStore),
-  setUserId: rootStore.setUserId.bind(rootStore),
 
   // 导出子Store，提供向后兼容性
   soupStore: rootStore.soupStore,

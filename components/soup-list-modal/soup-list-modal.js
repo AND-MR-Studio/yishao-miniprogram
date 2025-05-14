@@ -1,5 +1,4 @@
 // components/soup-list-modal/soup-list-modal.js
-const userService = require('../../service/userService');
 const soupService = require('../../service/soupService');
 const dialogService = require('../../service/dialogService');
 const eventUtils = require('../../utils/eventUtils');
@@ -112,24 +111,17 @@ Component({
       this.setData({ loading: true });
 
       try {
-        // 检查登录状态
-        if (!userService.checkLoginStatus(false)) {
+        // 获取用户信息 - 使用传入的userInfo
+        const userInfo = this.properties.userInfo;
+
+        if (!userInfo) {
+          // 如果没有用户信息，显示空状态
           this.setData({
             soupList: [],
             isEmpty: true,
             loading: false
           });
           return;
-        }
-
-        // 获取用户信息 - 优先使用传入的userInfo，如果没有则重新获取
-        let userInfo = this.properties.userInfo;
-        if (!userInfo) {
-          userInfo = await userService.getFormattedUserInfo(false);
-        }
-
-        if (!userInfo) {
-          throw new Error('获取用户信息失败');
         }
 
         // 获取当前类型的配置
@@ -162,7 +154,7 @@ Component({
         }
 
         // 获取用户ID
-        const userId = await userService.getUserId();
+        const userId = userInfo.userId;
 
         // 为每个汤面获取对应的对话ID
         if (userId && soupList.length > 0) {

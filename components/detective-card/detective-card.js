@@ -1,6 +1,5 @@
 // components/detective-card/detective-card.js
 const api = require('../../config/api');
-const userService = require('../../service/userService');
 
 Component({
   /**
@@ -118,7 +117,7 @@ Component({
 
     /**
      * 处理签到
-     * 组件内部处理签到逻辑，并通知父页面结果
+     * 将签到逻辑委托给父页面，通过事件通知父页面处理
      */
     async handleSignIn() {
       // 防止重复调用
@@ -130,7 +129,8 @@ Component({
       try {
         // 检查登录状态
         if (!this.data.isLoggedIn) {
-          userService.checkLoginStatus();
+          // 通知父页面检查登录状态
+          this.triggerEvent('checklogin');
           return;
         }
 
@@ -145,87 +145,8 @@ Component({
           return;
         }
 
-        try {
-          // 调用后端签到接口
-          const res = await api.userRequest({
-            url: api.user_signin_url,
-            method: 'POST'
-          });
-
-          if (res.success && res.data) {
-            // 更新组件内部状态
-            this.setData({ hasSignedIn: true });
-
-            // 显示签到成功提示
-            wx.showToast({
-              title: '签到成功',
-              icon: 'success',
-              duration: 2000
-            });
-
-            // 振动反馈
-            wx.vibrateShort({ type: 'medium' });
-
-            // 处理升级提示
-            if (res.data.levelUp) {
-              userService.showLevelUpNotification(res.data.levelTitle);
-            }
-
-            // 刷新用户信息
-            await this.refreshUserInfo();
-
-            // 通知父页面签到成功
-            this.triggerEvent('signinresult', {
-              success: true,
-              data: res.data
-            });
-          } else {
-            wx.showToast({
-              title: res.error || '签到失败',
-              icon: 'none',
-              duration: 2000
-            });
-
-            // 通知父页面签到失败
-            this.triggerEvent('signinresult', {
-              success: false,
-              error: res.error || '签到失败'
-            });
-          }
-        } catch (error) {
-          const errorMsg = error.toString();
-
-          // 处理"今日已签到"的情况
-          if (errorMsg.includes('今日已签到')) {
-            this.setData({ hasSignedIn: true });
-
-            wx.showToast({
-              title: '今天已经签到过啦~',
-              icon: 'none',
-              duration: 2000
-            });
-
-            wx.vibrateShort({ type: 'light' });
-
-            // 通知父页面已签到
-            this.triggerEvent('signinresult', {
-              success: true,
-              alreadySignedIn: true
-            });
-          } else {
-            wx.showToast({
-              title: '签到失败，请重试',
-              icon: 'none',
-              duration: 2000
-            });
-
-            // 通知父页面签到失败
-            this.triggerEvent('signinresult', {
-              success: false,
-              error: errorMsg
-            });
-          }
-        }
+        // 通知父页面执行签到操作
+        this.triggerEvent('signin');
       } finally {
         // 重置签到状态标志
         setTimeout(() => {
@@ -236,22 +157,11 @@ Component({
 
     /**
      * 刷新用户信息
-     * 从后端获取最新用户信息并更新组件显示
+     * 通知父页面刷新用户信息
      */
-    async refreshUserInfo() {
-      try {
-        // 获取最新用户信息
-        const detectiveInfo = await userService.getFormattedUserInfo(false);
-        if (!detectiveInfo) return;
-
-        // 更新组件数据
-        this.updateCardDisplay(detectiveInfo);
-
-        // 通知父页面用户信息已更新
-        this.triggerEvent('userinforefreshed', { detectiveInfo });
-      } catch (error) {
-        console.error('刷新用户信息失败:', error);
-      }
+    refreshUserInfo() {
+      // 通知父页面刷新用户信息
+      this.triggerEvent('refreshuserinfo');
     },
 
     /**

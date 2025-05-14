@@ -53,7 +53,7 @@ Page({
         // 获取随机汤面并初始化
         const randomSoup = await soupStore.getRandomSoup();
         if (randomSoup && randomSoup.id) {
-          await soupStore.initSoupWithData(randomSoup, soupStore.userId || "");
+          await soupStore.initSoupWithData(randomSoup);
         } else {
           throw new Error("获取随机汤面失败");
         }
@@ -175,7 +175,7 @@ Page({
       if (randomSoup && randomSoup.id) {
         // 初始化新的汤面数据 - 所有数据管理由store处理
         // 这会自动设置isLoading状态，MobX会触发观察者更新breathingBlur
-        await soupStore.initSoupWithData(randomSoup, soupStore.userId || "");
+        await soupStore.initSoupWithData(randomSoup);
 
         // 增加汤面阅读数
         if (soupStore.soupData?.id) {
