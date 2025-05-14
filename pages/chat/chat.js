@@ -58,8 +58,6 @@ Page({
         actions: ['showTip', 'hideTip', 'setDefaultTip']
       });
 
-      this.setData({ isLoading: true });
-
       // 获取页面参数
       const soupId = options.soupId || '';
       const dialogId = options.dialogId || '';
@@ -71,18 +69,12 @@ Page({
       // 同步用户ID
       await this.syncUserId();
 
-      // 获取汤面数据并初始化
+      // 获取汤面数据并初始化 - 直接使用soupStore的方法，不需要手动更新页面数据
       const soupData = await this.fetchSoupById(soupId);
 
       if (!soupData) {
         throw new Error('获取汤面数据失败');
       }
-
-      // 更新页面数据
-      this.setData({
-        soupData: soupData,
-        isLoading: false
-      });
 
       // 设置chatStore的基本数据
       chatStore.updateState({
@@ -182,8 +174,8 @@ Page({
     // 使用MobX更新偷看状态
     this.setPeekingStatus(true);
 
-    // 同时隐藏提示模块
-    tipStore.visible = false;
+    // 同时隐藏提示模块 - 使用action方法
+    this.hideTip();
   },
 
   /**
@@ -196,9 +188,9 @@ Page({
 
     // 恢复提示模块可见性 - 使用延迟确保状态更新后再显示提示
     setTimeout(() => {
-      tipStore.visible = true;
-      // 重置提示内容为默认值
-      tipStore.resetTipContent();
+      // 使用action方法显示提示并重置内容
+      this.setDefaultTip();
+      this.showTip(tipStore.defaultTitle, tipStore.defaultContent);
     }, 100);
   },
 
@@ -228,7 +220,7 @@ Page({
   },
 
   /**
-   * 处理清理上下文确认事件
+   * 处理清理上下文事件
    * @param {Object} e 事件对象
    */
   async handleClearContextConfirm(e) {
@@ -245,39 +237,6 @@ Page({
 
       // 刷新chatStore中的消息
       await this.fetchMessages();
-
-      // 显示成功提示
-      wx.showToast({
-        title: '对话已清理',
-        icon: 'success',
-        duration: 1500
-      });
-    } catch (error) {
-      console.error('清理上下文失败:', error);
-      this.showErrorToast('清理失败，请重试');
-    }
-  },
-
-  /**
-   * 处理清理上下文事件
-   * @param {Object} e 事件对象
-   */
-  async clearContext(e) {
-    try {
-      const { dialogId, userId } = e.detail;
-      if (!dialogId || !userId) {
-        console.error('清理上下文失败: 缺少必要参数');
-        return;
-      }
-
-      // 使用dialogService清空对话消息
-      const dialogService = require('../../service/dialogService');
-      await dialogService.saveDialogMessages(dialogId, userId, []);
-
-      // 刷新chatStore中的消息
-      await this.fetchMessages();
-
-      // 不再需要手动刷新对话组件，chatStore的变化会自动通知组件
 
       // 显示成功提示
       wx.showToast({
@@ -363,10 +322,10 @@ Page({
       // 获取对话组件并执行动画
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
-        // 如果启用了打字机效果，为最后一条消息添加动画
-        this.setData({ isAnimating: true });
+        // 使用chatStore管理动画状态
+        chatStore.setAnimatingStatus(true);
         await dialog.animateMessage(chatStore.latestMessageIndex);
-        this.setData({ isAnimating: false });
+        chatStore.setAnimatingStatus(false);
       }
 
     } catch (error) {
@@ -396,33 +355,6 @@ Page({
     const { message, index } = e.detail;
     console.log('消息被点击:', message, index);
     // 可以在这里添加点击消息的处理逻辑
-  },
-
-  /**
-   * 处理消息长按事件
-   * @param {Object} e 事件对象
-   */
-  handleMessageLongPress(e) {
-    const { message, index } = e.detail;
-    console.log('消息被长按:', message, index);
-    // 可以在这里添加长按消息的处理逻辑，如复制文本等
-    wx.showActionSheet({
-      itemList: ['复制文本'],
-      success: (res) => {
-        if (res.tapIndex === 0) {
-          // 复制文本
-          wx.setClipboardData({
-            data: message.content,
-            success: () => {
-              wx.showToast({
-                title: '已复制到剪贴板',
-                icon: 'success'
-              });
-            }
-          });
-        }
-      }
-    });
   },
 
   /**
