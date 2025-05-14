@@ -46,9 +46,11 @@
   <!-- 输入栏组件 -->
   <input-bar
     id="inputBar"
+    inputValue="{{inputValue}}"
     disabled="{{isAnimating || isSending}}"
     sending="{{isSending}}"
     showTestButton="{{true}}"
+    bind:input="handleInputChange"
     bind:send="handleSend"
     bind:testAgent="handleTestAgent"
     bind:voiceStart="handleVoiceStart"

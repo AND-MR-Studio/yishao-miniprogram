@@ -55,18 +55,4 @@
     <!-- 滚动锚点 -->
     <view id="scrollBottom" style="height: 10rpx;"></view>
   </scroll-view>
-
-  <!-- 输入栏组件 -->
-  <view class="input-bar-wrapper">
-    <input-bar
-      disabled="{{isAnimating}}"
-      sending="{{isSending}}"
-      showTestButton="{{true}}"
-      bind:send="handleSend"
-      bind:testAgent="handleTestAgent"
-      bind:voiceStart="handleVoiceStart"
-      bind:voiceEnd="handleVoiceEnd"
-      bind:voiceCancel="handleVoiceCancel"
-    />
-  </view>
 </view>

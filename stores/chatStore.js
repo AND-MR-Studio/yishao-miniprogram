@@ -24,6 +24,7 @@ class ChatStore {
   isPeeking = false;   // 是否处于偷看模式
   isSending = false;   // 是否正在发送消息
   isReplying = false;  // 是否正在回复
+  isAnimating = false; // 是否正在执行动画
   inputValue = '';     // 输入框的值
   tipVisible = true;   // 提示是否可见
 
@@ -94,6 +95,9 @@ class ChatStore {
     if (data.isReplying !== undefined) {
       this.isReplying = data.isReplying;
     }
+    if (data.isAnimating !== undefined) {
+      this.isAnimating = data.isAnimating;
+    }
     if (data.inputValue !== undefined) {
       this.inputValue = data.inputValue;
     }
@@ -120,6 +124,21 @@ class ChatStore {
   // 设置提示可见性
   setTipVisible(visible) {
     this.tipVisible = visible;
+  }
+
+  // 设置输入框的值
+  setInputValue(value) {
+    this.inputValue = value;
+  }
+
+  // 设置动画状态
+  setAnimatingStatus(isAnimating) {
+    this.isAnimating = isAnimating;
+  }
+
+  // 设置发送状态
+  setSendingStatus(isSending) {
+    this.isSending = isSending;
   }
 
   // 切换到汤底状态

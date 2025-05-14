@@ -279,152 +279,60 @@ Component({
       }, 100);
     },
 
-    async handleSend(e) {
-      // 处理文本消息
-      const { value } = e.detail;
+    // 添加消息到对话
+    addMessage(message) {
+      if (!message) return;
 
-      // 如果正在执行打字机动画，显示提示并返回
-      if (this.data.isAnimating) {
-        // 只有当有内容时才显示提示
-        if (value && value.trim()) {
-          // 使用tipStore显示提示，并设置2秒后自动隐藏，同步到chatStore
-          this.showTip('请稍等', ['正在回复中，请稍候...'], 2000, true);
-        }
-        return;
-      }
-
-      // 检查消息是否为空
-      if (!value || !value.trim()) return;
-
-      // 验证消息长度不超过50个字
-      if (value.length > 50) {
-        wx.showToast({
-          title: '消息不能超过50个字',
-          icon: 'none'
-        });
-        return;
-      }
-
-      // 获取必要参数
-      const soupId = this.properties.soupId || '';
-      const dialogId = this.properties.dialogId || '';
-      const userId = this.properties.userId || '';
-
-      // 检查必要参数
-      if (!dialogId) {
-        console.error('发送消息失败: 缺少对话ID');
-        wx.showToast({
-          title: '发送失败，请重试',
-          icon: 'none'
-        });
-        return;
-      }
-
-      if (!userId) {
-        console.error('发送消息失败: 缺少用户ID');
-        wx.showToast({
-          title: '发送失败，请重试',
-          icon: 'none'
-        });
-        return;
-      }
-
-      // 更新用户回答过的汤记录
-      if (soupId) {
-        try {
-          await userService.updateAnsweredSoup(soupId);
-        } catch (err) {
-          console.error('更新用户回答汤记录失败:', err);
-          // 失败不影响用户体验，继续执行
-        }
-      }
-
-      // 使用服务层处理用户输入
-      const { userMessage } = dialogService.handleUserInput(value.trim());
-
-      // 添加状态属性
-      const userMessageWithStatus = {
-        ...userMessage,
-        status: 'sending'
-      };
-
-      // 添加用户消息并设置发送状态
-      const messages = [...this.data.messages, userMessageWithStatus];
+      const messages = [...this.data.messages, message];
       this.setData({
         messages,
-        isSending: true // 标记为发送中
+        scrollToView: 'scrollBottom'
       }, () => {
         this.scrollToBottom();
       });
 
-      // 使用tipStore跟踪用户消息
-      this.tipStore.trackUserMessage({
-        messageId: userMessage.id,
-        content: userMessage.content
+      return messages;
+    },
+
+    // 添加用户消息和回复
+    async addUserMessageAndReply(userMessage, replyMessage) {
+      if (!userMessage || !replyMessage) return;
+
+      // 添加用户消息
+      const messages = this.addMessage(userMessage);
+
+      // 准备回复消息的打字机效果
+      const typingMessage = {
+        id: replyMessage.id,
+        role: 'assistant',
+        content: '',
+        status: 'typing',
+        timestamp: replyMessage.timestamp
+      };
+
+      // 添加打字机效果的空消息
+      const updatedMessages = [...messages, typingMessage];
+      this.setData({
+        messages: updatedMessages,
+        animatingMessageIndex: updatedMessages.length - 1,
+        isAnimating: true,
+        typingText: '',
+        scrollToView: 'scrollBottom'
       });
 
-      try {
-        // 发送消息到服务器并获取回复
-        const reply = await dialogService.sendMessage({
-          message: userMessage.content,
-          userId: userId,
-          dialogId: dialogId,
-          messageId: userMessage.id // 传递用户消息 ID
-        });
+      // 执行打字机动画
+      await this.typeAnimator.start(replyMessage.content);
 
-        // 更新用户消息状态
-        this.updateMessageStatus(userMessage.id, 'sent');
+      // 更新为完整回复消息
+      const finalMessages = [...updatedMessages];
+      finalMessages[finalMessages.length - 1] = replyMessage;
 
-        // 创建回复消息
-        const replyMessage = {
-          ...reply,
-          status: 'sent'
-        };
-
-        // 使用打字机效果，保持isSending为true
-        const updatedMessages = [...messages, {
-          id: replyMessage.id,
-          role: 'assistant',
-          content: '',
-          status: 'typing',
-          timestamp: replyMessage.timestamp
-        }];
-
-        this.setData({
-          messages: updatedMessages,
-          animatingMessageIndex: updatedMessages.length - 1,
-          isAnimating: true,
-          // 不重置isSending，因为从用户角度看仍在"发送"过程中
-          typingText: '',
-          scrollToView: 'scrollBottom'
-        });
-
-        // 打字机动画完成后才重置isSending
-        await this.typeAnimator.start(replyMessage.content);
-
-        const finalMessages = [...updatedMessages];
-        finalMessages[finalMessages.length - 1] = replyMessage;
-
-        this.setData({
-          messages: finalMessages,
-          animatingMessageIndex: -1,
-          isSending: false, // 动画完成后重置发送状态
-          typingText: ''
-        });
-      } catch (error) {
-        console.error('发送消息失败:', error);
-
-        // 从消息列表中移除失败的消息
-        const updatedMessages = this.data.messages.filter(msg => msg.id !== userMessage.id);
-
-        this.setData({
-          messages: updatedMessages,
-          isSending: false // 出错时也要重置状态
-        });
-
-        // 使用tipStore显示错误提示，并设置3秒后自动隐藏，同步到chatStore
-        this.showTip('发送失败', [error.message || '消息发送失败，请稍后再试'], 3000, true);
-      }
+      this.setData({
+        messages: finalMessages,
+        animatingMessageIndex: -1,
+        isAnimating: false,
+        typingText: ''
+      });
     },
 
     // 更新消息状态
@@ -452,6 +360,31 @@ Component({
           messages,
           scrollToView: 'scrollBottom' // 确保滚动到底部
         });
+      }
+    },
+
+    /**
+     * 刷新消息列表
+     * 从chatStore获取最新消息并更新组件
+     */
+    refreshMessages() {
+      try {
+        // 获取chatStore
+        const { chatStore } = require('../../stores/chatStore');
+        if (!chatStore || !chatStore.messages) {
+          console.error('无法获取chatStore或消息列表');
+          return;
+        }
+
+        // 更新消息列表
+        this.setData({
+          messages: chatStore.messages,
+          scrollToView: 'scrollBottom'
+        }, () => {
+          this.scrollToBottom();
+        });
+      } catch (error) {
+        console.error('刷新消息列表失败:', error);
       }
     },
 
@@ -488,126 +421,58 @@ Component({
 
     /**
      * 处理测试Agent API事件
-     * 使用当前输入内容和汤面数据发送测试请求到Agent API，并将结果直接显示在对话界面中
-     * @param {Object} e 事件对象
+     * 该方法将由页面调用，不再直接处理输入
+     * @param {Object} params 参数对象，包含用户消息、历史消息等
      */
-    async handleTestAgent(e) {
-      // 处理文本消息
-      const { value } = e.detail;
-
-      // 如果正在执行打字机动画，显示提示并返回
+    async processAgentRequest(params) {
       if (this.data.isAnimating) {
-        // 只有当有内容时才显示提示
-        if (value && value.trim()) {
-          // 使用tipStore显示提示，并设置2秒后自动隐藏，同步到chatStore
-          this.showTip('请稍等', ['正在回复中，请稍候...'], 2000, true);
-        }
-        return;
+        this.showTip('请稍等', ['正在回复中，请稍候...'], 2000, true);
+        return false;
       }
-
-      // 检查消息是否为空
-      if (!value || !value.trim()) return;
-
-      // 获取必要参数
-      const soupId = this.properties.soupId || '';
-      const dialogId = this.properties.dialogId || '';
-      const userId = this.properties.userId || '';
-
-      // 检查必要参数
-      if (!dialogId) {
-        console.error('发送失败: 缺少对话ID');
-        wx.showToast({
-          title: '发送失败，请重试',
-          icon: 'none'
-        });
-        return;
-      }
-
-      if (!userId) {
-        console.error('发送失败: 缺少用户ID');
-        wx.showToast({
-          title: '发送失败，请重试',
-          icon: 'none'
-        });
-        return;
-      }
-
-      if (!soupId) {
-        console.error('发送失败: 缺少汤面ID');
-        wx.showToast({
-          title: '发送失败，请重试',
-          icon: 'none'
-        });
-        return;
-      }
-
-      // 直接创建用户消息对象，不使用dialogService
-      const userMessage = {
-        id: `msg_${Date.now()}`,
-        role: 'user',
-        content: value.trim(),
-        timestamp: Date.now()
-      };
-
-      // 添加状态属性
-      const userMessageWithStatus = {
-        ...userMessage,
-        status: 'sending'
-      };
-
-      // 添加用户消息并设置发送状态
-      // 注意：这里不触发 wx.eventCenter.emit('userSentMessage') 事件，避免其他组件响应
-      const messages = [...this.data.messages, userMessageWithStatus];
-      this.setData({
-        messages,
-        isSending: true // 标记为发送中
-      }, () => {
-        this.scrollToBottom();
-      });
 
       try {
-        // 获取汤面数据
-        const soupData = await soupService.getSoup(soupId);
-        if (!soupData) {
-          throw new Error('无法获取汤面数据');
+        const { userMessage, soupData, userId, dialogId } = params;
+
+        if (!userMessage || !soupData || !userId || !dialogId) {
+          throw new Error('缺少必要参数');
         }
 
-        // 构建包含历史对话的消息数组
-        let historyMessages = [];
+        // 添加状态属性
+        const userMessageWithStatus = {
+          ...userMessage,
+          status: 'sending'
+        };
 
-        // 从当前对话记录中提取历史消息
-        // 注意：此时this.data.messages已经包含了当前用户消息
-        // 获取除了最后一条消息之外的所有历史消息
+        // 添加用户消息
+        this.setData({
+          isSending: true // 标记为发送中
+        });
+
+        const messages = this.addMessage(userMessageWithStatus);
+
+        // 构建历史消息数组
         const previousMessages = this.data.messages.slice(0, -1).filter(msg =>
           msg.role === 'user' || msg.role === 'assistant'
         );
 
-        // 添加历史消息（如果有）
-        if (previousMessages.length > 0) {
-          // 将历史消息转换为API所需格式
-          historyMessages = previousMessages.map(msg => ({
-            role: msg.role,
-            content: msg.content
-          }));
-        }
+        // 转换为API所需格式
+        const historyMessages = previousMessages.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
 
-        // 添加当前用户消息（从this.data.messages的最后一条获取）
-        const currentUserMessage = this.data.messages[this.data.messages.length - 1];
+        // 添加当前用户消息
         historyMessages.push({
-          role: currentUserMessage.role,
-          content: currentUserMessage.content
+          role: userMessage.role,
+          content: userMessage.content
         });
 
-        console.log('发送消息历史:', historyMessages);
-
-        // 调用agentService的sendAgent方法
-        // 注意：agentService现在会自动保存对话到云端
+        // 调用Agent API
         const response = await agentService.sendAgent({
           messages: historyMessages,
           soup: soupData,
           userId: userId,
           dialogId: dialogId
-          // saveToCloud: true  // 默认为true，可以省略
         });
 
         // 更新用户消息状态
@@ -622,50 +487,56 @@ Component({
           timestamp: response.timestamp
         };
 
-        // 使用打字机效果，保持isSending为true
-        const updatedMessages = [...messages, {
+        // 使用打字机效果显示回复
+        const typingMessage = {
           id: replyMessage.id,
           role: 'assistant',
           content: '',
           status: 'typing',
           timestamp: replyMessage.timestamp
-        }];
+        };
 
+        const updatedMessages = [...messages, typingMessage];
         this.setData({
           messages: updatedMessages,
           animatingMessageIndex: updatedMessages.length - 1,
           isAnimating: true,
-          // 不重置isSending，因为从用户角度看仍在"发送"过程中
           typingText: '',
           scrollToView: 'scrollBottom'
         });
 
-        // 打字机动画完成后才重置isSending
+        // 执行打字机动画
         await this.typeAnimator.start(replyMessage.content);
 
+        // 更新为完整回复消息
         const finalMessages = [...updatedMessages];
         finalMessages[finalMessages.length - 1] = replyMessage;
 
         this.setData({
           messages: finalMessages,
           animatingMessageIndex: -1,
-          isSending: false, // 动画完成后重置发送状态
+          isSending: false,
           typingText: ''
         });
 
+        return true;
       } catch (error) {
-        console.error('发送消息失败:', error);
+        console.error('处理Agent请求失败:', error);
 
-        // 从消息列表中移除失败的消息
-        const updatedMessages = this.data.messages.filter(msg => msg.id !== userMessage.id);
+        // 移除失败的用户消息
+        if (params?.userMessage?.id) {
+          const updatedMessages = this.data.messages.filter(msg => msg.id !== params.userMessage.id);
+          this.setData({
+            messages: updatedMessages,
+            isSending: false
+          });
+        } else {
+          this.setData({ isSending: false });
+        }
 
-        this.setData({
-          messages: updatedMessages,
-          isSending: false // 出错时也要重置状态
-        });
-
-        // 使用tipStore显示错误提示，并设置3秒后自动隐藏，同步到chatStore
+        // 显示错误提示
         this.showTip('发送失败', [error.message || '消息发送失败，请稍后再试'], 3000, true);
+        return false;
       }
     },
 

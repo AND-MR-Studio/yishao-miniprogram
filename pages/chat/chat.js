@@ -7,6 +7,8 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { soupStore } = require('../../stores/soupStore');
 const { chatStore, CHAT_STATE } = require('../../stores/chatStore');
 const { tipStore } = require('../../stores/tipStore');
+const dialogService = require('../../service/dialogService');
+const userService = require('../../service/userService');
 
 Page({
   // ===== 页面数据 =====
@@ -42,12 +44,13 @@ Page({
         store: chatStore,
         fields: [
           'soupId', 'soupData', 'dialogId', 'userId', 'chatState',
-          'isPeeking', 'isSending', 'isReplying', 'tipVisible',
-          'isDrinking', 'isTruth', 'shouldShowTip', 'messages'
+          'isPeeking', 'isSending', 'isReplying', 'isAnimating', 'tipVisible',
+          'isDrinking', 'isTruth', 'shouldShowTip', 'messages', 'inputValue'
         ],
         actions: [
-          'updateState', 'setPeekingStatus', 'setTipVisible',
-          'showTruth', 'createDialog', 'fetchMessages', 'sendMessage'
+          'updateState', 'setPeekingStatus', 'setTipVisible', 'setInputValue',
+          'setAnimatingStatus', 'setSendingStatus', 'showTruth',
+          'createDialog', 'fetchMessages', 'sendMessage'
         ]
       });
 
@@ -243,6 +246,16 @@ Page({
   },
 
   /**
+   * 处理输入框内容变化事件
+   * @param {Object} e 事件对象
+   */
+  handleInputChange(e) {
+    const { value } = e.detail;
+    // 使用MobX更新输入框的值
+    this.setInputValue(value);
+  },
+
+  /**
    * 转发清理上下文事件到对话组件
    * @param {Object} e 事件对象
    */
@@ -275,26 +288,165 @@ Page({
    * @param {Object} e 事件对象
    */
   async handleSend(e) {
-    const { message } = e.detail;
-    if (!message) return;
+    const { value } = e.detail;
+    if (!value || !value.trim()) return;
 
-    // 使用chatStore发送消息
-    await this.sendMessage(message);
+    // 验证消息长度不超过50个字
+    if (value.length > 50) {
+      wx.showToast({
+        title: '消息不能超过50个字',
+        icon: 'none'
+      });
+      return;
+    }
 
-    // 更新对话组件
-    const dialog = this.selectComponent('#dialog');
-    if (dialog) {
-      dialog.refreshMessages();
+    // 如果正在发送或动画中，显示提示并返回
+    if (this.data.isSending || this.data.isAnimating) {
+      this.showTip('请稍等', ['正在回复中，请稍候...'], 2000);
+      return;
+    }
+
+    // 设置发送状态
+    this.setData({ isSending: true });
+
+    try {
+      // 获取必要参数
+      const soupId = this.soupId;
+      const dialogId = this.dialogId;
+      const userId = this.userId;
+
+      // 检查必要参数
+      if (!dialogId || !userId || !soupId) {
+        throw new Error('缺少必要参数');
+      }
+
+      // 更新用户回答过的汤记录
+      try {
+        await userService.updateAnsweredSoup(soupId);
+      } catch (err) {
+        console.error('更新用户回答汤记录失败:', err);
+        // 失败不影响用户体验，继续执行
+      }
+
+      // 使用dialogService处理用户输入
+      const { userMessage } = dialogService.handleUserInput(value.trim());
+
+      // 添加状态属性
+      const userMessageWithStatus = {
+        ...userMessage,
+        status: 'sending'
+      };
+
+      // 获取对话组件
+      const dialog = this.selectComponent('#dialog');
+      if (!dialog) {
+        throw new Error('无法获取对话组件');
+      }
+
+      // 使用tipStore跟踪用户消息
+      tipStore.trackUserMessage({
+        messageId: userMessage.id,
+        content: userMessage.content
+      });
+
+      // 发送消息到服务器并获取回复
+      const reply = await dialogService.sendMessage({
+        message: userMessage.content,
+        userId: userId,
+        dialogId: dialogId,
+        messageId: userMessage.id
+      });
+
+      // 创建回复消息
+      const replyMessage = {
+        ...reply,
+        status: 'sent'
+      };
+
+      // 添加消息到对话组件
+      await dialog.addUserMessageAndReply(userMessageWithStatus, replyMessage);
+
+      // 更新chatStore中的消息
+      await this.fetchMessages();
+
+    } catch (error) {
+      console.error('发送消息失败:', error);
+      this.showErrorToast(error.message || '发送失败，请重试');
+    } finally {
+      // 重置发送状态
+      this.setData({ isSending: false });
     }
   },
 
   /**
    * 处理测试代理事件
+   * @param {Object} e 事件对象
    */
-  handleTestAgent() {
-    const dialog = this.selectComponent('#dialog');
-    if (dialog) {
-      dialog.testAgent();
+  async handleTestAgent(e) {
+    const { value } = e.detail;
+    if (!value || !value.trim()) return;
+
+    // 验证消息长度不超过50个字
+    if (value.length > 50) {
+      wx.showToast({
+        title: '消息不能超过50个字',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 如果正在发送或动画中，显示提示并返回
+    if (this.data.isSending || this.data.isAnimating) {
+      this.showTip('请稍等', ['正在回复中，请稍候...'], 2000);
+      return;
+    }
+
+    // 设置发送状态
+    this.setData({ isSending: true });
+
+    try {
+      // 获取必要参数
+      const soupId = this.soupId;
+      const dialogId = this.dialogId;
+      const userId = this.userId;
+      const soupData = this.soupData;
+
+      // 检查必要参数
+      if (!dialogId || !userId || !soupId || !soupData) {
+        throw new Error('缺少必要参数');
+      }
+
+      // 创建用户消息对象
+      const userMessage = {
+        id: `msg_${Date.now()}`,
+        role: 'user',
+        content: value.trim(),
+        timestamp: Date.now()
+      };
+
+      // 获取对话组件
+      const dialog = this.selectComponent('#dialog');
+      if (!dialog) {
+        throw new Error('无法获取对话组件');
+      }
+
+      // 处理Agent请求
+      await dialog.processAgentRequest({
+        userMessage,
+        soupData,
+        userId,
+        dialogId
+      });
+
+      // 更新chatStore中的消息
+      await this.fetchMessages();
+
+    } catch (error) {
+      console.error('处理Agent请求失败:', error);
+      this.showErrorToast(error.message || '发送失败，请重试');
+    } finally {
+      // 重置发送状态
+      this.setData({ isSending: false });
     }
   },
 
@@ -303,10 +455,8 @@ Page({
    * @param {Object} e 事件对象
    */
   handleVoiceStart(e) {
-    const dialog = this.selectComponent('#dialog');
-    if (dialog) {
-      dialog.handleVoiceStart(e);
-    }
+    // 语音功能暂未实现
+    console.log('语音开始:', e);
   },
 
   /**
@@ -314,10 +464,8 @@ Page({
    * @param {Object} e 事件对象
    */
   handleVoiceEnd(e) {
-    const dialog = this.selectComponent('#dialog');
-    if (dialog) {
-      dialog.handleVoiceEnd(e);
-    }
+    // 语音功能暂未实现
+    console.log('语音结束:', e);
   },
 
   /**
@@ -325,10 +473,8 @@ Page({
    * @param {Object} e 事件对象
    */
   handleVoiceCancel(e) {
-    const dialog = this.selectComponent('#dialog');
-    if (dialog) {
-      dialog.handleVoiceCancel(e);
-    }
+    // 语音功能暂未实现
+    console.log('语音取消:', e);
   },
 
   // ===== 辅助方法 =====

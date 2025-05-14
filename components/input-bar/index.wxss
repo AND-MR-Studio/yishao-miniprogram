@@ -1,23 +1,57 @@
 /* components/input-bar/index.wxss */
 
-/* 底部输入区域 */
-.input-area {
+/* 输入区域包装容器 */
+.input-area-wrapper {
   position: fixed;
   left: 0;
-  /* bottom值现在由JS动态控制，默认位置为tabbar上方 */
-  bottom: calc(110rpx + env(safe-area-inset-bottom)); /* 留出tabbar的高度和安全区域 */
+  bottom: 0;
+  width: 100%;
+  z-index: 1005; /* 保持较高z-index */
+}
+
+/* 背景延伸层 - 确保背景色填充到屏幕底部 */
+.input-area-background {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: calc(10vh + env(safe-area-inset-bottom)); /* 确保覆盖安全区域 */
+  /* 增强玻璃质感背景 */
+  background: linear-gradient(to bottom, rgba(6, 20, 41, 0.75) 0%, rgba(3, 9, 26, 0.9) 100%);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  box-shadow: 0 -6rpx 20rpx rgba(0, 0, 0, 0.35);
+  border-top: 1.5rpx solid rgba(87, 44, 239, 0.15);
+  z-index: -1; /* 确保在输入区域下方 */
+  overflow: hidden; /* 确保内部效果不溢出 */
+}
+
+/* 背景内部光晕效果 */
+.input-area-background::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  right: -50%;
+  bottom: -50%;
+  background: radial-gradient(circle at center, rgba(87, 44, 239, 0.1), transparent 70%);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* 底部输入区域 */
+.input-area {
+  position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* 玻璃质感背景 - 与tabbar风格一致 */
-  background: linear-gradient(to bottom, rgba(2, 8, 20, 0.85) 0%, rgba(2, 8, 20, 0.95) 100%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.25);
-  border-top: 1rpx solid rgba(94, 232, 33, 0.1);
-  z-index: 1005; /* 提高z-index，确保在tabbar之上显示 */
-  transition: bottom 0.3s; /* 添加过渡效果，使位置变化更平滑 */
+  /* 背景设为透明，使用背景延伸层的背景 */
+  background: transparent;
+  z-index: 1; /* 确保在背景层之上 */
+  transition: all var(--transition-duration) var(--transition-timing); /* 使用主题变量 */
+  padding-top: 12rpx;
+  padding-bottom: calc(12rpx + env(safe-area-inset-bottom)); /* 底部内边距包含安全区域 */
 }
 
 .input-container {
@@ -75,41 +109,64 @@
 /* 输入框 */
 .input-box {
   flex: 1;
-  height: 80rpx;
-  /* 新拟态风格输入框 */
-  background: rgba(41, 55, 79, 0.4);
-  border: 1.5rpx solid rgba(94, 232, 33, 0.3);
-  border-radius: 20rpx;
+  height: 84rpx;
+  /* 增强拟态风格输入框 */
+  background: rgba(6, 20, 41, 0.5);
+  border: 1.5rpx solid rgba(87, 44, 239, 0.25);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   padding: 0 30rpx;
   /* 精致的阴影效果 */
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15),
-              inset 0 2rpx 6rpx rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  transition: all 0.3s var(--transition-timing);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.2),
+              inset 0 2rpx 8rpx rgba(0, 0, 0, 0.15),
+              inset 0 1rpx 2rpx rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  transition: all var(--transition-duration) var(--transition-timing);
   position: relative;
+  overflow: hidden;
 }
 
+/* 输入框聚焦状态 */
 .input-box:focus-within {
-  background: rgba(41, 55, 79, 0.5);
+  background: rgba(6, 20, 41, 0.6);
   border-color: var(--color-primary);
-  box-shadow: 0 0 16rpx rgba(94, 232, 33, 0.25),
-              inset 0 2rpx 6rpx rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 20rpx rgba(87, 44, 239, 0.2),
+              inset 0 2rpx 8rpx rgba(0, 0, 0, 0.1),
+              inset 0 1rpx 2rpx rgba(255, 255, 255, 0.08);
+}
+
+/* 输入框聚焦时的微光效果 */
+.input-box:focus-within::after {
+  content: "";
+  position: absolute;
+  top: -10rpx;
+  left: -10rpx;
+  right: -10rpx;
+  bottom: -10rpx;
+  background: radial-gradient(circle at center, rgba(87, 44, 239, 0.15), transparent 70%);
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: -1;
 }
 
 .input-field {
   width: 100%;
   height: 100%;
-  font-size: 30rpx;
+  font-family: var(--font-family-mincho); /* 使用汇文明朝体 */
+  font-size: 32rpx;
   color: var(--color-text-primary);
-  letter-spacing: 0.5rpx;
+  letter-spacing: var(--letter-spacing-wide);
+  padding: 0 4rpx;
 }
 
 .input-placeholder {
+  font-family: var(--font-family-mincho); /* 使用汇文明朝体 */
   color: var(--color-text-hint);
-  font-size: 30rpx;
+  font-size: 32rpx;
+  letter-spacing: var(--letter-spacing-normal);
+  opacity: 0.7;
 }
 
 /* 字数统计样式 */
@@ -117,17 +174,26 @@
   position: absolute;
   right: 20rpx;
   bottom: 10rpx;
-  font-size: 24rpx;
-  color: rgba(255, 255, 255, 0.6);
-  background-color: rgba(0, 0, 0, 0.2);
-  padding: 2rpx 10rpx;
-  border-radius: 10rpx;
+  font-family: var(--font-family-mincho); /* 使用汇文明朝体 */
+  font-size: 22rpx;
+  color: rgba(255, 255, 255, 0.7);
+  background: rgba(6, 20, 41, 0.6);
+  padding: 4rpx 12rpx;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid rgba(87, 44, 239, 0.2);
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   pointer-events: none;
+  transition: all 0.2s var(--transition-timing);
 }
 
 /* 接近字数限制时的警告样式 */
 .char-count-warning {
   color: var(--color-accent);
+  background: rgba(64, 197, 86, 0.15);
+  border-color: rgba(64, 197, 86, 0.3);
+  box-shadow: 0 0 8rpx rgba(64, 197, 86, 0.2);
 }
 
 /* 录音状态样式 */
@@ -216,107 +282,137 @@
   margin-left: auto;
 }
 
-/* 测试按钮 */
-.test-btn {
-  width: 80rpx;
-  height: 80rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-shrink: 0;
-  border-radius: 50%;
-  transition: all 0.3s var(--transition-timing);
-  margin-right: 10rpx;
-}
-
 /* 发送按钮 */
 .send-btn {
-  width: 80rpx;
-  height: 80rpx;
+  width: 84rpx;
+  height: 84rpx;
   display: flex;
   justify-content: center;
   align-items: center;
   flex-shrink: 0;
   border-radius: 50%;
-  transition: all 0.3s var(--transition-timing);
+  transition: all var(--transition-duration) var(--transition-timing);
+  position: relative;
+  overflow: hidden;
 }
 
 /* 有内容时的按钮 */
 .send-btn.active, .test-btn.active {
-  /* 玻璃质感按钮 */
+  /* 增强玻璃质感按钮 */
   background: var(--color-accent);
-  border: 1rpx solid rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4rpx 16rpx rgba(94, 232, 33, 0.3);
+  border: 1.5rpx solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 6rpx 18rpx rgba(64, 197, 86, 0.35),
+              inset 0 1rpx 3rpx rgba(255, 255, 255, 0.3);
 }
 
-/* 测试按钮特殊样式 */
-.test-btn.active {
-  background: #4CAF50; /* 绿色 */
+/* 按钮内部光晕效果 */
+.send-btn.active::before {
+  content: "";
+  position: absolute;
+  top: -10rpx;
+  left: -10rpx;
+  right: -10rpx;
+  bottom: -10rpx;
+  background: radial-gradient(circle at center, rgba(255, 255, 255, 0.3), transparent 70%);
+  opacity: 0.6;
+  pointer-events: none;
 }
+
 
 .send-btn-active-hover, .test-btn-active-hover {
   transform: scale(0.92);
-  box-shadow: 0 2rpx 10rpx rgba(94, 232, 33, 0.25);
+  box-shadow: 0 3rpx 12rpx rgba(64, 197, 86, 0.25);
 }
 
 /* 无内容时的按钮 */
 .send-btn.inactive, .test-btn.inactive {
-  background: rgba(41, 55, 79, 0.4);
-  border: 1rpx solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.2);
+  background: rgba(6, 20, 41, 0.6);
+  border: 1.5rpx solid rgba(87, 44, 239, 0.15);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.25),
+              inset 0 1rpx 2rpx rgba(255, 255, 255, 0.05);
 }
 
 .send-btn .icon-image {
-  width: 36rpx;
-  height: 36rpx;
-  margin-top: 2rpx;
+  width: 38rpx;
+  height: 38rpx;
+  filter: drop-shadow(0 2rpx 4rpx rgba(0, 0, 0, 0.3));
+  transition: all 0.2s ease;
 }
 
 /* 禁用状态样式 */
 .disabled-input-area {
-  opacity: 0.9;
+  opacity: 0.95;
+  filter: saturate(0.9);
+}
+
+/* 禁用状态下的背景样式 */
+.input-area-background.disabled-input-area {
+  background: linear-gradient(to bottom, rgba(6, 20, 41, 0.7) 0%, rgba(3, 9, 26, 0.85) 100%);
 }
 
 .disabled-input {
-  background: rgba(41, 55, 79, 0.3) !important;
-  border-color: rgba(94, 232, 33, 0.15) !important;
-  box-shadow: none !important;
+  background: rgba(6, 20, 41, 0.4) !important;
+  border-color: rgba(87, 44, 239, 0.15) !important;
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.1) !important;
+  position: relative;
+}
+
+/* 禁用状态的微妙提示效果 */
+.disabled-input::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-lg);
+  pointer-events: none;
 }
 
 /* 加载中的发送按钮样式 */
 .loading-btn {
   /* 保持活跃状态的样式，确保背景色与active状态一致 */
   background: var(--color-accent) !important;
-  border: 1rpx solid rgba(255, 255, 255, 0.15) !important;
-  box-shadow: 0 4rpx 16rpx rgba(94, 232, 33, 0.3) !important;
-  /* 添加一些微妙的脉冲效果 */
-  animation: pulse-glow 2s infinite ease-in-out;
+  border: 1.5rpx solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 0 6rpx 18rpx rgba(64, 197, 86, 0.35) !important;
+  /* 添加更精致的脉冲效果 */
+  animation: pulse-glow 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes pulse-glow {
   0%, 100% {
-    box-shadow: 0 4rpx 16rpx rgba(94, 232, 33, 0.3);
+    box-shadow: 0 6rpx 18rpx rgba(64, 197, 86, 0.35);
+    border-color: rgba(255, 255, 255, 0.25);
   }
   50% {
-    box-shadow: 0 4rpx 20rpx rgba(94, 232, 33, 0.5);
+    box-shadow: 0 8rpx 24rpx rgba(64, 197, 86, 0.5),
+                0 0 30rpx rgba(64, 197, 86, 0.3);
+    border-color: rgba(255, 255, 255, 0.4);
   }
 }
 
 /* 旋转动画 */
 .rotating {
-  animation: rotate 1.5s infinite linear;
+  animation: rotate 1.8s infinite cubic-bezier(0.5, 0.1, 0.5, 0.9);
   transform-origin: center;
+  filter: drop-shadow(0 0 6rpx rgba(64, 197, 86, 0.4));
 }
 
 @keyframes rotate {
   0% {
     transform: rotate(0deg);
+    filter: drop-shadow(0 0 6rpx rgba(64, 197, 86, 0.4));
+  }
+  50% {
+    filter: drop-shadow(0 0 10rpx rgba(64, 197, 86, 0.6));
   }
   100% {
     transform: rotate(360deg);
+    filter: drop-shadow(0 0 6rpx rgba(64, 197, 86, 0.4));
   }
 }

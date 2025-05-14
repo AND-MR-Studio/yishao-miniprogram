@@ -1,66 +1,64 @@
 <!--components/input-bar/index.wxml-->
 <!-- 底部输入区域 -->
-<view class="input-area {{disabled ? 'disabled-input-area' : ''}}" style="bottom: {{bottom >= 0 ? bottom + 'px' : 'calc(110rpx + env(safe-area-inset-bottom))'}};">
-  <view class="input-container">
-    <!-- 语音按钮（临时禁用） -->
-    <view class="voice-btn disabled"
-      bindtap="handleVoiceClick"
-      hover-class="{{!disabled ? 'voice-btn-hover' : ''}}">
-      <image class="icon-image" src="/static/images/voice.png" mode="aspectFit"></image>
-    </view>
+<view class="input-area-wrapper">
+  <!-- 背景延伸层 - 确保背景色填充到屏幕底部 -->
+  <view class="input-area-background {{disabled ? 'disabled-input-area' : ''}}"></view>
 
-    <!-- 输入框 -->
-    <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}} {{disabled ? 'disabled-input' : ''}}">
-      <input class="input-field"
-        value="{{inputValue}}"
-        placeholder="输入你的问题..."
-        placeholder-class="input-placeholder"
-        cursor-spacing="20"
-        adjust-position="{{false}}"
-        hold-keyboard="{{false}}"
-        confirm-type="send"
-        confirm-hold="{{false}}"
-        bindinput="handleInput"
-        bindconfirm="handleSend"
-        bindfocus="handleInputFocus"
-        bindblur="handleInputBlur"
-        focus="{{inputFocus}}"
-        hidden="{{isRecording}}"
-        maxlength="50"
-        disabled="{{disabled}}"
-      />
-
-      <!-- 字数提示 -->
-      <view class="char-count {{inputValue.length > 45 ? 'char-count-warning' : ''}}" wx:if="{{inputValue.length > 0}}">
-        {{inputValue.length}}/50
+  <!-- 主输入区域 -->
+  <view class="input-area {{disabled ? 'disabled-input-area' : ''}}" style="bottom: {{bottom >= 0 ? bottom + 'px' : '0'}};">
+    <view class="input-container">
+      <!-- 语音按钮（临时禁用） -->
+      <view class="voice-btn disabled"
+        bindtap="handleVoiceClick"
+        hover-class="{{!disabled ? 'voice-btn-hover' : ''}}">
+        <image class="icon-image" src="/static/images/voice.png" mode="aspectFit"></image>
       </view>
 
-      <!-- 录音中UI -->
-      <view class="recording-ui" wx:if="{{isRecording}}">
-        <view class="recording-waves">
-          <view class="wave wave1"></view>
-          <view class="wave wave2"></view>
-          <view class="wave wave3"></view>
+      <!-- 输入框 -->
+      <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}} {{disabled ? 'disabled-input' : ''}}">
+        <input class="input-field text-mincho"
+          value="{{inputValue}}"
+          placeholder="请输入你的问题，侦探大人..."
+          placeholder-class="input-placeholder"
+          cursor-spacing="20"
+          adjust-position="{{false}}"
+          hold-keyboard="{{false}}"
+          confirm-type="send"
+          confirm-hold="{{false}}"
+          bindinput="handleInput"
+          bindconfirm="handleTestAgent"
+          bindfocus="handleInputFocus"
+          bindblur="handleInputBlur"
+          focus="{{inputFocus}}"
+          hidden="{{isRecording}}"
+          maxlength="50"
+          disabled="{{disabled}}"
+        />
+
+        <!-- 字数提示 -->
+        <view class="char-count {{inputValue.length > 45 ? 'char-count-warning' : ''}}" wx:if="{{inputValue.length > 0}}">
+          {{inputValue.length}}/50
         </view>
-        <text class="recording-text">{{isCancelled ? '松开手指，取消发送' : '松开发送，上滑取消'}}</text>
+
+        <!-- 录音中UI -->
+        <view class="recording-ui" wx:if="{{isRecording}}">
+          <view class="recording-waves">
+            <view class="wave wave1"></view>
+            <view class="wave wave2"></view>
+            <view class="wave wave3"></view>
+          </view>
+          <text class="recording-text">{{isCancelled ? '松开手指，取消发送' : '松开发送，上滑取消'}}</text>
+        </view>
+
+        <!-- 移除打字机效果进行中提示 -->
       </view>
 
-      <!-- 移除打字机效果进行中提示 -->
-    </view>
-
-    <!-- 测试Agent API按钮 -->
-    <view class="test-btn {{(hasContent || sending) ? 'active' : 'inactive'}} {{(disabled || sending) ? 'loading-btn' : ''}}"
-          bindtap="handleTestAgent"
-          hover-class="{{hasContent && !disabled && !sending ? 'test-btn-active-hover' : ''}}"
-          wx:if="{{showTestButton}}">
-      <image class="icon-image" src="/static/images/question.png" mode="aspectFit"></image>
-    </view>
-
-    <!-- 发送按钮 -->
-    <view class="send-btn {{(hasContent || sending) ? 'active' : 'inactive'}} {{(disabled || sending) ? 'loading-btn' : ''}}"
-          bindtap="handleSend"
-          hover-class="{{hasContent && !disabled && !sending ? 'send-btn-active-hover' : ''}}">
-      <image class="icon-image {{(disabled || sending) ? 'rotating' : ''}}" src="/static/images/question.png" mode="aspectFit"></image>
+      <!-- Agent API按钮 (保留这个按钮) -->
+      <view class="send-btn {{(hasContent || sending) ? 'active' : 'inactive'}} {{(disabled || sending) ? 'loading-btn' : ''}}"
+            bindtap="handleTestAgent"
+            hover-class="{{hasContent && !disabled && !sending ? 'send-btn-active-hover' : ''}}">
+        <image class="icon-image {{(disabled || sending) ? 'rotating' : ''}}" src="/static/images/question.png" mode="aspectFit"></image>
+      </view>
     </view>
   </view>
 </view>

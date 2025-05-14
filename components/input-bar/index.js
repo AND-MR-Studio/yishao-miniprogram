@@ -95,18 +95,37 @@ Component({
     // 处理输入框获取焦点事件
     handleInputFocus(e) {
       // 获取键盘高度，设置输入框距离底部的距离
+      // 键盘高度需要减去安全区域高度，因为我们已经在CSS中考虑了安全区域
+      const keyboardHeight = e.detail.height || 0;
+      const safeAreaHeight = this.getSafeAreaHeight();
+
       this.setData({
-        bottom: e.detail.height || 0
+        bottom: Math.max(0, keyboardHeight - safeAreaHeight)
       });
     },
 
     // 处理输入框失去焦点事件
     handleInputBlur() {
-      // 使用特殊值-1表示使用CSS中的默认位置
-      // 在WXML中会处理这个特殊值
+      // 恢复到默认位置
       this.setData({
-        bottom: -1
+        bottom: 0
       });
+    },
+
+    // 获取安全区域高度
+    getSafeAreaHeight() {
+      try {
+        const systemInfo = wx.getSystemInfoSync();
+        // 如果有安全区域信息，返回底部安全区域高度
+        if (systemInfo && systemInfo.safeArea) {
+          const { screenHeight, safeArea } = systemInfo;
+          return screenHeight - safeArea.bottom;
+        }
+        return 0;
+      } catch (e) {
+        console.error('获取系统信息失败', e);
+        return 0;
+      }
     },
 
     // 处理语音按钮点击事件（临时禁用功能）
