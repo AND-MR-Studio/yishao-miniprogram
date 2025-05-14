@@ -44,10 +44,16 @@ class ChatStore {
       createDialog: flow,
       fetchMessages: flow,
       sendMessage: flow,
+      sendAgentMessage: flow,
+      animateLastMessage: flow,
 
       // 标记为非观察属性
-      rootStore: false
+      rootStore: false,
+      animationCallback: false
     });
+
+    // 初始化动画回调函数
+    this.animationCallback = null;
   }
 
   // 获取用户ID的计算属性
@@ -69,6 +75,21 @@ class ChatStore {
   // 判断当前是否为汤底状态
   get isTruth() {
     return this.chatState === CHAT_STATE.TRUTH;
+  }
+
+  // 判断是否可以发送消息
+  get canSendMessage() {
+    return !this.isSending && !this.isAnimating;
+  }
+
+  // 获取最新消息
+  get latestMessage() {
+    return this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
+  }
+
+  // 获取最新消息索引
+  get latestMessageIndex() {
+    return this.messages.length - 1;
   }
 
   // ===== Action方法 =====
@@ -137,6 +158,23 @@ class ChatStore {
   // 设置发送状态
   setSendingStatus(isSending) {
     this.isSending = isSending;
+  }
+
+  // 执行消息动画
+  *animateMessage(messageIndex) {
+    if (messageIndex < 0 || messageIndex >= this.messages.length) {
+      return false;
+    }
+
+    try {
+      this.isAnimating = true;
+      return true;
+    } catch (error) {
+      console.error('消息动画执行失败:', error);
+      return false;
+    } finally {
+      this.isAnimating = false;
+    }
   }
 
   // 切换到汤底状态
@@ -221,7 +259,28 @@ class ChatStore {
     }
   }
 
-  // 发送消息 - 异步流程
+  // 执行消息动画 - 异步流程
+  *animateMessage(messageIndex) {
+    if (!this.animationCallback || messageIndex < 0 || messageIndex >= this.messages.length) {
+      return false;
+    }
+
+    try {
+      this.isAnimating = true;
+
+      // 调用页面设置的回调函数执行动画
+      yield this.animationCallback(messageIndex);
+
+      return true;
+    } catch (error) {
+      console.error('消息动画执行失败:', error);
+      return false;
+    } finally {
+      this.isAnimating = false;
+    }
+  }
+
+  // 发送消息 - 统一的异步流程
   *sendMessage(content) {
     if (!this.dialogId || !content) {
       return false;
@@ -230,15 +289,48 @@ class ChatStore {
     try {
       this.isSending = true;
 
-      // 发送消息
-      const result = yield dialogService.sendMessage(this.dialogId, content);
+      // 创建用户消息对象
+      const userMessage = {
+        id: `msg_${Date.now()}`,
+        role: 'user',
+        content: content,
+        timestamp: Date.now()
+      };
 
-      if (!result || !result.success) {
-        return false;
-      }
+      // 先将用户消息添加到消息列表
+      this.messages = [...this.messages, userMessage];
 
-      // 获取最新消息
-      yield this.fetchMessages();
+      // 使用Agent API
+      const agentService = require('../service/agentService');
+
+      // 构建历史消息数组
+      const historyMessages = this.messages
+        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
+        .map(msg => ({
+          role: msg.role,
+          content: msg.content
+        }));
+
+      // 调用Agent API
+      const response = yield agentService.sendAgent({
+        messages: historyMessages,
+        soup: this.soupData,
+        userId: this.userId,
+        dialogId: this.dialogId,
+        saveToCloud: true
+      });
+
+      // 创建回复消息
+      const replyMessage = {
+        id: response.id,
+        role: 'assistant',
+        content: response.content,
+        status: 'sent',
+        timestamp: response.timestamp
+      };
+
+      // 添加回复消息到消息列表
+      this.messages = [...this.messages, replyMessage];
 
       return true;
     } catch (error) {

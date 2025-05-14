@@ -38,11 +38,6 @@ Component({
     isPeeking: {
       type: Boolean,
       value: false
-    },
-    // 是否启用打字机效果
-    enableTypeAnimation: {
-      type: Boolean,
-      value: true
     }
   },
 

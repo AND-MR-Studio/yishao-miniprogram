@@ -10,15 +10,8 @@ const userService = require('../../service/userService');
 Page({
   // ===== 页面数据 =====
   data: {
-    // 页面状态
-    isLoading: true,
-
-    // 汤面数据 - 仅用于传递给soup-display组件
-    soupData: null,
-
-    // 交互相关
-    isSending: false, // 是否正在发送消息
-    isAnimating: false, // 是否正在动画中
+    // 页面状态 - 仅保留不由MobX管理的状态
+    isAnimating: false, // 是否正在动画中 - 用于控制动画过程中的UI状态
   },
 
   // ===== 生命周期方法 =====
@@ -316,7 +309,7 @@ Page({
   },
 
   /**
-   * 处理发送消息事件
+   * 处理发送消息事件 - 统一处理所有消息发送
    * @param {Object} e 事件对象
    */
   async handleSend(e) {
@@ -332,36 +325,19 @@ Page({
       return;
     }
 
-    // 如果正在发送或动画中，显示提示并返回
-    if (this.data.isSending || this.data.isAnimating) {
+    // 使用chatStore的计算属性检查是否可以发送消息
+    if (!chatStore.canSendMessage) {
       this.showTip('请稍等', ['正在回复中，请稍候...'], 2000);
       return;
     }
 
-    // 设置发送状态
-    this.setData({ isSending: true });
-    this.setSendingStatus(true);
-
     try {
-      // 直接从store获取必要参数
-      const soupId = soupStore.soupData ? soupStore.soupData.id : '';
-      const dialogId = chatStore.dialogId;
-      const userId = rootStore.userId;
-
-      // 检查必要参数
-      if (!dialogId) {
-        throw new Error('缺少必要参数: dialogId (chatStore.dialogId)');
-      }
-      if (!userId) {
-        throw new Error('缺少必要参数: userId (rootStore.userId)');
-      }
-      if (!soupId) {
-        throw new Error('缺少必要参数: soupId (soupStore.soupData.id)');
-      }
-
       // 更新用户回答过的汤记录
       try {
-        await userService.updateAnsweredSoup(soupId);
+        const soupId = soupStore.soupData ? soupStore.soupData.id : '';
+        if (soupId) {
+          await userService.updateAnsweredSoup(soupId);
+        }
       } catch (err) {
         console.error('更新用户回答汤记录失败:', err);
         // 失败不影响用户体验，继续执行
@@ -384,141 +360,18 @@ Page({
         throw new Error('发送消息失败');
       }
 
-      // 不再需要手动刷新对话组件，chatStore的变化会自动通知组件
-
-    } catch (error) {
-      console.error('发送消息失败:', error);
-      this.showErrorToast(error.message || '发送失败，请重试');
-    } finally {
-      // 重置发送状态
-      this.setData({ isSending: false });
-      this.setSendingStatus(false);
-    }
-  },
-
-  /**
-   * 处理测试代理事件
-   * @param {Object} e 事件对象
-   */
-  async handleTestAgent(e) {
-    const { value } = e.detail;
-    if (!value || !value.trim()) return;
-
-    // 验证消息长度不超过50个字
-    if (value.length > 50) {
-      wx.showToast({
-        title: '消息不能超过50个字',
-        icon: 'none'
-      });
-      return;
-    }
-
-    // 如果正在发送或动画中，显示提示并返回
-    if (this.data.isSending || this.data.isAnimating) {
-      this.showTip('请稍等', ['正在回复中，请稍候...'], 2000);
-      return;
-    }
-
-    // 设置发送状态
-    this.setData({
-      isSending: true,
-      isAnimating: false
-    });
-
-    try {
-      // 直接从store获取必要参数
-      const soupId = soupStore.soupData ? soupStore.soupData.id : '';
-      const dialogId = chatStore.dialogId;
-      const userId = rootStore.userId;
-      const soupData = soupStore.soupData;
-
-      // 详细日志，帮助调试
-      console.log('调试参数(从store获取):', {
-        soupId,
-        dialogId,
-        userId,
-        soupData: soupData ? '存在' : '不存在'
-      });
-
-      // 检查必要参数
-      if (!dialogId) {
-        throw new Error('缺少必要参数: dialogId (chatStore.dialogId)');
-      }
-      if (!userId) {
-        throw new Error('缺少必要参数: userId (rootStore.userId)');
-      }
-      if (!soupId) {
-        throw new Error('缺少必要参数: soupId (soupStore.soupData.id)');
-      }
-      if (!soupData) {
-        throw new Error('缺少必要参数: soupData (soupStore.soupData)');
-      }
-
-      // 创建用户消息对象
-      const userMessage = {
-        id: `msg_${Date.now()}`,
-        role: 'user',
-        content: value.trim(),
-        timestamp: Date.now()
-      };
-
-      // 直接调用agentService发送请求
-      const agentService = require('../../service/agentService');
-
-      // 构建历史消息数组
-      const historyMessages = chatStore.messages
-        .filter(msg => msg.role === 'user' || msg.role === 'assistant')
-        .map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }));
-
-      // 添加当前用户消息
-      historyMessages.push({
-        role: userMessage.role,
-        content: userMessage.content
-      });
-
-      // 先将用户消息添加到消息列表
-      const messagesWithUser = [...chatStore.messages, userMessage];
-      chatStore.updateState({ messages: messagesWithUser });
-
-      // 调用Agent API
-      const response = await agentService.sendAgent({
-        messages: historyMessages,
-        soup: soupStore.soupData, // 直接使用soupStore.soupData
-        userId: userId,
-        dialogId: dialogId
-      });
-
-      // 创建回复消息
-      const replyMessage = {
-        id: response.id,
-        role: 'assistant',
-        content: response.content,
-        status: 'sent',
-        timestamp: response.timestamp
-      };
-
-      // 更新消息列表，添加回复消息
-      const updatedMessages = [...messagesWithUser, replyMessage];
-      chatStore.updateState({ messages: updatedMessages });
-
-      // 获取对话组件
+      // 获取对话组件并执行动画
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
         // 如果启用了打字机效果，为最后一条消息添加动画
         this.setData({ isAnimating: true });
-        await dialog.animateMessage(updatedMessages.length - 1);
+        await dialog.animateMessage(chatStore.latestMessageIndex);
         this.setData({ isAnimating: false });
       }
 
     } catch (error) {
-      console.error('处理Agent请求失败:', error);
+      console.error('发送消息失败:', error);
       this.showErrorToast(error.message || '发送失败，请重试');
-    } finally {
-      // 重置发送状态
-      this.setData({ isSending: false });
     }
   },
 

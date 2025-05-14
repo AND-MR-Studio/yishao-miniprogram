@@ -77,7 +77,7 @@ const api = {
 
   // Agent服务
   agent: {
-    chat: 'https://yavin.and-tech.cn/agent/yishao/chat'
+    chat: 'https://m1.apifoxmock.com/m1/6036386-5726220-default/agent/yishao/chat'
   }
 };
 
