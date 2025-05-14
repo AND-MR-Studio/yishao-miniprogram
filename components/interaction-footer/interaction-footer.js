@@ -3,7 +3,7 @@
  * 包含点赞、收藏和感谢作者功能
  * 使用MobX管理状态，组件负责渲染状态和处理用户交互
  */
-const { soupStore } = require('../../stores/index');
+const { rootStore, soupStore } = require('../../stores/index');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
@@ -32,6 +32,12 @@ Component({
         store: soupStore,
         fields: ['isLiked', 'isFavorite', 'likeCount', 'favoriteCount', 'soupData']
       });
+
+      // 创建rootStore绑定 - 获取登录状态
+      this.rootStoreBindings = createStoreBindings(this, {
+        store: rootStore,
+        fields: ['isLoggedIn']
+      });
     },
 
     // 组件卸载
@@ -40,17 +46,35 @@ Component({
       if (this.storeBindings) {
         this.storeBindings.destroyStoreBindings();
       }
+      if (this.rootStoreBindings) {
+        this.rootStoreBindings.destroyStoreBindings();
+      }
     }
   },
 
   methods: {
     /**
      * 处理收藏点击事件
+     * 检查登录状态，未登录时显示登录弹窗
      * 触发store中的action并处理结果提示
      */
     async handleFavoriteClick() {
       // 从soupData中获取soupId
       const soupId = this.data.soupData?.id || '';
+
+      // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
+      if (!this.data.isLoggedIn) {
+        // 获取页面实例 - 微信小程序中getCurrentPages是全局函数
+        const pages = wx.getCurrentPages ? wx.getCurrentPages() : getCurrentPages();
+        const currentPage = pages[pages.length - 1];
+
+        // 显示登录提示弹窗
+        const loginPopup = currentPage.selectComponent("#loginPopup");
+        if (loginPopup) {
+          loginPopup.show();
+        }
+        return;
+      }
 
       try {
         // 调用store的action并处理结果
@@ -79,11 +103,26 @@ Component({
 
     /**
      * 处理点赞点击事件
+     * 检查登录状态，未登录时显示登录弹窗
      * 触发store中的action并处理结果提示
      */
     async handleLikeClick() {
       // 从soupData中获取soupId
       const soupId = this.data.soupData?.id || '';
+
+      // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
+      if (!this.data.isLoggedIn) {
+        // 获取页面实例 - 微信小程序中getCurrentPages是全局函数
+        const pages = wx.getCurrentPages ? wx.getCurrentPages() : getCurrentPages();
+        const currentPage = pages[pages.length - 1];
+
+        // 显示登录提示弹窗
+        const loginPopup = currentPage.selectComponent("#loginPopup");
+        if (loginPopup) {
+          loginPopup.show();
+        }
+        return;
+      }
 
       try {
         // 调用store的action并处理结果

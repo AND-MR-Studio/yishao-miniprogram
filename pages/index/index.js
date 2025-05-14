@@ -28,10 +28,10 @@ Page({
    * @param {Object} options - 页面参数，可能包含soupId
    */
   async onLoad(options) {
-    // 创建rootStore绑定 - 用于获取用户ID
+    // 创建rootStore绑定 - 用于获取用户ID和登录状态
     this.rootStoreBindings = createStoreBindings(this, {
       store: rootStore,
-      fields: ["userId"],
+      fields: ["userId", "isLoggedIn"],
       actions: ["syncUserId"]
     });
 
@@ -130,9 +130,8 @@ Page({
    * 极简逻辑，只负责跳转到chat页面
    */
   async onStartSoup() {
-    // 检查用户是否已登录
-    const token = wx.getStorageSync("token");
-    if (!token) {
+    // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
+    if (!this.data.isLoggedIn) {
       // 显示登录提示弹窗
       const loginPopup = this.selectComponent("#loginPopup");
       if (loginPopup) {
@@ -205,12 +204,22 @@ Page({
 
   /**
    * 处理双击收藏事件
-   * 直接调用MobX store的toggleFavorite方法
+   * 检查登录状态，未登录时显示登录弹窗
    */
-  handleDoubleTap() {
+  async handleDoubleTap() {
     if (soupStore.soupData?.id) {
-      // 直接调用store的方法，store内部会处理登录检查
-      soupStore.toggleFavorite(soupStore.soupData.id);
+      // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
+      if (!this.data.isLoggedIn) {
+        // 显示登录提示弹窗
+        const loginPopup = this.selectComponent("#loginPopup");
+        if (loginPopup) {
+          loginPopup.show();
+        }
+        return;
+      }
+
+      // 用户已登录，调用store的方法
+      await soupStore.toggleFavorite(soupStore.soupData.id);
     }
   },
 

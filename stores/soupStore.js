@@ -266,9 +266,10 @@ class SoupStore {
       if (!soupId) {
         return { success: false, message: "缺少汤面ID" };
       }
-      // 检查用户是否已登录
-      if (!userService.checkLoginStatus(false)) {
-        return { success: false, message: "请先登录" };
+      // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
+      if (!this.rootStore.isLoggedIn) {
+        // 返回特定的错误码，表示需要登录
+        return { success: false, message: "请先登录", needLogin: true };
       }
       // 更新用户记录
       const userResult = yield userUpdateMethod(soupId, newStatus);
