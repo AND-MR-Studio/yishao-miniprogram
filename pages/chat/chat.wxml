@@ -36,9 +36,11 @@
   <dialog-component
     id="dialog"
     visible="{{true}}"
+    isPeeking="{{isPeeking}}"
     bind:close="onDialogClose"
     bind:showTruth="onShowTruth"
     bind:clearcontext="clearContext"
+    bind:peekingStatusChange="handlePeekingStatusChange"
   ></dialog-component>
 
   <!-- 输入栏组件 -->

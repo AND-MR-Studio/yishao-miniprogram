@@ -3,10 +3,10 @@
  * 负责处理喝汤状态下的对话、提示和输入功能
  */
 // ===== 导入依赖 =====
-const eventUtils = require('../../utils/eventUtils');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { soupStore } = require('../../stores/soupStore');
 const { chatStore, CHAT_STATE } = require('../../stores/chatStore');
+const { tipStore } = require('../../stores/tipStore');
 
 Page({
   // ===== 页面数据 =====
@@ -51,6 +51,13 @@ Page({
         ]
       });
 
+      // 创建tipStore绑定 - 管理提示信息状态
+      this.tipStoreBindings = createStoreBindings(this, {
+        store: tipStore,
+        fields: ['visible', 'title', 'content'],
+        actions: ['showTip', 'hideTip', 'setDefaultTip']
+      });
+
       this.setData({ isLoading: true });
 
       // 获取页面参数
@@ -83,8 +90,12 @@ Page({
         soupData: soupData,
         userId: userId,
         chatState: CHAT_STATE.DRINKING,
-        dialogId: dialogId
+        dialogId: dialogId,
+        tipVisible: true // 确保提示可见
       });
+
+      // 确保tipStore的visible状态为true
+      tipStore.visible = true;
 
       // 初始化对话
       if (dialogId) {
@@ -143,14 +154,10 @@ Page({
 
   /**
    * 页面加载完成时执行
-   * 注册事件监听器
    */
   onReady() {
-    // 初始化事件中心（如果尚未初始化）
-    eventUtils.initEventCenter();
-
-    // 注册事件监听器
-    eventUtils.onEvent('peekingStatusChange', this.handlePeekingStatusChange.bind(this));
+    // 页面加载完成时的处理逻辑
+    // 不再需要注册事件监听器，使用组件事件绑定替代
   },
 
   /**
@@ -158,15 +165,15 @@ Page({
    * 清理资源
    */
   onUnload() {
-    // 清理事件监听器
-    eventUtils.offEvent('peekingStatusChange', this.handlePeekingStatusChange);
-
     // 清理MobX绑定
     if (this.soupStoreBindings) {
       this.soupStoreBindings.destroyStoreBindings();
     }
     if (this.chatStoreBindings) {
       this.chatStoreBindings.destroyStoreBindings();
+    }
+    if (this.tipStoreBindings) {
+      this.tipStoreBindings.destroyStoreBindings();
     }
   },
 
@@ -183,13 +190,14 @@ Page({
   // ===== 事件处理 =====
   /**
    * 处理偷看状态变更事件
-   * @param {Object} data 事件数据
+   * @param {Object} e 事件对象
    */
-  handlePeekingStatusChange(data) {
-    if (!data) return;
+  handlePeekingStatusChange(e) {
+    const { isPeeking } = e.detail;
+    if (isPeeking === undefined) return;
 
     // 使用MobX更新偷看状态
-    this.setPeekingStatus(data.isPeeking);
+    this.setPeekingStatus(isPeeking);
   },
 
   /**

@@ -4,7 +4,8 @@ const simpleTypeAnimation = require('../../utils/typeAnimation');
 const userService = require('../../service/userService');
 const soupService = require('../../service/soupService');
 const agentService = require('../../service/agentService');
-const eventUtils = require('../../utils/eventUtils');
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { tipStore } = require('../../stores/tipStore');
 
 Component({
   properties: {
@@ -28,6 +29,11 @@ Component({
     typeSpeed: {
       type: Number,
       value: 60
+    },
+    // 是否处于偷看模式 - 由父组件通过MobX管理
+    isPeeking: {
+      type: Boolean,
+      value: false
     }
   },
 
@@ -71,12 +77,27 @@ Component({
           this.scrollToBottom(true);
         }
       });
+
+      // 创建tipStore绑定
+      this.tipStoreBindings = createStoreBindings(this, {
+        store: tipStore,
+        fields: [],
+        actions: ['showTip', 'hideTip', 'trackUserMessage']
+      });
+
+      // 将tipStore实例保存到this中，方便直接访问
+      this.tipStore = tipStore;
     },
 
     detached() {
       // 组件销毁时清理打字机动画资源
       if (this.typeAnimator) {
         this.typeAnimator.destroy();
+      }
+
+      // 清理MobX绑定
+      if (this.tipStoreBindings) {
+        this.tipStoreBindings.destroyStoreBindings();
       }
     }
   },
@@ -104,6 +125,10 @@ Component({
 
         this.loadDialogMessages();
       }
+    },
+    'isPeeking': function(isPeeking) {
+      // 当isPeeking属性变化时，更新组件的peekMode状态
+      this.setData({ peekMode: isPeeking });
     }
   },
 
@@ -194,8 +219,8 @@ Component({
       // 设置加载状态
       this.setData({ loading: true });
 
-      // 通过tip-module显示加载提示
-      eventUtils.showTip('加载中...', ['正在加载对话记录，请稍候...']);
+      // 通过tipStore显示加载提示，并同步到chatStore
+      this.showTip('加载中...', ['正在加载对话记录，请稍候...'], 0, true);
 
       try {
         // 从服务器获取对话记录
@@ -209,8 +234,9 @@ Component({
           }, resolve);
         });
 
-        // 隐藏加载提示
-        eventUtils.hideTip();
+        // 不再隐藏加载提示，保持提示可见
+        // 只更新提示内容为默认内容
+        this.tipStore.resetTipContent();
 
         // 滚动到底部
         this.scrollToBottom();
@@ -219,13 +245,8 @@ Component({
       } catch (error) {
         console.error('加载对话记录失败:', error);
 
-        // 显示错误提示
-        eventUtils.showTip('加载失败', ['无法加载对话记录，请稍后再试']);
-
-        // 3秒后隐藏错误提示
-        setTimeout(() => {
-          eventUtils.hideTip();
-        }, 3000);
+        // 显示错误提示，并同步到chatStore
+        this.showTip('加载失败', ['无法加载对话记录，请稍后再试'], 3000, true);
 
         // 出错时返回空消息数组
         await new Promise(resolve => {
@@ -266,13 +287,8 @@ Component({
       if (this.data.isAnimating) {
         // 只有当有内容时才显示提示
         if (value && value.trim()) {
-          // 使用tip-module显示提示
-          eventUtils.showTip('请稍等', ['正在回复中，请稍候...']);
-
-          // 2秒后隐藏提示
-          setTimeout(() => {
-            eventUtils.hideTip();
-          }, 2000);
+          // 使用tipStore显示提示，并设置2秒后自动隐藏，同步到chatStore
+          this.showTip('请稍等', ['正在回复中，请稍候...'], 2000, true);
         }
         return;
       }
@@ -341,8 +357,8 @@ Component({
         this.scrollToBottom();
       });
 
-      // 触发用户发送消息事件，用于提示模块更新
-      eventUtils.emitEvent('userSentMessage', {
+      // 使用tipStore跟踪用户消息
+      this.tipStore.trackUserMessage({
         messageId: userMessage.id,
         content: userMessage.content
       });
@@ -406,13 +422,8 @@ Component({
           isSending: false // 出错时也要重置状态
         });
 
-        // 使用tip-module显示错误提示
-        eventUtils.showTip('发送失败', [error.message || '消息发送失败，请稍后再试']);
-
-        // 3秒后隐藏错误提示
-        setTimeout(() => {
-          eventUtils.hideTip();
-        }, 3000);
+        // 使用tipStore显示错误提示，并设置3秒后自动隐藏，同步到chatStore
+        this.showTip('发送失败', [error.message || '消息发送失败，请稍后再试'], 3000, true);
       }
     },
 
@@ -488,13 +499,8 @@ Component({
       if (this.data.isAnimating) {
         // 只有当有内容时才显示提示
         if (value && value.trim()) {
-          // 使用tip-module显示提示
-          eventUtils.showTip('请稍等', ['正在回复中，请稍候...']);
-
-          // 2秒后隐藏提示
-          setTimeout(() => {
-            eventUtils.hideTip();
-          }, 2000);
+          // 使用tipStore显示提示，并设置2秒后自动隐藏，同步到chatStore
+          this.showTip('请稍等', ['正在回复中，请稍候...'], 2000, true);
         }
         return;
       }
@@ -658,13 +664,8 @@ Component({
           isSending: false // 出错时也要重置状态
         });
 
-        // 使用tip-module显示错误提示
-        eventUtils.showTip('发送失败', [error.message || '消息发送失败，请稍后再试']);
-
-        // 3秒后隐藏错误提示
-        setTimeout(() => {
-          eventUtils.hideTip();
-        }, 3000);
+        // 使用tipStore显示错误提示，并设置3秒后自动隐藏，同步到chatStore
+        this.showTip('发送失败', [error.message || '消息发送失败，请稍后再试'], 3000, true);
       }
     },
 
@@ -673,8 +674,8 @@ Component({
       // 设置偷看模式
       this.setData({ peekMode: true });
 
-      // 使用eventCenter发送偷看状态变更事件
-      eventUtils.emitEvent('peekingStatusChange', {
+      // 直接触发事件通知父组件
+      this.triggerEvent('peekingStatusChange', {
         isPeeking: true
       });
     },
@@ -684,10 +685,10 @@ Component({
       if (this.data.peekMode) {
         this.setData({ peekMode: false });
 
-        // 使用eventCenter发送偷看状态变更事件
+        // 直接触发事件通知父组件
         // 确保在下一个渲染周期发送事件，避免可能的时序问题
         wx.nextTick(() => {
-          eventUtils.emitEvent('peekingStatusChange', {
+          this.triggerEvent('peekingStatusChange', {
             isPeeking: false
           });
         });
