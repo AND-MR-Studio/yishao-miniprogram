@@ -18,7 +18,7 @@
       <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}} {{disabled ? 'disabled-input' : ''}}">
         <input class="input-field text-mincho"
           value="{{inputValue}}"
-          placeholder="请输入你的问题，侦探大人..."
+          placeholder="请输入你的问题..."
           placeholder-class="input-placeholder"
           cursor-spacing="20"
           adjust-position="{{false}}"
@@ -26,7 +26,7 @@
           confirm-type="send"
           confirm-hold="{{false}}"
           bindinput="handleInput"
-          bindconfirm="handleTestAgent"
+          bindconfirm="handleSend"
           bindfocus="handleInputFocus"
           bindblur="handleInputBlur"
           focus="{{inputFocus}}"
@@ -55,7 +55,7 @@
 
       <!-- Agent API按钮 (保留这个按钮) -->
       <view class="send-btn {{(hasContent || sending) ? 'active' : 'inactive'}} {{(disabled || sending) ? 'loading-btn' : ''}}"
-            bindtap="handleTestAgent"
+            bindtap="handleSend"
             hover-class="{{hasContent && !disabled && !sending ? 'send-btn-active-hover' : ''}}">
         <image class="icon-image {{(disabled || sending) ? 'rotating' : ''}}" src="/static/images/question.png" mode="aspectFit"></image>
       </view>

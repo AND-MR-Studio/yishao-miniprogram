@@ -119,6 +119,7 @@ Component({
 
     /**
      * 为指定消息添加打字机动画效果
+     * 简化版：只对AI助手消息应用动画，自行管理动画状态
      *
      * @param {number} messageIndex - 要添加动画效果的消息索引
      * @returns {Promise<void>} 动画完成的Promise
@@ -137,6 +138,12 @@ Component({
         return;
       }
 
+      // 只对AI助手消息应用动画
+      if (message.role !== 'assistant') {
+        console.log('跳过非agent消息的打字机动画:', message.role);
+        return;
+      }
+
       // 设置动画状态
       this.setData({
         isAnimating: true,
@@ -147,32 +154,13 @@ Component({
       try {
         // 执行打字机动画
         await this.typeAnimator.start(message.content);
-
+      } catch (error) {
+        console.error('打字机动画失败:', error);
+      } finally {
         // 动画完成后重置状态
         this.setData({
           isAnimating: false,
           animatingMessageIndex: -1
-        });
-
-        // 通知父组件动画完成
-        this.triggerEvent('animationComplete', {
-          messageIndex,
-          success: true
-        });
-      } catch (error) {
-        console.error('打字机动画失败:', error);
-
-        // 错误处理 - 重置状态
-        this.setData({
-          isAnimating: false,
-          animatingMessageIndex: -1
-        });
-
-        // 通知父组件动画失败
-        this.triggerEvent('animationComplete', {
-          messageIndex,
-          success: false,
-          error
         });
       }
     },

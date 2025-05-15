@@ -16,13 +16,11 @@ class ChatStore {
   // 核心数据
   soupId = '';       // 当前汤面ID（不再存储完整soupData）
   dialogId = '';     // 当前对话ID
-  truthSoupId = '';  // 汤底ID
 
   // UI状态
   isPeeking = false;   // 是否处于偷看模式
   isSending = false;   // 是否正在发送消息
-  isReplying = false;  // 是否正在回复
-  isAnimating = false; // 是否正在执行动画
+  isAnimating = false; // 是否正在执行动画（包含回复动画）
   inputValue = '';     // 输入框的值
 
   // 对话数据
@@ -44,16 +42,10 @@ class ChatStore {
       createDialog: flow,
       fetchMessages: flow,
       sendMessage: flow,
-      sendAgentMessage: flow,
-      animateLastMessage: flow,
 
       // 标记为非观察属性
-      rootStore: false,
-      animationCallback: false
+      rootStore: false
     });
-
-    // 初始化动画回调函数
-    this.animationCallback = null;
   }
 
   // 获取用户ID的计算属性
@@ -93,51 +85,14 @@ class ChatStore {
   }
 
   // ===== Action方法 =====
-  // 更新状态
+  // 更新基本状态 - 简化版，只保留实际使用的部分
   updateState(data) {
-    // 更新状态
-    if (data.chatState !== undefined) {
-      this.chatState = data.chatState;
-    }
-
-    // 更新数据
-    if (data.soupId !== undefined) {
-      this.soupId = data.soupId;
-    }
-    if (data.dialogId !== undefined) {
-      this.dialogId = data.dialogId;
-    }
-    // 不再更新userId，由rootStore管理
-    if (data.truthSoupId !== undefined) {
-      this.truthSoupId = data.truthSoupId;
-    }
-
-    // 更新UI状态
-    if (data.isPeeking !== undefined) {
-      this.isPeeking = data.isPeeking;
-    }
-    if (data.isSending !== undefined) {
-      this.isSending = data.isSending;
-    }
-    if (data.isReplying !== undefined) {
-      this.isReplying = data.isReplying;
-    }
-    if (data.isAnimating !== undefined) {
-      this.isAnimating = data.isAnimating;
-    }
-    if (data.inputValue !== undefined) {
-      this.inputValue = data.inputValue;
-    }
-
-    // 更新对话数据
-    if (data.messages !== undefined) {
-      this.messages = data.messages;
-    }
-
-    // 更新加载状态
-    if (data.isLoading !== undefined) {
-      this.isLoading = data.isLoading;
-    }
+    // 直接更新提供的属性
+    Object.keys(data).forEach(key => {
+      if (this.hasOwnProperty(key)) {
+        this[key] = data[key];
+      }
+    });
   }
 
   // 设置偷看状态
@@ -160,29 +115,11 @@ class ChatStore {
     this.isSending = isSending;
   }
 
-  // 执行消息动画
-  *animateMessage(messageIndex) {
-    if (messageIndex < 0 || messageIndex >= this.messages.length) {
-      return false;
-    }
 
-    try {
-      this.isAnimating = true;
-      return true;
-    } catch (error) {
-      console.error('消息动画执行失败:', error);
-      return false;
-    } finally {
-      this.isAnimating = false;
-    }
-  }
 
   // 切换到汤底状态
-  showTruth(truthSoupId) {
+  showTruth() {
     this.chatState = CHAT_STATE.TRUTH;
-    if (truthSoupId) {
-      this.truthSoupId = truthSoupId;
-    }
   }
 
   // 创建对话 - 异步流程
@@ -259,26 +196,7 @@ class ChatStore {
     }
   }
 
-  // 执行消息动画 - 异步流程
-  *animateMessage(messageIndex) {
-    if (!this.animationCallback || messageIndex < 0 || messageIndex >= this.messages.length) {
-      return false;
-    }
 
-    try {
-      this.isAnimating = true;
-
-      // 调用页面设置的回调函数执行动画
-      yield this.animationCallback(messageIndex);
-
-      return true;
-    } catch (error) {
-      console.error('消息动画执行失败:', error);
-      return false;
-    } finally {
-      this.isAnimating = false;
-    }
-  }
 
   // 发送消息 - 统一的异步流程
   *sendMessage(content) {
@@ -332,10 +250,13 @@ class ChatStore {
       // 添加回复消息到消息列表
       this.messages = [...this.messages, replyMessage];
 
-      return true;
+      return {
+        success: true,
+        messageIndex: this.messages.length - 1
+      };
     } catch (error) {
       console.error('发送消息失败:', error);
-      return false;
+      return { success: false };
     } finally {
       this.isSending = false;
     }

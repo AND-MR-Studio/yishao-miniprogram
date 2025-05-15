@@ -115,7 +115,7 @@ Component({
     // 获取安全区域高度
     getSafeAreaHeight() {
       try {
-        const systemInfo = wx.getSystemInfoSync();
+        const systemInfo = wx.getDeviceInfo();
         // 如果有安全区域信息，返回底部安全区域高度
         if (systemInfo && systemInfo.safeArea) {
           const { screenHeight, safeArea } = systemInfo;

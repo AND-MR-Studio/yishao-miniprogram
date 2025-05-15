@@ -26,7 +26,7 @@ page {
 
   /* 背景色 */
   --color-background: #061429;
-  --color-background-light: #061429;
+  --color-background-light:rgb(58, 70, 87);
   --color-background-dark: #03091A;
 
   /* 文本颜色 */

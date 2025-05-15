@@ -73,7 +73,7 @@ class AgentService {
               replyContent = response[0].content || '';
             }
 
-            // 创建回复消息对象
+            // 创建回复消息对象 - 简化版，不再使用标记
             const replyMessage = {
                 id: replyId,
                 role: 'assistant',

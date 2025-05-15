@@ -27,7 +27,7 @@
     <!-- 汤底显示区域 -->
     <soup-truth
       id="soupTruth"
-      soupId="{{truthSoupId || ''}}"
+      soupId="{{soupId}}"
       wx:if="{{isTruth}}"
     ></soup-truth>
   </view>
@@ -55,7 +55,6 @@
     showTestButton="{{true}}"
     bind:input="handleInputChange"
     bind:send="handleSend"
-    bind:testAgent="handleTestAgent"
     bind:voiceStart="handleVoiceStart"
     bind:voiceEnd="handleVoiceEnd"
     bind:voiceCancel="handleVoiceCancel"

@@ -328,7 +328,7 @@
 
 /* 无内容时的按钮 */
 .send-btn.inactive, .test-btn.inactive {
-  background: rgba(6, 20, 41, 0.6);
+  background: var(--color-background-light);
   border: 1.5rpx solid rgba(87, 44, 239, 0.15);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);

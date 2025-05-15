@@ -41,7 +41,7 @@ Page({
         store: chatStore,
         fields: [
           'dialogId', 'chatState', 'soupId',
-          'isPeeking', 'isSending', 'isReplying', 'isAnimating',
+          'isPeeking', 'isSending', 'isAnimating',
           'isDrinking', 'isTruth', 'messages', 'inputValue'
         ],
         actions: [
@@ -255,12 +255,9 @@ Page({
    * @param {Object} e 事件对象
    */
   async onShowTruth(e) {
-    const { soupId } = e.detail;
-    if (!soupId) return;
-
     try {
-      // 使用chatStore显示汤底
-      this.showTruth(soupId);
+      // 使用chatStore显示汤底 - 不再需要传递soupId参数
+      this.showTruth();
     } catch (error) {
       console.error('获取汤底失败:', error);
       this.showErrorToast('无法获取汤底，请重试');
@@ -313,19 +310,17 @@ Page({
       });
 
       // 直接使用chatStore发送消息
-      const success = await chatStore.sendMessage(userMessage.content);
+      const result = await chatStore.sendMessage(userMessage.content);
 
-      if (!success) {
+      if (!result || !result.success) {
         throw new Error('发送消息失败');
       }
 
-      // 获取对话组件并执行动画
+      // 获取对话组件并执行动画 - 只对AI助手消息应用动画
       const dialog = this.selectComponent('#dialog');
       if (dialog) {
-        // 使用chatStore管理动画状态
-        chatStore.setAnimatingStatus(true);
-        await dialog.animateMessage(chatStore.latestMessageIndex);
-        chatStore.setAnimatingStatus(false);
+        // 直接调用dialog组件的animateMessage方法
+        await dialog.animateMessage(result.messageIndex);
       }
 
     } catch (error) {
