@@ -116,12 +116,74 @@ Page({
   },
 
   /**
-   * 分享小程序
+   * 分享小程序给好友
+   * 使用最新的微信小程序分享API
+   * 只分享当前显示的soup-display组件内容
+   * @returns {Object} 分享配置对象
    */
   onShareAppMessage() {
+    // 获取当前汤面数据
+    const shareSoup = soupStore.soupData;
+
+    // 构建分享标题 - 使用汤面标题或默认标题
+    const shareTitle = shareSoup?.title
+      ? `是侦探就来破案：${shareSoup.title}`
+      : "这个海龟汤太难了来帮帮我！";
+
+    // 构建分享路径 - 确保带上soupId参数
+    const sharePath = `/pages/index/index?soupId=${shareSoup?.id || ''}`;
+
+    // 构建分享图片 - 如果有自定义图片则使用，否则使用默认图片
+    // 注意：图片必须是网络图片，且必须是https协议
+    const imageUrl = shareSoup?.shareImage || 'https://yavin.and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png';
+
     return {
-      title: "这个海龟汤太难了来帮帮我！",
-      path: `/pages/index/index?soupId=${soupStore.soupData?.id || ''}`,
+      title: shareTitle,
+      path: sharePath,
+      imageUrl: imageUrl,
+      success: function(res) {
+        // 分享成功的回调
+        console.log('分享成功', res);
+
+        // 可以在这里添加分享成功的统计或其他操作
+        if (shareSoup?.id) {
+          // 记录分享事件 - 使用自定义方法记录分享
+          console.log('分享汤面:', shareSoup.id, shareSoup.title || '');
+          // 注意：wx.reportAnalytics已弃用，应使用其他统计方法
+        }
+      },
+      fail: function(res) {
+        // 分享失败的回调
+        console.log('分享失败', res);
+      }
+    };
+  },
+
+  /**
+   * 分享小程序到朋友圈
+   * 使用最新的微信小程序分享朋友圈API
+   * 只分享当前显示的soup-display组件内容
+   * @returns {Object} 分享配置对象
+   */
+  onShareTimeline() {
+    // 获取当前汤面数据
+    const shareSoup = soupStore.soupData;
+
+    // 构建分享标题 - 使用汤面标题或默认标题
+    const shareTitle = shareSoup?.title
+      ? `是侦探就来破案：${shareSoup.title}`
+      : "这个海龟汤太难了来帮帮我！";
+
+    // 构建查询参数 - 朋友圈分享使用query而不是path
+    const query = `soupId=${shareSoup?.id || ''}`;
+
+    // 构建分享图片 - 如果有自定义图片则使用，否则使用默认图片
+    const imageUrl = shareSoup?.shareImage || 'https://yavin.and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png';
+
+    return {
+      title: shareTitle,
+      query: query,
+      imageUrl: imageUrl
     };
   },
 
@@ -236,16 +298,6 @@ Page({
     });
   },
 
-  /**
-   * 处理汤面加载状态变化
-   * @param {Object} e 事件对象
-   */
-  handleSoupLoading() {
-    // 这里不需要额外处理，因为isLoading状态已经由MobX管理
-    // 但需要保留这个方法以响应组件的loading事件
-  },
-
-  // 移除对breathingBlur的控制代码，由soup-display组件自己处理
 
   // ===== 交互管理器相关 =====
   /**
@@ -281,7 +333,7 @@ Page({
    * @param {Object} e 触摸事件对象
    */
   handleTouchStart(e) {
-    this.interactionManager?.handleTouchStart(e, !this.isLoading);
+    this.interactionManager?.handleTouchStart(e, !this.data.isLoading);
   },
 
   /**
@@ -289,7 +341,7 @@ Page({
    * @param {Object} e 触摸事件对象
    */
   handleTouchMove(e) {
-    this.interactionManager?.handleTouchMove(e, !this.isLoading);
+    this.interactionManager?.handleTouchMove(e, !this.data.isLoading);
   },
 
   /**
@@ -297,6 +349,6 @@ Page({
    * @param {Object} e 触摸事件对象
    */
   handleTouchEnd(e) {
-    this.interactionManager?.handleTouchEnd(e, !this.isLoading);
+    this.interactionManager?.handleTouchEnd(e, !this.data.isLoading);
   },
 });

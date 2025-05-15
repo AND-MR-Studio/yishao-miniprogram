@@ -19,7 +19,6 @@
         blurAmount="{{blurAmount}}"
         swipeDirection="{{swipeDirection}}"
         class="soup-display-component"
-        bind:loading="handleSoupLoading"
         bind:swipe="handleSoupSwipe"
       ></soup-display>
     </view>

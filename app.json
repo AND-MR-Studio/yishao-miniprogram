@@ -34,5 +34,13 @@
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index"
   },
-  "lazyCodeLoading": "requiredComponents"
+  "lazyCodeLoading": "requiredComponents",
+  "renderer": "webview",
+  "rendererOptions": {
+    "webviewOptions": {
+      "csp": {
+        "enableSharedArrayBuffer": true
+      }
+    }
+  }
 }
