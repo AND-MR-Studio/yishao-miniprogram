@@ -1,16 +1,16 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container {{isLoading ? 'loading' : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
+  class="soup-container {{isLoading ? 'loading breathing-blur' : ''}}"
   style="filter: blur({{blurAmount}}px);"
 >
   <!-- 汤面内容区域 -->
   <block wx:if="{{!isLoading}}">
     <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
       <!-- 标题和内容分开显示 -->
-      <view class="title-container" wx:if="{{localSoupData.title}}">
-        <text class="title-text">{{localSoupData.title}}</text>
+      <view class="title-container" wx:if="{{soupData.title || properties.soupData.title}}">
+        <text class="title-text">{{properties.soupData.title || soupData.title}}</text>
       </view>
-      <text class="soup-text">{{localSoupData.soup_surface || ''}}</text>
+      <text class="soup-text">{{properties.soupData.soup_surface || soupData.soup_surface || ''}}</text>
     </view>
 
     <!-- 使用独立的交互底部组件 - 使用MobX管理状态 -->

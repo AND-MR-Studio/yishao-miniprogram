@@ -47,11 +47,7 @@ Component({
   },
 
   data: {
-    // 组件内部数据
-    localSoupData: {}, // 本地汤面数据，用于存储从属性或store获取的数据
-    isInitialized: false, // 标记组件是否已初始化
-    breathingBlur: false, // 呼吸模糊效果，由isLoading状态控制
-    isLoading: false // 加载状态
+    isLoading: false // 加载状态，同时控制呼吸模糊效果
   },
 
   lifetimes: {
@@ -59,14 +55,11 @@ Component({
     attached() {
       this._isAttached = true;
 
-      // 创建MobX Store绑定 - 确保使用正确的store对象
+      // 创建MobX Store绑定
       this.storeBindings = createStoreBindings(this, {
-        store: soupStore, // 确保这里使用的是soupStore而不是store
+        store: soupStore,
         fields: ['soupData', 'isLoading']
       });
-
-      // 标记组件已初始化
-      this.setData({ isInitialized: true });
     },
 
     // 组件卸载
@@ -88,56 +81,17 @@ Component({
         // 通知页面组件加载状态变化
         this.triggerEvent('loading', { loading: loading });
 
-        // 直接控制breathingBlur动画
-        this.setData({
-          breathingBlur: loading, // 加载中时启用呼吸模糊效果
-          isLoading: loading
-        });
-      }
-    },
-
-    // 监听传入的soupData属性变化
-    'soupData': function(soupData) {
-      if (this._isAttached && soupData) {
-        console.log('从属性接收汤面数据:', soupData.title);
-        this.setData({ localSoupData: soupData });
-      }
-    },
-
-    // 监听soupstore.soupData变化
-    'soupStore.soupData': function(soupData) {
-      if (this._isAttached && soupData && !this.properties.soupData) {
-        // 只有当没有通过属性传入soupData时，才使用store中的数据
-        console.log('从store获取汤面数据:', soupData.title);
-        this.setData({ localSoupData: soupData });
+        // 更新加载状态，呼吸模糊效果将通过WXML中的类绑定自动应用
+        this.setData({ isLoading: loading });
       }
     }
   },
 
   methods: {
-    /**
-     * 设置偷看状态
-     * 由父页面调用，用于控制偷看功能
-     * @param {boolean} isPeeking 是否处于偷看状态
-     */
-    setPeekingStatus(isPeeking) {
-      this.triggerEvent(isPeeking ? 'longPressStart' : 'longPressEnd');
-    },
-
-    /**
-     * 处理长按开始事件
-     */
-    handleLongPressStart() {
-      // 触发长按开始事件
-      this.triggerEvent('longPressStart');
-    },
-
-    /**
-     * 处理长按结束事件
-     */
-    handleLongPressEnd() {
-      // 触发长按结束事件
-      this.triggerEvent('longPressEnd');
+    // 获取当前应显示的汤面数据
+    // 优先使用属性传入的数据，其次使用store中的数据
+    getDisplaySoupData() {
+      return this.properties.soupData || this.data.soupData;
     }
   }
 });
