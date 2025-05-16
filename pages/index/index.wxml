@@ -1,5 +1,9 @@
 <!--pages/index.wxml - 海龟汤首页-->
 <view class="page {{swiping ? 'swiping' : ''}}" style="{{gradientStyle ? '--dynamic-gradient: ' + gradientStyle : ''}}">
+  <!-- 噪点效果 -->
+  <view class="noise-overlay"></view>
+  <!-- 屏幕闪烁效果 -->
+  <view class="screen-flicker"></view>
   <!-- 导航栏 -->
   <nav-bar
     bind:settingchange="handleSettingChange"
@@ -31,10 +35,13 @@
       </start-soup-button>
     </view>
 
-    <!-- 滑动提示 -->
-    <view class="swipe-hint show-hint">
-      <text class="text-caption">左右滑动切换汤面</text>
-    </view>
+    <!-- 恐怖元素 - 随机闪烁的微光点 -->
+    <view class="horror-flicker"></view>
+    <view class="horror-flicker"></view>
+    <view class="horror-flicker"></view>
+    <view class="horror-flicker"></view>
+    <view class="horror-flicker"></view>
+    <view class="horror-flicker"></view>
   </view>
 
 
