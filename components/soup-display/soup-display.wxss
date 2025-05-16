@@ -6,13 +6,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 300rpx 0 100rpx; /* 顶部和底部都添加padding，确保内容区域固定 */
+  padding: 200rpx 0 200rpx; /* 增加底部padding，为图片留出更多空间 */
   width: 100%;
   height: 100vh; /* 使用视口高度 */
   position: fixed;
   box-sizing: border-box;
   will-change: transform, filter;
   transition: opacity 0.6s var(--transition-decelerated), filter 0.3s ease;
+  overflow: visible; /* 修改为visible，确保图片完整显示 */
 }
 
 /* 汤面内容样式 - 无模糊效果 */
@@ -29,17 +30,17 @@
 
 /* 汤面内容区样式 */
 .soup-content {
-  width: 70%;
+  width: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20rpx 0;
   margin-bottom: 20rpx;
-  height: 700rpx; /* 固定高度 */
+  min-height: 700rpx; /* 最小高度而非固定高度，允许内容扩展 */
   position: relative;
   transition: all 0.6s var(--transition-decelerated);
   will-change: transform, opacity;
-  overflow-y: auto; /* 内容超出时可滚动 */
+  overflow: visible; /* 修改为visible，确保图片完整显示 */
   box-sizing: border-box;
 }
 
@@ -47,14 +48,29 @@
 .title-container {
   width: 100%;
   margin-bottom: 20rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 案件行样式 */
+.case-line {
+  width: 100%;
+  text-align: left;
+  padding-left: 50rpx;
+  margin-bottom: 10rpx;
+}
+
+/* 标题行样式 */
+.title-line {
+  width: 100%;
   text-align: center;
 }
 
-/* 标题文本样式  */
-.title-text {
+/* "案件"文本样式 */
+.case-text {
   font-family: var(--font-family-mincho);
-  font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */
-  font-weight: var(--font-weight-medium);
+  font-size: 28rpx; /* 小一号字体 */
+  font-weight: normal;
   text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
                0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
   letter-spacing: 4rpx;
@@ -63,7 +79,33 @@
   color: var(--color-text-primary);
 }
 
-/* 汤面文本样式  */
+/* 案件编号样式 */
+.case-number {
+  font-family: var(--font-family-mincho);
+  font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */
+  font-weight: bold; /* 加粗 */
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  letter-spacing: 4rpx;
+  white-space: nowrap;
+  display: inline-block;
+  color: var(--color-text-primary);
+}
+
+/* 标题文本样式  */
+.title-text {
+  font-family: var(--font-family-mincho);
+  font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */
+  font-weight: normal; /* 不加粗 */
+  text-shadow: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58),
+               0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  letter-spacing: 4rpx;
+  white-space: nowrap;
+  display: inline-block;
+  color: var(--color-text-primary);
+}
+
+/* 汤面文本样式 - 无图片时居中排版 */
 .soup-text {
   font-family: var(--font-family-mincho);
   font-size: 28rpx; /* 符合小程序设计规范 - 摘要/小按钮文字 */
@@ -77,6 +119,53 @@
   box-sizing: border-box;
   flex: 1;
   color: var(--color-text-primary);
+  overflow: hidden; /* 禁止滚动 */
+}
+
+/* 有图片时的容器样式 */
+.soup-text-with-image {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10rpx 0;
+  box-sizing: border-box;
+  overflow: visible; /* 修改为visible，确保图片不被剪裁 */
+  flex: 1;
+  position: relative; /* 添加相对定位，便于子元素定位 */
+  z-index: 1; /* 确保容器在适当的层级 */
+}
+
+/* 有图片时的文本样式 - 左对齐 */
+.soup-text-left {
+  font-family: var(--font-family-mincho);
+  font-size: 28rpx;
+  line-height: 1.8;
+  padding: 10rpx 50rpx 0; /* 移除底部内边距，为图片留出更多空间 */
+  text-align: left;
+  white-space: normal; /* 允许换行 */
+  width: 100%;
+  letter-spacing: 5rpx;
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  overflow: visible; /* 修改为visible，确保不会影响图片显示 */
+  text-indent: 2em; /* 首行缩进2个字符 */
+  max-height: 300rpx; /* 限制文本高度，确保图片有足够空间显示 */
+}
+
+/* 图片样式 */
+.soup-image {
+  width: 500rpx; /* 固定宽度 */
+  height: 500rpx; /* 固定高度，保持正方形 */
+  margin: 40rpx auto 120rpx; /* 增加上下边距，使图片更靠近开始按钮 */
+  box-sizing: border-box;
+  object-fit: cover; /* 保持图片比例，裁剪多余部分 */
+  border-radius: 20rpx; /* 添加圆角 */
+  box-shadow: 0 0 20rpx 10rpx rgba(0, 0, 0, 0.39); /* 增强阴影效果，实现边缘模糊 */
+  display: block; /* 确保居中有效 */
+  mix-blend-mode: multiply; /* 使用正片叠底混合模式 */
+  position: relative; /* 添加相对定位 */
+  z-index: 5; /* 确保图片在文字上方 */
 }
 
 /* 底部控件样式已移至interaction-footer组件 */
@@ -89,8 +178,6 @@
 .soup-container.swipe-feedback-right {
   animation: swipe-right 0.5s ease-out;
 }
-
-/* 呼吸模糊效果 */
 .soup-container.breathing-blur {
   animation: breathing-blur 2s infinite alternate ease-in-out;
 }
@@ -112,3 +199,5 @@
   50% { filter: blur(5px); }
   100% { filter: blur(0px); }
 }
+
+

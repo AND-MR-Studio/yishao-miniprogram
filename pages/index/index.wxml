@@ -28,8 +28,8 @@
       <start-soup-button
         id="startSoupButton"
         bind:tap="onStartSoup"
-        width="50%"
-        height="80rpx">
+        width="30%"
+        height="40rpx">
       </start-soup-button>
     </view>
 

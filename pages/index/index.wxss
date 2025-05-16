@@ -97,7 +97,7 @@
    position: fixed;
    gap: 27rpx;
    width: 100%;
-   bottom: calc(300rpx + env(safe-area-inset-bottom) + 60rpx); /* tabbar高度 + 安全区域 + 间距 */
+   bottom: calc(200rpx + env(safe-area-inset-bottom) + 60rpx); /* tabbar高度 + 安全区域 + 间距 */
    left: 0;
    z-index: 998;
  }

@@ -41,9 +41,9 @@
   align-items: center;
   padding: 13rpx 0rpx;
   gap: 10rpx;
-  width: 50%;
-  min-width: 300rpx;
-  height: 80rpx;
+  width: 30%;
+  min-width: 240rpx;
+  height: 60rpx;
   background: var(--color-accent, #5ce821);
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
@@ -54,12 +54,12 @@
 
 /* 按下状态的按钮样式 - 圆形 */
 .btn-light.pressed {
-  width: 120rpx !important;
-  height: 120rpx !important;
-  min-width: 120rpx !important;
-  min-height: 120rpx !important;
-  max-width: 120rpx !important;
-  max-height: 120rpx !important;
+  width: 80rpx !important;
+  height: 80rpx !important;
+  min-width: 80rpx !important;
+  min-height: 80rpx !important;
+  max-width: 80rpx !important;
+  max-height: 80rpx !important;
   padding: 0 !important;
   margin: 0 auto !important;
   border-radius: 50% !important;

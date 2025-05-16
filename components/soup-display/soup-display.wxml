@@ -8,9 +8,25 @@
     <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
       <!-- 标题和内容分开显示 -->
       <view class="title-container" wx:if="{{soupData.title}}">
-        <text class="title-text">{{soupData.title}}</text>
+        <view class="case-line">
+          <text class="case-text">案件</text><text class="case-number">{{soupData.id}}</text>
+        </view>
+        <view class="title-line">
+          <text class="title-text">《{{soupData.title}}》</text>
+        </view>
       </view>
-      <text class="soup-text">{{soupData.soup_surface || ''}}</text>
+      <!-- 有图片时的排版方式 -->
+      <block wx:if="{{soupData.image || mockImage}}">
+        <view class="soup-text-with-image">
+          <text class="soup-text-left">{{soupData.soup_surface || ''}}</text>
+          <image class="soup-image" src="{{soupData.image || mockImage}}" mode="aspectFill" lazy-load="true"></image>
+        </view>
+      </block>
+
+      <!-- 无图片时的排版方式 -->
+      <block wx:else>
+        <text class="soup-text">{{soupData.soup_surface || ''}}</text>
+      </block>
     </view>
 
     <!-- 使用独立的交互底部组件 - 使用MobX管理状态 -->

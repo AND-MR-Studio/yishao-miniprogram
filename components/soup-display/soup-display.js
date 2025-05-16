@@ -47,7 +47,8 @@ Component({
   },
 
   data: {
-    isLoading: false // 加载状态，同时控制呼吸模糊效果
+    isLoading: false, // 加载状态，同时控制呼吸模糊效果
+    mockImage: '/static/images/test_image.png' // 使用本地图片路径
   },
 
   lifetimes: {

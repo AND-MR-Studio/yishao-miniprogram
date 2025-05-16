@@ -2,8 +2,8 @@
 <!-- 底部控件容器 - 包含创作者信息和交互图标 -->
 <view class="bottom-controls-container">
   <!-- 创作者感谢文字 - 放在上面 -->
-  <view class="creator-credit" wx:if="{{soupData.creator}}">
-    <text class="creator-text">感谢创作者：{{soupData.creator}}</text>
+  <view class="creator-credit" wx:if="{{soupData.creator || true}}">
+    <text class="creator-text">感谢创作者：{{soupData.creator || '不愿透露姓名的小勺'}}</text>
   </view>
 
   <!-- 图标容器 -->

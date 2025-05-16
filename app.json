@@ -37,10 +37,5 @@
   "lazyCodeLoading": "requiredComponents",
   "renderer": "webview",
   "rendererOptions": {
-    "webviewOptions": {
-      "csp": {
-        "enableSharedArrayBuffer": true
-      }
-    }
   }
 }
