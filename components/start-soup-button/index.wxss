@@ -41,8 +41,8 @@
   align-items: center;
   padding: 13rpx 0rpx;
   gap: 10rpx;
-  width: 30%;
-  min-width: 240rpx;
+  width: 50%;
+  min-width: 300rpx;
   height: 60rpx;
   background: var(--color-accent, #5ce821);
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);

@@ -113,6 +113,8 @@ page {
   /* 发光效果 */
   --glow-primary: 0 0 15rpx rgba(87, 44, 239, 0.6);
   --glow-accent: 0 0 15rpx rgba(92, 232, 33, 0.6);
+  --text-glow-primary: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58), 0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  --text-glow-secondary: 2rpx 2rpx 0rpx rgba(43, 255, 0, 0.3), 0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.3);
 
   /* 动画相关变量 */
   --transition-duration: 0.3s;
@@ -189,6 +191,15 @@ page {
   line-height: var(--line-height-xs);
   color: var(--color-text-hint);
   letter-spacing: var(--letter-spacing-normal);
+}
+
+/* 文字发光效果样式 */
+.text-glow-primary {
+  text-shadow: var(--text-glow-primary);
+}
+
+.text-glow-secondary {
+  text-shadow: var(--text-glow-secondary);
 }
 
 /* 按钮文本样式 */

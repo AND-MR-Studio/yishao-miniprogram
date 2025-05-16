@@ -27,15 +27,13 @@
     <view class="button-container show-buttons">
       <start-soup-button
         id="startSoupButton"
-        bind:tap="onStartSoup"
-        width="30%"
-        height="40rpx">
+        bind:tap="onStartSoup">
       </start-soup-button>
     </view>
 
     <!-- 滑动提示 -->
     <view class="swipe-hint show-hint">
-      <text>左右滑动切换汤面</text>
+      <text class="text-caption">左右滑动切换汤面</text>
     </view>
   </view>
 

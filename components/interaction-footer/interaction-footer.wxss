@@ -134,10 +134,10 @@
 
 /* 创作者文本样式 */
 .creator-text {
-  font-size: 24rpx;
+  font-size: var(--font-size-sm);
   color: var(--color-text-hint);
-  font-weight: 300;
-  letter-spacing: 1rpx;
+  font-weight: var(--font-weight-light);
+  letter-spacing: var(--letter-spacing-normal);
   text-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.5);
   white-space: nowrap; /* 防止文本换行 */
   overflow: hidden;
