@@ -100,50 +100,6 @@
    100% { transform: translate(0, 0); }
  }
 
- /* 屏幕闪烁效果 */
- .screen-flicker {
-   position: fixed;
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 100%;
-   background: transparent;
-   z-index: 5;
-   pointer-events: none;
-   animation: screen-flicker 20s infinite;
- }
-
- @keyframes screen-flicker {
-   0%, 95%, 100% {
-     box-shadow: none;
-     background: transparent;
-   }
-   95.5% {
-     box-shadow: inset 0 0 100vw rgba(255, 255, 255, 0.1);
-     background: rgba(0, 0, 0, 0.1);
-   }
-   96% {
-     box-shadow: none;
-     background: transparent;
-   }
-   96.5% {
-     box-shadow: inset 0 0 100vw rgba(255, 255, 255, 0.3);
-     background: rgba(0, 0, 0, 0.05);
-   }
-   97% {
-     box-shadow: none;
-     background: transparent;
-   }
-   97.5% {
-     box-shadow: inset 0 0 100vw rgba(255, 255, 255, 0.2);
-     background: rgba(180, 0, 0, 0.05);
-   }
-   98% {
-     box-shadow: none;
-     background: transparent;
-   }
- }
-
  /* 容器样式 - 确保覆盖整个页面并正确处理触摸事件 */
  .container {
    width: 100%;

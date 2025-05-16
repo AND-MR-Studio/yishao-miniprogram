@@ -2,8 +2,6 @@
 <view class="page {{swiping ? 'swiping' : ''}}" style="{{gradientStyle ? '--dynamic-gradient: ' + gradientStyle : ''}}">
   <!-- 噪点效果 -->
   <view class="noise-overlay"></view>
-  <!-- 屏幕闪烁效果 -->
-  <view class="screen-flicker"></view>
   <!-- 导航栏 -->
   <nav-bar
     bind:settingchange="handleSettingChange"
