@@ -1,7 +1,7 @@
 /* components/soup-display/soup-display.wxss */
 @import "../../styles/animation.wxss";
 
-/* 汤面容器 */
+/* 汤面容器 - 暗黑恐怖风格 */
 .soup-container {
   display: flex;
   flex-direction: column;
@@ -12,8 +12,9 @@
   position: fixed;
   box-sizing: border-box;
   will-change: transform, filter;
-  transition: opacity 0.6s var(--transition-decelerated), filter 0.3s ease;
+  transition: opacity 0.8s cubic-bezier(0.19, 1, 0.22, 1), filter 0.5s ease; /* 更平滑的过渡 */
   overflow: visible; /* 修改为visible，确保图片完整显示 */
+  background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.3) 70%); /* 添加暗角效果 */
 }
 
 /* 汤面内容样式 - 无模糊效果 */

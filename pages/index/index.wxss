@@ -3,25 +3,25 @@
  */
  @import "../../styles/animation.wxss";
 
- /* 页面基础样式 */
+ /* 页面基础样式 - 暗黑恐怖风格 */
  .page {
    width: 100%;
    min-height: 100vh;
-   background-color:rgb(0, 0, 0); /* 更深的蓝黑色背景 */
+   background-color: #000000; /* 纯黑背景 */
    position: fixed;
    overflow: hidden; /* 防止渐变光晕溢出 */
-   background-image: linear-gradient(to bottom, #030a1c 0%, #020814 100%); /* 增加垂直渐变 */
+   background-image: linear-gradient(to bottom, #050510 0%, #000000 100%); /* 更暗的垂直渐变 */
  }
 
- /* 弥散光渐变背景 - 统一的绿紫品牌色调 */
+ /* 弥散光渐变背景 - 暗黑恐怖氛围 */
  .page {
-   --default-gradient: radial-gradient(ellipse at 20% 30%, rgba(87, 44, 239, 0.5) 0%, rgba(25, 0, 112, 0.3) 30%, transparent 70%),
-                      radial-gradient(ellipse at 80% 85%, rgba(0, 30, 255, 0.3) 0%, rgba(0, 10, 80, 0.2) 40%, transparent 70%),
-                      radial-gradient(ellipse at 50% 50%, rgba(87, 44, 239, 0.2) 0%, rgba(50, 0, 120, 0.1) 30%, transparent 60%),
-                      /* 适度增强绿色品牌色 */
-                      radial-gradient(ellipse at 65% 20%, rgba(92, 232, 33, 0.5) 0%, rgba(0, 180, 90, 0.3) 30%, transparent 60%),
-                      radial-gradient(ellipse at 40% 60%, rgba(92, 232, 33, 0.3) 0%, rgba(0, 150, 75, 0.2) 40%, transparent 70%),
-                      radial-gradient(circle at 30% 75%, rgba(92, 232, 33, 0.2) 0%, rgba(0, 100, 50, 0.1) 40%, transparent 70%);
+   --default-gradient: radial-gradient(ellipse at 20% 30%, rgba(87, 44, 239, 0.3) 0%, rgba(25, 0, 112, 0.2) 20%, transparent 60%),
+                      radial-gradient(ellipse at 80% 85%, rgba(0, 30, 255, 0.2) 0%, rgba(0, 10, 80, 0.1) 30%, transparent 60%),
+                      radial-gradient(ellipse at 50% 50%, rgba(87, 44, 239, 0.1) 0%, rgba(50, 0, 120, 0.05) 20%, transparent 50%),
+                      /* 恐怖氛围的红色和绿色光晕 */
+                      radial-gradient(ellipse at 65% 20%, rgba(92, 232, 33, 0.3) 0%, rgba(0, 180, 90, 0.2) 20%, transparent 50%),
+                      radial-gradient(ellipse at 40% 60%, rgba(180, 0, 0, 0.2) 0%, rgba(100, 0, 0, 0.1) 30%, transparent 60%),
+                      radial-gradient(circle at 30% 75%, rgba(0, 100, 50, 0.15) 0%, rgba(0, 50, 25, 0.1) 30%, transparent 60%);
    --dynamic-gradient: var(--default-gradient);
  }
 
@@ -33,14 +33,15 @@
    width: 100%;
    height: 100%;
    background: var(--dynamic-gradient);
-   filter: blur(90px); /* 增大模糊半径，使光晕更加柔和且混合 */
+   filter: blur(120px); /* 更大的模糊半径，营造恐怖氛围 */
    z-index: 1;
-   opacity: 0.95; /* 适度调整不透明度，保持高级感 */
-   transition: background 0.25s ease-out;
-   mix-blend-mode: lighten; /* 使用lighten混合模式，保持高级感 */
+   opacity: 0.85; /* 降低不透明度，增加暗黑感 */
+   transition: background 0.3s ease-out;
+   mix-blend-mode: screen; /* 使用screen混合模式，增强光晕效果 */
+   animation: subtle-pulse 8s infinite alternate ease-in-out; /* 添加微妙的脉动效果 */
  }
 
- /* 磨砂质感叠加层 */
+ /* 磨砂质感叠加层 - 恐怖风格 */
  .page::after {
    content: "";
    position: absolute;
@@ -48,10 +49,27 @@
    left: 0;
    width: 100%;
    height: 100%;
-   background-image: url('data:imae/png;base64,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');
-   opacity: 0.05;
+   background-image: url('data:image/png;base64,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');
+   opacity: 0.08; /* 增加噪点效果 */
    z-index: 2;
    pointer-events: none;
+   filter: contrast(120%) brightness(80%); /* 增加对比度，降低亮度 */
+ }
+
+ /* 添加微妙的脉动动画 */
+ @keyframes subtle-pulse {
+   0% {
+     opacity: 0.8;
+     filter: blur(120px) saturate(90%);
+   }
+   50% {
+     opacity: 0.85;
+     filter: blur(130px) saturate(100%);
+   }
+   100% {
+     opacity: 0.8;
+     filter: blur(120px) saturate(90%);
+   }
  }
 
  /* 容器样式 - 确保覆盖整个页面并正确处理触摸事件 */
