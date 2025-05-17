@@ -135,7 +135,7 @@ Page({
 
     // 构建分享图片 - 如果有自定义图片则使用，否则使用默认图片
     // 注意：图片必须是网络图片，且必须是https协议
-    const imageUrl = shareSoup?.shareImage || 'https://yavin.and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png';
+    const imageUrl = shareSoup?.shareImage || 'https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png';
 
     return {
       title: shareTitle,
@@ -178,7 +178,7 @@ Page({
     const query = `soupId=${shareSoup?.id || ''}`;
 
     // 构建分享图片 - 如果有自定义图片则使用，否则使用默认图片
-    const imageUrl = shareSoup?.shareImage || 'https://yavin.and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png';
+    const imageUrl = shareSoup?.shareImage || 'https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png';
 
     return {
       title: shareTitle,

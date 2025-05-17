@@ -51,7 +51,7 @@
     confirmText="去登录→"
     cancelText="再想想"
     showClose="{{false}}"
-    imageUrl="https://yavin.and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png"
+    imageUrl="https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png"
     bind:confirm="onLoginConfirm"
     bind:cancel="onLoginCancel"
   ></popup>

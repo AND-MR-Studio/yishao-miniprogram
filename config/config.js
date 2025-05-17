@@ -5,8 +5,8 @@ const config = {
   //开发版
   develop: {
     //请求的地址
-    baseUrl: "https://yavin.and-tech.cn",
-    ysUrl: "https://yavin.and-tech.cn/yishao-api/",
+    baseUrl: "https://and-tech.cn",
+    ysUrl: "https://and-tech.cn/yishao-api/",
     memory: "http://alex.and-tech.cn/memory",
   },
   //体验版
