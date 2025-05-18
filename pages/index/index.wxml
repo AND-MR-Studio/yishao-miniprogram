@@ -42,6 +42,12 @@
     <view class="horror-flicker"></view>
   </view>
 
+  <!-- 新用户引导层组件 -->
+  <guide-overlay
+    wx:if="{{isFirstVisit}}"
+    show="{{showGuide}}"
+    bind:close="closeGuide">
+  </guide-overlay>
 
   <!-- 登录提示弹窗 -->
   <popup

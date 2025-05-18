@@ -53,7 +53,7 @@
   flex-direction: column;
 }
 
-/* 案件行样式 */
+/* 汤面行样式 */
 .case-line {
   width: 100%;
   text-align: left;
@@ -67,7 +67,7 @@
   text-align: center;
 }
 
-/* "案件"文本样式 */
+/* "汤面"文本样式 */
 .case-text {
   font-family: var(--font-family-mincho);
   font-size: 28rpx; /* 小一号字体 */
@@ -78,7 +78,7 @@
   color: var(--color-text-primary);
 }
 
-/* 案件编号样式 */
+/* 汤面编号样式 */
 .case-number {
   font-family: var(--font-family-mincho);
   font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */

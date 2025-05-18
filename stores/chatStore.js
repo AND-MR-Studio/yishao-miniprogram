@@ -1,5 +1,6 @@
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 const dialogService = require('../service/dialogService');
+const soupService = require('../service/soupService');
 
 // 聊天状态常量
 const CHAT_STATE = {
@@ -16,6 +17,7 @@ class ChatStore {
   // 核心数据
   soupId = '';       // 当前汤面ID（不再存储完整soupData）
   dialogId = '';     // 当前对话ID
+  soupData = null;   // 当前汤面数据（从soupService获取）
 
   // UI状态
   isPeeking = false;   // 是否处于偷看模式
@@ -42,6 +44,7 @@ class ChatStore {
       createDialog: flow,
       fetchMessages: flow,
       sendMessage: flow,
+      fetchSoupForChat: flow,
 
       // 标记为非观察属性
       rootStore: false
@@ -53,10 +56,7 @@ class ChatStore {
     return this.rootStore.userId;
   }
 
-  // 获取当前汤面数据的计算属性
-  get soupData() {
-    return this.rootStore.soupStore.soupData;
-  }
+  // 不再需要soupData的计算属性，因为我们现在直接在chatStore中存储soupData
 
   // ===== 计算属性 =====
   // 判断当前是否为喝汤状态
@@ -122,10 +122,47 @@ class ChatStore {
     this.chatState = CHAT_STATE.TRUTH;
   }
 
+  /**
+   * 获取汤面数据 - 异步流程
+   * 专门为chat页面设计的汤面数据获取方法
+   * @param {string} soupId 汤面ID
+   * @returns {Promise<Object>} 汤面数据
+   */
+  *fetchSoupForChat(soupId) {
+    if (!soupId) {
+      console.error("获取汤面数据失败: 缺少汤面ID");
+      return null;
+    }
+
+    try {
+      // 设置加载状态
+      this.isLoading = true;
+
+      // 获取汤面数据
+      const soupData = yield soupService.getSoup(soupId);
+
+      if (!soupData) {
+        console.error("获取汤面数据失败: 服务返回空数据");
+        return null;
+      }
+
+      // 更新chatStore中的汤面数据
+      this.soupData = soupData;
+      this.soupId = soupData.id;
+
+      return soupData;
+    } catch (error) {
+      console.error("获取汤面数据失败:", error);
+      return null;
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
   // 创建对话 - 异步流程
   *createDialog() {
-    // 使用当前soupId或从soupStore获取
-    const soupId = this.soupId || (this.rootStore.soupStore.soupData ? this.rootStore.soupStore.soupData.id : '');
+    // 使用当前soupId
+    const soupId = this.soupId;
 
     if (!this.userId || !soupId) {
       console.error('无法创建对话: 缺少用户ID或汤面ID');
@@ -232,7 +269,7 @@ class ChatStore {
       // 调用Agent API
       const response = yield agentService.sendAgent({
         messages: historyMessages,
-        soup: this.soupData,
+        soup: this.soupData, // 直接使用chatStore中的soupData
         userId: this.userId,
         dialogId: this.dialogId,
         saveToCloud: true

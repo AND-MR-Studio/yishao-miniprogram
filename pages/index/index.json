@@ -4,7 +4,7 @@
     "soup-display": "/components/soup-display/soup-display",
     "custom-button": "/components/button/index",
     "start-soup-button": "/components/start-soup-button/index",
-    "popup": "/components/popup/index"
-    
+    "popup": "/components/popup/index",
+    "guide-overlay": "/components/guide-overlay/guide-overlay"
   }
 }

@@ -27,6 +27,10 @@ class SoupStore {
   // 加载状态
   isLoading = false; // 是否正在加载汤面数据
 
+  // 新用户引导相关状态
+  isFirstVisit = false; // 是否首次访问
+  showGuide = false; // 是否显示引导层
+
   // 防止重复请求的标志
   _fetchingId = null; // 当前正在获取数据的soupId
 
@@ -46,11 +50,16 @@ class SoupStore {
       toggleFavorite: flow,
       getRandomSoup: false, // 普通异步方法，不需要flow
       viewSoup: false, // 普通异步方法，不需要flow
+      checkFirstVisit: false, // 普通方法，不需要flow
+      closeGuide: false, // 普通方法，不需要flow
 
       // 标记为非观察属性
       _fetchingId: false,
       rootStore: false,
     });
+
+    // 初始化时检查用户是否首次访问
+    this.checkFirstVisit();
   }
 
   // 获取用户ID的计算属性
@@ -363,8 +372,6 @@ class SoupStore {
     );
   }
 
-  // 移除syncUserId方法，由rootStore负责同步用户ID
-
   /**
    * 获取随机汤面数据
    * 直接调用soupService的getRandomSoup方法
@@ -435,6 +442,48 @@ class SoupStore {
       console.error("增加阅读数失败:", error);
       return null;
     }
+  }
+
+  /**
+   * 检查用户是否首次访问
+   * 使用wx.getStorageSync检查本地存储中是否有首次访问标记
+   */
+  checkFirstVisit() {
+    try {
+      // 从本地存储中获取首次访问标记
+      const hasVisited = wx.getStorageSync('hasVisitedSoupPage');
+
+      // 如果没有访问记录，则设置为首次访问
+      if (!hasVisited) {
+        this.isFirstVisit = true;
+        this.showGuide = true;
+        console.log('首次访问，显示引导层');
+      } else {
+        console.log('非首次访问，不显示引导层');
+      }
+    } catch (error) {
+      console.error('检查首次访问状态失败:', error);
+      // 出错时默认不显示引导
+      this.isFirstVisit = false;
+      this.showGuide = false;
+    }
+  }
+
+  /**
+   * 关闭引导层
+   * 设置本地存储，标记用户已访问过
+   */
+  closeGuide() {
+    // 设置本地存储，标记用户已访问过
+    try {
+      wx.setStorageSync('hasVisitedSoupPage', true);
+      console.log('已保存访问记录');
+    } catch (error) {
+      console.error('保存访问记录失败:', error);
+    }
+
+    // 隐藏引导层
+    this.showGuide = false;
   }
 }
 

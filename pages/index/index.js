@@ -35,10 +35,11 @@ Page({
       actions: ["syncUserId"]
     });
 
-    // 创建soupStore绑定 - 只绑定需要的字段
+    // 创建soupStore绑定 - 包含引导层相关字段和方法
     this.soupStoreBindings = createStoreBindings(this, {
       store: soupStore,
-      fields: ["isLoading", "soupData"],
+      fields: ["isLoading", "soupData", "isFirstVisit", "showGuide"],
+      actions: ["closeGuide"]
     });
 
     // 同步用户ID - 确保获取最新的用户状态
@@ -222,10 +223,9 @@ Page({
   /**
    * 切换汤面
    * 极简版本，只负责UI效果和调用store方法
-   * @param {string} direction 切换方向，'next' 或 'previous'
    * @returns {Promise<void>}
    */
-  async switchSoup(direction) {
+  async switchSoup() {
     // 如果正在加载，不执行切换
     if (this.data.isLoading) return;
 
@@ -258,6 +258,16 @@ Page({
    */
   handleSoupSwipe(e) {
     const { direction } = e.detail;
+
+    // 记录用户滑动行为，用于引导层
+    if (this.data.isFirstVisit) {
+      if (direction === SWIPE_DIRECTION.LEFT) {
+        this.setData({ hasSwipedLeft: true });
+      } else if (direction === SWIPE_DIRECTION.RIGHT) {
+        this.setData({ hasSwipedRight: true });
+      }
+    }
+
     // 等待一帧，确保滑动反馈动画先应用
     wx.nextTick(() => {
       this.switchSoup(direction);
@@ -269,6 +279,11 @@ Page({
    * 检查登录状态，未登录时显示登录弹窗
    */
   async handleDoubleTap() {
+    // 记录用户双击行为，用于引导层
+    if (this.data.isFirstVisit) {
+      this.setData({ hasDoubleTapped: true });
+    }
+
     if (soupStore.soupData?.id) {
       // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
       if (!this.data.isLoggedIn) {
@@ -299,6 +314,8 @@ Page({
   },
 
 
+
+
   // ===== 交互管理器相关 =====
   /**
    * 初始化交互管理器
@@ -309,18 +326,6 @@ Page({
     this.interactionManager = createInteractionManager({
       // 设置数据更新方法 - 直接传递页面的setData方法
       setData: this.setData.bind(this),
-
-      // 滑动相关配置
-      threshold: 50, // 滑动触发阈值
-      maxBlur: 10, // 最大模糊程度
-      maxDistance: 100, // 最大滑动距离
-      enableBlurEffect: true, // 启用模糊特效
-      enableBackgroundEffect: true, // 启用背景效果
-
-      // 双击相关配置
-      doubleTapDelay: 300, // 双击间隔时间
-      doubleTapDistance: 30, // 双击允许的位置偏差
-
       // 回调函数 - 简化为直接调用页面方法
       onSwipeLeft: () => this.switchSoup("next"),
       onSwipeRight: () => this.switchSoup("previous"),

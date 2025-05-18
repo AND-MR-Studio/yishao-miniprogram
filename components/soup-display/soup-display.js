@@ -48,7 +48,7 @@ Component({
 
   data: {
     isLoading: false, // 加载状态，同时控制呼吸模糊效果
-    mockImage: 'https://img.picui.cn/free/2025/05/16/6826b40836987.png' // 使用在线图片路径
+    mockImage: 'https://and-tech.cn/uploads/images/78e17666-0671-487e-80bc-a80c0b8d0e07.png' // 使用在线图片路径
   },
 
   lifetimes: {

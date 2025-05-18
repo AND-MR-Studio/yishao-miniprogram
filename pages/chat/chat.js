@@ -4,7 +4,7 @@
  */
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { rootStore, soupStore, chatStore, tipStore, CHAT_STATE } = require('../../stores/index');
+const { rootStore, chatStore, tipStore, CHAT_STATE } = require('../../stores/index');
 const userService = require('../../service/userService');
 
 Page({
@@ -29,25 +29,18 @@ Page({
         actions: ['syncUserId']
       });
 
-      // 创建soupStore绑定 - 用于获取汤面数据
-      this.soupStoreBindings = createStoreBindings(this, {
-        store: soupStore,
-        fields: ['isLoading', 'soupData'],
-        actions: ['fetchSoupById']
-      });
-
       // 创建chatStore绑定 - 管理聊天相关的所有状态
       this.chatStoreBindings = createStoreBindings(this, {
         store: chatStore,
         fields: [
-          'dialogId', 'chatState', 'soupId',
-          'isPeeking', 'isSending', 'isAnimating',
+          'dialogId', 'chatState', 'soupId', 'soupData',
+          'isPeeking', 'isSending', 'isAnimating', 'isLoading',
           'isDrinking', 'isTruth', 'messages', 'inputValue'
         ],
         actions: [
           'updateState', 'setPeekingStatus', 'setInputValue',
           'setAnimatingStatus', 'setSendingStatus', 'showTruth',
-          'createDialog', 'fetchMessages', 'sendMessage'
+          'createDialog', 'fetchMessages', 'sendMessage', 'fetchSoupForChat'
         ]
       });
 
@@ -69,8 +62,8 @@ Page({
       // 同步用户ID
       await this.syncUserId();
 
-      // 获取汤面数据并初始化 - 直接使用soupStore的方法，不需要手动更新页面数据
-      const soupData = await this.fetchSoupById(soupId);
+      // 获取汤面数据并初始化 - 使用chatStore的方法
+      const soupData = await this.fetchSoupForChat(soupId);
 
       if (!soupData) {
         throw new Error('获取汤面数据失败');
@@ -78,7 +71,6 @@ Page({
 
       // 设置chatStore的基本数据
       chatStore.updateState({
-        soupId: soupData.id,
         chatState: CHAT_STATE.DRINKING,
         dialogId: dialogId
       });
@@ -137,9 +129,6 @@ Page({
     if (this.rootStoreBindings) {
       this.rootStoreBindings.destroyStoreBindings();
     }
-    if (this.soupStoreBindings) {
-      this.soupStoreBindings.destroyStoreBindings();
-    }
     if (this.chatStoreBindings) {
       this.chatStoreBindings.destroyStoreBindings();
     }
@@ -152,8 +141,8 @@ Page({
    * 分享小程序
    */
   onShareAppMessage() {
-    // 直接从store获取当前汤面ID和对话ID
-    const soupId = soupStore.soupData ? soupStore.soupData.id : '';
+    // 直接从chatStore获取当前汤面ID和对话ID
+    const soupId = chatStore.soupData ? chatStore.soupData.id : '';
     const dialogId = chatStore.dialogId || '';
     return {
       title: '这个海龟汤太难了来帮帮我！',
@@ -290,7 +279,7 @@ Page({
     try {
       // 更新用户回答过的汤记录
       try {
-        const soupId = soupStore.soupData ? soupStore.soupData.id : '';
+        const soupId = chatStore.soupData ? chatStore.soupData.id : '';
         if (soupId) {
           await userService.updateAnsweredSoup(soupId);
         }

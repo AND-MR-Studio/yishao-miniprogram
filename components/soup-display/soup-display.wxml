@@ -9,7 +9,7 @@
       <!-- 标题和内容分开显示 -->
       <view class="title-container" wx:if="{{soupData.title}}">
         <view class="case-line">
-          <text class="case-text text-glow-primary">案件</text><text class="case-number text-glow-primary">{{soupData.id}}</text>
+          <text class="case-text text-glow-primary">汤面</text><text class="case-number text-glow-primary">{{soupData.id}}</text>
         </view>
         <view class="title-line">
           <text class="title-text text-glow-secondary">《{{soupData.title}}》</text>
