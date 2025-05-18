@@ -125,6 +125,7 @@ class ChatStore {
   /**
    * 获取汤面数据 - 异步流程
    * 专门为chat页面设计的汤面数据获取方法
+   * 使用soupStore的fetchSoup方法获取数据
    * @param {string} soupId 汤面ID
    * @returns {Promise<Object>} 汤面数据
    */
@@ -138,8 +139,9 @@ class ChatStore {
       // 设置加载状态
       this.isLoading = true;
 
-      // 获取汤面数据
-      const soupData = yield soupService.getSoup(soupId);
+      // 使用soupStore的fetchSoup方法获取汤面数据
+      // 设置incrementViews为false，避免重复增加阅读数
+      const soupData = yield this.rootStore.soupStore.fetchSoup(soupId, false);
 
       if (!soupData) {
         console.error("获取汤面数据失败: 服务返回空数据");

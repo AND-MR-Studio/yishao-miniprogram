@@ -40,25 +40,20 @@ Page({
     this.soupStoreBindings = createStoreBindings(this, {
       store: soupStore,
       fields: ["soupLoading", "buttonLoading", "soupData", "isFirstVisit", "showGuide"],
-      actions: ["closeGuide", "setButtonLoading", "resetButtonLoading"]
+      actions: ["closeGuide", "setButtonLoading", "resetButtonLoading", "fetchSoup"]
     });
 
     // 同步用户ID - 确保获取最新的用户状态
     await this.syncUserId();
 
     try {
-      // 统一数据获取路径：无论是否有soupId，都通过store方法获取数据
+      // 统一数据获取路径：无论是否有soupId，都通过统一的fetchSoup方法获取数据
       if (options.soupId) {
         // 如果有指定的soupId，直接通过store获取
-        await soupStore.fetchSoupDataAndStore(options.soupId);
+        await soupStore.fetchSoup(options.soupId);
       } else {
-        // 获取随机汤面并初始化
-        const randomSoup = await soupStore.getRandomSoup();
-        if (randomSoup && randomSoup.id) {
-          await soupStore.initSoupWithData(randomSoup);
-        } else {
-          throw new Error("获取随机汤面失败");
-        }
+        // 获取随机汤面
+        await soupStore.getRandomSoup();
       }
 
       // 检查数据有效性
@@ -68,7 +63,7 @@ Page({
         return;
       }
 
-      // 注意：不再需要调用viewSoup，已在initSoupWithData中处理
+      // 注意：不再需要调用viewSoup，已在fetchSoup中处理
     } catch (error) {
       console.error("加载汤面过程中发生错误:", error);
       this.showErrorToast("加载失败，请检查网络或稍后重试");
@@ -241,15 +236,11 @@ Page({
     if (this.data.soupLoading) return;
 
     try {
-      // 使用MobX store中的方法获取随机汤面
-      const randomSoup = await soupStore.getRandomSoup();
+      // 使用MobX store中的getRandomSoup方法获取随机汤面
+      // 该方法内部会调用fetchSoup加载完整数据
+      const soupData = await soupStore.getRandomSoup();
 
-      if (randomSoup && randomSoup.id) {
-        // 初始化新的汤面数据 - 所有数据管理由store处理
-        // 这会自动设置isLoading状态，MobX会触发观察者更新breathingBlur
-        // 注意：initSoupWithData内部已调用viewSoup，不再需要单独调用
-        await soupStore.initSoupWithData(randomSoup);
-      } else {
+      if (!soupData) {
         this.showErrorToast("切换失败，请重试");
       }
     } catch (error) {
