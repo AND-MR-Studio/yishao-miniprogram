@@ -431,9 +431,7 @@ class SoupStore {
 
     try {
       const result = await soupService.viewSoup(soupId);
-
-      // 如果当前显示的就是这个汤面，更新阅读数
-      if (result && this.soupData && this.soupData.id === soupId) {
+      if (result) {
         this.viewCount = result.views || 0;
       }
 
