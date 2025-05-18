@@ -83,7 +83,8 @@ const api = {
 
 // 默认资源
 const defaults = {
-  avatar: '/static/images/default-avatar.jpg'
+  avatar: '/static/images/default-avatar.jpg',
+  shareImage: 'https://and-tech.cn/uploads/images/78e17666-0671-487e-80bc-a80c0b8d0e07.png'
 };
 
 module.exports = {
@@ -128,6 +129,7 @@ module.exports = {
   user_liked_soup_url: api.user.likedSoup,
   user_solved_soup_url: api.user.solvedSoup,
   default_avatar_url: defaults.avatar,
+  default_share_image: defaults.shareImage,
 
   // 系统相关接口URL
   asset_list_url: api.asset.list,

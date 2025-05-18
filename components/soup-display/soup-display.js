@@ -13,7 +13,7 @@ Component({
     // 汤面数据对象
     soupData: {
       type: Object,
-      value: null
+      value: {} // 使用空对象作为默认值，而不是null
     },
 
     // 是否处于偷看模式
@@ -59,7 +59,7 @@ Component({
       // 创建MobX Store绑定
       this.storeBindings = createStoreBindings(this, {
         store: soupStore,
-        fields: ['soupData', 'isLoading']
+        fields: ['soupData', 'soupLoading']
       });
 
       // 加载汇文明朝体字体
@@ -80,13 +80,13 @@ Component({
   // 属性变化观察者
   observers: {
     // 监听loading状态变化
-    'loading': function(loading) {
+    'loading, soupLoading': function(loading, soupLoading) {
       if (this._isAttached) {
         // 通知页面组件加载状态变化
-        this.triggerEvent('loading', { loading: loading });
+        this.triggerEvent('loading', { loading: loading || soupLoading });
 
         // 更新加载状态，呼吸模糊效果将通过WXML中的类绑定自动应用
-        this.setData({ isLoading: loading });
+        this.setData({ isLoading: loading || soupLoading });
       }
     }
   },

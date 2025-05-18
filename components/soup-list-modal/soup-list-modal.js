@@ -104,7 +104,7 @@ Component({
 
       this.soupStoreBindings = createStoreBindings(this, {
         store: soupStore,
-        fields: ['isLoading'],
+        fields: ['soupLoading'],
         actions: ['fetchSoupById', 'fetchSoupDataAndStore']
       });
     },

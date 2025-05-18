@@ -1,15 +1,13 @@
 <!--components/start-soup-button/index.wxml-->
 <view class="start-soup-button-container">
   <view class="btn-container" bindtap="handleTap">
-    <view class="btn-light {{buttonLoading || isLoading ? 'pressed' : ''}}">
-      <block wx:if="{{!buttonLoading && !isLoading}}">
+    <view class="btn-light {{buttonLoading || soupLoading ? 'pressed' : ''}}">
+      <block wx:if="{{!buttonLoading && !soupLoading}}">
         <text class="btn-text-light">{{text}}</text>
       </block>
       <block wx:else>
-        <view class="loading-dots">
-          <text class="dot">.</text>
-          <text class="dot">.</text>
-          <text class="dot">.</text>
+        <view class="loading-animation">
+          <view class="loading-spinner"></view>
         </view>
       </block>
     </view>

@@ -28,7 +28,7 @@ Component({
    * 组件的初始数据
    */
   data: {
-    buttonLoading: false // 按钮自身的加载状态，独立于MobX的isLoading
+    // 移除本地的buttonLoading状态，使用store中的状态
   },
 
   /**
@@ -38,24 +38,15 @@ Component({
     // 按钮点击事件
     handleTap() {
       // 如果正在加载，不处理点击
-      if (this.isLoading || this.data.buttonLoading) {
+      if (this.soupLoading || this.buttonLoading) {
         return;
       }
 
-      // 立即设置按钮为加载状态
-      this.setData({
-        buttonLoading: true
-      });
+      // 立即设置按钮为加载状态 - 使用store方法
+      this.setButtonLoading();
 
       // 触发tap事件，由父组件处理业务逻辑
       this.triggerEvent('tap');
-
-      // 设置一个超时，如果5秒后仍在加载，则自动重置
-      this._loadingTimeout = setTimeout(() => {
-        this.setData({
-          buttonLoading: false
-        });
-      }, 5000);
     }
   },
 
@@ -67,17 +58,12 @@ Component({
       // 创建MobX Store绑定
       this.storeBindings = createStoreBindings(this, {
         store: soupStore,
-        fields: ['isLoading'],
+        fields: ['soupLoading', 'buttonLoading'],
+        actions: ['setButtonLoading', 'resetButtonLoading'],
       });
     },
 
     detached() {
-      // 清理超时计时器
-      if (this._loadingTimeout) {
-        clearTimeout(this._loadingTimeout);
-        this._loadingTimeout = null;
-      }
-
       // 清理MobX绑定
       if (this.storeBindings) {
         this.storeBindings.destroyStoreBindings();

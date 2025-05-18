@@ -25,7 +25,8 @@ class SoupStore {
   viewCount = 0; // 阅读数量
 
   // 加载状态
-  isLoading = false; // 是否正在加载汤面数据
+  soupLoading = false; // 是否正在加载汤面数据
+  buttonLoading = false; // 开始喝汤按钮的加载状态
 
   // 新用户引导相关状态
   isFirstVisit = false; // 是否首次访问
@@ -49,9 +50,10 @@ class SoupStore {
       toggleLike: flow,
       toggleFavorite: flow,
       getRandomSoup: false, // 普通异步方法，不需要flow
-      viewSoup: false, // 普通异步方法，不需要flow
       checkFirstVisit: false, // 普通方法，不需要flow
       closeGuide: false, // 普通方法，不需要flow
+      setButtonLoading: false, // 普通方法，不需要flow
+      resetButtonLoading: false, // 普通方法，不需要flow
 
       // 标记为非观察属性
       _fetchingId: false,
@@ -88,9 +90,17 @@ class SoupStore {
     this.soupData = soupData;
 
     // 设置加载状态
-    this.isLoading = true;
+    this.soupLoading = true;
 
     try {
+      // 直接调用service的viewSoup方法增加阅读数
+      const viewResult = await soupService.viewSoup(soupData.id);
+      if (viewResult) {
+        this.viewCount = viewResult.views || 0;
+      } else {
+        this.viewCount = soupData.views || 0;
+      }
+
       // 只有在用户已登录的情况下获取交互状态
       if (this.userId) {
         // 并行获取用户交互状态
@@ -111,11 +121,10 @@ class SoupStore {
       // 更新计数
       this.likeCount = soupData.likes || 0;
       this.favoriteCount = soupData.favorites || 0;
-      this.viewCount = soupData.views || 0;
     } catch (error) {
       console.error("获取交互状态失败:", error);
     } finally {
-      this.isLoading = false;
+      this.soupLoading = false;
     }
   }
 
@@ -137,7 +146,7 @@ class SoupStore {
 
     try {
       // 设置加载状态
-      this.isLoading = true;
+      this.soupLoading = true;
 
       // 并行获取汤面数据和用户交互状态
       const [soupData, isLiked, isFavorite] = yield Promise.all([
@@ -182,7 +191,7 @@ class SoupStore {
       console.error("获取汤面数据失败:", error);
     } finally {
       // 重置加载状态和请求标志
-      this.isLoading = false;
+      this.soupLoading = false;
       this._fetchingId = null;
     }
   }
@@ -206,7 +215,7 @@ class SoupStore {
 
     try {
       // 设置加载状态
-      this.isLoading = true;
+      this.soupLoading = true;
 
       // 并行获取汤面数据和用户交互状态
       const [isLiked, isFavorite] = yield Promise.all([
@@ -249,7 +258,7 @@ class SoupStore {
       console.error("获取汤面数据失败:", error);
     } finally {
       // 重置加载状态和请求标志
-      this.isLoading = false;
+      this.soupLoading = false;
       this._fetchingId = null;
     }
   }
@@ -400,7 +409,7 @@ class SoupStore {
 
     try {
       // 设置加载状态
-      this.isLoading = true;
+      this.soupLoading = true;
 
       // 获取汤面数据
       const soupData = await soupService.getSoup(soupId);
@@ -416,31 +425,11 @@ class SoupStore {
       console.error("获取汤面数据失败:", error);
       return null;
     } finally {
-      this.isLoading = false;
+      this.soupLoading = false;
     }
   }
 
-  /**
-   * 增加汤面阅读数
-   * 直接调用soupService的viewSoup方法
-   * @param {string} soupId 汤面ID
-   * @returns {Promise<Object>} 结果，包含更新后的阅读数
-   */
-  async viewSoup(soupId) {
-    if (!soupId) return null;
 
-    try {
-      const result = await soupService.viewSoup(soupId);
-      if (result) {
-        this.viewCount = result.views || 0;
-      }
-
-      return result;
-    } catch (error) {
-      console.error("增加阅读数失败:", error);
-      return null;
-    }
-  }
 
   /**
    * 检查用户是否首次访问
@@ -482,6 +471,37 @@ class SoupStore {
 
     // 隐藏引导层
     this.showGuide = false;
+  }
+
+  /**
+   * 设置按钮加载状态
+   * 将按钮状态设置为加载中
+   */
+  setButtonLoading() {
+    this.buttonLoading = true;
+
+    // 设置一个超时，如果5秒后仍在加载，则自动重置
+    if (this._buttonLoadingTimeout) {
+      clearTimeout(this._buttonLoadingTimeout);
+    }
+
+    this._buttonLoadingTimeout = setTimeout(() => {
+      this.resetButtonLoading();
+    }, 5000);
+  }
+
+  /**
+   * 重置按钮加载状态
+   * 将按钮状态设置为非加载中
+   */
+  resetButtonLoading() {
+    this.buttonLoading = false;
+
+    // 清理超时计时器
+    if (this._buttonLoadingTimeout) {
+      clearTimeout(this._buttonLoadingTimeout);
+      this._buttonLoadingTimeout = null;
+    }
   }
 }
 

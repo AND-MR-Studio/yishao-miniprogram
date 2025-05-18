@@ -138,23 +138,75 @@ Page({
   },
 
   /**
-   * 分享小程序
+   * 分享小程序给好友
+   * 使用最新的微信小程序分享API
+   * 只分享当前显示的soup-display组件内容
+   * @returns {Object} 分享配置对象
    */
   onShareAppMessage() {
-    // 直接从chatStore获取当前汤面ID和对话ID
-    const soupId = chatStore.soupData ? chatStore.soupData.id : '';
+    // 获取当前汤面数据
+    const shareSoup = chatStore.soupData;
+
+    // 构建分享标题 - 使用汤面标题或默认标题
+    const shareTitle = shareSoup?.title
+      ? `这个海龟汤太难了：${shareSoup.title}`
+      : "这个海龟汤太难了来帮帮我！";
+
+    // 构建分享路径 - 确保带上soupId和dialogId参数
+    const soupId = shareSoup?.id || '';
     const dialogId = chatStore.dialogId || '';
+    const sharePath = `/pages/chat/chat?soupId=${soupId}&dialogId=${dialogId}`;
+
+    // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
+    // 注意：图片必须是网络图片，且必须是https协议
+    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.mockImage || require('../../config/api').default_share_image;
+
     return {
-      title: '这个海龟汤太难了来帮帮我！',
-      path: `/pages/chat/chat?soupId=${soupId}&dialogId=${dialogId}`
+      title: shareTitle,
+      path: sharePath,
+      imageUrl: imageUrl,
+      success: function(res) {
+        // 分享成功的回调
+        console.log('分享成功', res);
+      },
+      fail: function(res) {
+        // 分享失败的回调
+        console.log('分享失败', res);
+      }
+    };
+  },
+
+  /**
+   * 分享小程序到朋友圈
+   * 使用最新的微信小程序分享朋友圈API
+   * 只分享当前显示的soup-display组件内容
+   * @returns {Object} 分享配置对象
+   */
+  onShareTimeline() {
+    // 获取当前汤面数据
+    const shareSoup = chatStore.soupData;
+
+    // 构建分享标题 - 使用汤面标题或默认标题
+    const shareTitle = shareSoup?.title
+      ? `这个海龟汤太难了：${shareSoup.title}`
+      : "这个海龟汤太难了来帮帮我！";
+
+    // 构建查询参数 - 朋友圈分享使用query而不是path
+    const soupId = shareSoup?.id || '';
+    const dialogId = chatStore.dialogId || '';
+    const query = `soupId=${soupId}&dialogId=${dialogId}`;
+
+    // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
+    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.mockImage || require('../../config/api').default_share_image;
+
+    return {
+      title: shareTitle,
+      query: query,
+      imageUrl: imageUrl
     };
   },
 
   // ===== 事件处理 =====
-  // 偷看状态现在由页面直接管理，不再需要处理组件事件
-
-  // 消息更新现在由chatStore直接管理，不再需要处理组件事件
-
   /**
    * 处理长按开始事件
    * 用于偷看功能 - 页面级别管理

@@ -10,6 +10,7 @@ const {
 } = require("../../utils/interactionManager");
 const { createStoreBindings } = require("mobx-miniprogram-bindings");
 const { rootStore, soupStore } = require("../../stores/index");
+const api = require("../../config/api");
 
 Page({
   // ===== 页面数据 =====
@@ -38,8 +39,8 @@ Page({
     // 创建soupStore绑定 - 包含引导层相关字段和方法
     this.soupStoreBindings = createStoreBindings(this, {
       store: soupStore,
-      fields: ["isLoading", "soupData", "isFirstVisit", "showGuide"],
-      actions: ["closeGuide"]
+      fields: ["soupLoading", "buttonLoading", "soupData", "isFirstVisit", "showGuide"],
+      actions: ["closeGuide", "setButtonLoading", "resetButtonLoading"]
     });
 
     // 同步用户ID - 确保获取最新的用户状态
@@ -67,10 +68,7 @@ Page({
         return;
       }
 
-      // 增加汤面阅读数
-      if (soupStore.soupData?.id) {
-        soupStore.viewSoup(soupStore.soupData.id);
-      }
+      // 注意：不再需要调用viewSoup，已在initSoupWithData中处理
     } catch (error) {
       console.error("加载汤面过程中发生错误:", error);
       this.showErrorToast("加载失败，请检查网络或稍后重试");
@@ -128,15 +126,15 @@ Page({
 
     // 构建分享标题 - 使用汤面标题或默认标题
     const shareTitle = shareSoup?.title
-      ? `是侦探就来破案：${shareSoup.title}`
+      ? `这个海龟汤太难了：${shareSoup.title}`
       : "这个海龟汤太难了来帮帮我！";
 
     // 构建分享路径 - 确保带上soupId参数
     const sharePath = `/pages/index/index?soupId=${shareSoup?.id || ''}`;
 
-    // 构建分享图片 - 如果有自定义图片则使用，否则使用默认图片
+    // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
     // 注意：图片必须是网络图片，且必须是https协议
-    const imageUrl = shareSoup?.shareImage || 'https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png';
+    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.mockImage || api.default_share_image;
 
     return {
       title: shareTitle,
@@ -172,14 +170,14 @@ Page({
 
     // 构建分享标题 - 使用汤面标题或默认标题
     const shareTitle = shareSoup?.title
-      ? `是侦探就来破案：${shareSoup.title}`
+      ? `这个海龟汤太难了：${shareSoup.title}`
       : "这个海龟汤太难了来帮帮我！";
 
     // 构建查询参数 - 朋友圈分享使用query而不是path
     const query = `soupId=${shareSoup?.id || ''}`;
 
-    // 构建分享图片 - 如果有自定义图片则使用，否则使用默认图片
-    const imageUrl = shareSoup?.shareImage || 'https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png';
+    // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
+    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.mockImage || api.default_share_image;
 
     return {
       title: shareTitle,
@@ -200,12 +198,25 @@ Page({
       if (loginPopup) {
         loginPopup.show();
       }
+      // 重置按钮加载状态
+      this.resetButtonLoading();
       return;
     }
 
     // 直接跳转到chat页面
     wx.navigateTo({
       url: `/pages/chat/chat?soupId=${soupStore.soupData?.id || ''}`,
+      success: () => {
+        // 跳转成功后重置按钮状态
+        setTimeout(() => {
+          this.resetButtonLoading();
+        }, 500);
+      },
+      fail: () => {
+        // 跳转失败立即重置按钮状态
+        this.resetButtonLoading();
+        this.showErrorToast("跳转失败，请重试");
+      }
     });
   },
 
@@ -227,7 +238,7 @@ Page({
    */
   async switchSoup() {
     // 如果正在加载，不执行切换
-    if (this.data.isLoading) return;
+    if (this.data.soupLoading) return;
 
     try {
       // 使用MobX store中的方法获取随机汤面
@@ -236,12 +247,8 @@ Page({
       if (randomSoup && randomSoup.id) {
         // 初始化新的汤面数据 - 所有数据管理由store处理
         // 这会自动设置isLoading状态，MobX会触发观察者更新breathingBlur
+        // 注意：initSoupWithData内部已调用viewSoup，不再需要单独调用
         await soupStore.initSoupWithData(randomSoup);
-
-        // 增加汤面阅读数
-        if (soupStore.soupData?.id) {
-          soupStore.viewSoup(soupStore.soupData.id);
-        }
       } else {
         this.showErrorToast("切换失败，请重试");
       }
@@ -338,7 +345,7 @@ Page({
    * @param {Object} e 触摸事件对象
    */
   handleTouchStart(e) {
-    this.interactionManager?.handleTouchStart(e, !this.data.isLoading);
+    this.interactionManager?.handleTouchStart(e, !this.data.soupLoading);
   },
 
   /**
@@ -346,7 +353,7 @@ Page({
    * @param {Object} e 触摸事件对象
    */
   handleTouchMove(e) {
-    this.interactionManager?.handleTouchMove(e, !this.data.isLoading);
+    this.interactionManager?.handleTouchMove(e, !this.data.soupLoading);
   },
 
   /**
@@ -354,6 +361,6 @@ Page({
    * @param {Object} e 触摸事件对象
    */
   handleTouchEnd(e) {
-    this.interactionManager?.handleTouchEnd(e, !this.data.isLoading);
+    this.interactionManager?.handleTouchEnd(e, !this.data.soupLoading);
   },
 });

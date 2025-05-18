@@ -31,10 +31,6 @@
     </view>
 
     <!-- 弹窗图片 -->
-    <image
-      class="popup-image"
-      src="{{imageUrl}}"
-      wx:if="{{imageUrl}}"
-      mode="aspectFit"></image>
+    <view class="icon-login-popup" wx:if="{{showLoginIcon}}"></view>
   </view>
 </view>

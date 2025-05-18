@@ -131,6 +131,32 @@
   transform: rotate(45deg);
 }
 
+/* 提示模块头像GIF图标 */
+.icon-avatar-gif {
+  width: 100%;
+  height: 100%;
+  background-image: url("https://and-tech.cn/uploads/icons/ffd33e4c-a0a9-413d-8fb4-fdceb0e1759e.gif");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+}
+
+/* 登录提示弹窗图标 */
+.icon-login-popup {
+  width: 240rpx;
+  height: 240rpx;
+  background-image: url("https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+  position: absolute;
+  right: -20rpx;
+  bottom: 0;
+  z-index: 10;
+}
+
 /* 交互图标样式 */
 
 /* 图标文本样式 */
