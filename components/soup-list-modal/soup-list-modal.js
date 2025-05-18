@@ -1,6 +1,7 @@
 // components/soup-list-modal/soup-list-modal.js
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { rootStore, soupStore } = require('../../stores/index');
+const soupService = require('../../service/soupService');
 
 // 定义列表类型配置
 const TYPE_CONFIG = {
@@ -105,7 +106,7 @@ Component({
       this.soupStoreBindings = createStoreBindings(this, {
         store: soupStore,
         fields: ['soupLoading'],
-        actions: ['fetchSoupById', 'fetchSoupDataAndStore']
+        actions: ['fetchSoupDataAndStore']
       });
     },
 
@@ -163,8 +164,9 @@ Component({
           return;
         }
 
-        // 使用soupStore获取海龟汤详细信息
-        let soupList = await soupStore.fetchSoupById(soupIds);
+        // 直接使用soupService获取海龟汤详细信息
+        // 注意：这是临时解决方案，等待后续重构
+        let soupList = await soupService.getSoup(soupIds);
 
         // 确保 soupList 是数组
         if (!Array.isArray(soupList)) {

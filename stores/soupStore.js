@@ -49,6 +49,7 @@ class SoupStore {
       initSoupAndStore: flow,
       toggleLike: flow,
       toggleFavorite: flow,
+
       getRandomSoup: false, // 普通异步方法，不需要flow
       checkFirstVisit: false, // 普通方法，不需要flow
       closeGuide: false, // 普通方法，不需要flow
@@ -394,42 +395,6 @@ class SoupStore {
       return null;
     }
   }
-
-  /**
-   * 通过ID获取汤面数据
-   * 统一的汤面数据获取入口
-   * @param {string|string[]} soupId 汤面ID或ID数组
-   * @returns {Promise<Object|Array>} 汤面数据或数组
-   */
-  async fetchSoupById(soupId) {
-    if (!soupId) {
-      console.error("获取汤面数据失败: 缺少汤面ID");
-      return null;
-    }
-
-    try {
-      // 设置加载状态
-      this.soupLoading = true;
-
-      // 获取汤面数据
-      const soupData = await soupService.getSoup(soupId);
-
-      // 如果是单个ID请求，并且获取到了数据，更新当前显示的汤面
-      if (!Array.isArray(soupId) && soupData && !Array.isArray(soupData)) {
-        // 初始化汤面数据 - 不再传递userId参数
-        await this.initSoupWithData(soupData);
-      }
-
-      return soupData;
-    } catch (error) {
-      console.error("获取汤面数据失败:", error);
-      return null;
-    } finally {
-      this.soupLoading = false;
-    }
-  }
-
-
 
   /**
    * 检查用户是否首次访问
