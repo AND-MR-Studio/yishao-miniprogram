@@ -16,7 +16,7 @@
 
       <!-- 输入框 -->
       <view class="input-box {{isRecording ? (isCancelled ? 'recording-cancel' : 'recording') : ''}} {{disabled ? 'disabled-input' : ''}}">
-        <input class="input-field text-mincho"
+        <input class="input-field"
           value="{{inputValue}}"
           placeholder="请输入你的问题..."
           placeholder-class="input-placeholder"

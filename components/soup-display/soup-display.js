@@ -61,6 +61,9 @@ Component({
         store: soupStore,
         fields: ['soupData', 'isLoading']
       });
+
+      // 加载汇文明朝体字体
+      this.loadMinchoFont();
     },
 
     // 组件卸载
@@ -93,6 +96,23 @@ Component({
     // 优先使用属性传入的数据，其次使用store中的数据
     getDisplaySoupData() {
       return this.properties.soupData || this.data.soupData;
+    },
+
+    // 加载汇文明朝体字体
+    loadMinchoFont() {
+      wx.loadFontFace({
+        family: 'Huiwen-mincho',
+        source: 'url("https://juhe-001.oss-cn-hangzhou.aliyuncs.com/hwmct.ttf")',
+        success: (res) => {
+          console.log('字体加载成功', res);
+        },
+        fail: (err) => {
+          console.error('字体加载失败', err);
+        },
+        complete: () => {
+          console.log('字体加载完成');
+        }
+      });
     }
   }
 });

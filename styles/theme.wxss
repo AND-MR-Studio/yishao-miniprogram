@@ -3,14 +3,7 @@
  * 主题变量的集中管理
  */
 
-/* 定义汇文明朝体字体 */
-@font-face {
-  font-family: 'Huiwen-mincho';
-  src: url('https://chinese-font.netlify.app/font-cdn/packages/hwmct/dist/汇文明朝体/result.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+/* 注意：汇文明朝体字体通过 wx.loadFontFace API 在 soup-display 组件中动态加载 */
 
 /* 颜色系统 */
 page {
