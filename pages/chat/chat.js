@@ -22,11 +22,11 @@ Page({
    */
   async onLoad(options) {
     try {
-      // 创建rootStore绑定 - 用于获取用户ID
+      // 创建rootStore绑定 - 用于获取用户ID和引导层状态
       this.rootStoreBindings = createStoreBindings(this, {
         store: rootStore,
-        fields: ['userId'],
-        actions: ['syncUserId']
+        fields: ['userId', 'isFirstVisit', 'showGuide'],
+        actions: ['syncUserId', 'showGuideManually', 'closeGuide']
       });
 
       // 创建chatStore绑定 - 管理聊天相关的所有状态
@@ -401,6 +401,16 @@ Page({
     const { messageIndex, success } = e.detail;
     console.log('动画完成:', messageIndex, success);
     // 动画完成后的处理逻辑
+  },
+
+  /**
+   * 处理设置面板变化事件
+   * @param {Object} e 事件对象
+   */
+  handleSettingChange(e) {
+    const { type, value } = e.detail;
+    console.log('设置变化:', type, value);
+    // 处理设置变化
   }
 
 });

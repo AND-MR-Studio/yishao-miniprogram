@@ -106,8 +106,8 @@ async function getUserId() {
 }
 
 /**
- * 获取剩余回答次数
- * @returns {Promise<number>} 剩余回答次数
+ * 获取剩余提问次数
+ * @returns {Promise<number>} 剩余提问次数
  */
 async function getRemainingAnswers() {
   try {

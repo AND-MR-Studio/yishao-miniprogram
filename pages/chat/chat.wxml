@@ -66,4 +66,10 @@
     bind:close="onTipModuleClose"
     bind:visibleChange="onTipVisibleChange"
   ></tip-module>
+
+  <!-- 新用户引导层组件 -->
+  <guide-overlay
+    show="{{showGuide}}"
+    bind:close="closeGuide">
+  </guide-overlay>
 </view>

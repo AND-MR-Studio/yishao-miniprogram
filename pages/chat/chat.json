@@ -4,7 +4,7 @@
     "dialog-component": "/components/dialog/index",
     "soup-display": "/components/soup-display/soup-display",
     "tip-module": "/components/tip-module/index",
-    "input-bar": "/components/input-bar/index"
-    
+    "input-bar": "/components/input-bar/index",
+    "guide-overlay": "/components/guide-overlay/guide-overlay"
   }
 }

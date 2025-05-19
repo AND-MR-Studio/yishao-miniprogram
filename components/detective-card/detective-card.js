@@ -36,7 +36,7 @@ Component({
     isLoggedIn: false,
     // 等级称号
     levelTitle: '未知侦探',
-    // 剩余回答次数
+    // 剩余提问次数
     remainingAnswers: 0,
     // 四栏数据
     unsolvedCount: 0,
