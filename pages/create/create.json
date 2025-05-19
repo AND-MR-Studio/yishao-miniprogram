@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "nav-bar": "/components/nav-bar/index",
+    "custom-button": "/components/button/index"
+  },
+  "navigationStyle": "custom",
+  "disableScroll": false
+}

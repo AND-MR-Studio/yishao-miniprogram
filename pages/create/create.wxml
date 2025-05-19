@@ -1,0 +1,106 @@
+<!--pages/create/create.wxml - 海龟汤创建页面-->
+<view class="page">
+  <!-- 噪点效果 -->
+  <view class="noise-overlay"></view>
+
+  <!-- 导航栏 -->
+  <nav-bar title="创建海龟汤" showBack="{{true}}" bind:back="handleBack" />
+
+  <view class="container">
+    <view class="form-container">
+      <!-- 标题输入 -->
+      <view class="form-item">
+        <view class="form-label">标题</view>
+        <input
+          class="form-input {{validation.titleError ? 'input-error' : ''}}"
+          placeholder="请输入标题（15字以内）"
+          maxlength="15"
+          value="{{formData.title}}"
+          bindinput="handleTitleInput"
+        />
+        <view class="error-text" wx:if="{{validation.titleError}}">{{validation.titleError}}</view>
+        <view class="char-count">
+          {{titleLength}}/15
+        </view>
+      </view>
+
+      <!-- 汤面内容输入 -->
+      <view class="form-item">
+        <view class="form-label">汤面内容</view>
+        <textarea
+          class="form-textarea {{validation.contentError ? 'input-error' : ''}}"
+          placeholder="请输入汤面内容（谜题描述，100字以内）"
+          maxlength="100"
+          value="{{formData.content}}"
+          bindinput="handleContentInput"
+          auto-height
+        />
+        <view class="error-text" wx:if="{{validation.contentError}}">{{validation.contentError}}</view>
+        <view class="char-count">
+          {{contentLength}}/100
+        </view>
+      </view>
+
+      <!-- 汤底内容输入 -->
+      <view class="form-item">
+        <view class="form-label">汤底内容</view>
+        <textarea
+          class="form-textarea {{validation.truthError ? 'input-error' : ''}}"
+          placeholder="请输入汤底内容（谜题答案，500字以内）"
+          maxlength="500"
+          value="{{formData.truth}}"
+          bindinput="handleTruthInput"
+          auto-height
+        />
+        <view class="error-text" wx:if="{{validation.truthError}}">{{validation.truthError}}</view>
+        <view class="char-count">
+          {{truthLength}}/500
+        </view>
+      </view>
+
+      <!-- 图片上传 -->
+      <view class="form-item">
+        <view class="form-label">配图（可选）</view>
+        <view class="image-upload-container">
+          <view class="image-preview" wx:if="{{formData.image}}" bindtap="handlePreviewImage">
+            <image class="preview-image" src="{{formData.image}}" mode="aspectFill"></image>
+            <view class="image-delete" catchtap="handleDeleteImage">×</view>
+          </view>
+          <view class="upload-button" bindtap="handleChooseImage" wx:else>
+            <view class="upload-icon">+</view>
+            <view class="upload-text">添加图片</view>
+          </view>
+        </view>
+        <!-- 上传进度条 -->
+        <view class="upload-progress-container" wx:if="{{isUploading}}">
+          <view class="upload-progress-bar">
+            <view class="upload-progress-inner" style="width: {{uploadProgress}}%;"></view>
+          </view>
+          <view class="upload-progress-text">上传中 {{uploadProgress}}%</view>
+        </view>
+      </view>
+
+      <!-- 占位，确保内容区域有足够的底部间距 -->
+      <view style="height: 150rpx;"></view>
+    </view>
+  </view>
+  <!-- 底部固定按钮 -->
+  <view class="fixed-bottom-buttons">
+    <custom-button
+      type="secondary"
+      text="保存草稿"
+      width="45%"
+      height="88rpx"
+      bind:tap="handleSaveDraft"
+    />
+    <custom-button
+      type="primary"
+      text="{{isSubmitting ? '提交中...' : '创建海龟汤'}}"
+      width="45%"
+      height="88rpx"
+      loading="{{isSubmitting}}"
+      disabled="{{isSubmitting || isUploading}}"
+      bind:tap="handleSubmit"
+    />
+  </view>
+</view>

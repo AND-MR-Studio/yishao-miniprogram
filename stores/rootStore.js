@@ -10,6 +10,7 @@ const userService = require('../service/userService');
 const { ChatStoreClass } = require('./chatStore');
 const { SoupStoreClass } = require('./soupStore');
 const { TipStoreClass } = require('./tipStore');
+const { UploadStoreClass } = require('./uploadStore');
 
 /**
  * RootStore类
@@ -34,6 +35,7 @@ class RootStore {
   chatStore = null;
   soupStore = null;
   tipStore = null;
+  uploadStore = null;
 
   // ===== 加载状态 =====
   isLoadingUserId = false;
@@ -44,6 +46,7 @@ class RootStore {
     this.chatStore = new ChatStoreClass(this);
     this.soupStore = new SoupStoreClass(this);
     this.tipStore = new TipStoreClass(this);
+    this.uploadStore = new UploadStoreClass(this);
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
@@ -60,6 +63,7 @@ class RootStore {
       chatStore: false,
       soupStore: false,
       tipStore: false,
+      uploadStore: false,
       lastCheckedToken: false
     });
 

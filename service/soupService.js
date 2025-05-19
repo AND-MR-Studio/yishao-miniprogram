@@ -90,6 +90,7 @@ const soupService = {
    * @param {string} soupData.title 标题
    * @param {string} soupData.content 汤面内容
    * @param {string} soupData.truth 汤底
+   * @param {string} [soupData.image] 图片URL
    * @param {number} [soupData.soupType] 海龟汤类型，0表示预制汤，1表示DIY汤
    * @param {string[]} [soupData.tags] 海龟汤标签数组（可包含多个标签）
    * @returns {Promise<Object>} 创建的海龟汤数据
@@ -100,12 +101,13 @@ const soupService = {
     }
 
     try {
-      const response = await soupRequest({
-        url: api.soup.base,
-        method: "POST",
+      // 使用新的创建接口
+      const response = await post("create_soup", {
+        url: api.soup.create,
         data: soupData,
       });
-      return response.success ? response.data : null;
+
+      return response || null;
     } catch (error) {
       console.error("创建海龟汤失败:", error);
       return null;
@@ -321,6 +323,29 @@ const soupService = {
       return response ? response.views : null;
     } catch (error) {
       return null;
+    }
+  },
+
+  /**
+   * 获取用户创建的海龟汤列表
+   * @param {string} userId 用户ID
+   * @returns {Promise<Array>} 用户创建的海龟汤列表
+   */
+  async getUserCreatedSoups(userId) {
+    if (!userId) {
+      return [];
+    }
+
+    try {
+      const response = await get("user_created_soup", {
+        url: api.user.createdSoup,
+        data: { userId }
+      });
+
+      return response && Array.isArray(response) ? response : [];
+    } catch (error) {
+      console.error("获取用户创建的汤失败:", error);
+      return [];
     }
   },
 };

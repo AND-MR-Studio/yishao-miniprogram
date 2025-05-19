@@ -1,2 +1,134 @@
-<!--pages/upload/upload.wxml-->
-<text>pages/upload/upload.wxml</text>
+<!--pages/upload/upload.wxml - 海龟汤创建页面-->
+<view class="page">
+  <!-- 噪点效果 -->
+  <view class="noise-overlay"></view>
+
+  <!-- 导航栏 -->
+  <nav-bar title="煮汤" showBack="{{false}}" />
+
+  <!-- 小勺GIF背景 -->
+  <view class="xiaoshao-background">
+    <image class="xiaoshao-gif" src="https://and-tech.cn/uploads/icons/ffd33e4c-a0a9-413d-8fb4-fdceb0e1759e.gif" mode="aspectFit"></image>
+  </view>
+
+  <!-- 欢迎文案区域 - 在卡片外部 -->
+  <view class="welcome-header">
+    <text class="hello-text">Hello ~</text>
+    <text class="welcome-title">欢迎来到一勺推理社！</text>
+  </view>
+
+  <view class="container">
+    <!-- 卡片布局区域 -->
+    <view class="cards-grid">
+      <!-- 新建创作卡片 - 占据顶部整行 -->
+      <view class="card create-card">
+        <view class="card-content">
+          <view class="create-card-inner">
+            <view class="create-card-info">
+              <!-- 标题输入框 -->
+              <view class="title-input-container">
+                <input
+                  class="title-input"
+                  placeholder="请输入海龟汤标题..."
+                  placeholder-style="color: rgba(255, 255, 255, 0.6);"
+                  maxlength="15"
+                  bindinput="handleTitleInput"
+                  value="{{createTitle}}"
+                />
+                <view class="title-input-counter">{{createTitleLength || 0}}/15</view>
+              </view>
+
+              <!-- 创作按钮 -->
+              <view class="create-card-button" bindtap="handleShowForm">
+                <text>开始创作→</text>
+              </view>
+
+              <!-- 小提示文本 -->
+              <view class="create-card-tip">创作海龟汤可获得额外喝汤机会</view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <!-- 草稿箱卡片 - 左侧 -->
+      <view class="card drafts-card">
+        <view class="card-header">
+          <text class="card-title">草稿箱</text>
+          <text class="card-badge" wx:if="{{drafts.length}}">{{drafts.length}}</text>
+        </view>
+        <view class="card-content">
+          <block wx:if="{{drafts.length > 0}}">
+            <swipe-cell
+              wx:for="{{drafts}}"
+              wx:key="id"
+              leftText="删除"
+              rightText="继续"
+              bind:left="handleDeleteDraft"
+              bind:right="handleEditDraft"
+              data-id="{{item.id}}"
+            >
+              <view class="draft-item">
+                <view class="draft-info">
+                  <text class="draft-title">{{item.title}}</text>
+                </view>
+              </view>
+            </swipe-cell>
+          </block>
+          <view class="empty-list" wx:else>
+            <text>暂无草稿</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 我发布的汤卡片 - 右侧 -->
+      <view class="card published-card">
+        <view class="card-header">
+          <text class="card-title">我发布的汤</text>
+          <text class="card-badge" wx:if="{{publishedSoups.length}}">{{publishedSoups.length}}</text>
+        </view>
+        <view class="card-content">
+          <block wx:if="{{publishedSoups.length > 0}}">
+            <view
+              class="published-item {{item.status === 'rejected' ? 'published-item-rejected' : ''}}"
+              wx:for="{{publishedSoups}}"
+              wx:key="id"
+              bindtap="handleViewPublishedSoup"
+              data-id="{{item.id}}"
+            >
+              <view class="published-info">
+                <view class="published-status">
+                  <text class="status-tag status-{{item.status}}">
+                    {{item.status === 'reviewing' ? '[审核中]' :
+                      item.status === 'published' ? '[已上架]' :
+                      '[被驳回]'}}
+                  </text>
+                  <text class="published-title">{{item.title}}</text>
+                </view>
+                <view class="published-meta">
+                  <text class="published-rating" wx:if="{{item.status === 'published'}}">⭐{{item.rating}}</text>
+                  <text class="published-action" wx:if="{{item.status === 'rejected'}}">→ 修改重提</text>
+                </view>
+              </view>
+            </view>
+          </block>
+          <view class="empty-list" wx:else>
+            <text>暂无发布的汤</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空态提示 -->
+    <view class="empty-state" wx:if="{{showEmptyState}}">
+      <image class="empty-illustration" src="/static/images/empty-pot.png" mode="aspectFit"></image>
+      <text class="empty-text">快来写第一碗！</text>
+      <custom-button
+        type="primary"
+        text="立即新建"
+        width="240rpx"
+        height="80rpx"
+        bind:tap="handleShowForm"
+      />
+    </view>
+  </view>
+</view>

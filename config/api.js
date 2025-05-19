@@ -63,6 +63,7 @@ const api = {
     unlike: (soupId) => `${memoryUrl}/api/soups/${soupId}/unlike`,
     favorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/favor`,
     unfavorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/unfavor`,
+    create: memoryUrl + '/api/soups/create',
     map: memoryUrl + paths.soup + 'map'
   },
 

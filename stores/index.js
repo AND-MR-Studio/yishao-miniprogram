@@ -17,6 +17,7 @@ module.exports = {
   soupStore: rootStore.soupStore,
   chatStore: rootStore.chatStore,
   tipStore: rootStore.tipStore,
+  uploadStore: rootStore.uploadStore,
 
   // 导出常量
   CHAT_STATE
