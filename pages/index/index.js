@@ -229,6 +229,7 @@ Page({
   /**
    * 切换汤面
    * 极简版本，只负责UI效果和调用store方法
+   * 确保在切换过程中保持之前的内容并显示模糊效果
    * @returns {Promise<void>}
    */
   async switchSoup() {
@@ -236,6 +237,13 @@ Page({
     if (this.data.soupLoading) return;
 
     try {
+      // 先应用模糊效果，确保在加载新数据前保持之前的内容
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      if (soupDisplay) {
+        // 手动设置模糊效果，确保在加载过程中显示
+        soupDisplay.setData({ blurAmount: 3 });
+      }
+
       // 使用MobX store中的getRandomSoup方法获取随机汤面
       // 该方法内部会调用fetchSoup加载完整数据
       const soupData = await soupStore.getRandomSoup();
@@ -246,6 +254,12 @@ Page({
     } catch (error) {
       console.error("切换汤面失败:", error);
       this.showErrorToast("切换失败，请重试");
+    } finally {
+      // 确保在加载完成后清除手动设置的模糊效果
+      const soupDisplay = this.selectComponent('#soupDisplay');
+      if (soupDisplay && !this.data.soupLoading) {
+        soupDisplay.setData({ blurAmount: 0 });
+      }
     }
   },
 
