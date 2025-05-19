@@ -126,7 +126,15 @@
   opacity: 0.9;
 }
 
-/* 图片样式已移至icon.wxss中的.icon-login-popup */
+/* 添加图片样式 */
+.popup-image {
+  position: absolute;
+  right: -20rpx;
+  bottom: 0;
+  width: 240rpx;
+  height: 240rpx;
+  z-index: 10;
+}
 
 /* 调整按钮容器，让按钮靠左显示 */
 .popup-footer {

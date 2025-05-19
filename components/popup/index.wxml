@@ -31,6 +31,10 @@
     </view>
 
     <!-- 弹窗图片 -->
-    <view class="icon-login-popup" wx:if="{{showLoginIcon}}"></view>
+    <image
+      class="popup-image"
+      src="https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png"
+      wx:if="{{showLoginIcon}}"
+      mode="aspectFit"></image>
   </view>
 </view>

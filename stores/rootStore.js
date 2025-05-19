@@ -98,7 +98,7 @@ class RootStore {
 
           // 如果soupStore有数据，重新获取汤面数据（包括点赞、收藏状态）
           if (this.soupStore.soupData && this.soupStore.soupData.id) {
-            yield this.soupStore.fetchSoupDataAndStore(this.soupStore.soupData.id);
+            yield this.soupStore.fetchSoup(this.soupStore.soupData.id);
           }
         }
       } catch (error) {

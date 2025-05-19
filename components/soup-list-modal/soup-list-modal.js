@@ -106,7 +106,7 @@ Component({
       this.soupStoreBindings = createStoreBindings(this, {
         store: soupStore,
         fields: ['soupLoading'],
-        actions: ['fetchSoupDataAndStore']
+        actions: ['fetchSoup']
       });
     },
 
@@ -236,7 +236,7 @@ Component({
         success: () => {
           // 使用soupStore加载汤面，不再使用eventUtils
           setTimeout(() => {
-            soupStore.fetchSoupDataAndStore(soupid);
+            soupStore.fetchSoup(soupid);
           }, 500); // 增加延迟时间，确保页面已经完成跳转和初始化
         },
         fail: () => {
