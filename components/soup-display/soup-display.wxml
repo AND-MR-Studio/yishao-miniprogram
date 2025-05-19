@@ -1,33 +1,36 @@
 <!--components/soup-display/soup-display.wxml-->
 <view
-  class="soup-container {{loading ? 'loading' : ''}} {{swipeFeedback ? 'swipe-feedback-' + swipeDirection : ''}} {{breathingBlur ? 'breathing-blur' : ''}}"
+  class="soup-container {{isLoading ? 'loading breathing-blur' : ''}}"
   style="filter: blur({{blurAmount}}px);"
-  bindtouchstart="touchStart"
-  bindtouchmove="touchMove"
-  bindtouchend="touchEnd"
 >
-  <!-- 汤面内容区域 -->
-  <block wx:if="{{!loading}}">
-    <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
-      <!-- 标题和内容分开显示 -->
-      <view class="title-container" wx:if="{{currentSoup.title}}">
-        <text class="title-text">{{currentSoup.title}}</text>
+  <!-- 汤面内容区域 - 移除条件渲染，确保在加载状态下仍然显示内容 -->
+  <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
+    <!-- 标题和内容分开显示 -->
+    <view class="title-container" wx:if="{{soupData.title}}">
+      <view class="case-line">
+        <text class="case-text text-glow-primary">汤面</text><text class="case-number text-glow-primary">{{soupData.id}}</text>
       </view>
-      <text class="soup-text">{{displayContent}}</text>
+      <view class="title-line">
+        <text class="title-text text-glow-secondary">《{{soupData.title}}》</text>
+      </view>
     </view>
+    <!-- 有图片时的排版方式 -->
+    <block wx:if="{{soupData.image || mockImage}}">
+      <view class="soup-text-with-image">
+        <text class="soup-text-left">{{soupData.soup_surface || ''}}</text>
+        <image class="soup-image" src="{{soupData.image || mockImage}}" mode="aspectFill" lazy-load="true"></image>
+      </view>
+    </block>
 
-    <!-- 使用独立的交互底部组件 -->
-    <interaction-footer
-      id="interactionFooter"
-      isFavorite="{{isFavorite}}"
-      favoriteCount="{{favoriteCount}}"
-      isLiked="{{isLiked}}"
-      likeCount="{{likeCount}}"
-      creatorId="{{creatorId}}"
-      isDrinking="{{isDrinking}}"
-      soupId="{{currentSoup.soupId || ''}}"
-      bind:favoriteChange="onFavoriteChange"
-      bind:likeChange="onLikeChange"
-    ></interaction-footer>
-  </block>
+    <!-- 无图片时的排版方式 -->
+    <block wx:else>
+      <text class="soup-text">{{soupData.soup_surface || ''}}</text>
+    </block>
+  </view>
+
+  <!-- 使用独立的交互底部组件 - 使用MobX管理状态 -->
+  <interaction-footer
+    id="interactionFooter"
+    isDrinking="{{isDrinking}}"
+  ></interaction-footer>
 </view>

@@ -1,100 +1,43 @@
 /**
  * 汤面显示组件
  * 负责汤面内容的渲染
+ * 不包含交互逻辑，交互由父页面控制
  */
 
-// 引入交互管理器
-const { createInteractionManager, SWIPE_DIRECTION } = require('../../utils/interactionManager');
-// 引入服务
-const soupService = require('../../utils/soupService');
-const userService = require('../../utils/userService');
+// 引入MobX store和绑定工具
+const { soupStore } = require('../../stores/index');
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
   properties: {
-    // 汤面ID，可选，如果提供则组件自行获取数据
-    soupId: {
-      type: String,
-      value: '',
-      observer: function(newVal) {
-        if (newVal && !this.data.soupData && this._isAttached) {
-          this.fetchSoupData(newVal);
-        }
-      }
-    },
-    // 汤面数据对象，可选，优先级高于soupId
+    // 汤面数据对象
     soupData: {
       type: Object,
-      value: null,
-      observer: function(newVal) {
-        if (newVal && this._isAttached) {
-          this.updateSoupDisplay(newVal);
-        }
-      }
+      value: {} // 使用空对象作为默认值，而不是null
     },
-    // 是否加载中
-    loading: {
-      type: Boolean,
-      value: false
-    },
-    // 是否已收藏
-    isFavorite: {
-      type: Boolean,
-      value: false
-    },
-    // 是否已点赞
-    isLiked: {
-      type: Boolean,
-      value: false
-    },
+
     // 是否处于偷看模式
     isPeeking: {
       type: Boolean,
       value: false
     },
-    // 收藏数量
-    favoriteCount: {
-      type: Number,
-      value: 0
-    },
-    // 点赞数量
-    likeCount: {
-      type: Number,
-      value: 0
-    },
-    // 阅读数量
-    viewCount: {
-      type: Number,
-      value: 0
-    },
+
     // 是否处于喝汤状态
     isDrinking: {
       type: Boolean,
       value: false
     },
+
     // 模糊程度（0-10px）
     blurAmount: {
       type: Number,
       value: 0
     },
-    // 是否启用呼吸模糊效果
-    breathingBlur: {
+
+    // 是否正在加载
+    loading: {
       type: Boolean,
       value: false
-    },
-    // 滑动方向反馈
-    swipeFeedback: {
-      type: Boolean,
-      value: false
-    },
-    // 滑动方向
-    swipeDirection: {
-      type: String,
-      value: 'none'
-    },
-    // 页面状态：viewing, drinking, truth
-    pageState: {
-      type: String,
-      value: 'viewing'
     }
   },
 
@@ -104,257 +47,122 @@ Component({
   },
 
   data: {
-    currentSoup: null,  // 当前汤面数据
-    displayContent: '',  // 显示的文本内容
-    creatorId: ''  // 创作者ID
+    isLoading: false, // 加载状态，同时控制呼吸模糊效果
+    mockImage: 'https://and-tech.cn/uploads/images/78e17666-0671-487e-80bc-a80c0b8d0e07.png' // 使用在线图片路径
   },
 
   lifetimes: {
     // 组件初始化
     attached() {
       this._isAttached = true;
-      if (this.data.currentSoup) {
-        this.setData({
-          displayContent: this._formatSoupContent(this.data.currentSoup)
-        });
-      }
 
-      // 初始化交互管理器
-      this.initInteractionManager();
+      // 创建MobX Store绑定
+      this.storeBindings = createStoreBindings(this, {
+        store: soupStore,
+        fields: ['soupData', 'soupLoading']
+      });
+
+      // 加载汇文明朝体字体
+      this.loadMinchoFont();
     },
 
     // 组件卸载
     detached() {
       this._isAttached = false;
 
-      // 销毁交互管理器
-      if (this.interactionManager) {
-        this.interactionManager.destroy();
-        this.interactionManager = null;
+      // 清理MobX绑定
+      if (this.storeBindings) {
+        this.storeBindings.destroyStoreBindings();
+      }
+    }
+  },
+
+  // 属性变化观察者
+  observers: {
+    // 监听loading状态变化
+    'loading, soupLoading': function(loading, soupLoading) {
+      if (this._isAttached) {
+        // 通知页面组件加载状态变化
+        this.triggerEvent('loading', { loading: loading || soupLoading });
+
+        // 更新加载状态，呼吸模糊效果将通过WXML中的类绑定自动应用
+        // 确保在切换汤谜时保持之前的内容并显示模糊效果
+        this.setData({ isLoading: loading || soupLoading });
+
+        // 如果不再加载，确保清除模糊效果
+        if (!(loading || soupLoading)) {
+          this.setData({ blurAmount: 0 });
+        }
       }
     }
   },
 
   methods: {
-    /**
-     * 格式化汤面内容为显示文本
-     * @param {Object} soup 汤面数据
-     * @returns {String} 格式化后的文本
-     * @private
-     */
-    _formatSoupContent(soup) {
-      if (!soup) return '';
-
-      let content = '';
-
-      // 只添加内容，标题单独显示
-      if (soup.contentLines && Array.isArray(soup.contentLines)) {
-        content = soup.contentLines.join('\n');
-      }
-
-      return content;
+    // 获取当前应显示的汤面数据
+    // 优先使用属性传入的数据，其次使用store中的数据
+    getDisplaySoupData() {
+      return this.properties.soupData || this.data.soupData;
     },
 
-    /**
-     * 获取当前汤面ID
-     * @returns {string} 当前汤面ID
-     */
-    getCurrentSoupId() {
-      if (this.data.currentSoup) {
-        return this.data.currentSoup.soupId || '';
-      }
-      return '';
-    },
-
-    /**
-     * 处理收藏状态变更事件
-     * 从交互底部组件传递上来的事件
-     */
-    onFavoriteChange(e) {
-      const { isFavorite, favoriteCount } = e.detail;
-
-      // 更新组件状态
-      this.setData({
-        isFavorite: isFavorite,
-        favoriteCount: favoriteCount
-      });
-
-      // 不再向上传递事件，由eventCenter统一处理
-    },
-
-    /**
-     * 处理点赞状态变更事件
-     * 从交互底部组件传递上来的事件
-     */
-    onLikeChange(e) {
-      const { likeCount } = e.detail;
-
-      // 更新组件状态
-      this.setData({
-        likeCount: likeCount
-      });
-
-      // 不再向上传递事件，由eventCenter统一处理
-    },
-
-    /**
-     * 初始化交互管理器
-     */
-    initInteractionManager() {
-      this.interactionManager = createInteractionManager({
-        setData: this.setData.bind(this),
-        onSwipeLeft: this.handleSwipeLeft.bind(this),
-        onSwipeRight: this.handleSwipeRight.bind(this),
-        onDoubleTap: this.handleDoubleTap.bind(this),
-        onLongPressStart: this.handleLongPressStart.bind(this),
-        onLongPressEnd: this.handleLongPressEnd.bind(this),
-        // 长按相关配置
-        longPressDelay: 300, // 长按触发时间，默认300ms
-        enablePeek: true // 启用偷看功能
-      });
-    },
-
-    /**
-     * 处理左滑事件
-     */
-    handleSwipeLeft() {
-      if (this.canSwitchSoup()) {
-        this.setData({
-          swipeFeedback: true,
-          swipeDirection: SWIPE_DIRECTION.LEFT
-        });
-
-        // 通知页面切换汤面
-        this.triggerEvent('swipe', { direction: 'next' });
-      }
-    },
-
-    /**
-     * 处理右滑事件
-     */
-    handleSwipeRight() {
-      if (this.canSwitchSoup()) {
-        this.setData({
-          swipeFeedback: true,
-          swipeDirection: SWIPE_DIRECTION.RIGHT
-        });
-
-        // 通知页面切换汤面
-        this.triggerEvent('swipe', { direction: 'previous' });
-      }
-    },
-
-    /**
-     * 处理双击事件
-     */
-    handleDoubleTap() {
-      // 调用交互底部组件的收藏方法
-      const interactionFooter = this.selectComponent('#interactionFooter');
-      if (interactionFooter) {
-        interactionFooter.toggleFavorite();
-      }
-    },
-
-    /**
-     * 处理长按开始事件
-     */
-    handleLongPressStart() {
-      // 触发长按开始事件
-      this.triggerEvent('longPressStart');
-    },
-
-    /**
-     * 处理长按结束事件
-     */
-    handleLongPressEnd() {
-      // 触发长按结束事件
-      this.triggerEvent('longPressEnd');
-    },
-
-    /**
-     * 检查是否可以切换汤面
-     * @returns {boolean} 是否可以切换汤面
-     */
-    canSwitchSoup() {
-      return this.properties.pageState === 'viewing' && !this.properties.loading;
-    },
-
-    /**
-     * 触摸开始事件处理
-     */
-    touchStart(e) {
-      const canInteract = this.canSwitchSoup();
-      this.interactionManager?.handleTouchStart(e, canInteract);
-    },
-
-    /**
-     * 触摸移动事件处理
-     */
-    touchMove(e) {
-      const canInteract = this.canSwitchSoup();
-      this.interactionManager?.handleTouchMove(e, canInteract);
-    },
-
-    /**
-     * 触摸结束事件处理
-     */
-    touchEnd(e) {
-      const canInteract = this.canSwitchSoup();
-      this.interactionManager?.handleTouchEnd(e, canInteract);
-    },
-
-    /**
-     * 增加汤面阅读数并更新用户浏览记录
-     * 注意：此方法已被移至index.js中的viewSoup方法，通过eventCenter统一管理
-     * @param {string} soupId 汤面ID
-     */
-    async incrementSoupViewCount(soupId) {
-      // 不再直接调用API，由index.js中的viewSoup方法统一处理
-      // 保留此方法是为了向后兼容
-    },
-
-    /**
-     * 更新汤面显示
-     */
-    updateSoupDisplay(soupData) {
-      // 更新当前汤面数据
-      this.setData({
-        currentSoup: soupData,
-        displayContent: this._formatSoupContent(soupData),
-        favoriteCount: soupData.favoriteCount || 0,
-        likeCount: soupData.likeCount || 0,
-        viewCount: soupData.viewCount || 0,
-        creatorId: soupData.creatorId || ''
-      });
-
-      // 增加汤面阅读数
-      const soupId = soupData.soupId || '';
-      if (soupId) {
-        this.incrementSoupViewCount(soupId);
-      }
-    },
-
-    /**
-     * 获取汤面数据
-     */
-    async fetchSoupData(soupId) {
-      if (!soupId) return;
+    // 加载汇文明朝体字体
+    loadMinchoFont() {
+      // 字体缓存的key
+      const FONT_CACHE_KEY = 'huiwen_mincho_font_cache';
+      // 字体缓存有效期（365天，单位：毫秒）
+      const FONT_CACHE_DURATION = 365 * 24 * 60 * 60 * 1000;
 
       try {
-        // 通知页面组件正在加载
-        this.triggerEvent('loading', { loading: true });
+        // 尝试从本地缓存获取字体加载状态
+        const fontCache = wx.getStorageSync(FONT_CACHE_KEY);
+        const now = Date.now();
 
-        // 获取汤面数据
-        const soupData = await soupService.getSoup(soupId);
-
-        if (soupData) {
-          this.updateSoupDisplay(soupData);
+        // 检查缓存是否存在且未过期
+        if (fontCache && fontCache.timestamp && (now - fontCache.timestamp < FONT_CACHE_DURATION)) {
+          console.log('使用字体缓存，无需重新加载');
+          return; // 缓存有效，直接返回
         }
-      } catch (error) {
-        console.error('获取汤面数据失败:', error);
-      } finally {
-        // 通知页面组件加载完成
-        this.triggerEvent('loading', { loading: false });
+
+        // 缓存不存在或已过期，重新加载字体
+        wx.loadFontFace({
+          family: 'Huiwen-mincho',
+          source: 'url("https://and-tech.cn/uploads/fonts/hwmct.woff2")',
+          success: (res) => {
+            console.log('字体加载成功', res);
+            // 字体加载成功后，将状态缓存到本地
+            wx.setStorage({
+              key: FONT_CACHE_KEY,
+              data: {
+                timestamp: Date.now(),
+                status: 'success'
+              },
+              success: () => {
+                console.log('字体缓存成功保存到本地');
+              },
+              fail: (err) => {
+                console.error('字体缓存保存失败', err);
+              }
+            });
+          },
+          fail: (err) => {
+            console.error('字体加载失败', err);
+          },
+          complete: () => {
+            console.log('字体加载完成');
+          }
+        });
+      } catch (e) {
+        console.error('字体缓存读取失败', e);
+        // 发生错误时，仍然尝试加载字体
+        wx.loadFontFace({
+          family: 'Huiwen-mincho',
+          source: 'url("https://and-tech.cn/uploads/fonts/hwmct.woff2")',
+          success: (res) => {
+            console.log('字体加载成功', res);
+          },
+          fail: (err) => {
+            console.error('字体加载失败', err);
+          }
+        });
       }
     }
   }

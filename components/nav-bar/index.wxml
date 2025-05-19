@@ -17,7 +17,6 @@
 
 <setting-card
   show="{{showSettingPanel}}"
-  soupId="{{soupId}}"
   pageState="{{pageState}}"
   bind:close="onSettingClose"
   bind:switchchange="onSwitchChange"

@@ -131,6 +131,19 @@
   transform: rotate(45deg);
 }
 
+/* 提示模块头像GIF图标 */
+.icon-avatar-gif {
+  width: 100%;
+  height: 100%;
+  background-image: url("https://and-tech.cn/uploads/icons/ffd33e4c-a0a9-413d-8fb4-fdceb0e1759e.gif");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  display: inline-block;
+}
+
+
+
 /* 交互图标样式 */
 
 /* 图标文本样式 */
@@ -141,7 +154,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.3); /* 添加文本阴影增强可见度 */
+  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.3); /* 保留轻微阴影增强可见度 */
 }
 
 /* 收藏图标文本样式 */

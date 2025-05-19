@@ -35,16 +35,11 @@ Component({
       type: String,
       value: ''
     },
-    // 当前海龟汤ID
-    soupId: {
+    // 页面状态，用于设置面板显示不同内容
+    pageState: {
       type: String,
       value: ''
     },
-    // 当前页面状态
-    pageState: {
-      type: String,
-      value: 'viewing' // 默认为viewing状态，可选值：viewing, drinking, truth
-    }
   },
 
   /**
@@ -70,35 +65,6 @@ Component({
   methods: {
     // 处理点击左侧图标
     onClickLeft() {
-      // 获取当前页面实例
-      const pages = getCurrentPages();
-      const currentPage = pages[pages.length - 1];
-
-      // 如果在喝汤页面
-      if (currentPage.route === 'pages/index/index') {
-        // 如果当前是喝汤状态，则触发对话框关闭事件
-        if (currentPage.data.pageState === 'drinking') {
-          // 获取对话组件并触发关闭事件
-          const dialog = currentPage.selectComponent('#dialog');
-          if (dialog) {
-            dialog.handleClose();
-          } else {
-            // 如果无法获取对话组件，直接调用页面的关闭事件处理函数
-            currentPage.onDialogClose();
-          }
-          return;
-        }
-        // 如果是汤底状态，直接返回查看状态
-        else if (currentPage.data.pageState === 'truth') {
-          currentPage.setData({
-            pageState: 'viewing',
-            showButtons: true
-          });
-          return;
-        }
-      }
-
-      // 其他情况跳转到首页
       wx.switchTab({
         url: '/pages/index/index'
       });
@@ -153,12 +119,12 @@ Component({
 
     // 处理清理上下文事件
     onClearContext(e) {
-      // 获取对话ID
-      const { dialogId } = e.detail;
-      if (!dialogId) return;
+      // 获取对话ID和用户ID
+      const { dialogId, userId } = e.detail;
+      if (!dialogId || !userId) return;
 
       // 触发清理上下文事件给页面处理
-      this.triggerEvent('clearcontext', { dialogId });
+      this.triggerEvent('clearcontext', { dialogId, userId });
     }
   }
 })

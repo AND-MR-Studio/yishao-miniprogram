@@ -43,7 +43,7 @@
   gap: 10rpx;
   width: 50%;
   min-width: 300rpx;
-  height: 80rpx;
+  height: 60rpx;
   background: var(--color-accent, #5ce821);
   box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
   border-radius: 100rpx;
@@ -54,12 +54,12 @@
 
 /* 按下状态的按钮样式 - 圆形 */
 .btn-light.pressed {
-  width: 120rpx !important;
-  height: 120rpx !important;
-  min-width: 120rpx !important;
-  min-height: 120rpx !important;
-  max-width: 120rpx !important;
-  max-height: 120rpx !important;
+  width: 80rpx !important;
+  height: 80rpx !important;
+  min-width: 80rpx !important;
+  min-height: 80rpx !important;
+  max-width: 80rpx !important;
+  max-height: 80rpx !important;
   padding: 0 !important;
   margin: 0 auto !important;
   border-radius: 50% !important;
@@ -77,30 +77,7 @@
   animation: none !important;
 }
 
-/* 展开动画按钮样式 - 与按下状态相同 */
-.btn-light.expand-animation {
-  width: 120rpx !important;
-  height: 120rpx !important;
-  min-width: 120rpx !important;
-  min-height: 120rpx !important;
-  max-width: 120rpx !important;
-  max-height: 120rpx !important;
-  padding: 0 !important;
-  margin: 0 auto !important;
-  border-radius: 50% !important;
-  background-color: var(--color-accent, #5ce821);
-  box-shadow: 0rpx 10rpx 25rpx rgba(4, 244, 77, 0.3) !important;
-  z-index: 1000 !important;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important; /* 弹性过渡效果 */
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  overflow: hidden !important;
-  box-sizing: border-box !important;
-  transform-origin: center center !important;
-  /* 停止呼吸动画 */
-  animation: none !important;
-}
+
 
 /* 点亮按钮文本  */
 .btn-text-light {
@@ -114,8 +91,8 @@
   font-family: var(--font-family-mincho);
 }
 
-/* 加载中动画样式 */
-.loading-dots {
+/* 加载中动画样式 - 新版旋转动画 */
+.loading-animation {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -123,38 +100,38 @@
   width: 100%;
 }
 
-.loading-dots .dot {
-  font-size: 36rpx;
-  font-weight: bold;
-  color: #000000;
-  opacity: 0;
-  animation: dot-animation 1.4s infinite;
-  margin: 0 -4rpx;
+.loading-spinner {
+  width: 32rpx;
+  height: 32rpx;
+  border: 3rpx solid rgba(0, 0, 0, 0.1);
+  border-top: 3rpx solid #000000;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  box-shadow: 0 0 8rpx rgba(0, 0, 0, 0.2);
 }
 
-.loading-dots .dot:nth-child(1) {
-  animation-delay: 0s;
-}
-
-.loading-dots .dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.loading-dots .dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-@keyframes dot-animation {
+@keyframes spin {
   0% {
-    opacity: 0;
-  }
-  20% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
+    transform: rotate(0deg);
   }
   100% {
-    opacity: 0;
+    transform: rotate(360deg);
+  }
+}
+
+/* 脉冲动画 - 给加载中的按钮添加脉冲效果 */
+.btn-light.pressed .loading-spinner {
+  animation: spin 0.8s linear infinite, pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 6rpx rgba(0, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
   }
 }

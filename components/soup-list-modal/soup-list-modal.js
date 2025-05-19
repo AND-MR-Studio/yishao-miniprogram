@@ -1,8 +1,7 @@
 // components/soup-list-modal/soup-list-modal.js
-const userService = require('../../utils/userService');
-const soupService = require('../../utils/soupService');
-const dialogService = require('../../utils/dialogService');
-const eventUtils = require('../../utils/eventUtils');
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { rootStore, soupStore } = require('../../stores/index');
+const soupService = require('../../service/soupService');
 
 // 定义列表类型配置
 const TYPE_CONFIG = {
@@ -87,13 +86,37 @@ Component({
           emptyText: config.emptyText
         });
 
-
-
         // 加载数据
         this.loadSoupList();
       } else {
         // 重置数据
         this.resetData();
+      }
+    }
+  },
+
+  lifetimes: {
+    attached() {
+      // 创建MobX Store绑定
+      this.storeBindings = createStoreBindings(this, {
+        store: rootStore,
+        fields: ['userId', 'isLoggedIn'],
+      });
+
+      this.soupStoreBindings = createStoreBindings(this, {
+        store: soupStore,
+        fields: ['soupLoading'],
+        actions: ['fetchSoup']
+      });
+    },
+
+    detached() {
+      // 清理MobX绑定
+      if (this.storeBindings) {
+        this.storeBindings.destroyStoreBindings();
+      }
+      if (this.soupStoreBindings) {
+        this.soupStoreBindings.destroyStoreBindings();
       }
     }
   },
@@ -112,24 +135,17 @@ Component({
       this.setData({ loading: true });
 
       try {
-        // 检查登录状态
-        if (!userService.checkLoginStatus(false)) {
+        // 获取用户信息 - 使用传入的userInfo
+        const userInfo = this.properties.userInfo;
+
+        if (!userInfo) {
+          // 如果没有用户信息，显示空状态
           this.setData({
             soupList: [],
             isEmpty: true,
             loading: false
           });
           return;
-        }
-
-        // 获取用户信息 - 优先使用传入的userInfo，如果没有则重新获取
-        let userInfo = this.properties.userInfo;
-        if (!userInfo) {
-          userInfo = await userService.getFormattedUserInfo(false);
-        }
-
-        if (!userInfo) {
-          throw new Error('获取用户信息失败');
         }
 
         // 获取当前类型的配置
@@ -148,7 +164,8 @@ Component({
           return;
         }
 
-        // 获取海龟汤详细信息
+        // 直接使用soupService获取海龟汤详细信息
+        // 注意：这是临时解决方案，等待后续重构
         let soupList = await soupService.getSoup(soupIds);
 
         // 确保 soupList 是数组
@@ -159,27 +176,6 @@ Component({
           } else {
             soupList = [];
           }
-        }
-
-        // 获取用户ID
-        const userId = await userService.getUserId();
-
-        // 为每个汤面获取对应的对话ID
-        if (userId && soupList.length > 0) {
-          // 使用Promise.all并行处理所有请求
-          await Promise.all(soupList.map(async (soup) => {
-            try {
-              // 获取用户与该汤面的对话
-              const dialogData = await dialogService.getUserDialog(userId, soup.soupId);
-              // 将对话ID添加到汤面数据中
-              if (dialogData && dialogData.dialogId) {
-                soup.dialogId = dialogData.dialogId;
-              }
-            } catch (error) {
-              console.error(`获取汤面${soup.soupId}的对话ID失败:`, error);
-              // 失败时不设置dialogId，不影响列表显示
-            }
-          }));
         }
 
         // 更新数据
@@ -234,20 +230,13 @@ Component({
       // 关闭弹窗
       this.closeModal();
 
-      // 使用事件通信方式，发布一个自定义事件
-
       // 跳转到海龟汤详情页（Tab页面）
       wx.switchTab({
         url: '/pages/index/index',
         success: () => {
-          // 跳转成功后发布事件，传递参数
-          // 增加延迟时间，确保页面完全准备好接收事件
+          // 使用soupStore加载汤面，不再使用eventUtils
           setTimeout(() => {
-            // 只发送 soupId，不发送 dialogId，这样页面会停留在 viewing 状态
-            eventUtils.emitEvent('loadSoup', {
-              soupId: soupid
-            });
-            console.log('发送loadSoup事件，soupId:', soupid);
+            soupStore.fetchSoup(soupid);
           }, 500); // 增加延迟时间，确保页面已经完成跳转和初始化
         },
         fail: () => {

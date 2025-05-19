@@ -12,7 +12,9 @@
       defaultAvatarUrl="{{defaultAvatarUrl}}"
       hasSignedIn="{{hasSignedIn}}"
       bind:signinresult="handleSignInResult"
-      bind:userinforefreshed="handleUserInfoRefreshed"
+      bind:refreshuserinfo="refreshUserInfo"
+      bind:checklogin="checkLoginStatus"
+      bind:signin="handleDetectiveCardSignIn"
       bind:navigate="handleNavigate"
       bind:editprofile="openUserInfoModal">
     </detective-card>

@@ -87,11 +87,7 @@
   z-index: 1001; /* 确保在tip内容之上 */
 }
 
-/* 头像GIF */
-.avatar-gif {
-  width: 100%;
-  height: 100%;
-}
+/* 头像GIF样式已移至icon.wxss */
 
 /* 文本容器 */
 .text-container {

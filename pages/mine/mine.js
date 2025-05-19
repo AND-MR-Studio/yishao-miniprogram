@@ -1,8 +1,10 @@
 // pages/mine/mine.js
 // 引入用户服务模块
-const userService = require('../../utils/userService');
+const userService = require('../../service/userService');
 // 引入API模块
-const api = require('../../utils/api');
+const api = require('../../config/api');
+// 引入rootStore
+const { rootStore } = require('../../stores/rootStore');
 
 Page({
 
@@ -49,9 +51,12 @@ Page({
       });
     }
 
-    // 每次显示页面时刷新数据
-    // 由于onLoad不再刷新，这里是唯一的刷新点
-    this.refreshPageData();
+    // 同步用户ID，确保用户状态最新
+    rootStore.syncUserId().then(() => {
+      // 每次显示页面时刷新数据
+      // 由于onLoad不再刷新，这里是唯一的刷新点
+      this.refreshPageData();
+    });
   },
 
   /**
@@ -457,6 +462,9 @@ Page({
       // 使用userService登录
       await userService.login();
 
+      // 同步用户ID，确保用户状态最新
+      await rootStore.syncUserId();
+
       // 登录成功后刷新页面数据
       await this.refreshPageData(false);
 
@@ -497,19 +505,22 @@ Page({
           // 使用userService退出登录
           userService.logout();
 
-          // 重置页面数据
-          this.setData({
-            userInfo: null,
-            detectiveInfo: null,
-            hasSignedIn: false,
-            buttonConfig: {
-              type: 'light',
-              text: '登录'
-            }
-          });
+          // 同步用户ID，确保用户状态最新
+          rootStore.syncUserId().then(() => {
+            // 重置页面数据
+            this.setData({
+              userInfo: null,
+              detectiveInfo: null,
+              hasSignedIn: false,
+              buttonConfig: {
+                type: 'light',
+                text: '登录'
+              }
+            });
 
-          // 更新统计数据
-          this.updateStatistics();
+            // 更新统计数据
+            this.updateStatistics();
+          });
         }
         this.setData({ isLoggingOut: false });
       },
@@ -598,18 +609,130 @@ Page({
   },
 
   /**
-   * 处理用户信息刷新 - 由detective-card组件触发
-   * @param {Object} e - 事件对象，包含更新后的用户信息
+   * 刷新用户信息 - 由detective-card组件触发
    */
-  handleUserInfoRefreshed(e) {
-    const { detectiveInfo } = e.detail;
+  async refreshUserInfo() {
+    try {
+      // 获取最新用户信息
+      const detectiveInfo = await userService.getFormattedUserInfo(false);
+      if (!detectiveInfo) return;
 
-    // 更新页面数据
-    if (detectiveInfo) {
+      // 更新页面数据
       this.setData({ detectiveInfo });
 
       // 更新统计数据
       this.updateStatistics();
+
+      // 获取detective-card组件实例
+      const detectiveCard = this.selectComponent('#detective-card');
+      if (detectiveCard) {
+        // 更新组件数据
+        detectiveCard.updateCardDisplay(detectiveInfo);
+      }
+    } catch (error) {
+      console.error('刷新用户信息失败:', error);
+    }
+  },
+
+  /**
+   * 检查登录状态 - 由detective-card组件触发
+   */
+  checkLoginStatus() {
+    userService.checkLoginStatus();
+  },
+
+  /**
+   * 处理detective-card组件的签到请求
+   */
+  async handleDetectiveCardSignIn() {
+    try {
+      // 调用后端签到接口
+      const res = await api.userRequest({
+        url: api.user_signin_url,
+        method: 'POST'
+      });
+
+      if (res.success && res.data) {
+        // 更新页面状态
+        this.setData({ hasSignedIn: true });
+
+        // 显示签到成功提示
+        wx.showToast({
+          title: '签到成功',
+          icon: 'success',
+          duration: 2000
+        });
+
+        // 振动反馈
+        wx.vibrateShort({ type: 'medium' });
+
+        // 处理升级提示
+        if (res.data.levelUp) {
+          userService.showLevelUpNotification(res.data.levelTitle);
+        }
+
+        // 刷新用户信息
+        await this.refreshUserInfo();
+
+        // 通知detective-card组件签到结果
+        this.handleSignInResult({
+          detail: {
+            success: true,
+            data: res.data
+          }
+        });
+      } else {
+        wx.showToast({
+          title: res.error || '签到失败',
+          icon: 'none',
+          duration: 2000
+        });
+
+        // 通知detective-card组件签到失败
+        this.handleSignInResult({
+          detail: {
+            success: false,
+            error: res.error || '签到失败'
+          }
+        });
+      }
+    } catch (error) {
+      const errorMsg = error.toString();
+
+      // 处理"今日已签到"的情况
+      if (errorMsg.includes('今日已签到')) {
+        this.setData({ hasSignedIn: true });
+
+        wx.showToast({
+          title: '今天已经签到过啦~',
+          icon: 'none',
+          duration: 2000
+        });
+
+        wx.vibrateShort({ type: 'light' });
+
+        // 通知detective-card组件已签到
+        this.handleSignInResult({
+          detail: {
+            success: true,
+            alreadySignedIn: true
+          }
+        });
+      } else {
+        wx.showToast({
+          title: '签到失败，请重试',
+          icon: 'none',
+          duration: 2000
+        });
+
+        // 通知detective-card组件签到失败
+        this.handleSignInResult({
+          detail: {
+            success: false,
+            error: errorMsg
+          }
+        });
+      }
     }
   },
 

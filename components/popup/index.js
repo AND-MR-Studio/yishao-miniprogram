@@ -49,10 +49,10 @@ Component({
       type: Boolean,
       value: true
     },
-    // 弹窗图片URL
-    imageUrl: {
-      type: String,
-      value: ''
+    // 是否显示登录图标
+    showLoginIcon: {
+      type: Boolean,
+      value: false
     }
   },
 
