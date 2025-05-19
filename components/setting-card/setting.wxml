@@ -50,6 +50,15 @@
         class="custom-button-class"
       />
 
+      <!-- 喝汤指南按钮 -->
+      <view class="setting-item">
+        <view class="item-label">操作指示</view>
+        <custom-button
+          type="confirm"
+          text="查看"
+          bindtap="showGuide" />
+      </view>
+
       <!-- 已移除跳过动画开关 -->
     </view>
 

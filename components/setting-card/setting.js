@@ -1,7 +1,7 @@
 // components/setting-card/setting.js
 const { createPanelDragManager } = require('../../utils/panelDrag');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { chatStore } = require('../../stores/index');
+const { chatStore, rootStore } = require('../../stores/index');
 
 Component({
 
@@ -267,6 +267,17 @@ Component({
     onAbout() {
       this.triggerVibration();
       this.triggerEvent('about');
+    },
+
+    // 显示喝汤指南
+    showGuide() {
+      this.triggerVibration();
+
+      // 调用rootStore的showGuideManually方法
+      rootStore.showGuideManually();
+
+      // 关闭设置面板
+      this.closePanel();
     },
 
     // 阻止蒙层的触摸事件穿透

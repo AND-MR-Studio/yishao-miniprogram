@@ -29,18 +29,18 @@ Page({
    * @param {Object} options - 页面参数，可能包含soupId
    */
   async onLoad(options) {
-    // 创建rootStore绑定 - 用于获取用户ID和登录状态
+    // 创建rootStore绑定 - 用于获取用户ID、登录状态和引导层状态
     this.rootStoreBindings = createStoreBindings(this, {
       store: rootStore,
-      fields: ["userId", "isLoggedIn"],
-      actions: ["syncUserId"]
+      fields: ["userId", "isLoggedIn", "isFirstVisit", "showGuide"],
+      actions: ["syncUserId", "closeGuide"]
     });
 
-    // 创建soupStore绑定 - 包含引导层相关字段和方法
+    // 创建soupStore绑定 - 汤面相关字段和方法
     this.soupStoreBindings = createStoreBindings(this, {
       store: soupStore,
-      fields: ["soupLoading", "buttonLoading", "soupData", "isFirstVisit", "showGuide"],
-      actions: ["closeGuide", "setButtonLoading", "resetButtonLoading", "fetchSoup"]
+      fields: ["soupLoading", "buttonLoading", "soupData"],
+      actions: ["setButtonLoading", "resetButtonLoading", "fetchSoup"]
     });
 
     // 同步用户ID - 确保获取最新的用户状态
@@ -271,15 +271,6 @@ Page({
   handleSoupSwipe(e) {
     const { direction } = e.detail;
 
-    // 记录用户滑动行为，用于引导层
-    if (this.data.isFirstVisit) {
-      if (direction === SWIPE_DIRECTION.LEFT) {
-        this.setData({ hasSwipedLeft: true });
-      } else if (direction === SWIPE_DIRECTION.RIGHT) {
-        this.setData({ hasSwipedRight: true });
-      }
-    }
-
     // 等待一帧，确保滑动反馈动画先应用
     wx.nextTick(() => {
       this.switchSoup(direction);
@@ -291,11 +282,6 @@ Page({
    * 检查登录状态，未登录时显示登录弹窗
    */
   async handleDoubleTap() {
-    // 记录用户双击行为，用于引导层
-    if (this.data.isFirstVisit) {
-      this.setData({ hasDoubleTapped: true });
-    }
-
     if (soupStore.soupData?.id) {
       // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
       if (!this.data.isLoggedIn) {

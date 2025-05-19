@@ -22,10 +22,6 @@ class SoupStore {
   soupLoading = false; // 是否正在加载汤面数据
   buttonLoading = false; // 开始喝汤按钮的加载状态
 
-  // 新用户引导相关状态
-  isFirstVisit = false; // 是否首次访问
-  showGuide = false; // 是否显示引导层
-
   // 防止重复请求的标志
   _fetchingId = null; // 当前正在获取数据的soupId
 
@@ -44,8 +40,6 @@ class SoupStore {
       toggleFavorite: flow,
 
       // 普通方法，不需要flow
-      checkFirstVisit: false,
-      closeGuide: false,
       setButtonLoading: false,
       resetButtonLoading: false,
 
@@ -53,9 +47,6 @@ class SoupStore {
       _fetchingId: false,
       rootStore: false,
     });
-
-    // 初始化时检查用户是否首次访问
-    this.checkFirstVisit();
   }
 
   // 获取用户ID的计算属性
@@ -272,43 +263,7 @@ class SoupStore {
     }
   }
 
-  /**
-   * 检查用户是否首次访问
-   * 使用wx.getStorageSync检查本地存储中是否有首次访问标记
-   */
-  checkFirstVisit() {
-    try {
-      // 从本地存储中获取首次访问标记
-      const hasVisited = wx.getStorageSync('hasVisitedSoupPage');
 
-      // 如果没有访问记录，则设置为首次访问
-      if (!hasVisited) {
-        this.isFirstVisit = true;
-        this.showGuide = true;
-      }
-    } catch (error) {
-      console.error('检查首次访问状态失败:', error);
-      // 出错时默认不显示引导
-      this.isFirstVisit = false;
-      this.showGuide = false;
-    }
-  }
-
-  /**
-   * 关闭引导层
-   * 设置本地存储，标记用户已访问过
-   */
-  closeGuide() {
-    // 设置本地存储，标记用户已访问过
-    try {
-      wx.setStorageSync('hasVisitedSoupPage', true);
-    } catch (error) {
-      console.error('保存访问记录失败:', error);
-    }
-
-    // 隐藏引导层
-    this.showGuide = false;
-  }
 
   /**
    * 设置按钮加载状态

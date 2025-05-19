@@ -44,7 +44,6 @@
 
   <!-- 新用户引导层组件 -->
   <guide-overlay
-    wx:if="{{isFirstVisit}}"
     show="{{showGuide}}"
     bind:close="closeGuide">
   </guide-overlay>

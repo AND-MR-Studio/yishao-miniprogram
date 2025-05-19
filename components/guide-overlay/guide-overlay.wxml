@@ -18,6 +18,15 @@
       </view>
     </view>
 
+    <!-- 长按查看汤面提示 -->
+    <view class="guide-item long-press-guide">
+      <view class="guide-text">在对话界面长按可查看汤面</view>
+      <view class="press-indicator">
+        <view class="press-finger"></view>
+        <view class="press-ripple"></view>
+      </view>
+    </view>
+
     <!-- 关闭按钮 -->
     <view class="guide-close-btn" catchtap="closeGuide">
       <text>我知道了</text>

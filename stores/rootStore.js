@@ -26,6 +26,10 @@ class RootStore {
   // 上次检查的token
   lastCheckedToken = '';
 
+  // 引导层相关状态
+  isFirstVisit = false; // 是否首次访问
+  showGuide = false; // 是否显示引导层
+
   // ===== 子Store实例 =====
   chatStore = null;
   soupStore = null;
@@ -48,6 +52,9 @@ class RootStore {
 
       // syncUserId现在是普通方法，不需要标记为flow
       syncUserId: false,
+      checkFirstVisit: false,
+      closeGuide: false,
+      showGuideManually: false,
 
       // 标记子Store为非观察属性
       chatStore: false,
@@ -61,6 +68,9 @@ class RootStore {
 
     // 启动登录状态监听
     this.monitorLoginStatus();
+
+    // 检查用户是否首次访问
+    this.checkFirstVisit();
   }
 
   // 移除setUserId方法，userId只应通过syncUserId方法更新
@@ -179,6 +189,57 @@ class RootStore {
     }
   }
 
+  /**
+   * 检查用户是否首次访问
+   * 使用wx.getStorageSync检查本地存储中是否有首次访问标记
+   */
+  checkFirstVisit() {
+    try {
+      // 从本地存储中获取首次访问标记
+      const hasVisited = wx.getStorageSync('hasVisitedSoupPage');
+
+      // 如果没有访问记录，则设置为首次访问
+      if (!hasVisited) {
+        this.isFirstVisit = true;
+        this.showGuide = true;
+        console.log('首次访问，显示引导层');
+      } else {
+        console.log('非首次访问，不显示引导层');
+      }
+    } catch (error) {
+      console.error('检查首次访问状态失败:', error);
+      // 出错时默认不显示引导
+      this.isFirstVisit = false;
+      this.showGuide = false;
+    }
+  }
+
+  /**
+   * 关闭引导层
+   * 设置本地存储，标记用户已访问过
+   */
+  closeGuide() {
+    // 设置本地存储，标记用户已访问过
+    try {
+      wx.setStorageSync('hasVisitedSoupPage', true);
+      console.log('已保存访问记录');
+    } catch (error) {
+      console.error('保存访问记录失败:', error);
+    }
+
+    // 隐藏引导层
+    this.showGuide = false;
+  }
+
+  /**
+   * 手动显示引导层
+   * 不修改isFirstVisit标志，只显示引导层
+   */
+  showGuideManually() {
+    // 显示引导层
+    this.showGuide = true;
+    console.log('手动显示引导层');
+  }
 
 }
 
