@@ -6,6 +6,9 @@
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 const soupService = require('../service/soupService');
 
+// 草稿存储的键名
+const DRAFT_STORAGE_KEY = 'soup_draft';
+
 /**
  * UploadStore类
  * 管理海龟汤创建页面的状态
@@ -38,6 +41,9 @@ class UploadStore {
   // 加载状态
   isSubmitting = false;  // 是否正在提交
 
+  // 草稿状态
+  hasDraft = false;      // 是否有草稿
+
 
 
   // 已发布的汤
@@ -59,6 +65,9 @@ class UploadStore {
       // 标记为非观察属性
       rootStore: false,
     });
+
+    // 检查是否有草稿
+    this.checkDraft();
   }
 
   // 获取用户ID的计算属性
@@ -216,6 +225,84 @@ class UploadStore {
     };
   }
 
+  /**
+   * 检查是否有草稿
+   */
+  checkDraft() {
+    try {
+      const draftData = wx.getStorageSync(DRAFT_STORAGE_KEY);
+      this.hasDraft = !!draftData;
+    } catch (error) {
+      console.error('检查草稿失败:', error);
+      this.hasDraft = false;
+    }
+  }
+
+  /**
+   * 保存草稿
+   * 将当前表单内容保存到本地缓存
+   */
+  saveDraft() {
+    try {
+      // 保存当前表单数据到本地缓存
+      wx.setStorageSync(DRAFT_STORAGE_KEY, {
+        title: this.formData.title,
+        content: this.formData.content,
+        truth: this.formData.truth,
+        tags: this.formData.tags,
+        timestamp: Date.now() // 添加时间戳，便于显示保存时间
+      });
+
+      // 更新草稿状态
+      this.hasDraft = true;
+
+      return true;
+    } catch (error) {
+      console.error('保存草稿失败:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 加载草稿
+   * 从本地缓存加载草稿数据
+   */
+  loadDraft() {
+    try {
+      const draftData = wx.getStorageSync(DRAFT_STORAGE_KEY);
+
+      if (draftData) {
+        // 更新表单数据
+        this.formData.title = draftData.title || '';
+        this.formData.content = draftData.content || '';
+        this.formData.truth = draftData.truth || '';
+        this.formData.tags = draftData.tags || [];
+
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('加载草稿失败:', error);
+      return false;
+    }
+  }
+
+  /**
+   * 清除草稿
+   * 删除本地缓存中的草稿数据
+   */
+  clearDraft() {
+    try {
+      wx.removeStorageSync(DRAFT_STORAGE_KEY);
+      this.hasDraft = false;
+      return true;
+    } catch (error) {
+      console.error('清除草稿失败:', error);
+      return false;
+    }
+  }
+
 
 
   /**
@@ -249,6 +336,9 @@ class UploadStore {
 
       // 重置表单
       this.resetForm();
+
+      // 清除草稿
+      this.clearDraft();
 
       // 加载已发布的汤
       yield this.loadPublishedSoups();

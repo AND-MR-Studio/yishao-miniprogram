@@ -47,13 +47,17 @@ Page({
         'isSubmitting',
         'titleLength',
         'contentLength',
-        'truthLength'
+        'truthLength',
+        'hasDraft'
       ],
       actions: [
         'updateField',
         'validateForm',
         'resetForm',
-        'submitForm'
+        'submitForm',
+        'saveDraft',
+        'loadDraft',
+        'clearDraft'
       ]
     });
 
@@ -69,6 +73,24 @@ Page({
     // 如果有标题参数，则预填充标题输入框
     if (options && options.title && (!this.data.formData || !this.data.formData.title)) {
       this.updateField('title', decodeURIComponent(options.title));
+    }
+
+    // 如果需要加载草稿，则从本地缓存加载草稿数据
+    if (options && options.loadDraft === 'true') {
+      const loaded = this.loadDraft();
+      if (loaded) {
+        // 同步标签数据到本地
+        this.setData({
+          selectedTags: this.data.formData.tags || []
+        });
+
+        // 显示提示
+        wx.showToast({
+          title: '已加载草稿',
+          icon: 'success',
+          duration: 2000
+        });
+      }
     }
   },
 
@@ -156,6 +178,11 @@ Page({
    * 提交表单
    */
   handleSubmit() {
+    // 如果正在提交中，不处理点击
+    if (this.data.isSubmitting) {
+      return;
+    }
+
     // 检查用户是否已登录
     if (!rootStore.isLoggedIn) {
       // 显示登录提示弹窗
@@ -178,6 +205,11 @@ Page({
     // 将本地标签数据同步到formData
     this.updateField('tags', this.data.selectedTags);
 
+    // 设置提交状态
+    this.setData({
+      isSubmitting: true
+    });
+
     // 提交表单
     this.submitForm().then(result => {
       if (result.success) {
@@ -198,6 +230,25 @@ Page({
           duration: 2000
         });
       }
+
+      // 重置提交状态
+      this.setData({
+        isSubmitting: false
+      });
+    }).catch(error => {
+      console.error('提交表单失败:', error);
+
+      // 显示错误提示
+      wx.showToast({
+        title: '提交失败，请稍后重试',
+        icon: 'none',
+        duration: 2000
+      });
+
+      // 重置提交状态
+      this.setData({
+        isSubmitting: false
+      });
     });
   },
 
@@ -206,6 +257,31 @@ Page({
    */
   handleBack() {
     wx.navigateBack();
+  },
+
+  /**
+   * 保存草稿
+   */
+  handleSaveDraft() {
+    // 将本地标签数据同步到formData
+    this.updateField('tags', this.data.selectedTags);
+
+    // 保存草稿
+    const saved = this.saveDraft();
+
+    if (saved) {
+      wx.showToast({
+        title: '草稿已保存',
+        icon: 'success',
+        duration: 2000
+      });
+    } else {
+      wx.showToast({
+        title: '保存失败',
+        icon: 'none',
+        duration: 2000
+      });
+    }
   },
 
   /**
@@ -218,10 +294,4 @@ Page({
     });
   },
 
-  /**
-   * 处理登录弹窗取消按钮点击事件
-   */
-  onLoginCancel() {
-    // 不做任何处理，弹窗会自动关闭
-  }
 })

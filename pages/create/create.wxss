@@ -284,9 +284,122 @@
 /* 表单操作按钮 */
 .form-actions {
   display: flex;
-  justify-content: center;
+  justify-content: center; /* 居中对齐 */
   align-items: center;
   margin-top: 50rpx;
   width: 100%;
   padding: 20rpx 0;
+  gap: 30rpx; /* 按钮之间的间距 */
+}
+
+/* 自定义按钮样式覆盖 */
+.custom-draft-btn {
+  width: 40%;
+  height: 88rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-radius: 60rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.custom-draft-btn:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
+}
+
+.custom-draft-btn text {
+  color: rgb(157, 157, 157);
+  font-size: 28rpx;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+}
+
+.custom-create-btn {
+  width: 60%;
+  height: 88rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 6rpx 20rpx;
+  gap: 8rpx;
+  border-radius: 60rpx;
+  background: var(--color-accent, #5ce821);
+  box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.custom-create-btn:active {
+  transform: scale(0.95);
+  background: #4bc71a;
+  box-shadow: 0rpx 5rpx 10rpx rgba(4, 244, 77, 0.15);
+}
+
+.custom-create-btn text {
+  color: #000000;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 加载中状态 */
+.custom-create-btn.submitting {
+  opacity: 0.8;
+}
+
+/* 加载动画 */
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.loading-dots .dot {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #000000;
+  opacity: 0;
+  animation: dot-animation 1.4s infinite;
+  margin: 0 -4rpx;
+}
+
+.loading-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-animation {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

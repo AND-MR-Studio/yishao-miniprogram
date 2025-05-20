@@ -51,14 +51,16 @@ Page({
         'contentLength',
         'truthLength',
         'showEmptyState',
-        'publishedSoups'
+        'publishedSoups',
+        'hasDraft'
       ],
       actions: [
         'updateField',
         'validateForm',
         'resetForm',
         'submitForm',
-        'loadPublishedSoups'
+        'loadPublishedSoups',
+        'checkDraft'
       ]
     });
 
@@ -95,6 +97,14 @@ Page({
 
     // 每次页面显示时重新加载数据
     this.loadData();
+  },
+
+  /**
+   * 生命周期函数--监听页面显示
+   */
+  onShow() {
+    // 检查是否有草稿
+    this.checkDraft();
   },
 
   /**
@@ -263,6 +273,36 @@ Page({
   },
 
   /**
+   * 打开草稿
+   */
+  handleOpenDraft() {
+    // 检查用户是否已登录
+    if (!rootStore.isLoggedIn) {
+      // 显示登录提示弹窗
+      const loginPopup = this.selectComponent("#loginPopup");
+      if (loginPopup) {
+        loginPopup.show();
+      }
+      return;
+    }
+
+    // 检查是否有草稿
+    if (this.data.hasDraft) {
+      // 跳转到创建页面并传递loadDraft参数
+      wx.navigateTo({
+        url: '/pages/create/create?loadDraft=true'
+      });
+    } else {
+      // 无草稿时显示提示
+      wx.showToast({
+        title: '暂无草稿，去创建一个吧~',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  },
+
+  /**
    * 刷新页面数据
    * 当导航栏左侧按钮点击时触发
    */
@@ -270,5 +310,7 @@ Page({
     console.log('刷新煮汤页面数据');
     // 重新加载已发布的汤
     this.loadData();
+    // 检查是否有草稿
+    this.checkDraft();
   }
 })

@@ -1,8 +1,5 @@
 <!--pages/upload/upload.wxml - 海龟汤创建页面-->
 <view class="page">
-  <!-- 噪点效果 -->
-  <view class="noise-overlay"></view>
-
   <!-- 导航栏 -->
   <nav-bar
     title="煮汤"
@@ -42,9 +39,18 @@
                 <view class="title-input-counter">{{createTitleLength || 0}}/15</view>
               </view>
 
-              <!-- 创作按钮 -->
-              <view class="create-card-button" bindtap="handleShowForm">
-                <text>开始创作→</text>
+              <!-- 创作按钮区域 -->
+              <view class="create-button-area">
+                <!-- 草稿入口 - 新位置 -->
+                <view class="draft-icon {{hasDraft ? 'has-draft' : ''}}" bindtap="handleOpenDraft">
+                  <text class="iconfont icon-pot"></text>
+                  <text class="draft-text">草稿</text>
+                </view>
+
+                <!-- 创作按钮 -->
+                <view class="create-card-button" bindtap="handleShowForm">
+                  <text>开始创作→</text>
+                </view>
               </view>
 
               <!-- 小提示文本 -->

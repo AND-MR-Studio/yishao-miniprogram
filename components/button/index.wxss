@@ -91,26 +91,43 @@
 /* 未点亮按钮 */
 .btn-unlight {
   display: flex;
-  flex-direction: column;
+  flex-direction: row; /* 改为横向排列 */
   justify-content: center;
   align-items: center;
-  padding: 13rpx 0rpx;
-  gap: 10rpx;
-  width: 100rpx;
-  height: 56rpx;
-  border: 1rpx solid#4a4e57;
-  border-radius: 100rpx;
-  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  padding: 6rpx 20rpx; /* 调整内边距与primary按钮一致 */
+  gap: 8rpx;
+  width: 100%; /* 默认宽度，可通过属性覆盖 */
+  height: 88rpx; /* 默认高度，可通过属性覆盖 */
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  border-radius: 30rpx;
+  transition: all 0.2s ease;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+}
+
+.btn-unlight:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
 }
 
 /* 未点亮按钮文本 */
 .btn-text-normal {
-  composes: text-mincho-sm;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  color:#4a4e57;
+  color: rgba(255, 255, 255, 0.9);
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  font-size: 28rpx;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
 }
 
 /* 标签切换器样式 */
