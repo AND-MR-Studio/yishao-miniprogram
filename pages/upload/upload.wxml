@@ -4,7 +4,11 @@
   <view class="noise-overlay"></view>
 
   <!-- 导航栏 -->
-  <nav-bar title="煮汤" showBack="{{false}}" />
+  <nav-bar
+    title="煮汤"
+    isTabBarPage="{{true}}"
+    bind:refreshPage="onRefreshPage"
+  />
 
   <!-- 小勺GIF背景 -->
   <view class="xiaoshao-background">

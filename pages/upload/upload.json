@@ -2,9 +2,7 @@
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
     "custom-button": "/components/button/index",
-    "progress-ring": "/components/progress-ring/progress-ring",
-    "collapse-panel": "/components/collapse-panel/collapse-panel",
-    "swipe-cell": "/components/swipe-cell/swipe-cell"
+    "progress-ring": "/components/progress-ring/progress-ring"
   },
   "navigationStyle": "custom",
   "disableScroll": false

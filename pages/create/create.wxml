@@ -58,27 +58,7 @@
         </view>
       </view>
 
-      <!-- 图片上传 -->
-      <view class="form-item">
-        <view class="form-label">配图（可选）</view>
-        <view class="image-upload-container">
-          <view class="image-preview" wx:if="{{formData.image}}" bindtap="handlePreviewImage">
-            <image class="preview-image" src="{{formData.image}}" mode="aspectFill"></image>
-            <view class="image-delete" catchtap="handleDeleteImage">×</view>
-          </view>
-          <view class="upload-button" bindtap="handleChooseImage" wx:else>
-            <view class="upload-icon">+</view>
-            <view class="upload-text">添加图片</view>
-          </view>
-        </view>
-        <!-- 上传进度条 -->
-        <view class="upload-progress-container" wx:if="{{isUploading}}">
-          <view class="upload-progress-bar">
-            <view class="upload-progress-inner" style="width: {{uploadProgress}}%;"></view>
-          </view>
-          <view class="upload-progress-text">上传中 {{uploadProgress}}%</view>
-        </view>
-      </view>
+
 
       <!-- 占位，确保内容区域有足够的底部间距 -->
       <view style="height: 150rpx;"></view>

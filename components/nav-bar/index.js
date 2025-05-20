@@ -40,6 +40,11 @@ Component({
       type: String,
       value: ''
     },
+    // 是否为TabBar页面（首页、煮汤、我的）
+    isTabBarPage: {
+      type: Boolean,
+      value: false
+    },
   },
 
   /**
@@ -65,65 +70,58 @@ Component({
   methods: {
     // 处理点击左侧图标
     onClickLeft() {
-      wx.switchTab({
-        url: '/pages/index/index'
-      });
+      if (this.data.isTabBarPage) {
+        this.triggerEvent('refreshPage');
+      } else {
+        wx.navigateBack({
+          fail: () => {
+            wx.switchTab({
+              url: '/pages/index/index'
+            });
+          }
+        });
+      }
     },
 
     // 处理点击右侧图标
     onClickRight() {
-      // 显示设置面板
       this.showSetting();
     },
 
+    // 显示设置面板
     showSetting() {
       this.setData({
         showSettingPanel: true
       });
     },
 
+    // 关闭设置面板
     onSettingClose() {
-      console.log('关闭设置面板');
       this.setData({
         showSettingPanel: false
       });
     },
 
-    // 添加设置相关回调函数
+    // 处理设置开关变化
     onSwitchChange(e) {
       const { type, value } = e.detail;
-
-      // 打印日志便于调试
-      console.log('nav-bar 接收到switchchange事件:', { type, value });
-      console.log('触发settingchange事件给页面');
-
-      // 触发事件给页面处理
       this.triggerEvent('settingchange', { type, value });
     },
 
-    onFontSizeChange(e) {
-      const { size } = e.detail;
-      // 触发事件给页面处理
-      this.triggerEvent('fontsizechange', { size });
-    },
-
+    // 处理联系我们事件
     onContact() {
-      // 触发联系我们事件
       this.triggerEvent('contact');
     },
 
+    // 处理关于我们事件
     onAbout() {
-      // 触发关于我们事件
       this.triggerEvent('about');
     },
 
     // 处理清理上下文事件
     onClearContext(e) {
-      // 获取对话ID和用户ID
       const { dialogId, userId } = e.detail;
       if (!dialogId || !userId) return;
-
-      // 触发清理上下文事件给页面处理
       this.triggerEvent('clearcontext', { dialogId, userId });
     }
   }

@@ -784,6 +784,16 @@ Page({
   },
 
   /**
+   * 刷新页面数据
+   * 当导航栏左侧按钮点击时触发
+   */
+  onRefreshPage() {
+    console.log('刷新个人中心页面数据');
+    // 刷新页面数据并显示提示
+    this.refreshPageData(true);
+  },
+
+  /**
    * 处理banner点击事件
    * @param {Object} e - 事件对象
    */

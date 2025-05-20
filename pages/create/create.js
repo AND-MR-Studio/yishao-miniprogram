@@ -14,9 +14,7 @@ Page({
     formData: {
       title: '',
       content: '',
-      truth: '',
-      image: '',
-      imageUrl: ''
+      truth: ''
     },
     // 表单验证状态 - 由MobX管理
     validation: {
@@ -52,7 +50,6 @@ Page({
         'validateForm',
         'resetForm',
         'submitForm',
-        'uploadImage',
         'saveDraft'
       ]
     });
@@ -126,51 +123,7 @@ Page({
     this.updateField('truth', e.detail.value);
   },
 
-  /**
-   * 选择图片
-   */
-  handleChooseImage() {
-    wx.chooseMedia({
-      count: 1,
-      mediaType: ['image'],
-      sourceType: ['album', 'camera'],
-      camera: 'back',
-      success: (res) => {
-        const tempFilePath = res.tempFiles[0].tempFilePath;
 
-        // 更新临时图片路径
-        this.updateField('image', tempFilePath);
-
-        // 上传图片
-        this.uploadImage(tempFilePath).then(imageUrl => {
-          if (imageUrl) {
-            wx.showToast({
-              title: '图片上传成功',
-              icon: 'success'
-            });
-          }
-        });
-      }
-    });
-  },
-
-  /**
-   * 预览图片
-   */
-  handlePreviewImage() {
-    wx.previewImage({
-      urls: [this.data.formData.image],
-      current: this.data.formData.image
-    });
-  },
-
-  /**
-   * 删除图片
-   */
-  handleDeleteImage() {
-    this.updateField('image', '');
-    this.updateField('imageUrl', '');
-  },
 
   /**
    * 保存草稿

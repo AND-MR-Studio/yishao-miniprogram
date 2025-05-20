@@ -14,9 +14,7 @@ Page({
     formData: {
       title: '',
       content: '',
-      truth: '',
-      image: '',
-      imageUrl: ''
+      truth: ''
     },
     // 表单验证状态 - 由MobX管理
     validation: {
@@ -33,16 +31,9 @@ Page({
     showCreateForm: false,
     showEmptyState: false,
 
-    // 喝汤次数 - 由MobX管理
-    drinkCount: 0,
-    maxDrinkCount: 10,
-
     // 草稿和已发布的汤 - 由MobX管理
     drafts: [],
     publishedSoups: [],
-
-    // 激励提示
-    showIncentiveToast: false,
 
     // 新建创作卡片标题输入
     createTitle: '',
@@ -75,7 +66,6 @@ Page({
         'validateForm',
         'resetForm',
         'submitForm',
-        'uploadImage',
         'showForm',
         'hideForm',
         'loadDrafts',
@@ -88,9 +78,6 @@ Page({
 
     // 加载草稿和已发布的汤
     this.loadData();
-
-    // 检查是否需要显示激励提示
-    this.checkIncentiveToast();
   },
 
   /**
@@ -110,24 +97,7 @@ Page({
     }
   },
 
-  /**
-   * 检查是否需要显示激励提示
-   */
-  checkIncentiveToast() {
-    // 如果喝汤次数小于3，显示激励提示
-    if (this.data.drinkCount < 3) {
-      this.setData({
-        showIncentiveToast: true
-      });
 
-      // 3秒后自动隐藏
-      setTimeout(() => {
-        this.setData({
-          showIncentiveToast: false
-        });
-      }, 3000);
-    }
-  },
 
   /**
    * 生命周期函数--监听页面显示
@@ -173,51 +143,7 @@ Page({
     this.updateField('truth', e.detail.value);
   },
 
-  /**
-   * 选择图片
-   */
-  handleChooseImage() {
-    wx.chooseMedia({
-      count: 1,
-      mediaType: ['image'],
-      sourceType: ['album', 'camera'],
-      camera: 'back',
-      success: (res) => {
-        const tempFilePath = res.tempFiles[0].tempFilePath;
 
-        // 更新临时图片路径
-        this.updateField('image', tempFilePath);
-
-        // 上传图片
-        this.uploadImage(tempFilePath).then(imageUrl => {
-          if (imageUrl) {
-            wx.showToast({
-              title: '图片上传成功',
-              icon: 'success'
-            });
-          }
-        });
-      }
-    });
-  },
-
-  /**
-   * 预览图片
-   */
-  handlePreviewImage() {
-    wx.previewImage({
-      urls: [this.data.formData.image],
-      current: this.data.formData.image
-    });
-  },
-
-  /**
-   * 删除图片
-   */
-  handleDeleteImage() {
-    this.updateField('image', '');
-    this.updateField('imageUrl', '');
-  },
 
   /**
    * 处理创建卡片标题输入
@@ -398,5 +324,22 @@ Page({
       title: '创建你的海龟汤',
       path: '/pages/upload/upload'
     };
+  },
+
+  /**
+   * 刷新页面数据
+   * 当导航栏左侧按钮点击时触发
+   */
+  onRefreshPage() {
+    console.log('刷新煮汤页面数据');
+    // 重新加载草稿和已发布的汤
+    this.loadData();
+
+    // 显示刷新提示
+    wx.showToast({
+      title: '数据已刷新',
+      icon: 'success',
+      duration: 1500
+    });
   }
 })

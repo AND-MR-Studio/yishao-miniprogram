@@ -18,8 +18,6 @@ class UploadStore {
     title: '',       // 标题
     content: '',     // 汤面内容
     truth: '',       // 汤底内容
-    image: '',       // 图片临时路径
-    imageUrl: '',    // 图片上传后的URL
   };
 
   // 表单验证状态
@@ -55,7 +53,6 @@ class UploadStore {
     makeAutoObservable(this, {
       // 标记异步方法为flow
       submitForm: flow,
-      uploadImage: flow,
       loadDrafts: flow,
       saveDraft: flow,
       loadPublishedSoups: flow,
@@ -150,8 +147,6 @@ class UploadStore {
       title: '',
       content: '',
       truth: '',
-      image: '',
-      imageUrl: '',
     };
 
     this.validation = {
@@ -217,7 +212,6 @@ class UploadStore {
         title: this.formData.title || '空白草稿',
         content: this.formData.content,
         truth: this.formData.truth,
-        image: this.formData.imageUrl,
         updateTime: new Date().toISOString()
       };
 
@@ -281,9 +275,7 @@ class UploadStore {
       this.formData = {
         title: draft.title,
         content: draft.content,
-        truth: draft.truth,
-        image: '',
-        imageUrl: draft.image
+        truth: draft.truth
       };
 
       // 显示创建表单
@@ -296,53 +288,7 @@ class UploadStore {
     }
   }
 
-  /**
-   * 上传图片
-   * @param {string} tempFilePath 临时文件路径
-   * @returns {Promise<string>} 上传后的图片URL
-   */
-  *uploadImage(tempFilePath) {
-    if (!tempFilePath) return '';
 
-    try {
-      this.isUploading = true;
-      this.uploadProgress = 0;
-
-      // 更新临时路径
-      this.formData.image = tempFilePath;
-
-      // 上传图片到服务器
-      const result = yield uploadFile({
-        url: api.asset.upload,
-        filePath: tempFilePath,
-        name: 'file',
-        formData: {
-          type: 'image',
-          name: `soup_image_${Date.now()}`,
-          description: `海龟汤图片 - ${this.formData.title || '未命名'}`,
-          compress: 'true'
-        }
-      });
-
-      if (result && result.success && result.data && result.data.url) {
-        // 更新图片URL
-        this.formData.imageUrl = result.data.url;
-        this.uploadProgress = 100;
-        return result.data.url;
-      } else {
-        throw new Error('图片上传失败');
-      }
-    } catch (error) {
-      console.error('上传图片失败:', error);
-      wx.showToast({
-        title: '图片上传失败',
-        icon: 'none'
-      });
-      return '';
-    } finally {
-      this.isUploading = false;
-    }
-  }
 
   /**
    * 提交表单创建海龟汤
@@ -362,7 +308,6 @@ class UploadStore {
         title: this.formData.title.trim(),
         content: this.formData.content.trim(),
         truth: this.formData.truth.trim(),
-        image: this.formData.imageUrl || '',
         soupType: 1, // DIY汤
       };
 
