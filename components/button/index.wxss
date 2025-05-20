@@ -273,6 +273,52 @@
   text-overflow: ellipsis;
 }
 
+/* 主要按钮样式 */
+.btn-primary {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 6rpx 20rpx;
+  gap: 8rpx;
+  width: 100%; /* 默认宽度，可通过属性覆盖 */
+  height: 88rpx; /* 默认高度，可通过属性覆盖 */
+  background: var(--color-accent, #5ce821);
+  border-radius: 30rpx;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+  margin: 0 auto;
+}
+
+.btn-primary:active {
+  transform: scale(0.95);
+  background: #4bc71a;
+  box-shadow: 0rpx 5rpx 10rpx rgba(4, 244, 77, 0.15);
+}
+
+.btn-primary.disabled {
+  background: rgba(92, 232, 33, 0.5);
+  box-shadow: none;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 主要按钮文本 */
+.btn-text-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #000000;
+  width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: 500;
+  font-size: 32rpx;
+}
+
 /* 开关容器 */
 .switch-item {
   display: flex;

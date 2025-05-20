@@ -16,13 +16,23 @@ class UploadStore {
     title: '',     // 标题
     content: '',   // 汤面内容
     truth: '',     // 汤底内容
+    tags: [],      // 标签（数组）
   };
+
+  // 预设标签池
+  tagPool = [
+    '悬疑', '推理', '恐怖', '灵异',
+    '科幻', '奇幻', '冒险', '历史',
+    '爱情', '喜剧', '悲剧', '犯罪',
+    '心理', '哲理', '社会', '日常'
+  ];
 
   // 表单验证状态
   validation = {
     titleError: '',
     contentError: '',
     truthError: '',
+    tagsError: '',
   };
 
   // 加载状态
@@ -76,6 +86,11 @@ class UploadStore {
     return this.formData.truth ? this.formData.truth.length : 0;
   }
 
+  // 已选标签数量
+  get tagsLength() {
+    return this.formData.tags ? this.formData.tags.length : 0;
+  }
+
   // 是否显示空态的计算属性
   get showEmptyState() {
     return this.publishedSoups.length === 0;
@@ -108,6 +123,35 @@ class UploadStore {
         this.validation[errorField] = '';
       }
     }
+  }
+
+  /**
+   * 添加标签
+   * @param {string} tag 要添加的标签
+   */
+  addTag(tag) {
+    // 如果标签已存在或已达到最大数量，不添加
+    if (this.formData.tags.includes(tag) || this.formData.tags.length >= 3) {
+      return;
+    }
+
+    // 添加标签
+    this.formData.tags.push(tag);
+
+    // 清除标签错误
+    this.validation.tagsError = '';
+  }
+
+  /**
+   * 移除标签
+   * @param {string} tag 要移除的标签
+   */
+  removeTag(tag) {
+    // 移除标签
+    this.formData.tags = this.formData.tags.filter(t => t !== tag);
+
+    // 清除标签错误
+    this.validation.tagsError = '';
   }
 
   /**
@@ -144,6 +188,12 @@ class UploadStore {
       isValid = false;
     }
 
+    // 验证标签
+    if (this.formData.tags.length > 3) {
+      this.validation.tagsError = '最多选择3个标签';
+      isValid = false;
+    }
+
     return isValid;
   }
 
@@ -155,12 +205,14 @@ class UploadStore {
       title: '',
       content: '',
       truth: '',
+      tags: [],
     };
 
     this.validation = {
       titleError: '',
       contentError: '',
       truthError: '',
+      tagsError: '',
     };
   }
 
@@ -182,9 +234,10 @@ class UploadStore {
       // 准备提交数据
       const soupData = {
         title: this.formData.title.trim(),
-        content: this.formData.content.trim(),
-        truth: this.formData.truth.trim(),
+        soup_surface: this.formData.content.trim(),
+        soup_bottom: this.formData.truth.trim(),
         soupType: 1, // DIY汤
+        tags: this.formData.tags
       };
 
       // 调用创建接口

@@ -133,10 +133,14 @@ Page({
    */
   handleTitleInput(e) {
     const title = e.detail.value;
+    // 更新页面数据
     this.setData({
       createTitle: title,
       createTitleLength: title.length
     });
+
+    // 同步更新到MobX store，确保跳转到create页面时能正确传递
+    this.updateField('title', title);
   },
 
   /**
@@ -153,9 +157,11 @@ Page({
       return;
     }
 
-    // 跳转到创建页面，并传递标题参数
+    // 跳转到创建页面
+    // 由于已经通过updateField更新了MobX store中的title，
+    // 不需要再通过URL参数传递，直接跳转即可
     wx.navigateTo({
-      url: `/pages/create/create${this.data.createTitle ? '?title=' + encodeURIComponent(this.data.createTitle) : ''}`
+      url: '/pages/create/create'
     });
   },
 
@@ -234,13 +240,6 @@ Page({
         wx.showToast({
           title: '创建成功',
           icon: 'success',
-          duration: 2000
-        });
-
-        // 显示获得喝汤机会的提示
-        wx.showToast({
-          title: '已获得20次喝汤机会',
-          icon: 'none',
           duration: 2000
         });
       } else {

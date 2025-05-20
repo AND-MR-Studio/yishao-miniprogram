@@ -1,8 +1,5 @@
 <!--pages/create/create.wxml - 海龟汤创建页面-->
 <view class="page">
-  <!-- 噪点效果 -->
-  <view class="noise-overlay"></view>
-
   <!-- 导航栏 -->
   <nav-bar title="创建海龟汤" showBack="{{true}}" bind:back="handleBack" />
 
@@ -58,23 +55,48 @@
         </view>
       </view>
 
+      <!-- 标签选择 -->
+      <view class="form-item">
+        <view class="form-label">标签 <text class="tag-hint">(最多选择3个)</text></view>
 
+        <!-- 已选标签显示区域 -->
+        <view class="selected-tags-container">
+          <view wx:if="{{selectedTags.length === 0}}" class="no-tags-selected">
+            请从下方选择标签
+          </view>
+          <block wx:for="{{selectedTags}}" wx:key="*this">
+            <view class="selected-tag">
+              <text>{{item}}</text>
+              <view class="tag-remove" bindtap="handleTagRemove" data-tag="{{item}}">×</view>
+            </view>
+          </block>
+        </view>
 
-      <!-- 占位，确保内容区域有足够的底部间距 -->
-      <view style="height: 150rpx;"></view>
+        <!-- 标签池 - 使用更简单的实现 -->
+        <view class="tag-pool">
+          <block wx:for="{{tagPool}}" wx:key="*this">
+            <view
+              class="tag-button {{selectedTags.indexOf(item) !== -1 ? 'selected' : ''}}"
+              bindtap="handleTagClick"
+              data-tag="{{item}}"
+            >{{item}}</view>
+          </block>
+        </view>
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="form-actions">
+        <custom-button
+          type="primary"
+          text="{{isSubmitting ? '提交中...' : '创建海龟汤'}}"
+          width="100%"
+          height="88rpx"
+          loading="{{isSubmitting}}"
+          disabled="{{isSubmitting}}"
+          bind:tap="handleSubmit"
+        />
+      </view>
     </view>
-  </view>
-  <!-- 底部固定按钮 -->
-  <view class="fixed-bottom-buttons">
-    <custom-button
-      type="primary"
-      text="{{isSubmitting ? '提交中...' : '创建海龟汤'}}"
-      width="100%"
-      height="88rpx"
-      loading="{{isSubmitting}}"
-      disabled="{{isSubmitting}}"
-      bind:tap="handleSubmit"
-    />
   </view>
 
   <!-- 登录提示弹窗 -->

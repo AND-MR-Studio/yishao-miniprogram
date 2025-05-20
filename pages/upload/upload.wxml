@@ -73,8 +73,8 @@
                 <view class="published-status">
                   <text class="status-tag status-{{item.status}}">
                     {{item.status === 'reviewing' ? '[审核中]' :
-                      item.status === 'published' ? '[已上架]' :
-                      '[被驳回]'}}
+                      item.status === 'published' ? '[已发布]' :
+                      '[已拒绝]'}}
                   </text>
                   <text class="published-title">{{item.title}}</text>
                 </view>
@@ -86,23 +86,11 @@
             </view>
           </block>
           <view class="empty-list" wx:else>
-            <text>快来创作你的第一碗海龟汤</text>
+            <image class="empty-illustration" src="/static/images/404.png" mode="aspectFit"></image>
+            <text class="empty-text">你完全不煮汤是吗？</text>
           </view>
         </view>
       </view>
-    </view>
-
-    <!-- 空态提示 -->
-    <view class="empty-state" wx:if="{{showEmptyState}}">
-      <image class="empty-illustration" src="/static/images/empty-pot.png" mode="aspectFit"></image>
-      <text class="empty-text">快来写第一碗！</text>
-      <custom-button
-        type="primary"
-        text="立即新建"
-        width="240rpx"
-        height="80rpx"
-        bind:tap="handleShowForm"
-      />
     </view>
   </view>
 

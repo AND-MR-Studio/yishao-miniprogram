@@ -5,7 +5,7 @@ Component({
    * 组件的属性列表
    */
   properties: {
-    // 按钮类型，light: 点亮，unlight: 未点亮，dark: 深色按钮，switch: 开关，radio: 单选按钮
+    // 按钮类型，light: 点亮，unlight: 未点亮，dark: 深色按钮，primary: 主要按钮，switch: 开关，radio: 单选按钮
     type: {
       type: String,
       value: 'unlight'
@@ -29,6 +29,16 @@ Component({
     show: {
       type: Boolean,
       value: true
+    },
+    // 是否禁用按钮（主要用于primary类型按钮）
+    disabled: {
+      type: Boolean,
+      value: false
+    },
+    // 是否显示加载状态（主要用于primary类型按钮）
+    loading: {
+      type: Boolean,
+      value: false
     },
     // 开关标签（仅在type为switch时有效）
     label: {

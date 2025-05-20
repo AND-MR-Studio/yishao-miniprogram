@@ -23,7 +23,15 @@ Page({
       truthError: ''
     },
     // 加载状态 - 由MobX管理
-    isSubmitting: false
+    isSubmitting: false,
+
+    // 本地标签数据 - 不使用MobX管理
+    selectedTags: [],
+    tagPool: [
+      '悬疑', '荒诞', '恐怖', '灵异',
+      '科幻', '奇幻',  '历史',
+      '爱情', '喜剧'
+    ]
   },
 
   /**
@@ -58,15 +66,11 @@ Page({
       }
     }
 
-
-
     // 如果有标题参数，则预填充标题输入框
-    if (options && options.title) {
+    if (options && options.title && (!this.data.formData || !this.data.formData.title)) {
       this.updateField('title', decodeURIComponent(options.title));
     }
   },
-
-
 
   /**
    * 生命周期函数--监听页面卸载
@@ -97,6 +101,53 @@ Page({
     this.updateField('truth', e.detail.value);
   },
 
+  /**
+   * 处理标签点击
+   * @param {Object} e 事件对象
+   */
+  handleTagClick(e) {
+    const tag = e.currentTarget.dataset.tag;
+    console.log('标签点击:', tag);
+
+    // 获取当前已选标签
+    const selectedTags = [...this.data.selectedTags];
+
+    // 如果标签已存在，不添加
+    if (selectedTags.includes(tag)) {
+      return;
+    }
+
+    // 如果已达到最大数量(3个)，不添加
+    if (selectedTags.length >= 3) {
+      wx.showToast({
+        title: '最多选择3个标签',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 添加标签
+    selectedTags.push(tag);
+
+    // 更新页面数据
+    this.setData({ selectedTags });
+  },
+
+  /**
+   * 处理标签删除
+   * @param {Object} e 事件对象
+   */
+  handleTagRemove(e) {
+    const tag = e.currentTarget.dataset.tag;
+    console.log('删除标签:', tag);
+
+    // 获取当前已选标签
+    const selectedTags = this.data.selectedTags.filter(t => t !== tag);
+
+    // 更新页面数据
+    this.setData({ selectedTags });
+  },
+
 
 
 
@@ -114,6 +165,18 @@ Page({
       }
       return;
     }
+
+    // 验证标签
+    if (this.data.selectedTags.length === 0) {
+      wx.showToast({
+        title: '请至少选择一个标签',
+        icon: 'none'
+      });
+      return;
+    }
+
+    // 将本地标签数据同步到formData
+    this.updateField('tags', this.data.selectedTags);
 
     // 提交表单
     this.submitForm().then(result => {

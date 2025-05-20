@@ -26,6 +26,24 @@
     </view>
   </view>
 </block>
+<block wx:elif="{{type === 'primary'}}">
+  <view class="jelly-effect-container">
+    <view class="btn-primary {{jellyAnimating ? 'jelly-effect' : ''}} {{disabled ? 'disabled' : ''}}"
+          style="width: {{width}}; height: {{height}};"
+          bindtap="{{!disabled ? 'handleTap' : ''}}">
+      <block wx:if="{{!loading}}">
+        <text class="btn-text-primary">{{text}}</text>
+      </block>
+      <block wx:else>
+        <view class="loading-dots">
+          <text class="dot">.</text>
+          <text class="dot">.</text>
+          <text class="dot">.</text>
+        </view>
+      </block>
+    </view>
+  </view>
+</block>
 <block wx:elif="{{type === 'confirm'}}">
   <view class="jelly-effect-container">
     <view class="btn-confirm {{jellyAnimating ? 'jelly-effect' : ''}}" bindtap="handleTap">
