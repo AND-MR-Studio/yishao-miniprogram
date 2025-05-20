@@ -62,8 +62,6 @@
 
   <!-- 提示模块组件 -->
   <tip-box
-    pageState="{{chatState || 'drinking'}}"
-    bind:close="onTipModuleClose"
     bind:visibleChange="onTipVisibleChange"
   ></tip-box>
 

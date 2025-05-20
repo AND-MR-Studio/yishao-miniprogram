@@ -47,44 +47,6 @@ const soupService = {
   },
 
   /**
-   * 获取以soupId为键的海龟汤对象
-   * 这种格式可以直接通过 soupMap[soupId].title 这样的方式访问属性
-   *
-   * @param {string|string[]|null} [soupId] 海龟汤ID或ID数组，如果不提供则获取所有海龟汤
-   * @returns {Promise<Object>} 以soupId为键的海龟汤对象映射
-   *
-   * @example
-   * // 获取所有汤面的映射
-   * const soupMap = await soupService.getSoupMap();
-   * // 访问特定汤面的属性
-   * const title = soupMap['local_001'].title;
-   * const truth = soupMap['local_001'].truth;
-   */
-  async getSoupMap(soupId) {
-    try {
-      let url = api.soup.map;
-
-      // 如果提供了ID参数，添加到查询字符串
-      if (soupId) {
-        if (Array.isArray(soupId)) {
-          url += `?id=${soupId.join(",")}`;
-        } else {
-          url += `?id=${soupId}`;
-        }
-      }
-
-      const response = await soupRequest({
-        url: url,
-        method: "GET",
-      });
-
-      return response.success ? response.data : {};
-    } catch (error) {
-      return {};
-    }
-  },
-
-  /**
    * 创建新海龟汤
    * @param {Object} soupData 海龟汤数据
    * @param {string} soupData.title 标题
@@ -126,44 +88,6 @@ const soupService = {
       return response ? response : null;
     } catch (error) {
       console.error("获取随机海龟汤失败:", error);
-      return null;
-    }
-  },
-
-  /**
-   * 通用方法：更新汤面交互状态（点赞/收藏）
-   * @param {string} soupId 海龟汤ID
-   * @param {string} type 交互类型（'like'/'favorite'）
-   * @returns {Promise<Object>} 交互结果
-   */
-  async updateInteractionStatus(soupId, type) {
-    if (!soupId) {
-      return null;
-    }
-    try {
-      // 根据交互类型确定API和参数
-      let url;
-      switch (type) {
-        case "like":
-          url = api.soup.like(soupId);
-          break;
-        case "favorite":
-          url = api.soup.favorite(soupId);
-          break;
-        case "unlike":
-          url = api.soup.unlike(soupId);
-          break;
-        case "unfavorite":
-          url = api.soup.unfavorite(soupId);
-          break;
-        default:
-          return Promise.reject("不支持的交互类型");
-      }
-
-      // 调用API
-      const response = await post("soup_status", { url: url });
-      return response;
-    } catch (error) {
       return null;
     }
   },
@@ -237,42 +161,6 @@ const soupService = {
         success: false,
         message: "收藏操作失败: " + (error.message || "未知错误")
       };
-    }
-  },
-
-  /**
-   * 获取相邻的海龟汤ID（上一个或下一个）
-   * @param {string} soupId 当前海龟汤ID
-   * @param {boolean} isNext 是否获取下一个，false表示获取上一个
-   * @returns {Promise<string>} 相邻的海龟汤ID
-   *
-   * @example
-   * // 获取下一个海龟汤ID
-   * const nextSoupId = await soupService.getAdjacentSoup(soupId, true);
-   *
-   * // 获取上一个海龟汤ID
-   * const prevSoupId = await soupService.getAdjacentSoup(soupId, false);
-   */
-  async getAdjacentSoup(soupId, isNext = true) {
-    if (!soupId) {
-      return null;
-    }
-
-    try {
-      // 根据最新接口契约，直接调用相应的API
-      const url = isNext
-        ? `${api.soup.base}${soupId}/next`
-        : `${api.soup.base}${soupId}/prev`;
-
-      const response = await soupRequest({
-        url: url,
-        method: "GET",
-      });
-
-      // 直接返回soupId
-      return response.success ? response.data : null;
-    } catch (error) {
-      return null;
     }
   },
 

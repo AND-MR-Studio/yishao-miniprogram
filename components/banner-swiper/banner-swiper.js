@@ -1,5 +1,5 @@
 // components/banner-swiper/banner-swiper.js
-const { requestOpen, asset_by_type_url } = require('../../config/api');
+const { requestOpen, api } = require('../../config/api');
 
 Component({
   /**
@@ -131,7 +131,7 @@ Component({
 
         // 从服务器获取banner数据
         const res = await requestOpen({
-          url: `${asset_by_type_url}banner?page=${page}`,
+          url: `${api.asset.byType}banner?page=${page}`,
           method: 'GET'
         });
 

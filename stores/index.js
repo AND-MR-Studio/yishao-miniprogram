@@ -5,6 +5,7 @@
  */
 const { rootStore } = require('./rootStore');
 const { CHAT_STATE } = require('./chatStore');
+const { TIP_STATE, tipConfig } = require('./tipStore');
 
 // 导出rootStore及其所有子Store
 module.exports = {
@@ -20,5 +21,7 @@ module.exports = {
   uploadStore: rootStore.uploadStore,
 
   // 导出常量
-  CHAT_STATE
+  CHAT_STATE,
+  TIP_STATE,
+  tipConfig
 };

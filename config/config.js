@@ -25,10 +25,12 @@ const config = {
   },
 }[wx.getAccountInfoSync().miniProgram.envVersion];
 
+
+
 /**
  * 全局配置
  */
 module.exports = {
   config,
-  memory: config.memory,
+  memory: config.memory
 };

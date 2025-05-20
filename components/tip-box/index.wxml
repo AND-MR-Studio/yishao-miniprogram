@@ -1,5 +1,5 @@
 <!--components/tip-box/index.wxml-->
-<view class="tip-box-container {{(visible || tipStore.visible) && !isPeeking ? 'visible' : 'hidden'}}">
+<view class="tip-box-container {{visible && !isPeeking ? 'visible' : 'hidden'}}">
   <!-- 内容区域 -->
   <view class="tip-content">
     <!-- 顶部GIF动画 -->
@@ -11,7 +11,7 @@
     <view class="text-container">
       <!-- 提示标题 -->
       <view class="text-title">
-        <text>{{title || tipTitle}}</text>
+        <text>{{title}}</text>
       </view>
       <!-- 提示内容 - 可滚动区域 -->
       <view class="tip-scroll-view">

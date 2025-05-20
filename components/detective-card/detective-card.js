@@ -16,7 +16,7 @@ Component({
     },
     defaultAvatarUrl: {
       type: String,
-      value: api.default_avatar_url
+      value: null
     },
     // 是否已经签到
     hasSignedIn: {

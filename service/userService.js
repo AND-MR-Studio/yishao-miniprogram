@@ -1,5 +1,5 @@
 // utils/userService.js
-const api = require('../config/api');
+const { userRequest, assetRequestOpen, uploadFile, api } = require('../config/api');
 
 // 定义常量
 const TOKEN_KEY = 'token'; // 使用token作为唯一的本地存储键
@@ -18,12 +18,12 @@ async function getUserAvatar(userId) {
   try {
     // 调用资源服务获取用户头像
     const config = {
-      url: api.asset_avatar_url + userId,
+      url: api.asset.avatar + userId,
       method: 'GET'
     };
 
     // 使用开放请求方法，不需要身份验证
-    const res = await api.assetRequestOpen(config);
+    const res = await assetRequestOpen(config);
 
     if (res.success && res.data && res.data.url) {
       return res.data.url;
@@ -52,12 +52,12 @@ function getUserInfo() {
     return new Promise((resolve, reject) => {
       // 调用后端接口获取用户信息
       const config = {
-        url: api.user_info_url,
+        url: api.user.info,
         method: 'GET'
       };
 
       // 使用userRequest方法，保持一致性
-      api.userRequest(config).then(res => {
+      userRequest(config).then(res => {
         if (res.success && res.data) {
           // 返回完整的后端数据，不在本地存储用户信息
           resolve(res.data);
@@ -160,8 +160,8 @@ async function updateAvatar(avatarUrl) {
     });
 
     // 使用资源服务上传头像
-    const result = await api.uploadFile({
-      url: api.asset_upload_url,
+    const result = await uploadFile({
+      url: api.asset.upload,
       filePath: avatarUrl,
       name: 'file',
       formData: {
@@ -224,14 +224,14 @@ function updateNickname(nickName) {
 
   // 上传到服务器，token会通过request.js自动添加到请求头
   const config = {
-    url: api.user_update_url,
+    url: api.user.update,
     method: 'POST',
     data: {
       nickName: nickName
     }
   };
 
-  return api.userRequest(config);
+  return userRequest(config);
 }
 
 /**
@@ -325,7 +325,7 @@ function login() {
       success: res => {
         // 发送 res.code 到后台换取 openId, sessionKey, unionId
         const config = {
-          url: api.user_login_url,
+          url: api.user.login,
           method: 'POST',
           data: {
             code: res.code,
@@ -335,7 +335,7 @@ function login() {
           }
         };
 
-        api.userRequest(config).then(res => {
+        userRequest(config).then(res => {
           if (res.success && res.data) {
             // 单独保存 token 到本地存储
             if (res.data.token) {
@@ -530,14 +530,14 @@ async function setUserInfo(userInfo) {
   // 上传到服务器，token会通过request.js自动添加到请求头
   // 如果昵称为空，后端会自动生成
   const config = {
-    url: api.user_update_url,
+    url: api.user.update,
     method: 'POST',
     data: {
       nickName: userInfo.nickName || ''
     }
   };
 
-  const res = await api.userRequest(config);
+  const res = await userRequest(config);
 
   if (res.success && res.data) {
     // 直接返回后端数据
@@ -564,14 +564,14 @@ async function updateViewedSoup(soupId) {
   try {
     // 调用后端接口更新用户浏览过的汤
     const config = {
-      url: api.user_viewed_soup_url,
+      url: api.user.viewedSoup,
       method: 'POST',
       data: {
         soupId: soupId
       }
     };
 
-    const res = await api.userRequest(config);
+    const res = await userRequest(config);
     return res;
   } catch (error) {
     // 浏览记录更新失败不影响用户体验，返回静默失败
@@ -598,14 +598,14 @@ async function updateAnsweredSoup(soupId) {
   try {
     // 调用后端接口更新用户回答过的汤
     const config = {
-      url: api.user_answered_soup_url,
+      url: api.user.answeredSoup,
       method: 'POST',
       data: {
         soupId: soupId
       }
     };
 
-    const res = await api.userRequest(config);
+    const res = await userRequest(config);
     return res;
   } catch (error) {
     // 回答记录更新失败不影响用户体验，返回静默失败
@@ -634,10 +634,10 @@ async function updateSoupInteraction(soupId, status, type) {
     let url, data;
 
     if (type === 'favorite') {
-      url = api.user_favorite_soup_url;
+      url = api.user.favoriteSoup;
       data = { soupId, isFavorite: status };
     } else if (type === 'like') {
-      url = api.user_liked_soup_url;
+      url = api.user.likedSoup;
       data = { soupId, isLike: status };
     } else {
       return Promise.reject('不支持的交互类型');
@@ -650,7 +650,7 @@ async function updateSoupInteraction(soupId, status, type) {
       data
     };
 
-    const res = await api.userRequest(config);
+    const res = await userRequest(config);
     return res;
   } catch (error) {
     // 交互记录更新失败不影响用户体验，返回静默失败
@@ -755,14 +755,14 @@ async function updateCreatedSoup(soupId) {
   try {
     // 调用后端接口更新用户创建的汤
     const config = {
-      url: api.user_created_soup_url,
+      url: api.user.createdSoup,
       method: 'POST',
       data: {
         soupId: soupId
       }
     };
 
-    const res = await api.userRequest(config);
+    const res = await userRequest(config);
     return res;
   } catch (error) {
     // 创建记录更新失败不影响用户体验，返回静默失败
@@ -788,14 +788,14 @@ async function updateSolvedSoup(soupId) {
   try {
     // 调用后端接口更新用户已解决的汤
     const config = {
-      url: api.user_solved_soup_url,
+      url: api.user.solvedSoup,
       method: 'POST',
       data: {
         soupId: soupId
       }
     };
 
-    const res = await api.userRequest(config);
+    const res = await userRequest(config);
 
     // 如果成功且有升级，显示升级提示
     if (res.success && res.data && res.data.levelUp) {

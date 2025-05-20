@@ -14,7 +14,7 @@ Page({
   data: {
     userInfo: null,
     detectiveInfo: null, // 完整的侦探信息，用于传递给detective-card组件
-    defaultAvatarUrl: api.default_avatar_url,
+    defaultAvatarUrl: api.defaults.avatar,
     buttonConfig: {
       type: 'light',
       text: '登录'
