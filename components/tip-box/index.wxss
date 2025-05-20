@@ -31,6 +31,15 @@
   }
 }
 
+/* 新增滑入动画 */
+@keyframes slideIn {
+  0% {opacity:0; transform:translateY(-16rpx);}
+  100% {opacity:1; transform:translateY(0);}
+}
+
+.tip-enter {animation: slideIn 300ms ease-out both;}
+.tip-leave {animation: slideIn 300ms ease-in reverse both;}
+
 /* 提示模块容器 */
 .tip-box-container {
   position: fixed;

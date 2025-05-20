@@ -100,6 +100,21 @@ class TipStore {
     return this.rootStore.userId;
   }
 
+  // 提示可见性计算属性
+  get visible() {
+    return this.state !== TIP_STATE.HIDDEN;
+  }
+
+  // 是否正在切换内容
+  get isSwitchingContent() {
+    return this.state === TIP_STATE.TRANSITIONING;
+  }
+
+  // 是否显示闲置提示
+  get showingIdleTip() {
+    return this.state === TIP_STATE.IDLE;
+  }
+
   // ===== Action方法 =====
   /**
    * 显示提示

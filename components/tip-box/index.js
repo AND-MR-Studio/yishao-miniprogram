@@ -8,7 +8,9 @@ Component({
    */
   data: {
     // 当前显示的提示内容
-    currentTipContent: []
+    currentTipContent: [],
+    // 内容是否正在切换中
+    isContentSwitching: false
   },
 
   /**
@@ -78,28 +80,35 @@ Component({
   methods: {
     // 执行滚轮动画切换提示内容
     animateTipChange(newContent) {
-      // 标记当前内容为滚出状态
-      const oldContent = this.data.currentTipContent.map(item => {
-        return typeof item === 'string'
-          ? { text: item, isScrollingOut: true }
-          : { ...item, isScrollingOut: true };
-      });
-
+      // 先标记当前内容为滚出状态
       this.setData({
-        currentTipContent: oldContent
+        isContentSwitching: true,
+        currentTipContent: this.data.currentTipContent.map(item => {
+          return typeof item === 'string'
+            ? { text: item, isScrollingOut: true }
+            : { ...item, isScrollingOut: true };
+        })
       });
 
-      // 等待滚出动画完成后，设置新内容
-      setTimeout(() => {
+      // 使用CSS动画完成后的回调来设置新内容
+      // 监听一个动画结束事件，而不是使用setTimeout
+      this.animationEndCallback = () => {
         // 设置新内容（从下方滚入）
         this.setData({
+          isContentSwitching: false,
           currentTipContent: newContent.map(item => {
             return typeof item === 'string'
               ? { text: item, isScrollingOut: false }
               : { ...item, isScrollingOut: false };
           })
         });
-      }, 500);
+
+        // 移除监听器，避免内存泄漏
+        this.animationEndCallback = null;
+      };
+
+      // 300ms后执行回调，与CSS动画时长匹配
+      setTimeout(this.animationEndCallback, 300);
     }
   }
 });

@@ -1,5 +1,5 @@
 <!--components/tip-box/index.wxml-->
-<view class="tip-box-container {{visible && !isPeeking ? 'visible' : 'hidden'}}">
+<view class="tip-box-container {{state !== 'HIDDEN' && !isPeeking ? 'visible' : 'hidden'}} {{state !== 'HIDDEN' && !isPeeking ? 'tip-enter' : 'tip-leave'}}">
   <!-- 内容区域 -->
   <view class="tip-content">
     <!-- 顶部GIF动画 -->
@@ -19,7 +19,7 @@
           <view
             wx:for="{{currentTipContent}}"
             wx:key="index"
-            class="text-line {{item.isScrollingOut ? 'scrolling-out' : ''}}"
+            class="text-line {{item.isScrollingOut ? 'scrolling-out' : ''}} {{isContentSwitching ? 'tip-leave' : 'tip-enter'}}"
             style="animation-delay: {{index * 100}}ms;">
             <text>{{item.text || item}}</text>
           </view>

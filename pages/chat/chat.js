@@ -4,7 +4,7 @@
  */
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { rootStore, chatStore, tipStore, CHAT_STATE } = require('../../stores/index');
+const { rootStore, chatStore, tipStore, CHAT_STATE, TIP_STATE, tipConfig } = require('../../stores/index');
 const userService = require('../../service/userService');
 
 Page({
@@ -47,8 +47,8 @@ Page({
       // 创建tipStore绑定 - 管理提示信息状态
       this.tipStoreBindings = createStoreBindings(this, {
         store: tipStore,
-        fields: ['visible', 'title', 'content'],
-        actions: ['showTip', 'hideTip', 'setDefaultTip']
+        fields: ['visible', 'title', 'content', 'state'],
+        actions: ['showTip', 'hideTip', 'setDefaultTip', 'showSpecialTip']
       });
 
       // 获取页面参数
@@ -75,8 +75,8 @@ Page({
         dialogId: dialogId
       });
 
-      // 确保tipStore的visible状态为true
-      tipStore.visible = true;
+      // 确保tipStore显示默认提示
+      tipStore.showTip(tipConfig.defaultTitle, tipConfig.defaultContent, 0, TIP_STATE.DEFAULT);
 
       // 初始化对话
       if (dialogId) {
