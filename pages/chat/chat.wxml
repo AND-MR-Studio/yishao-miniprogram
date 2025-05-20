@@ -61,11 +61,11 @@
   />
 
   <!-- 提示模块组件 -->
-  <tip-module
+  <tip-box
     pageState="{{chatState || 'drinking'}}"
     bind:close="onTipModuleClose"
     bind:visibleChange="onTipVisibleChange"
-  ></tip-module>
+  ></tip-box>
 
   <!-- 新用户引导层组件 -->
   <guide-overlay

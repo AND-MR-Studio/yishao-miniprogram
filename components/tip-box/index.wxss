@@ -1,4 +1,4 @@
-/* components/tip-module/index.wxss */
+/* components/tip-box/index.wxss */
 @import "../../styles/animation.wxss";
 
 /* 滚轮动画 - 从下向上滚动 */
@@ -32,7 +32,7 @@
 }
 
 /* 提示模块容器 */
-.tip-module-container {
+.tip-box-container {
   position: fixed;
   top: 200rpx; /* 调整顶部位置，确保在导航栏下方 */
   left: 0;
@@ -48,20 +48,18 @@
 }
 
 /* 可见状态 */
-.tip-module-container.visible {
+.tip-box-container.visible {
   opacity: 1;
   transform: translateY(0);
   pointer-events: auto;
 }
 
 /* 隐藏状态 */
-.tip-module-container.hidden {
+.tip-box-container.hidden {
   opacity: 0;
   transform: translateY(-50rpx);
   pointer-events: none;
 }
-
-
 
 /* 内容区域 */
 .tip-content {
@@ -146,5 +144,3 @@
   top: 0;
   left: 0;
 }
-
-

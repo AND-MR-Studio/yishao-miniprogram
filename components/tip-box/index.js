@@ -1,4 +1,4 @@
-// components/tip-module/index.js
+// components/tip-box/index.js
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { tipStore, chatStore } = require('../../stores/index');
 
