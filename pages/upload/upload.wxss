@@ -83,7 +83,7 @@
   padding: 20rpx 24rpx;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   display: flex;
-  justify-content: space-between;
+  justify-content: left;
   align-items: center;
 }
 
@@ -94,7 +94,7 @@
 }
 
 .card-badge {
-  background: linear-gradient(to right, #29D26D, #8C5BFF);
+  background: var(--color-primary);
   color: white;
   font-size: 22rpx;
   padding: 4rpx 12rpx;

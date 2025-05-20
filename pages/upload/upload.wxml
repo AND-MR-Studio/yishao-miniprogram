@@ -64,7 +64,7 @@
       <view class="card published-card">
         <view class="card-header">
           <text class="card-title">我创作的汤</text>
-          <text class="card-badge" wx:if="{{publishedSoups.length}}">{{publishedSoups.length}}</text>
+          <text class="card-badge">{{createdSoupCount}}</text>
         </view>
         <view class="card-content">
           <block wx:if="{{publishedSoups.length > 0}}">

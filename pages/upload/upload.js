@@ -31,6 +31,9 @@ Page({
     // 已发布的汤 - 由MobX管理
     publishedSoups: [],
 
+    // 用户创建的汤总数 - 从userinfo.createsoup获取
+    createdSoupCount: 0,
+
     // 新建创作卡片标题输入
     createTitle: '',
     createTitleLength: 0
@@ -76,9 +79,39 @@ Page({
       // 加载已发布的汤
       if (rootStore.isLoggedIn) {
         await this.loadPublishedSoups();
+
+        // 获取用户信息，更新创建的汤数量
+        this.updateCreatedSoupCount();
       }
     } catch (error) {
       console.error('加载数据失败:', error);
+    }
+  },
+
+  /**
+   * 更新用户创建的汤数量
+   */
+  updateCreatedSoupCount() {
+    try {
+      // 检查用户是否已登录
+      if (!rootStore.isLoggedIn) {
+        this.setData({ createdSoupCount: 0 });
+        return;
+      }
+
+      // 从rootStore获取用户信息
+      const userInfo = wx.getStorageSync('userInfo');
+
+      // 更新创建的汤数量
+      if (userInfo && userInfo.creationCount !== undefined) {
+        // 使用creationCount字段
+        this.setData({ createdSoupCount: userInfo.creationCount || 0 });
+      } else {
+        this.setData({ createdSoupCount: 0 });
+      }
+    } catch (error) {
+      console.error('获取用户创建的汤数量失败:', error);
+      this.setData({ createdSoupCount: 0 });
     }
   },
 
