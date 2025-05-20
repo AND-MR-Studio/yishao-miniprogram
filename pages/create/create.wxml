@@ -10,7 +10,7 @@
         <view class="form-label">标题</view>
         <input
           class="form-input {{validation.titleError ? 'input-error' : ''}}"
-          placeholder="请输入标题（15字以内）"
+          placeholder="示例：神秘来电 | 一个简短不剧透的标题"
           maxlength="15"
           value="{{formData.title}}"
           bindinput="handleTitleInput"
@@ -26,7 +26,7 @@
         <view class="form-label">汤面内容</view>
         <textarea
           class="form-textarea {{validation.contentError ? 'input-error' : ''}}"
-          placeholder="请输入汤面内容（谜题描述，100字以内）"
+          placeholder="示例：她每天同一时间都会的无声电话💡 请描述一个引人入胜的谜题情境，引发读者的好奇心。"
           maxlength="100"
           value="{{formData.content}}"
           bindinput="handleContentInput"
