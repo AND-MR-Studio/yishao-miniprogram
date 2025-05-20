@@ -97,12 +97,7 @@ Page({
 
     // 每次页面显示时重新加载数据
     this.loadData();
-  },
 
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow() {
     // 检查是否有草稿
     this.checkDraft();
   },

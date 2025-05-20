@@ -307,7 +307,7 @@
 .create-card-tip {
   font-size: 26rpx;
   color: rgba(255, 255, 255, 0.8);
-  margin-top: 25rpx;
+  margin-top: 50rpx;
   text-align: center;
   font-weight: 300;
 }

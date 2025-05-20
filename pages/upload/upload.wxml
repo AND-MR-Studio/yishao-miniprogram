@@ -54,7 +54,7 @@
               </view>
 
               <!-- 小提示文本 -->
-              <view class="create-card-tip">创作海龟汤可获得额外喝汤机会</view>
+              <view class="create-card-tip">创作海龟汤可获得额外喝汤次数，多多煮汤吧~</view>
             </view>
           </view>
         </view>

@@ -1,4 +1,4 @@
-<!--components/button/index.wxml-->
+<!--components/custom-button/index.wxml-->
 <block wx:if="{{type === 'switch'}}">
   <view class="switch-item">
     <view class="item-label">{{label}}</view>
@@ -21,7 +21,7 @@
 </block>
 <block wx:elif="{{type === 'dark'}}">
   <view class="jelly-effect-container">
-    <view class="btn-dark {{jellyAnimating ? 'jelly-effect' : ''}}" style="width: {{width}}; height: {{height}};" bindtap="handleTap">
+    <view class="btn-dark {{jellyAnimating ? 'jelly-effect' : ''}}" bindtap="handleTap">
       <text class="btn-text-dark">{{text}}</text>
     </view>
   </view>
@@ -29,7 +29,6 @@
 <block wx:elif="{{type === 'primary'}}">
   <view class="jelly-effect-container">
     <view class="btn-primary {{jellyAnimating ? 'jelly-effect' : ''}} {{disabled ? 'disabled' : ''}}"
-          style="width: {{width}}; height: {{height}};"
           bindtap="{{!disabled ? 'handleTap' : ''}}">
       <block wx:if="{{!loading}}">
         <text class="btn-text-primary">{{text}}</text>
@@ -53,7 +52,11 @@
 </block>
 <block wx:elif="{{type === 'unlight'}}">
   <view class="jelly-effect-container">
-    <view class="btn-unlight {{animationClass}} {{jellyAnimating ? 'jelly-effect' : ''}}" style="{{animationStyle}}; width: {{width}}; height: {{height}};" bindtap="handleTap" bindanimationend="handleAnimationEnd" wx:if="{{show}}">
+    <view class="btn-unlight {{animationClass}} {{jellyAnimating ? 'jelly-effect' : ''}}"
+          style="{{animationStyle}}"
+          bindtap="handleTap"
+          bindanimationend="handleAnimationEnd"
+          wx:if="{{show}}">
       <text class="btn-text-normal">{{text}}</text>
     </view>
   </view>
@@ -62,8 +65,8 @@
   <view class="btn-container"
         bindtap="handleTap"
         wx:if="{{show}}">
-    <view class="btn-light {{animationClass}} {{jellyAnimating ? 'jelly-effect' : ''}}"
-          style="{{animationStyle}}; width: {{width}}; height: {{height}};"
+    <view class="btn-light {{animationClass}} {{jellyAnimating ? 'jelly-effect' : ''}} {{loading ? 'loading' : ''}}"
+          style="{{animationStyle}}"
           bindanimationend="handleAnimationEnd">
       <block wx:if="{{!loading}}">
         <text class="btn-text-light">{{text}}</text>

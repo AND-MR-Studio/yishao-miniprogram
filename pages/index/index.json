@@ -2,7 +2,7 @@
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
     "soup-display": "/components/soup-display/soup-display",
-    "custom-button": "/components/button/index",
+    "custom-button": "/components/custom-button/index",
     "start-soup-button": "/components/start-soup-button/index",
     "popup": "/components/popup/index",
     "guide-overlay": "/components/guide-overlay/guide-overlay"

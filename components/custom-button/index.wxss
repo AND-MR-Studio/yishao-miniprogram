@@ -1,19 +1,19 @@
-/* components/button/index.wxss */
+/* components/custom-button/index.wxss */
 @import "../../styles/animation.wxss";
 
 /* 呼吸动画 */
 @keyframes breathing {
   0% {
     transform: scale(1);
-    box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+    box-shadow: 0rpx 8rpx 16rpx rgba(64, 197, 86, 0.3);
   }
   50% {
-    transform: scale(1.05);
-    box-shadow: 0rpx 12rpx 24rpx rgba(4, 244, 77, 0.25);
+    transform: scale(1.03);
+    box-shadow: 0rpx 10rpx 20rpx rgba(64, 197, 86, 0.4);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+    box-shadow: 0rpx 8rpx 16rpx rgba(64, 197, 86, 0.3);
   }
 }
 
@@ -30,57 +30,84 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   width: 100%;
-  height: 120rpx;
+  min-height: 120rpx;
   overflow: visible;
+  box-sizing: border-box;
 }
 
 /* 点亮按钮 */
 .btn-light {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
+  flex-direction: row;
   align-items: center;
-  padding: 13rpx 0rpx;
-  gap: 10rpx;
-  width: 100rpx;
-  height: 56rpx;
-  background:var(--color-accent);
-  box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
-  border-radius: 100rpx;
+  justify-content: center; /* 文字居中 */
+  padding: 18rpx 80rpx; /* 内边距 */
+  width: 100%; /* 宽度 */
+  max-width: 500rpx;
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light, #8dff6b)); /* 绿色渐变背景 */
+  border-radius: 45rpx; /* 圆角 */
+  box-shadow: 0rpx 8rpx 16rpx rgba(64, 197, 86, 0.3),
+              inset 0 1px 2px rgba(255, 255, 255, 0.2); /* 增强阴影效果 */
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
+  box-sizing: border-box;
   /* 应用呼吸动画 */
   animation: breathing 4s ease-in-out infinite;
 }
 
+/* 按钮加载状态样式 */
+.btn-light.loading {
+  width: 120rpx;
+  height: 120rpx;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0rpx 8rpx 16rpx rgba(64, 197, 86, 0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* 停止呼吸动画 */
+  animation: none;
+}
+
 /* 点亮按钮文本 */
 .btn-text-light {
-  composes: text-mincho-sm;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: #000000;
+  color: rgb(0, 0, 0); /* 黑色文字 */
+  font-size: 34rpx; /* 字体大小 */
+  font-weight: normal; /* 加粗 */
 }
 
 /* 未点亮按钮 */
 .btn-unlight {
   display: flex;
-  flex-direction: row; /* 改为横向排列 */
+  flex-direction: row; /* 横向排列 */
   justify-content: center;
   align-items: center;
-  padding: 6rpx 20rpx; /* 调整内边距与primary按钮一致 */
-  gap: 8rpx;
-  width: 100%; /* 默认宽度，可通过属性覆盖 */
-  height: 88rpx; /* 默认高度，可通过属性覆盖 */
+  padding: 18rpx 50rpx; /* 增大内边距 */
+  gap: 10rpx;
+  width: 70%; /* 与light按钮保持一致 */
+  max-width: 500rpx;
+  min-width: 240rpx; /* 确保最小宽度 */
   border: 1rpx solid rgba(255, 255, 255, 0.3);
-  border-radius: 30rpx;
+  border-radius: 45rpx; /* 增大圆角 */
   transition: all 0.2s ease;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.3); /* 稍微加深背景 */
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2); /* 增强阴影 */
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-unlight:active {
@@ -95,100 +122,14 @@
   align-items: center;
   justify-content: center;
   text-align: center;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgb(127, 127, 127);
   width: 100%;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
   font-weight: 500;
-  font-size: 28rpx;
+  font-size: 28rpx; /* 增大字体大小 */
   text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
-}
-
-/* 标签切换器样式 */
-.tab-switcher {
-  position: fixed;
-  top: 180rpx; /* 位置固定在顶部，留出导航栏空间 */
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  z-index: 10;
-  padding: 20rpx 0;
-}
-
-/* 标签容器 */
-.tab-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 80%;
-  height: 70rpx;
-  background: rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(20rpx);
-  -webkit-backdrop-filter: blur(20rpx);
-  border-radius: 35rpx;
-  border: 1rpx solid rgba(209, 209, 209, 0.1);
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.4);
-  overflow: hidden;
-  position: relative;
-  padding: 2rpx;
-}
-
-/* 标签样式 */
-.tab {
-  flex: 1;
-  height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  transition: all 0.3s ease;
-  z-index: 1;
-  position: relative;
-  overflow: hidden;
-  margin: 4rpx;
-  border-radius: 30rpx;
-}
-
-/* 标签文本 */
-.tab-text {
-  font-size: 24rpx;
-  color: var(--color-text-disabled);
-  transition: all 0.3s ease;
-  z-index: 2;
-}
-
-/* 激活标签的文本 */
-.tab.active .tab-text {
-  color: var(--color-text-primary);
-  font-weight: normal;
-}
-
-/* 激活的标签背景 */
-.tab.active {
-  background: var(--color-primary);
-  opacity: 0.6;
-  border-radius: 30rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.5);
-}
-
-/* 未解决数量徽章 */
-.badge {
-  position: absolute;
-  right: -6rpx;
-  min-width: 32rpx;
-  height: 32rpx;
-  padding: 0 6rpx;
-  background: var(--color-primary-light);
-  border-radius: 16rpx;
-  font-size: 20rpx;
-  color: var(--color-text-secondary);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
-  z-index: 3;
 }
 
 /* 确定类型按钮 - 玻璃拟物感样式 */
@@ -421,35 +362,55 @@
   text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
 }
 
-/* 字体大小选择组合样式 */
-.font-size-setting {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 20rpx;
-  height: 134rpx;
-}
-
-.font-size-label {
-  composes: text-body-md;
-  width: 100%;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
-}
-
-.font-size-options {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0;
-  width: 100%;
-  height: 48rpx;
-}
-
 /* 使用公共果冻动画类 - 只应用于特定类型的按钮，不包括light和unlight */
 .btn-confirm.jelly-animate,
 .btn-dark.jelly-animate,
 .switch.jelly-animate,
 .radio.jelly-animate {
   animation: jelly-animation 0.6s var(--transition-ease);
+}
+
+/* 加载中动画样式 */
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.loading-dots .dot {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #000000;
+  opacity: 0;
+  animation: dot-animation 1.4s infinite;
+  margin: 0 -4rpx;
+}
+
+.loading-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-animation {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }

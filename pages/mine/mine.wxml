@@ -51,8 +51,6 @@
         <button-component
           type="{{userInfo ? 'unlight' : 'light'}}"
           text="{{userInfo ? '退出登录' : '微信一键登录'}}"
-          width="500rpx"
-          height="70rpx"
           bind:tap="{{userInfo ? 'handleLogout' : 'handleLogin'}}"
         />
       </view>
@@ -104,8 +102,6 @@
         <button-component
           type="light"
           text="确认信息"
-          width="100%"
-          height="88rpx"
           bind:tap="confirmUserInfo"
         />
         <view class="skip-btn" bindtap="skipUserInfo">暂不设置</view>

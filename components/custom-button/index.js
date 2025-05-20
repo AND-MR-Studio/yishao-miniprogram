@@ -1,4 +1,4 @@
-// components/button/index.js
+// components/custom-button/index.js
 Component({
 
   /**
@@ -69,16 +69,6 @@ Component({
     groupName: {
       type: String,
       value: ''
-    },
-    // 宽度（可选，主要用于dark类型按钮）
-    width: {
-      type: String,
-      value: 'auto'
-    },
-    // 高度（可选，主要用于dark类型按钮）
-    height: {
-      type: String,
-      value: 'auto'
     }
   },
 

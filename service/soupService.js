@@ -90,8 +90,6 @@ const soupService = {
    * @param {string} soupData.title 标题
    * @param {string} soupData.content 汤面内容
    * @param {string} soupData.truth 汤底
-   * @param {string} [soupData.image] 图片URL
-   * @param {number} [soupData.soupType] 海龟汤类型，0表示预制汤，1表示DIY汤
    * @param {string[]} [soupData.tags] 海龟汤标签数组（可包含多个标签）
    * @returns {Promise<Object>} 创建的海龟汤数据
    */
@@ -128,29 +126,6 @@ const soupService = {
       return response ? response : null;
     } catch (error) {
       console.error("获取随机海龟汤失败:", error);
-      return null;
-    }
-  },
-
-  /**
-   * 批量删除海龟汤
-   * @param {string[]} soupIds 海龟汤ID数组
-   * @returns {Promise<Object>} 删除结果
-   */
-  async deleteSoups(soupIds) {
-    if (!Array.isArray(soupIds) || soupIds.length === 0) {
-      console.error("批量删除海龟汤失败: 无效的ID数组");
-      return null;
-    }
-
-    try {
-      const response = await soupRequest({
-        url: `${api.soup.base}?ids=${soupIds.join(",")}`,
-        method: "DELETE",
-      });
-      return response.success ? response.data : null;
-    } catch (error) {
-      console.error("批量删除海龟汤失败:", error);
       return null;
     }
   },

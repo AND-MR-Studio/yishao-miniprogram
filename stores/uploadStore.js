@@ -323,7 +323,6 @@ class UploadStore {
         title: this.formData.title.trim(),
         soup_surface: this.formData.content.trim(),
         soup_bottom: this.formData.truth.trim(),
-        soupType: 1, // DIY汤
         tags: this.formData.tags
       };
 
