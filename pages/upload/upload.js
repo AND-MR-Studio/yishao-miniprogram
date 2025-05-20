@@ -24,15 +24,11 @@ Page({
     },
     // 加载状态 - 由MobX管理
     isSubmitting: false,
-    isUploading: false,
-    uploadProgress: 0,
 
     // 页面状态 - 由MobX管理
-    showCreateForm: false,
     showEmptyState: false,
 
-    // 草稿和已发布的汤 - 由MobX管理
-    drafts: [],
+    // 已发布的汤 - 由MobX管理
     publishedSoups: [],
 
     // 新建创作卡片标题输入
@@ -51,14 +47,10 @@ Page({
         'formData',
         'validation',
         'isSubmitting',
-        'isUploading',
-        'uploadProgress',
         'titleLength',
         'contentLength',
         'truthLength',
-        'showCreateForm',
         'showEmptyState',
-        'drafts',
         'publishedSoups'
       ],
       actions: [
@@ -66,17 +58,11 @@ Page({
         'validateForm',
         'resetForm',
         'submitForm',
-        'showForm',
-        'hideForm',
-        'loadDrafts',
-        'saveDraft',
-        'deleteDraft',
-        'editDraft',
         'loadPublishedSoups'
       ]
     });
 
-    // 加载草稿和已发布的汤
+    // 加载已发布的汤
     this.loadData();
   },
 
@@ -85,9 +71,6 @@ Page({
    */
   async loadData() {
     try {
-      // 加载草稿
-      await this.loadDrafts();
-
       // 加载已发布的汤
       if (rootStore.isLoggedIn) {
         await this.loadPublishedSoups();
@@ -162,16 +145,11 @@ Page({
   handleShowForm() {
     // 检查用户是否已登录
     if (!rootStore.isLoggedIn) {
-      wx.showModal({
-        title: '提示',
-        content: '请先登录后再创建海龟汤',
-        showCancel: false,
-        success: () => {
-          wx.switchTab({
-            url: '/pages/mine/mine'
-          });
-        }
-      });
+      // 显示登录提示弹窗
+      const loginPopup = this.selectComponent("#loginPopup");
+      if (loginPopup) {
+        loginPopup.show();
+      }
       return;
     }
 
@@ -182,64 +160,23 @@ Page({
   },
 
   /**
-   * 保存草稿
+   * 处理登录弹窗确认按钮点击事件
    */
-  handleSaveDraft() {
-    this.saveDraft().then(result => {
-      if (result.success) {
-        wx.showToast({
-          title: '草稿保存成功',
-          icon: 'success'
-        });
-      } else {
-        wx.showToast({
-          title: result.message || '保存失败',
-          icon: 'none'
-        });
-      }
+  onLoginConfirm() {
+    // 跳转到个人中心页面
+    wx.switchTab({
+      url: "/pages/mine/mine",
     });
   },
 
   /**
-   * 删除草稿
+   * 处理登录弹窗取消按钮点击事件
    */
-  handleDeleteDraft(e) {
-    const draftId = e.currentTarget.dataset.id;
-
-    wx.showModal({
-      title: '提示',
-      content: '确定要删除这个草稿吗？',
-      success: (res) => {
-        if (res.confirm) {
-          const result = this.deleteDraft(draftId);
-
-          if (result.success) {
-            wx.showToast({
-              title: '删除成功',
-              icon: 'success'
-            });
-          } else {
-            wx.showToast({
-              title: result.message || '删除失败',
-              icon: 'none'
-            });
-          }
-        }
-      }
-    });
+  onLoginCancel() {
+    // 不做任何处理，弹窗会自动关闭
   },
 
-  /**
-   * 编辑草稿
-   */
-  handleEditDraft(e) {
-    const draftId = e.currentTarget.dataset.id;
 
-    // 跳转到创建页面，并传递草稿ID
-    wx.navigateTo({
-      url: `/pages/create/create?draftId=${draftId}`
-    });
-  },
 
   /**
    * 查看已发布的汤
@@ -321,7 +258,7 @@ Page({
    */
   onShareAppMessage() {
     return {
-      title: '创建你的海龟汤',
+      title: '舀一勺谜题，熬一锅真相。随时随地和AI玩推理解谜~',
       path: '/pages/upload/upload'
     };
   },
@@ -332,14 +269,7 @@ Page({
    */
   onRefreshPage() {
     console.log('刷新煮汤页面数据');
-    // 重新加载草稿和已发布的汤
+    // 重新加载已发布的汤
     this.loadData();
-
-    // 显示刷新提示
-    wx.showToast({
-      title: '数据已刷新',
-      icon: 'success',
-      duration: 1500
-    });
   }
 })

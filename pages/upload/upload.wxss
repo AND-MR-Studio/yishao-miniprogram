@@ -6,7 +6,7 @@
   width: 100%;
   min-height: 100vh;
   background-color: var(--color-background);
-  position: relative;
+  position: fixed;
   overflow-x: hidden;
   padding-bottom: 40rpx;
   /* 添加渐变背景 */
@@ -373,20 +373,9 @@
   font-weight: 300;
 }
 
-/* 草稿箱卡片样式 */
-.drafts-card {
-  grid-column: 1;
-  grid-row: 2;
-  background: linear-gradient(135deg, rgba(10, 20, 40, 0.7), rgba(41, 210, 109, 0.05));
-  min-height: 300rpx; /* 确保卡片有足够高度 */
-  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.3),
-              inset 0 1px 1px rgba(255, 255, 255, 0.05),
-              0 0 15rpx rgba(41, 210, 109, 0.1); /* 绿色光晕 */
-}
-
 /* 我发布的汤卡片样式 */
 .published-card {
-  grid-column: 2;
+  grid-column: 1 / span 2; /* 占据整行 */
   grid-row: 2;
   background: linear-gradient(135deg, rgba(10, 20, 40, 0.7), rgba(140, 91, 255, 0.05));
   min-height: 300rpx; /* 确保卡片有足够高度 */
@@ -397,8 +386,8 @@
 
 
 
-/* 草稿和已发布列表项 */
-.draft-item, .published-item {
+/* 已发布列表项 */
+.published-item {
   padding: 20rpx;
   background: rgba(10, 20, 40, 0.3);
   border-radius: 10rpx;
@@ -413,7 +402,7 @@
 }
 
 /* 列表项玻璃质感效果 */
-.draft-item::before, .published-item::before {
+.published-item::before {
   content: "";
   position: absolute;
   top: 0;
@@ -428,16 +417,16 @@
   z-index: 1;
 }
 
-.draft-item:active, .published-item:active {
+.published-item:active {
   transform: scale(0.98);
 }
 
-.draft-info, .published-info {
+.published-info {
   display: flex;
   flex-direction: column;
 }
 
-.draft-title, .published-title {
+.published-title {
   font-size: 28rpx;
   color: var(--color-text-primary);
   margin-bottom: 10rpx;
@@ -625,108 +614,9 @@
   color: var(--color-text-hint);
 }
 
-/* 字数接近上限警告 */
-.char-count-warning {
-  color: var(--color-warning);
-}
 
-/* 图片上传容器 */
-.image-upload-container {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-}
 
-/* 上传按钮 */
-.upload-button {
-  width: 200rpx;
-  height: 200rpx;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px dashed rgba(255, 255, 255, 0.3);
-  border-radius: 10rpx;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
 
-/* 上传图标 */
-.upload-icon {
-  font-size: 60rpx;
-  color: var(--color-text-hint);
-  line-height: 1;
-}
-
-/* 上传文本 */
-.upload-text {
-  font-size: 24rpx;
-  color: var(--color-text-hint);
-  margin-top: 10rpx;
-}
-
-/* 图片预览 */
-.image-preview {
-  width: 200rpx;
-  height: 200rpx;
-  position: relative;
-  margin-right: 20rpx;
-  margin-bottom: 20rpx;
-  border-radius: 10rpx;
-  overflow: hidden;
-}
-
-/* 预览图片 */
-.preview-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-/* 删除图标 */
-.image-delete {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 40rpx;
-  height: 40rpx;
-  background: rgba(0, 0, 0, 0.6);
-  color: #fff;
-  font-size: 30rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-bottom-left-radius: 10rpx;
-}
-
-/* 上传进度容器 */
-.upload-progress-container {
-  margin-top: 20rpx;
-}
-
-/* 上传进度条 */
-.upload-progress-bar {
-  width: 100%;
-  height: 6rpx;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3rpx;
-  overflow: hidden;
-}
-
-/* 上传进度内部 */
-.upload-progress-inner {
-  height: 100%;
-  background: var(--color-primary);
-  transition: width 0.3s;
-}
-
-/* 上传进度文本 */
-.upload-progress-text {
-  font-size: 24rpx;
-  color: var(--color-text-hint);
-  margin-top: 8rpx;
-  text-align: right;
-}
 
 /* 表单操作按钮 */
 .form-actions {

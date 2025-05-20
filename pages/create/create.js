@@ -23,9 +23,7 @@ Page({
       truthError: ''
     },
     // 加载状态 - 由MobX管理
-    isSubmitting: false,
-    isUploading: false,
-    uploadProgress: 0
+    isSubmitting: false
   },
 
   /**
@@ -39,8 +37,6 @@ Page({
         'formData',
         'validation',
         'isSubmitting',
-        'isUploading',
-        'uploadProgress',
         'titleLength',
         'contentLength',
         'truthLength'
@@ -49,29 +45,20 @@ Page({
         'updateField',
         'validateForm',
         'resetForm',
-        'submitForm',
-        'saveDraft'
+        'submitForm'
       ]
     });
 
     // 检查用户是否已登录
     if (!rootStore.isLoggedIn) {
-      wx.showModal({
-        title: '提示',
-        content: '请先登录后再创建海龟汤',
-        showCancel: false,
-        success: () => {
-          wx.switchTab({
-            url: '/pages/mine/mine'
-          });
-        }
-      });
+      // 显示登录提示弹窗
+      const loginPopup = this.selectComponent("#loginPopup");
+      if (loginPopup) {
+        loginPopup.show();
+      }
     }
 
-    // 如果有草稿ID参数，则加载草稿
-    if (options && options.draftId) {
-      this.loadDraft(options.draftId);
-    }
+
 
     // 如果有标题参数，则预填充标题输入框
     if (options && options.title) {
@@ -79,20 +66,7 @@ Page({
     }
   },
 
-  /**
-   * 加载草稿
-   */
-  loadDraft(draftId) {
-    if (!draftId) return;
 
-    const result = uploadStore.editDraft(draftId);
-    if (!result.success) {
-      wx.showToast({
-        title: result.message || '加载草稿失败',
-        icon: 'none'
-      });
-    }
-  },
 
   /**
    * 生命周期函数--监听页面卸载
@@ -125,29 +99,7 @@ Page({
 
 
 
-  /**
-   * 保存草稿
-   */
-  handleSaveDraft() {
-    this.saveDraft().then(result => {
-      if (result.success) {
-        wx.showToast({
-          title: '草稿保存成功',
-          icon: 'success'
-        });
 
-        // 返回上一页
-        setTimeout(() => {
-          wx.navigateBack();
-        }, 1500);
-      } else {
-        wx.showToast({
-          title: result.message || '保存失败',
-          icon: 'none'
-        });
-      }
-    });
-  },
 
   /**
    * 提交表单
@@ -155,16 +107,11 @@ Page({
   handleSubmit() {
     // 检查用户是否已登录
     if (!rootStore.isLoggedIn) {
-      wx.showModal({
-        title: '提示',
-        content: '请先登录后再创建海龟汤',
-        showCancel: false,
-        success: () => {
-          wx.switchTab({
-            url: '/pages/mine/mine'
-          });
-        }
-      });
+      // 显示登录提示弹窗
+      const loginPopup = this.selectComponent("#loginPopup");
+      if (loginPopup) {
+        loginPopup.show();
+      }
       return;
     }
 
@@ -195,23 +142,23 @@ Page({
    * 返回上一页
    */
   handleBack() {
-    // 如果表单有内容，提示是否保存草稿
-    if (this.data.formData.title || this.data.formData.content || this.data.formData.truth) {
-      wx.showModal({
-        title: '提示',
-        content: '是否保存为草稿？',
-        confirmText: '保存',
-        cancelText: '不保存',
-        success: (res) => {
-          if (res.confirm) {
-            this.handleSaveDraft();
-          } else {
-            wx.navigateBack();
-          }
-        }
-      });
-    } else {
-      wx.navigateBack();
-    }
+    wx.navigateBack();
+  },
+
+  /**
+   * 处理登录弹窗确认按钮点击事件
+   */
+  onLoginConfirm() {
+    // 跳转到个人中心页面
+    wx.switchTab({
+      url: "/pages/mine/mine",
+    });
+  },
+
+  /**
+   * 处理登录弹窗取消按钮点击事件
+   */
+  onLoginCancel() {
+    // 不做任何处理，弹窗会自动关闭
   }
 })

@@ -5,19 +5,17 @@
  */
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 const soupService = require('../service/soupService');
-const { api, uploadFile } = require('../config/api');
 
 /**
  * UploadStore类
  * 管理海龟汤创建页面的状态
  */
 class UploadStore {
-  // ===== 可观察状态 =====
-  // 表单数据
+  // 核心状态
   formData = {
-    title: '',       // 标题
-    content: '',     // 汤面内容
-    truth: '',       // 汤底内容
+    title: '',     // 标题
+    content: '',   // 汤面内容
+    truth: '',     // 汤底内容
   };
 
   // 表单验证状态
@@ -29,18 +27,11 @@ class UploadStore {
 
   // 加载状态
   isSubmitting = false;  // 是否正在提交
-  isUploading = false;   // 是否正在上传图片
-  uploadProgress = 0;    // 上传进度（0-100）
 
-  // 草稿箱
-  drafts = [];           // 草稿列表
+
 
   // 已发布的汤
   publishedSoups = [];   // 已发布的汤列表
-
-  // 页面状态
-  showCreateForm = false;  // 是否显示创建表单
-  showEmptyState = false;  // 是否显示空态
 
   // 引用rootStore
   rootStore = null;
@@ -53,8 +44,6 @@ class UploadStore {
     makeAutoObservable(this, {
       // 标记异步方法为flow
       submitForm: flow,
-      loadDrafts: flow,
-      saveDraft: flow,
       loadPublishedSoups: flow,
 
       // 标记为非观察属性
@@ -87,6 +76,24 @@ class UploadStore {
     return this.formData.truth ? this.formData.truth.length : 0;
   }
 
+  // 是否显示空态的计算属性
+  get showEmptyState() {
+    return this.publishedSoups.length === 0;
+  }
+
+  // 移除过时的属性，避免undefined错误
+  get isUploading() {
+    return false;
+  }
+
+  get uploadProgress() {
+    return 0;
+  }
+
+  get showCreateForm() {
+    return false;
+  }
+
   /**
    * 更新表单字段
    * @param {string} field 字段名
@@ -96,8 +103,9 @@ class UploadStore {
     if (field in this.formData) {
       this.formData[field] = value;
       // 清除对应的验证错误
-      if (field in this.validation) {
-        this.validation[`${field}Error`] = '';
+      const errorField = `${field}Error`;
+      if (errorField in this.validation) {
+        this.validation[errorField] = '';
       }
     }
   }
@@ -154,138 +162,6 @@ class UploadStore {
       contentError: '',
       truthError: '',
     };
-
-    this.uploadProgress = 0;
-  }
-
-  /**
-   * 显示创建表单
-   */
-  showForm() {
-    this.showCreateForm = true;
-  }
-
-  /**
-   * 隐藏创建表单
-   */
-  hideForm() {
-    this.showCreateForm = false;
-  }
-
-  /**
-   * 加载草稿列表
-   */
-  *loadDrafts() {
-    try {
-      // 从本地存储加载草稿
-      const draftsStr = wx.getStorageSync('soup_drafts');
-      if (draftsStr) {
-        this.drafts = JSON.parse(draftsStr);
-      } else {
-        this.drafts = [];
-      }
-
-      // 检查是否需要显示空态
-      this.checkEmptyState();
-
-      return this.drafts;
-    } catch (error) {
-      console.error('加载草稿失败:', error);
-      this.drafts = [];
-      return [];
-    }
-  }
-
-  /**
-   * 保存草稿
-   */
-  *saveDraft() {
-    try {
-      // 验证表单是否有内容
-      if (!this.formData.title && !this.formData.content && !this.formData.truth) {
-        return { success: false, message: '草稿内容为空' };
-      }
-
-      // 创建草稿对象
-      const draft = {
-        id: Date.now().toString(),
-        title: this.formData.title || '空白草稿',
-        content: this.formData.content,
-        truth: this.formData.truth,
-        updateTime: new Date().toISOString()
-      };
-
-      // 添加到草稿列表
-      this.drafts.unshift(draft);
-
-      // 保存到本地存储
-      wx.setStorageSync('soup_drafts', JSON.stringify(this.drafts));
-
-      // 重置表单
-      this.resetForm();
-
-      // 隐藏创建表单
-      this.hideForm();
-
-      // 检查是否需要显示空态
-      this.checkEmptyState();
-
-      return { success: true, message: '草稿保存成功' };
-    } catch (error) {
-      console.error('保存草稿失败:', error);
-      return { success: false, message: '保存草稿失败: ' + error.message };
-    }
-  }
-
-  /**
-   * 删除草稿
-   * @param {string} draftId 草稿ID
-   */
-  deleteDraft(draftId) {
-    try {
-      // 从草稿列表中删除
-      this.drafts = this.drafts.filter(draft => draft.id !== draftId);
-
-      // 保存到本地存储
-      wx.setStorageSync('soup_drafts', JSON.stringify(this.drafts));
-
-      // 检查是否需要显示空态
-      this.checkEmptyState();
-
-      return { success: true, message: '草稿删除成功' };
-    } catch (error) {
-      console.error('删除草稿失败:', error);
-      return { success: false, message: '删除草稿失败: ' + error.message };
-    }
-  }
-
-  /**
-   * 继续编辑草稿
-   * @param {string} draftId 草稿ID
-   */
-  editDraft(draftId) {
-    try {
-      // 查找草稿
-      const draft = this.drafts.find(d => d.id === draftId);
-      if (!draft) {
-        return { success: false, message: '草稿不存在' };
-      }
-
-      // 加载草稿到表单
-      this.formData = {
-        title: draft.title,
-        content: draft.content,
-        truth: draft.truth
-      };
-
-      // 显示创建表单
-      this.showForm();
-
-      return { success: true };
-    } catch (error) {
-      console.error('编辑草稿失败:', error);
-      return { success: false, message: '编辑草稿失败: ' + error.message };
-    }
   }
 
 
@@ -321,9 +197,6 @@ class UploadStore {
       // 重置表单
       this.resetForm();
 
-      // 隐藏创建表单
-      this.hideForm();
-
       // 加载已发布的汤
       yield this.loadPublishedSoups();
 
@@ -356,29 +229,13 @@ class UploadStore {
 
       // 调用真实API获取用户创建的汤
       const response = yield soupService.getUserCreatedSoups(this.userId);
-
-      if (response && Array.isArray(response)) {
-        this.publishedSoups = response;
-      } else {
-        this.publishedSoups = [];
-      }
-
-      // 检查是否需要显示空态
-      this.checkEmptyState();
-
+      this.publishedSoups = response && Array.isArray(response) ? response : [];
       return this.publishedSoups;
     } catch (error) {
       console.error('加载已发布的汤失败:', error);
       this.publishedSoups = [];
       return [];
     }
-  }
-
-  /**
-   * 检查是否需要显示空态
-   */
-  checkEmptyState() {
-    this.showEmptyState = this.drafts.length === 0 && this.publishedSoups.length === 0;
   }
 }
 

@@ -2,7 +2,7 @@
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
     "custom-button": "/components/button/index",
-    "progress-ring": "/components/progress-ring/progress-ring"
+    "popup": "/components/popup/index"
   },
   "navigationStyle": "custom",
   "disableScroll": false

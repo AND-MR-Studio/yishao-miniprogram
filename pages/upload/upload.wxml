@@ -54,40 +54,10 @@
         </view>
       </view>
 
-      <!-- 草稿箱卡片 - 左侧 -->
-      <view class="card drafts-card">
-        <view class="card-header">
-          <text class="card-title">草稿箱</text>
-          <text class="card-badge" wx:if="{{drafts.length}}">{{drafts.length}}</text>
-        </view>
-        <view class="card-content">
-          <block wx:if="{{drafts.length > 0}}">
-            <swipe-cell
-              wx:for="{{drafts}}"
-              wx:key="id"
-              leftText="删除"
-              rightText="继续"
-              bind:left="handleDeleteDraft"
-              bind:right="handleEditDraft"
-              data-id="{{item.id}}"
-            >
-              <view class="draft-item">
-                <view class="draft-info">
-                  <text class="draft-title">{{item.title}}</text>
-                </view>
-              </view>
-            </swipe-cell>
-          </block>
-          <view class="empty-list" wx:else>
-            <text>暂无草稿</text>
-          </view>
-        </view>
-      </view>
-
-      <!-- 我发布的汤卡片 - 右侧 -->
+      <!-- 我创作的汤卡片 - 占据整行 -->
       <view class="card published-card">
         <view class="card-header">
-          <text class="card-title">我发布的汤</text>
+          <text class="card-title">我创作的汤</text>
           <text class="card-badge" wx:if="{{publishedSoups.length}}">{{publishedSoups.length}}</text>
         </view>
         <view class="card-content">
@@ -116,7 +86,7 @@
             </view>
           </block>
           <view class="empty-list" wx:else>
-            <text>暂无发布的汤</text>
+            <text>快来创作你的第一碗海龟汤</text>
           </view>
         </view>
       </view>
@@ -135,4 +105,17 @@
       />
     </view>
   </view>
+
+  <!-- 登录提示弹窗 -->
+  <popup
+    id="loginPopup"
+    title="侦探大人，想创作海龟汤吗？"
+    content="先去「个人中心」登录一下吧～"
+    confirmText="去登录→"
+    cancelText="再想想"
+    showClose="{{false}}"
+    showLoginIcon="{{true}}"
+    bind:confirm="onLoginConfirm"
+    bind:cancel="onLoginCancel"
+  ></popup>
 </view>
