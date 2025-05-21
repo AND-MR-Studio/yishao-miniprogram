@@ -4,6 +4,7 @@
  */
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { uploadStore, rootStore } = require('../../stores/index');
+const { assets } = require('../../config/api');
 
 Page({
   /**
@@ -36,7 +37,9 @@ Page({
 
     // 新建创作卡片标题输入
     createTitle: '',
-    createTitleLength: 0
+    createTitleLength: 0,
+
+    assets
   },
 
   /**

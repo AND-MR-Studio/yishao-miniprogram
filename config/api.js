@@ -7,6 +7,8 @@ const App = getApp();
 const baseUrl = App.globalData.config.baseUrl;
 const ysUrl = App.globalData.config.ysUrl;
 const memoryUrl = App.globalData.config.memory;
+const assetsBaseUrl = App.globalData.config.assetsBaseUrl;
+
 const {
   request,
   requestOpen,
@@ -24,7 +26,15 @@ const paths = {
   user: 'user/',
   soup: 'soup/',
   dialog: 'dialog/',
-  asset: 'asset/'
+  asset: 'asset/',
+  // 资源文件路径
+  assets: {
+    images: 'images/',
+    fonts: 'fonts/',
+    icons: 'icons/',
+    avatars: 'avatars/',
+    ui: 'images/ui/' // 添加 UI 相关图片路径
+  }
 };
 
 // API端点定义
@@ -82,11 +92,29 @@ const api = {
   }
 };
 
-  // 默认资源
- const defaults = {
-    avatar: '/static/images/default-avatar.jpg',
-    shareImage: 'https://and-tech.cn/uploads/images/78e17666-0671-487e-80bc-a80c0b8d0e07.png'
-}
+// 默认资源
+const defaults = {
+  avatar: '/static/images/default-avatar.jpg',
+  shareImage: `${assetsBaseUrl}/images/test.webp`
+};
+
+// 资源路径
+const assets = {
+  images: {
+    getPath: (filename) => `${assetsBaseUrl}/${paths.assets.images}${filename}`
+  },
+  icons: {
+    getPath: (filename) => `${assetsBaseUrl}/${paths.assets.icons}${filename}`
+  },
+  avatars: {
+    getPath: (filename) => `${assetsBaseUrl}/${paths.assets.avatars}${filename}`
+  },
+  ui: {
+    // UI 相关的固定资源
+    notFound: `${assetsBaseUrl}/${paths.assets.ui}404.webp`, // 404 图片
+    getPath: (filename) => `${assetsBaseUrl}/${paths.assets.ui}${filename}` // 其他 UI 图片
+  }
+};
 
 module.exports = {
   // 导出请求方法
@@ -107,5 +135,8 @@ module.exports = {
   // 导出API端点
   api,
 
-  defaults
+  defaults,
+  assets,
+  assetsBaseUrl,
+  paths
 };

@@ -9,7 +9,7 @@
 
   <!-- 小勺GIF背景 -->
   <view class="xiaoshao-background">
-    <image class="xiaoshao-gif" src="https://and-tech.cn/uploads/icons/ffd33e4c-a0a9-413d-8fb4-fdceb0e1759e.gif" mode="aspectFit"></image>
+    <image class="xiaoshao-gif" src="https://oss.and-tech.cn/images/xiaoshao.avis" mode="aspectFit"></image>
   </view>
 
   <!-- 欢迎文案区域 - 在卡片外部 -->
@@ -92,7 +92,7 @@
             </view>
           </block>
           <view class="empty-list" wx:else>
-            <image class="empty-illustration" src="/static/images/404.png" mode="aspectFit"></image>
+            <image class="empty-illustration" src="{{assets.ui.notFound}}" mode="aspectFit"></image>
             <text class="empty-text">你完全不煮汤是吗？</text>
           </view>
         </view>

@@ -33,7 +33,7 @@
     <!-- 弹窗图片 -->
     <image
       class="popup-image"
-      src="https://and-tech.cn/uploads/images/c36d0213-3295-45ce-bbcc-8672f57d1e94.png"
+      src="https://oss.and-tech.cn/images/popup.png"
       wx:if="{{showLoginIcon}}"
       mode="aspectFit"></image>
   </view>
