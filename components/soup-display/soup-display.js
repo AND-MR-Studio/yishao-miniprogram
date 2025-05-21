@@ -125,7 +125,7 @@ Component({
         // 缓存不存在或已过期，重新加载字体
         wx.loadFontFace({
           family: 'Huiwen-mincho',
-          source: 'url("https://and-tech.cn/uploads/fonts/hwmct.woff2")',
+          source: 'url("https://cdn.and-tech.cn/fonts/hwmct.woff2")',
           success: (res) => {
             console.log('字体加载成功', res);
             // 字体加载成功后，将状态缓存到本地
@@ -155,7 +155,7 @@ Component({
         // 发生错误时，仍然尝试加载字体
         wx.loadFontFace({
           family: 'Huiwen-mincho',
-          source: 'url("https://and-tech.cn/uploads/fonts/hwmct.woff2")',
+          source: 'url("https://cdn.and-tech.cn/fonts/hwmct.woff2")',
           success: (res) => {
             console.log('字体加载成功', res);
           },
