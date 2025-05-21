@@ -108,61 +108,54 @@ Component({
     loadMinchoFont() {
       // 字体缓存的key
       const FONT_CACHE_KEY = 'huiwen_mincho_font_cache';
-      // 字体缓存有效期（365天，单位：毫秒）
-      const FONT_CACHE_DURATION = 365 * 24 * 60 * 60 * 1000;
+      let loadSuccess = false; // 用于跟踪字体是否加载成功
 
       try {
         // 尝试从本地缓存获取字体加载状态
         const fontCache = wx.getStorageSync(FONT_CACHE_KEY);
-        const now = Date.now();
 
-        // 检查缓存是否存在且未过期
-        if (fontCache && fontCache.timestamp && (now - fontCache.timestamp < FONT_CACHE_DURATION)) {
+        // 检查缓存是否存在且状态为 success
+        if (fontCache && fontCache.status === 'success') {
           console.log('使用字体缓存，无需重新加载');
           return; // 缓存有效，直接返回
         }
 
-        // 缓存不存在或已过期，重新加载字体
+        // 缓存不存在或未成功，重新加载字体
         wx.loadFontFace({
           family: 'Huiwen-mincho',
-          source: 'url("https://cdn.and-tech.cn/fonts/hwmct.woff2")',
+          source: 'https://oss.and-tech.cn/fonts/hwmct.woff2', // 直接使用 URL，不加 url() 包装
           success: (res) => {
             console.log('字体加载成功', res);
-            // 字体加载成功后，将状态缓存到本地
-            wx.setStorage({
-              key: FONT_CACHE_KEY,
-              data: {
-                timestamp: Date.now(),
-                status: 'success'
-              },
-              success: () => {
-                console.log('字体缓存成功保存到本地');
-              },
-              fail: (err) => {
-                console.error('字体缓存保存失败', err);
-              }
-            });
+            loadSuccess = true; // 标记字体加载成功
           },
           fail: (err) => {
             console.error('字体加载失败', err);
+            loadSuccess = false; // 标记字体加载失败
           },
           complete: () => {
             console.log('字体加载完成');
+            
+            // 只有在字体加载成功时才保存缓存
+            if (loadSuccess) {
+              wx.setStorage({
+                key: FONT_CACHE_KEY,
+                data: {
+                  timestamp: Date.now(),
+                  status: 'success'
+                },
+                success: () => {
+                  console.log('字体缓存成功保存到本地');
+                },
+                fail: (err) => {
+                  console.error('字体缓存保存失败', err);
+                }
+              });
+            }
           }
         });
       } catch (e) {
         console.error('字体缓存读取失败', e);
-        // 发生错误时，仍然尝试加载字体
-        wx.loadFontFace({
-          family: 'Huiwen-mincho',
-          source: 'url("https://cdn.and-tech.cn/fonts/hwmct.woff2")',
-          success: (res) => {
-            console.log('字体加载成功', res);
-          },
-          fail: (err) => {
-            console.error('字体加载失败', err);
-          }
-        });
+        // 发生错误时不再重复加载字体，只做错误提示
       }
     }
   }
