@@ -19,7 +19,7 @@ Page({
     swiping: false, // 是否正在滑动中
     swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
     swipeStarted: false, // 是否开始滑动
-    blurAmount: 0, // 模糊程度（0-10px）
+    // blurAmount已移至soupStore中统一管理
   },
 
   // ===== 生命周期方法 =====
@@ -39,8 +39,8 @@ Page({
     // 创建soupStore绑定 - 汤面相关字段和方法
     this.soupStoreBindings = createStoreBindings(this, {
       store: soupStore,
-      fields: ["soupLoading", "buttonLoading", "soupData"],
-      actions: ["setButtonLoading", "resetButtonLoading", "fetchSoup"]
+      fields: ["soupLoading", "buttonLoading", "soupData", "blurAmount"],
+      actions: ["setButtonLoading", "resetButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
     });
 
     // 同步用户ID - 确保获取最新的用户状态
@@ -247,14 +247,11 @@ Page({
 
     try {
       // 先应用模糊效果，确保在加载新数据前保持之前的内容
-      const soupDisplay = this.selectComponent('#soupDisplay');
-      if (soupDisplay) {
-        // 手动设置模糊效果，确保在加载过程中显示
-        soupDisplay.setData({ blurAmount: 3 });
-      }
+      // 直接使用store中的方法设置模糊效果
+      this.setBlurAmount(3);
 
       // 使用MobX store中的getRandomSoup方法获取随机汤面
-      // 该方法内部会调用fetchSoup加载完整数据
+      // 该方法内部会调用fetchSoup加载完整数据，并自动处理模糊效果
       const soupData = await soupStore.getRandomSoup();
 
       if (!soupData) {
@@ -263,13 +260,10 @@ Page({
     } catch (error) {
       console.error("切换汤面失败:", error);
       this.showErrorToast("切换失败，请重试");
-    } finally {
-      // 确保在加载完成后清除手动设置的模糊效果
-      const soupDisplay = this.selectComponent('#soupDisplay');
-      if (soupDisplay && !this.data.soupLoading) {
-        soupDisplay.setData({ blurAmount: 0 });
-      }
+      // 出错时也需要重置模糊效果
+      this.resetBlurAmount();
     }
+    // 注意：不需要finally块，因为fetchSoup方法内部已经处理了模糊效果的重置
   },
 
   // ===== 交互相关 =====
@@ -333,6 +327,8 @@ Page({
     this.interactionManager = createInteractionManager({
       // 设置数据更新方法 - 直接传递页面的setData方法
       setData: this.setData.bind(this),
+      // 设置模糊效果更新方法 - 使用store中的方法
+      setBlurAmount: this.setBlurAmount.bind(this),
       // 回调函数 - 简化为直接调用页面方法
       onSwipeLeft: () => this.switchSoup("next"),
       onSwipeRight: () => this.switchSoup("previous"),

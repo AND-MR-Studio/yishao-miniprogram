@@ -1,4 +1,6 @@
 // components/popup/index.js
+const { assets } = require('../../config/api');
+
 Component({
   /**
    * 组件的属性列表
@@ -61,6 +63,7 @@ Component({
    */
   data: {
     // 组件内部数据
+    assets
   },
 
   /**

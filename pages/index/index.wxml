@@ -20,7 +20,6 @@
     <view class="soup-display-wrapper">
       <soup-display
         id="soupDisplay"
-        blurAmount="{{blurAmount}}"
         swipeDirection="{{swipeDirection}}"
         class="soup-display-component"
         bind:swipe="handleSoupSwipe"

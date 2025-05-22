@@ -22,6 +22,9 @@ class SoupStore {
   soupLoading = false; // 是否正在加载汤面数据
   buttonLoading = false; // 开始喝汤按钮的加载状态
 
+  // UI状态
+  blurAmount = 0; // 模糊程度（0-10px）
+
   // 防止重复请求的标志
   _fetchingId = null; // 当前正在获取数据的soupId
 
@@ -80,6 +83,9 @@ class SoupStore {
       // 设置加载状态
       this.soupLoading = true;
 
+      // 设置模糊效果，表示正在加载
+      this.setBlurAmount(3);
+
       // 获取汤面数据
       let soupData = yield soupService.getSoup(soupId);
 
@@ -96,25 +102,43 @@ class SoupStore {
       // 更新汤面数据
       this.soupData = soupData;
 
-      // 如果需要增加阅读数
+      // 准备并行请求数组
+      const parallelRequests = [];
+      let viewResultPromise = null;
+
+      // 如果需要增加阅读数，添加到并行请求
       if (incrementViews) {
-        const viewResult = yield soupService.viewSoup(soupId);
+        viewResultPromise = soupService.viewSoup(soupId);
+        parallelRequests.push(viewResultPromise);
+      }
+
+      // 只有在用户已登录的情况下获取交互状态
+      let isLikedPromise = null;
+      let isFavoritePromise = null;
+
+      if (this.isLoggedIn) {
+        isLikedPromise = userService.isLikedSoup(soupId);
+        isFavoritePromise = userService.isFavoriteSoup(soupId);
+        parallelRequests.push(isLikedPromise, isFavoritePromise);
+      }
+
+      // 并行执行所有请求
+      if (parallelRequests.length > 0) {
+        yield Promise.all(parallelRequests);
+      }
+
+      // 处理阅读数结果
+      if (incrementViews && viewResultPromise) {
+        const viewResult = yield viewResultPromise;
         this.viewCount = viewResult ? viewResult.views : (soupData.views || 0);
       } else {
         this.viewCount = soupData.views || 0;
       }
 
-      // 只有在用户已登录的情况下获取交互状态
+      // 处理交互状态结果
       if (this.isLoggedIn) {
-        // 并行获取用户交互状态
-        const [isLiked, isFavorite] = yield Promise.all([
-          userService.isLikedSoup(soupId),
-          userService.isFavoriteSoup(soupId)
-        ]);
-
-        // 更新交互状态
-        this.isLiked = isLiked;
-        this.isFavorite = isFavorite;
+        this.isLiked = yield isLikedPromise;
+        this.isFavorite = yield isFavoritePromise;
       } else {
         // 用户未登录，默认未点赞和未收藏
         this.isLiked = false;
@@ -133,6 +157,9 @@ class SoupStore {
       // 重置加载状态和请求标志
       this.soupLoading = false;
       this._fetchingId = null;
+
+      // 重置模糊效果
+      this.resetBlurAmount();
     }
   }
 
@@ -156,16 +183,18 @@ class SoupStore {
       // 确定新状态
       const newStatus = !this.isLiked;
 
-      // 更新用户记录
-      const userResult = yield userService.updateLikedSoup(soupId, newStatus);
+      // 并行更新用户记录和汤面记录
+      const [userResult, result] = yield Promise.all([
+        userService.updateLikedSoup(soupId, newStatus),
+        soupService.likeSoup(soupId, newStatus)
+      ]);
 
+      // 验证用户记录更新结果
       if (!userResult || !userResult.success) {
         return { success: false, message: "点赞状态更新失败，请重试" };
       }
 
-      // 更新汤面记录
-      const result = yield soupService.likeSoup(soupId, newStatus);
-
+      // 验证汤面记录更新结果
       if (!result || !result.success || result.likes === undefined) {
         return { success: false, message: "点赞状态更新失败，请重试" };
       }
@@ -210,16 +239,18 @@ class SoupStore {
       // 确定新状态
       const newStatus = !this.isFavorite;
 
-      // 更新用户记录
-      const userResult = yield userService.updateFavoriteSoup(soupId, newStatus);
+      // 并行更新用户记录和汤面记录
+      const [userResult, result] = yield Promise.all([
+        userService.updateFavoriteSoup(soupId, newStatus),
+        soupService.favoriteSoup(soupId, newStatus)
+      ]);
 
+      // 验证用户记录更新结果
       if (!userResult || !userResult.success) {
         return { success: false, message: "收藏状态更新失败，请重试" };
       }
 
-      // 更新汤面记录
-      const result = yield soupService.favoriteSoup(soupId, newStatus);
-
+      // 验证汤面记录更新结果
       if (!result || !result.success || result.favorites === undefined) {
         return { success: false, message: "收藏状态更新失败，请重试" };
       }
@@ -247,6 +278,7 @@ class SoupStore {
   /**
    * 获取随机汤面数据
    * 直接调用soupService的getRandomSoup方法，然后使用fetchSoup加载完整数据
+   * fetchSoup内部已经实现了并行请求优化，可以同时获取汤面数据和交互状态
    * @returns {Promise<Object>} 随机汤面数据
    */
   async getRandomSoup() {
@@ -254,6 +286,7 @@ class SoupStore {
       const randomSoup = await soupService.getRandomSoup();
       if (randomSoup && randomSoup.id) {
         // 使用fetchSoup加载完整数据
+        // fetchSoup内部已经实现了并行请求优化
         return await this.fetchSoup(randomSoup.id);
       }
       return null;
@@ -294,6 +327,22 @@ class SoupStore {
       clearTimeout(this._buttonLoadingTimeout);
       this._buttonLoadingTimeout = null;
     }
+  }
+
+  /**
+   * 设置模糊效果
+   * @param {number} amount 模糊程度（0-10px）
+   */
+  setBlurAmount(amount) {
+    // 确保值在有效范围内
+    this.blurAmount = Math.max(0, Math.min(10, amount));
+  }
+
+  /**
+   * 重置模糊效果
+   */
+  resetBlurAmount() {
+    this.blurAmount = 0;
   }
 }
 

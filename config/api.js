@@ -122,7 +122,9 @@ const assets = {
     // UI资源
     ui: {
       get: (filename) => `${assetsBaseUrl}/${paths.assets.ui}${filename}`,
-      notFound: `${assetsBaseUrl}/${paths.assets.ui}404.webp`
+      notFound: `${assetsBaseUrl}/${paths.assets.ui}404.webp`,
+      xiaoshao_avatar: `${assetsBaseUrl}/${paths.assets.ui}xiaoshao.heif`,
+      popup: `${assetsBaseUrl}/${paths.assets.ui}popup.png`
     },
 
     // 字体资源

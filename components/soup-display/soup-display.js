@@ -22,20 +22,14 @@ Component({
       value: false
     },
 
-    // 是否处于喝汤状态
-    isDrinking: {
-      type: Boolean,
-      value: false
-    },
-
     // 模糊程度（0-10px）
     blurAmount: {
       type: Number,
       value: 0
     },
 
-    // 是否正在加载
-    loading: {
+    // 是否处于喝汤状态
+    isDrinking: {
       type: Boolean,
       value: false
     }
@@ -59,7 +53,7 @@ Component({
       // 创建MobX Store绑定
       this.storeBindings = createStoreBindings(this, {
         store: soupStore,
-        fields: ['soupData', 'soupLoading']
+        fields: ['soupData', 'soupLoading', 'blurAmount']
       });
 
       // 加载汇文明朝体字体
@@ -79,20 +73,17 @@ Component({
 
   // 属性变化观察者
   observers: {
-    // 监听loading状态变化
-    'loading, soupLoading': function(loading, soupLoading) {
+    // 只监听soupLoading状态变化
+    'soupLoading': function(soupLoading) {
       if (this._isAttached) {
         // 通知页面组件加载状态变化
-        this.triggerEvent('loading', { loading: loading || soupLoading });
+        this.triggerEvent('loading', { loading: soupLoading });
 
         // 更新加载状态，呼吸模糊效果将通过WXML中的类绑定自动应用
         // 确保在切换汤谜时保持之前的内容并显示模糊效果
-        this.setData({ isLoading: loading || soupLoading });
+        this.setData({ isLoading: soupLoading });
 
-        // 如果不再加载，确保清除模糊效果
-        if (!(loading || soupLoading)) {
-          this.setData({ blurAmount: 0 });
-        }
+        // 注意：不再在这里设置blurAmount，由soupStore统一管理
       }
     }
   },
@@ -134,7 +125,7 @@ Component({
           },
           complete: () => {
             console.log('字体加载完成');
-            
+
             // 只有在字体加载成功时才保存缓存
             if (loadSuccess) {
               wx.setStorage({

@@ -9,7 +9,7 @@
 
   <!-- 小勺GIF背景 -->
   <view class="xiaoshao-background">
-    <image class="xiaoshao-gif" src="https://oss.and-tech.cn/images/xiaoshao.avis" mode="aspectFit"></image>
+    <image class="xiaoshao-gif" src="{{assets.remote.ui.xiaoshao_avatar}}" mode="aspectFit"></image>
   </view>
 
   <!-- 欢迎文案区域 - 在卡片外部 -->

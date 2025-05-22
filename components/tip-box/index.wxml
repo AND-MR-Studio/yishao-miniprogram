@@ -4,7 +4,7 @@
   <view class="tip-content">
     <!-- 顶部GIF动画 -->
     <view class="avatar-container">
-      <image class="avatar-gif" src="https://oss.and-tech.cn/images/xiaoshao.avis" mode="aspectFit"></image>
+      <image class="avatar-gif" src="{{assets.remote.ui.xiaoshao_avatar}}" mode="aspectFit"></image>
     </view>
 
     <!-- 文本内容区域 -->

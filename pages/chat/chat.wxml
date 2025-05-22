@@ -15,7 +15,6 @@
       <soup-display
         id="soupDisplay"
         soupData="{{soupData}}"
-        loading="{{isLoading}}"
         isDrinking="{{true}}"
         isPeeking="{{isPeeking}}"
         class="soup-display-component {{isPeeking ? 'peeking' : ''}}"

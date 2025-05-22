@@ -1,6 +1,7 @@
 // components/tip-box/index.js
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { tipStore, chatStore, TIP_STATE } = require('../../stores/index');
+const { assets } = require('../../config/api');
 
 Component({
   /**
@@ -10,7 +11,9 @@ Component({
     // 当前显示的提示内容
     currentTipContent: [],
     // 内容是否正在切换中
-    isContentSwitching: false
+    isContentSwitching: false,
+    // 资源引用
+    assets
   },
 
   /**
