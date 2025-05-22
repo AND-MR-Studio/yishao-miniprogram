@@ -157,9 +157,9 @@ Page({
     const dialogId = chatStore.dialogId || '';
     const sharePath = `/pages/chat/chat?soupId=${soupId}&dialogId=${dialogId}`;
 
-    // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
+    // 构建分享图片 - 优先使用汤面图片，其次使用配图，最后使用默认图片
     // 注意：图片必须是网络图片，且必须是https协议
-    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.mockImage || require('../../config/api').default_share_image;
+    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.coverUrl;
 
     return {
       title: shareTitle,

@@ -15,10 +15,10 @@
       </view>
     </view>
     <!-- 有图片时的排版方式 -->
-    <block wx:if="{{soupData.image || mockImage}}">
+    <block wx:if="{{soupData.image || coverUrl}}">
       <view class="soup-text-with-image">
         <text class="soup-text-left">{{soupData.soup_surface || ''}}</text>
-        <image class="soup-image" src="{{soupData.image || mockImage}}" mode="aspectFill" lazy-load="true"></image>
+        <image class="soup-image" src="{{soupData.image || coverUrl}}" mode="aspectFill" lazy-load="true"></image>
       </view>
     </block>
 

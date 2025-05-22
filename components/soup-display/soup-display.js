@@ -7,6 +7,7 @@
 // 引入MobX store和绑定工具
 const { soupStore } = require('../../stores/index');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { assets } = require('../../config/api');
 
 Component({
   properties: {
@@ -42,7 +43,7 @@ Component({
 
   data: {
     isLoading: false, // 加载状态，同时控制呼吸模糊效果
-    mockImage: 'https://oss.and-tech.cn/images/test.webp' // 使用在线图片路径
+    coverUrl: '' // 汤面配图URL
   },
 
   lifetimes: {
@@ -73,7 +74,7 @@ Component({
 
   // 属性变化观察者
   observers: {
-    // 只监听soupLoading状态变化
+    // 监听soupLoading状态变化
     'soupLoading': function(soupLoading) {
       if (this._isAttached) {
         // 通知页面组件加载状态变化
@@ -84,6 +85,15 @@ Component({
         this.setData({ isLoading: soupLoading });
 
         // 注意：不再在这里设置blurAmount，由soupStore统一管理
+      }
+    },
+
+    // 监听soupData变化，更新配图URL
+    'soupData': function(soupData) {
+      if (this._isAttached && soupData && soupData.id) {
+        // 使用soupData.id构建配图URL
+        const coverUrl = assets.remote.cover.get(soupData.id);
+        this.setData({ coverUrl });
       }
     }
   },

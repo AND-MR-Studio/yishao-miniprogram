@@ -36,7 +36,8 @@ const paths = {
     fonts: 'fonts/',
     icons: 'icons/',
     avatars: 'avatars/',
-    ui: 'images/ui/'
+    ui: 'images/ui/',
+    covers:'images/covers/'
   }
 };
 
@@ -130,6 +131,11 @@ const assets = {
     // 字体资源
     fonts: {
       get: (filename) => `${assetsBaseUrl}/${paths.assets.fonts}${filename}`
+    },
+
+    // 海龟汤配图资源
+    cover: {
+      get: (soupId) => `${assetsBaseUrl}/${paths.assets.covers}${soupId}.jpeg`
     }
   }
 };
