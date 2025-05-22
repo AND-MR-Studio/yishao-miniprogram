@@ -15,9 +15,9 @@
 
  /* 弥散光渐变背景 - 暗黑恐怖氛围 */
  .page {
-   --default-gradient: radial-gradient(ellipse at 20% 30%, rgba(87, 44, 239, 0.3) 0%, rgba(25, 0, 112, 0.2) 20%, transparent 60%),
-                      radial-gradient(ellipse at 80% 85%, rgba(0, 30, 255, 0.2) 0%, rgba(0, 10, 80, 0.1) 30%, transparent 60%),
-                      radial-gradient(ellipse at 50% 50%, rgba(87, 44, 239, 0.1) 0%, rgba(50, 0, 120, 0.05) 20%, transparent 50%),
+   --default-gradient: radial-gradient(ellipse at 20% 30%, rgba(140, 70, 255, 0.45) 0%, rgba(60, 0, 180, 0.3) 20%, transparent 60%),
+                      radial-gradient(ellipse at 80% 85%, rgba(30, 0, 200, 0.3) 0%, rgba(20, 0, 150, 0.2) 30%, transparent 60%),
+                      radial-gradient(ellipse at 50% 50%, rgba(150, 80, 255, 0.2) 0%, rgba(90, 10, 180, 0.1) 20%, transparent 50%),
                       /* 恐怖氛围的红色和绿色光晕 */
                       radial-gradient(ellipse at 65% 20%, rgba(92, 232, 33, 0.3) 0%, rgba(0, 180, 90, 0.2) 20%, transparent 50%),
                       radial-gradient(ellipse at 40% 60%, rgba(180, 0, 0, 0.2) 0%, rgba(100, 0, 0, 0.1) 30%, transparent 60%),
@@ -35,9 +35,9 @@
    background: var(--dynamic-gradient);
    filter: blur(120px); /* 更大的模糊半径，营造恐怖氛围 */
    z-index: 1;
-   opacity: 0.85; /* 降低不透明度，增加暗黑感 */
+   opacity: 0.95; /* 提高不透明度，增强紫色饱和度 */
    transition: background 0.3s ease-out;
-   mix-blend-mode: screen; /* 使用screen混合模式，增强光晕效果 */
+   mix-blend-mode: lighten; /* 使用lighten混合模式，更好地突出紫色光晕 */
    animation: subtle-pulse 8s infinite alternate ease-in-out; /* 添加微妙的脉动效果 */
  }
 
@@ -60,15 +60,15 @@
  @keyframes subtle-pulse {
    0% {
      opacity: 0.8;
-     filter: blur(120px) saturate(90%);
+     filter: blur(120px) saturate(120%);
    }
    50% {
      opacity: 0.85;
-     filter: blur(130px) saturate(100%);
+     filter: blur(140px) saturate(130%);
    }
    100% {
      opacity: 0.8;
-     filter: blur(120px) saturate(90%);
+     filter: blur(120px) saturate(120%);
    }
  }
 
@@ -168,6 +168,11 @@
    opacity: 0;
  }
 
+ /* 紫色闪烁点 */
+ .page .horror-flicker:nth-child(odd) {
+   background-color: rgba(180, 100, 255, 0.9);
+ }
+
  .page .horror-flicker:nth-child(1) {
    top: 15%;
    left: 20%;
@@ -204,12 +209,28 @@
    animation: flicker 11s infinite 2.5s;
  }
 
+ .page .horror-flicker:nth-child(7) {
+   top: 35%;
+   left: 45%;
+   animation: flicker 9.5s infinite 1.2s;
+   width: 3rpx;
+   height: 3rpx;
+ }
+
+ .page .horror-flicker:nth-child(8) {
+   top: 70%;
+   left: 55%;
+   animation: flicker 13s infinite 0.8s;
+   width: 3rpx;
+   height: 3rpx;
+ }
+
  @keyframes flicker {
    0%, 95%, 100% { opacity: 0; transform: scale(1); }
-   96% { opacity: 0.9; transform: scale(1.8); box-shadow: 0 0 15rpx rgba(255, 255, 255, 0.9), 0 0 30rpx rgba(180, 0, 0, 0.4); }
-   97% { opacity: 0.3; transform: scale(1.2); box-shadow: 0 0 8rpx rgba(255, 255, 255, 0.5); }
+   96% { opacity: 0.9; transform: scale(1.8); box-shadow: 0 0 15rpx rgba(255, 255, 255, 0.9), 0 0 30rpx rgba(140, 0, 255, 0.6); }
+   97% { opacity: 0.3; transform: scale(1.2); box-shadow: 0 0 8rpx rgba(180, 100, 255, 0.7); }
    98% { opacity: 0.8; transform: scale(2.0); box-shadow: 0 0 20rpx rgba(255, 255, 255, 0.8), 0 0 40rpx rgba(92, 232, 33, 0.4); }
-   99% { opacity: 0.2; transform: scale(1.5); box-shadow: 0 0 10rpx rgba(255, 255, 255, 0.4); }
+   99% { opacity: 0.2; transform: scale(1.5); box-shadow: 0 0 10rpx rgba(120, 0, 200, 0.6); }
  }
 
  /* 滑动过程中的背景渐变效果 - 根据滑动距离动态计算 */
@@ -220,8 +241,8 @@
  /* 汤面显示包装器 */
  .soup-display-wrapper {
    width: 100%;
-   height: auto;
-   position: relative;
+   height: 1000rpx;
+   position: fixed;
    display: block;
  }
 

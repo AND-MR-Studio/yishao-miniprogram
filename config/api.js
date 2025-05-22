@@ -36,7 +36,7 @@ const paths = {
     fonts: 'fonts/',
     icons: 'icons/',
     avatars: 'avatars/',
-    ui: 'ui/'
+    ui: 'images/ui/'
   }
 };
 

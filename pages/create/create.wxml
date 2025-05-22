@@ -72,11 +72,11 @@
           </block>
         </view>
 
-        <!-- 标签池 - 使用更简单的实现 -->
+        <!-- 标签池 - 已选标签会从池中移除 -->
         <view class="tag-pool">
           <block wx:for="{{tagPool}}" wx:key="*this">
             <view
-              class="tag-button {{selectedTags.indexOf(item) !== -1 ? 'selected' : ''}}"
+              class="tag-button"
               bindtap="handleTagClick"
               data-tag="{{item}}"
             >{{item}}</view>

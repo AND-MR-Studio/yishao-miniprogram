@@ -7,11 +7,11 @@
   <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
     <!-- 标题和内容分开显示 -->
     <view class="title-container" wx:if="{{soupData.title}}">
-      <view class="case-line">
-        <text class="case-text text-glow-primary">汤面</text><text class="case-number text-glow-primary">{{soupData.id}}</text>
-      </view>
       <view class="title-line">
-        <text class="title-text text-glow-secondary">《{{soupData.title}}》</text>
+        <view class="soup-id-container">
+          <text class="case-text">海龟汤</text><text class="case-number">{{soupData.id}}</text>
+        </view>
+        <text class="title-text title-glitch"> 《{{soupData.title}}》</text>
       </view>
     </view>
     <!-- 有图片时的排版方式 -->

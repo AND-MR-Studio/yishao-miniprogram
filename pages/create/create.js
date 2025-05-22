@@ -79,9 +79,16 @@ Page({
     if (options && options.loadDraft === 'true') {
       const loaded = this.loadDraft();
       if (loaded) {
+        // 获取草稿中的标签
+        const draftTags = this.data.formData.tags || [];
+
+        // 从标签池中移除已选标签
+        const updatedTagPool = this.data.tagPool.filter(tag => !draftTags.includes(tag));
+
         // 同步标签数据到本地
         this.setData({
-          selectedTags: this.data.formData.tags || []
+          selectedTags: draftTags,
+          tagPool: updatedTagPool
         });
 
         // 显示提示
@@ -131,8 +138,9 @@ Page({
     const tag = e.currentTarget.dataset.tag;
     console.log('标签点击:', tag);
 
-    // 获取当前已选标签
+    // 获取当前已选标签和标签池
     const selectedTags = [...this.data.selectedTags];
+    const tagPool = [...this.data.tagPool];
 
     // 如果标签已存在，不添加
     if (selectedTags.includes(tag)) {
@@ -148,11 +156,20 @@ Page({
       return;
     }
 
-    // 添加标签
+    // 添加标签到已选列表
     selectedTags.push(tag);
 
+    // 从标签池中移除该标签
+    const tagIndex = tagPool.indexOf(tag);
+    if (tagIndex !== -1) {
+      tagPool.splice(tagIndex, 1);
+    }
+
     // 更新页面数据
-    this.setData({ selectedTags });
+    this.setData({
+      selectedTags,
+      tagPool
+    });
   },
 
   /**
@@ -163,11 +180,20 @@ Page({
     const tag = e.currentTarget.dataset.tag;
     console.log('删除标签:', tag);
 
-    // 获取当前已选标签
+    // 获取当前已选标签和标签池
     const selectedTags = this.data.selectedTags.filter(t => t !== tag);
+    const tagPool = [...this.data.tagPool];
+
+    // 将删除的标签添加回标签池（如果不存在）
+    if (!tagPool.includes(tag)) {
+      tagPool.push(tag);
+    }
 
     // 更新页面数据
-    this.setData({ selectedTags });
+    this.setData({
+      selectedTags,
+      tagPool
+    });
   },
 
 
