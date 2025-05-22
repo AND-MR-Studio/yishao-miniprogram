@@ -14,11 +14,12 @@
         <text class="title-text title-glitch"> 《{{soupData.title}}》</text>
       </view>
     </view>
+
     <!-- 有图片时的排版方式 -->
-    <block wx:if="{{soupData.image || coverUrl}}">
+    <block wx:if="{{hasImage && coverUrl}}">
       <view class="soup-text-with-image">
         <text class="soup-text-left">{{soupData.soup_surface || ''}}</text>
-        <image class="soup-image" src="{{soupData.image || coverUrl}}" mode="aspectFill" lazy-load="true"></image>
+        <image class="soup-image" src="{{coverUrl}}" mode="aspectFill" lazy-load="true"></image>
       </view>
     </block>
 

@@ -91,9 +91,38 @@ Component({
     // 监听soupData变化，更新配图URL
     'soupData': function(soupData) {
       if (this._isAttached && soupData && soupData.id) {
-        // 使用soupData.id构建配图URL
-        const coverUrl = assets.remote.cover.get(soupData.id);
-        this.setData({ coverUrl });
+        // 检查图片是否存在
+        wx.request({
+          url: assets.remote.cover.get(soupData.id),
+          method: 'HEAD',
+          success: (res) => {
+            // 如果图片存在（状态码200），设置coverUrl
+            if (res.statusCode === 200) {
+              this.setData({ 
+                coverUrl: assets.remote.cover.get(soupData.id),
+                hasImage: true
+              });
+            } else {
+              // 图片不存在，清空coverUrl
+              this.setData({ 
+                coverUrl: '',
+                hasImage: false
+              });
+            }
+          },
+          fail: () => {
+            // 请求失败，清空coverUrl
+            this.setData({ 
+              coverUrl: '',
+              hasImage: false
+            });
+          }
+        });
+      } else {
+        this.setData({ 
+          coverUrl: '',
+          hasImage: false
+        });
       }
     }
   },

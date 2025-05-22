@@ -201,13 +201,15 @@
 /* 汤面文本样式 - 无图片时居中排版 */
 .soup-text {
   font-family: var(--font-family-mincho);
-  font-size: var(--font-size-md); /* 28rpx - 符合小程序设计规范的正文内容 */
-  line-height: var(--line-height-lg); /* 使用主题变量，更宽松的行高 */
+  font-size: var(--font-size-lg); /* 28rpx - 符合小程序设计规范的正文内容 */
+  line-height: 3; /* 使用主题变量，更宽松的行高 */
   padding: var(--spacing-xl); /* 使用主题变量 */
   text-align: center;
   white-space: pre-wrap;
   word-break: break-all;
   width: 100%;
+    color: var(--color-text-primary);
+  text-shadow:var(--text-glow-secondary);
   letter-spacing: var(--letter-spacing-wide); /* 使用主题变量 */
   box-sizing: border-box;
   flex: 1;
