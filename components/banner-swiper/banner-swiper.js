@@ -131,7 +131,7 @@ Component({
 
         // 从服务器获取banner数据
         const res = await requestOpen({
-          url: `${api.asset.byType}banner?page=${page}`,
+          url: `${api.asset.byType('banner')}?page=${page}`,
           method: 'GET'
         });
 

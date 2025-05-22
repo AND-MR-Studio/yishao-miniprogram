@@ -1,10 +1,10 @@
 // utils/userService.js
-const { userRequest, assetRequestOpen, uploadFile, api } = require('../config/api');
+const { userRequest, assetRequestOpen, uploadFile, api, assets } = require('../config/api');
 
 // 定义常量
 const TOKEN_KEY = 'token'; // 使用token作为唯一的本地存储键
 // 本地默认头像URL，仅作为前端兜底显示
-const DEFAULT_AVATAR_URL = '/static/images/default-avatar.jpg';
+const DEFAULT_AVATAR_URL = assets.local.avatar;
 
 /**
  * 获取用户头像
@@ -18,7 +18,7 @@ async function getUserAvatar(userId) {
   try {
     // 调用资源服务获取用户头像
     const config = {
-      url: api.asset.avatar + userId,
+      url: api.asset.avatar(userId),
       method: 'GET'
     };
 

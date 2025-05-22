@@ -23,17 +23,20 @@ const {
 
 // 基础路径
 const paths = {
-  user: 'user/',
-  soup: 'soup/',
-  dialog: 'dialog/',
-  asset: 'asset/',
+  // API路径
+  api: {
+    user: 'user/',
+    soup: 'soup/',
+    dialog: 'dialog/',
+    asset: 'asset/'
+  },
   // 资源文件路径
   assets: {
     images: 'images/',
     fonts: 'fonts/',
     icons: 'icons/',
     avatars: 'avatars/',
-    ui: 'images/ui/' // 添加 UI 相关图片路径
+    ui: 'ui/'
   }
 };
 
@@ -41,49 +44,48 @@ const paths = {
 const api = {
   // 用户服务
   user: {
-    login: ysUrl + paths.user + 'login',
-    update: ysUrl + paths.user + 'update',
-    info: ysUrl + paths.user + 'info',
-    signin: ysUrl + paths.user + 'signin',
-    list: ysUrl + paths.user + 'list',
-    viewedSoup: ysUrl + paths.user + 'viewed-soup',
-    answeredSoup: ysUrl + paths.user + 'answered-soup',
-    createdSoup: ysUrl + paths.user + 'created-soup',
-    favoriteSoup: ysUrl + paths.user + 'favorite-soup',
-    likedSoup: ysUrl + paths.user + 'liked-soup',
-    solvedSoup: ysUrl + paths.user + 'solved-soup'
+    login: `${ysUrl}${paths.api.user}login`,
+    update: `${ysUrl}${paths.api.user}update`,
+    info: `${ysUrl}${paths.api.user}info`,
+    signin: `${ysUrl}${paths.api.user}signin`,
+    list: `${ysUrl}${paths.api.user}list`,
+    viewedSoup: `${ysUrl}${paths.api.user}viewed-soup`,
+    answeredSoup: `${ysUrl}${paths.api.user}answered-soup`,
+    createdSoup: `${ysUrl}${paths.api.user}created-soup`,
+    favoriteSoup: `${ysUrl}${paths.api.user}favorite-soup`,
+    likedSoup: `${ysUrl}${paths.api.user}liked-soup`,
+    solvedSoup: `${ysUrl}${paths.api.user}solved-soup`
   },
 
   // 资源服务
   asset: {
-    base: ysUrl + paths.asset,
-    list: ysUrl + paths.asset + 'all',
-    byType: ysUrl + paths.asset + 'type/',
-    avatar: ysUrl + paths.asset + 'avatar/',
-    upload: ysUrl + paths.asset + 'upload'
+    base: `${ysUrl}${paths.api.asset}`,
+    byType: (type) => `${ysUrl}${paths.api.asset}type/${type}`,
+    avatar: (id) => `${ysUrl}${paths.api.asset}avatar/${id}`,
+    upload: `${ysUrl}${paths.api.asset}upload`
   },
 
   // 海龟汤服务
   soup: {
-    base: memoryUrl + paths.soup,
-    random: memoryUrl + '/api/soups/random',
+    base: `${memoryUrl}${paths.api.soup}`,
+    random: `${memoryUrl}/api/soups/random`,
     get: (soupId) => `${memoryUrl}/api/soups/${soupId}`,
     view: (soupId) => `${memoryUrl}/api/soups/${soupId}/view`,
     like: (soupId) => `${memoryUrl}/api/soups/${soupId}/like`,
     unlike: (soupId) => `${memoryUrl}/api/soups/${soupId}/unlike`,
     favorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/favor`,
     unfavorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/unfavor`,
-    create: memoryUrl + '/api/soups/create',
-    map: memoryUrl + paths.soup + 'map'
+    create: `${memoryUrl}/api/soups/create`,
+    map: `${memoryUrl}${paths.api.soup}map`
   },
 
   // 对话服务
   dialog: {
-    base: ysUrl + paths.dialog,
-    create: ysUrl + paths.dialog + 'create',
-    list: ysUrl + paths.dialog + 'list',
-    byUser: ysUrl + paths.dialog + 'user/',
-    bySoup: ysUrl + paths.dialog + 'soup/'
+    base: `${ysUrl}${paths.api.dialog}`,
+    create: `${ysUrl}${paths.api.dialog}create`,
+    list: `${ysUrl}${paths.api.dialog}list`,
+    byUser: (userId) => `${ysUrl}${paths.api.dialog}user/${userId}`,
+    bySoup: (soupId) => `${ysUrl}${paths.api.dialog}soup/${soupId}`
   },
 
   // Agent服务
@@ -92,27 +94,41 @@ const api = {
   }
 };
 
-// 默认资源
-const defaults = {
-  avatar: '/static/images/default-avatar.jpg',
-  shareImage: `${assetsBaseUrl}/images/test.webp`
-};
-
-// 资源路径
+// 资源管理
 const assets = {
-  images: {
-    getPath: (filename) => `${assetsBaseUrl}/${paths.assets.images}${filename}`
+  // 本地静态资源
+  local: {
+    avatar: '/static/images/default-avatar.jpg'
   },
-  icons: {
-    getPath: (filename) => `${assetsBaseUrl}/${paths.assets.icons}${filename}`
-  },
-  avatars: {
-    getPath: (filename) => `${assetsBaseUrl}/${paths.assets.avatars}${filename}`
-  },
-  ui: {
-    // UI 相关的固定资源
-    notFound: `${assetsBaseUrl}/${paths.assets.ui}404.webp`, // 404 图片
-    getPath: (filename) => `${assetsBaseUrl}/${paths.assets.ui}${filename}` // 其他 UI 图片
+
+  // 远程资源
+  remote: {
+    // 图片资源
+    images: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.images}${filename}`,
+      share: `${assetsBaseUrl}/images/test.webp`
+    },
+
+    // 图标资源
+    icons: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.icons}${filename}`
+    },
+
+    // 头像资源
+    avatars: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.avatars}${filename}`
+    },
+
+    // UI资源
+    ui: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.ui}${filename}`,
+      notFound: `${assetsBaseUrl}/${paths.assets.ui}404.webp`
+    },
+
+    // 字体资源
+    fonts: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.fonts}${filename}`
+    }
   }
 };
 
@@ -131,12 +147,15 @@ module.exports = {
   // 导出基础URL
   baseUrl,
   ysUrl,
+  memoryUrl,
+  assetsBaseUrl,
 
   // 导出API端点
   api,
 
-  defaults,
+  // 导出资源管理
   assets,
-  assetsBaseUrl,
+
+  // 导出路径配置
   paths
 };

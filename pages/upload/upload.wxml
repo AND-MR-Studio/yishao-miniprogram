@@ -92,7 +92,7 @@
             </view>
           </block>
           <view class="empty-list" wx:else>
-            <image class="empty-illustration" src="{{assets.ui.notFound}}" mode="aspectFit"></image>
+            <image class="empty-illustration" src="{{assets.remote.ui.notFound}}" mode="aspectFit"></image>
             <text class="empty-text">你完全不煮汤是吗？</text>
           </view>
         </view>
