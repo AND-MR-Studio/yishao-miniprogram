@@ -172,7 +172,7 @@ Page({
     const query = `soupId=${shareSoup?.id || ''}`;
 
     // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
-    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.mockImage || api.default_share_image;
+    const imageUrl = shareSoup?.image || api.assets.remote.images.share;
 
     return {
       title: shareTitle,

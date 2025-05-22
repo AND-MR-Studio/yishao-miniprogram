@@ -38,11 +38,12 @@ class SoupStore {
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
       // 标记异步方法为flow
-      fetchSoup: flow,
+      // fetchSoup 已改为 async/await 实现，不再需要标记为 flow
       toggleLike: flow,
       toggleFavorite: flow,
 
       // 普通方法，不需要flow
+      fetchSoup: false, // async 方法需要标记为普通方法
       setButtonLoading: false,
       resetButtonLoading: false,
 
@@ -65,11 +66,12 @@ class SoupStore {
   /**
    * 统一的汤面数据获取方法 - 异步流程
    * 通过ID获取汤面数据，防止重复请求，自动处理交互状态
+   * 使用 async/await 结合 Promise.all 处理并行请求
    * @param {string} soupId 汤面ID
    * @param {boolean} incrementViews 是否增加阅读数，默认为true
    * @returns {Promise<Object>} 汤面数据
    */
-  *fetchSoup(soupId, incrementViews = true) {
+  async fetchSoup(soupId, incrementViews = true) {
     // 参数校验
     if (!soupId) return null;
 
@@ -87,11 +89,11 @@ class SoupStore {
       this.setBlurAmount(3);
 
       // 获取汤面数据
-      let soupData = yield soupService.getSoup(soupId);
+      let soupData = await soupService.getSoup(soupId);
 
       // 如果获取失败，尝试获取随机汤面
       if (!soupData) {
-        soupData = yield soupService.getRandomSoup();
+        soupData = await soupService.getRandomSoup();
         if (!soupData) {
           throw new Error("获取汤面数据失败");
         }
@@ -102,43 +104,50 @@ class SoupStore {
       // 更新汤面数据
       this.soupData = soupData;
 
-      // 准备并行请求数组
+      // 准备并行请求
       const parallelRequests = [];
-      let viewResultPromise = null;
+      const requestResults = {};
 
       // 如果需要增加阅读数，添加到并行请求
       if (incrementViews) {
-        viewResultPromise = soupService.viewSoup(soupId);
-        parallelRequests.push(viewResultPromise);
+        parallelRequests.push(
+          soupService.viewSoup(soupId).then(result => {
+            requestResults.viewResult = result;
+          })
+        );
       }
 
       // 只有在用户已登录的情况下获取交互状态
-      let isLikedPromise = null;
-      let isFavoritePromise = null;
-
       if (this.isLoggedIn) {
-        isLikedPromise = userService.isLikedSoup(soupId);
-        isFavoritePromise = userService.isFavoriteSoup(soupId);
-        parallelRequests.push(isLikedPromise, isFavoritePromise);
+        parallelRequests.push(
+          userService.isLikedSoup(soupId).then(result => {
+            requestResults.isLiked = result;
+          })
+        );
+        
+        parallelRequests.push(
+          userService.isFavoriteSoup(soupId).then(result => {
+            requestResults.isFavorite = result;
+          })
+        );
       }
 
       // 并行执行所有请求
       if (parallelRequests.length > 0) {
-        yield Promise.all(parallelRequests);
+        await Promise.all(parallelRequests);
       }
 
       // 处理阅读数结果
-      if (incrementViews && viewResultPromise) {
-        const viewResult = yield viewResultPromise;
-        this.viewCount = viewResult ? viewResult.views : (soupData.views || 0);
+      if (incrementViews) {
+        this.viewCount = requestResults.viewResult ? requestResults.viewResult.views : (soupData.views || 0);
       } else {
         this.viewCount = soupData.views || 0;
       }
 
       // 处理交互状态结果
       if (this.isLoggedIn) {
-        this.isLiked = yield isLikedPromise;
-        this.isFavorite = yield isFavoritePromise;
+        this.isLiked = requestResults.isLiked;
+        this.isFavorite = requestResults.isFavorite;
       } else {
         // 用户未登录，默认未点赞和未收藏
         this.isLiked = false;

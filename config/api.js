@@ -107,7 +107,7 @@ const assets = {
     // 图片资源
     images: {
       get: (filename) => `${assetsBaseUrl}/${paths.assets.images}${filename}`,
-      share: `${assetsBaseUrl}/images/test.webp`
+      share: `${assetsBaseUrl}/${paths.assets.images}test.webp`
     },
 
     // 图标资源
