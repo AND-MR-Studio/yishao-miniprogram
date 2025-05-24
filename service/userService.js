@@ -7,35 +7,6 @@ const TOKEN_KEY = 'token'; // 使用token作为唯一的本地存储键
 const DEFAULT_AVATAR_URL = assets.local.avatar;
 
 /**
- * 获取用户头像
- * 从资源服务获取用户头像
- * @param {string} userId - 用户ID
- * @returns {Promise<string>} - 返回Promise，包含头像URL
- */
-async function getUserAvatar(userId) {
-  if (!userId) return Promise.resolve(DEFAULT_AVATAR_URL);
-
-  try {
-    // 调用资源服务获取用户头像
-    const config = {
-      url: api.asset.avatar(userId),
-      method: 'GET'
-    };
-
-    // 使用开放请求方法，不需要身份验证
-    const res = await assetRequestOpen(config);
-
-    if (res.success && res.data && res.data.url) {
-      return res.data.url;
-    } else {
-      return DEFAULT_AVATAR_URL;
-    }
-  } catch (error) {
-    return DEFAULT_AVATAR_URL;
-  }
-}
-
-/**
  * 获取用户信息
  * 简洁的实现，每次都从服务器获取最新数据
  * @returns {Promise} - 返回Promise，包含用户信息
@@ -59,9 +30,9 @@ function getUserInfo() {
       // 使用userRequest方法，保持一致性
       userRequest(config).then(res => {
         if (res.success && res.data) {
-          // 返回完整的后端数据，不在本地存储用户信息
-          resolve(res.data);
-        } else {
+            // 返回完整的后端数据
+            resolve(res.data);
+          } else {
           reject('获取用户信息失败');
         }
       }).catch(err => {
@@ -73,188 +44,9 @@ function getUserInfo() {
   }
 }
 
-/**
- * 刷新用户信息
- * @returns {Promise<Object>} 用户信息
- */
-function refreshUserInfo() {
-  return getUserInfo();
-}
 
-/**
- * 获取用户ID
- * @returns {Promise<string>} 用户ID
- */
-async function getUserId() {
-  try {
-    // 检查token是否存在
-    const token = wx.getStorageSync(TOKEN_KEY);
-    if (!token) {
-      return '';
-    }
 
-    // 从服务器获取用户信息，然后返回用户ID
-    try {
-      const userInfo = await getUserInfo();
-      return userInfo?.userId || '';
-    } catch {
-      return '';
-    }
-  } catch (error) {
-    return '';
-  }
-}
 
-/**
- * 获取剩余提问次数
- * @returns {Promise<number>} 剩余提问次数
- */
-async function getRemainingAnswers() {
-  try {
-    // 检查登录状态
-    const token = wx.getStorageSync(TOKEN_KEY);
-    if (!token) {
-      return 0;
-    }
-
-    // 从后端获取最新用户信息
-    // 后端已返回扁平化的数据结构
-    const userInfo = await getUserInfo();
-    return userInfo.remainingAnswers || 0;
-  } catch {
-    return 0;
-  }
-}
-
-/**
- * 上传用户头像图片
- * 增强版本，解决chooseAvatar:fail another chooseAvatar is in progress错误
- * @param {string} avatarUrl - 头像临时文件路径
- * @returns {Promise} - 上传结果
- */
-async function updateAvatar(avatarUrl) {
-  if (!avatarUrl) return Promise.reject('头像URL为空');
-
-  // 检查登录状态
-  const token = wx.getStorageSync(TOKEN_KEY);
-  if (!token) {
-    return Promise.reject('用户未登录，请先登录');
-  }
-
-  try {
-    // 获取用户ID
-    const userId = await getUserId();
-    if (!userId) {
-      return Promise.reject('获取用户ID失败');
-    }
-
-    // 添加更长的延迟，确保微信内部的chooseAvatar操作完全结束
-    // 从300ms增加到800ms，给微信API更多时间完成内部操作
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // 显示上传中提示
-    wx.showToast({
-      title: '上传头像中...',
-      icon: 'loading',
-      duration: 10000 // 设置较长时间，会在上传完成后被hide覆盖
-    });
-
-    // 使用资源服务上传头像
-    const result = await uploadFile({
-      url: api.asset.upload,
-      filePath: avatarUrl,
-      name: 'file',
-      formData: {
-        type: 'avatar',
-        userId: userId,
-        timestamp: new Date().getTime()
-      }
-    });
-
-    // 隐藏提示
-    wx.hideToast();
-
-    if (result.success && result.data) {
-      // 刷新用户信息，获取最新数据
-      await refreshUserInfo();
-
-      // 添加额外延迟，确保所有操作完全结束
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      // 显示成功提示
-      wx.showToast({
-        title: '头像上传成功',
-        icon: 'success',
-        duration: 2000
-      });
-
-      return {
-        success: true,
-        avatarUrl: result.data.url || '',
-        message: '头像上传成功'
-      };
-    } else {
-      wx.showToast({
-        title: result.error || '上传头像失败',
-        icon: 'none',
-        duration: 2000
-      });
-      return Promise.reject(result.error || '上传头像失败');
-    }
-  } catch (error) {
-    // 隐藏提示
-    wx.hideToast();
-
-    wx.showToast({
-      title: '上传头像失败',
-      icon: 'none',
-      duration: 2000
-    });
-    return Promise.reject('上传头像失败');
-  }
-}
-
-/**
- * 更新用户昵称
- * @param {string} nickName - 昵称
- * @returns {Promise} - 更新结果
- */
-function updateNickname(nickName) {
-  if (!nickName) return Promise.reject('昵称为空');
-
-  // 上传到服务器，token会通过request.js自动添加到请求头
-  const config = {
-    url: api.user.update,
-    method: 'POST',
-    data: {
-      nickName: nickName
-    }
-  };
-
-  return userRequest(config);
-}
-
-/**
- * 获取侦探ID
- * 从后端获取最新的侦探ID
- * @returns {Promise<string>} - 侦探ID
- */
-async function getDetectiveId() {
-  try {
-    // 检查登录状态
-    const token = wx.getStorageSync(TOKEN_KEY);
-    if (!token) {
-      return '';
-    }
-
-    // 从后端获取最新用户信息
-    // 后端已返回扁平化的数据结构
-    const userInfo = await getUserInfo();
-    return userInfo.detectiveId || '';
-  } catch {
-    return '';
-  }
-}
 
 // 登录状态标志
 let isLoggingIn = false;
@@ -440,145 +232,6 @@ function checkLoginStatus(showToast = true) {
   }
   return true;
 }
-
-/**
- * 显示升级提示
- * @param {string} levelTitle - 新的等级称号，由后端返回
- */
-function showLevelUpNotification(levelTitle) {
-  // 显示升级提示
-  wx.showToast({
-    title: `恭喜升级为${levelTitle}！`,
-    icon: 'success',
-    duration: 2000
-  });
-
-  // 播放升级成功的振动反馈
-  wx.vibrateShort({
-    type: 'heavy'
-  });
-
-  // 延迟显示模态框，给用户更明显的升级提示
-  setTimeout(() => {
-    wx.showModal({
-      title: '侦探等级提升',
-      content: `恭喜您升级为"${levelTitle}"！解锁更多推理能力！`,
-      showCancel: false,
-      confirmText: '太棒了'
-    });
-  }, 1000);
-}
-
-/**
- * 获取用户信息
- * 简化实现，直接使用后端返回的扁平化数据结构，不再进行结构转换
- * @param {boolean} showToast - 是否显示加载提示
- * @returns {Promise<Object>} 用户信息
- */
-async function getFormattedUserInfo(showToast = false) {
-  try {
-    // 检查登录状态
-    if (!checkLoginStatus(false)) {
-      return null;
-    }
-
-    // 显示加载中提示
-    if (showToast) {
-      wx.showToast({
-        title: '加载中...',
-        icon: 'loading',
-        duration: 10000 // 设置较长时间，会在获取完成后被hide覆盖
-      });
-    }
-
-    // 使用getUserInfo方法获取用户信息
-    // 后端已返回扁平化的数据结构，包含头像URL
-    const userInfo = await getUserInfo();
-
-    // 隐藏提示
-    if (showToast) {
-      wx.hideToast();
-    }
-
-    // 直接返回后端数据，不再进行结构转换
-    // 后端已经提供了所有必要的字段和默认值
-    return userInfo;
-  } catch (error) {
-    // 隐藏提示
-    if (showToast) {
-      wx.hideToast();
-    }
-    console.error('获取用户信息失败:', error);
-    return null;
-  }
-}
-
-/**
- * 设置用户信息
- * @param {Object} userInfo - 用户信息
- * @returns {Promise} - 设置结果
- */
-async function setUserInfo(userInfo) {
-  if (!userInfo) return Promise.reject('用户信息为空');
-
-  // 检查用户是否已登录（检查token是否存在）
-  const token = wx.getStorageSync(TOKEN_KEY);
-  if (!token) {
-    return Promise.reject('用户未登录，请先登录');
-  }
-
-  // 上传到服务器，token会通过request.js自动添加到请求头
-  // 如果昵称为空，后端会自动生成
-  const config = {
-    url: api.user.update,
-    method: 'POST',
-    data: {
-      nickName: userInfo.nickName || ''
-    }
-  };
-
-  const res = await userRequest(config);
-
-  if (res.success && res.data) {
-    // 直接返回后端数据
-    return res.data;
-  }
-  return res;
-}
-
-/**
- * 更新用户浏览过的汤
- * 将当前浏览的汤ID添加到用户的viewedSoups数组中
- * @param {string} soupId - 汤ID
- * @returns {Promise} - 更新结果
- */
-async function updateViewedSoup(soupId) {
-  if (!soupId) return Promise.reject('汤ID为空');
-
-  // 检查用户是否已登录
-  const token = wx.getStorageSync(TOKEN_KEY);
-  if (!token) {
-    return Promise.resolve({ success: false, message: '用户未登录' });
-  }
-
-  try {
-    // 调用后端接口更新用户浏览过的汤
-    const config = {
-      url: api.user.viewedSoup,
-      method: 'POST',
-      data: {
-        soupId: soupId
-      }
-    };
-
-    const res = await userRequest(config);
-    return res;
-  } catch (error) {
-    // 浏览记录更新失败不影响用户体验，返回静默失败
-    return { success: false, message: '更新浏览记录失败' };
-  }
-}
-
 /**
  * 更新用户回答过的汤
  * 将当前回答的汤ID添加到用户的answeredSoups数组中
@@ -838,23 +491,9 @@ async function isSolvedSoup(soupId) {
 }
 
 module.exports = {
-  TOKEN_KEY,
-  DEFAULT_AVATAR_URL,
   getUserInfo,
-  getUserId,
-  refreshUserInfo,
-  getRemainingAnswers,
-  updateAvatar,
-  updateNickname,
-  getDetectiveId,
   login,
   logout,
-  checkLoginStatus,
-  showLevelUpNotification,
-  getFormattedUserInfo,
-  setUserInfo,
-  getUserAvatar,
-  updateViewedSoup,
   updateAnsweredSoup,
   updateFavoriteSoup,
   isFavoriteSoup,

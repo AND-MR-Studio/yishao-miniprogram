@@ -12,8 +12,8 @@ App({
     // 应用初始化完成后，延迟同步用户ID
     setTimeout(() => {
       const { rootStore } = require('./stores/rootStore');
-      if (rootStore && typeof rootStore.syncUserId === 'function') {
-        rootStore.syncUserId();
+      if (rootStore && typeof rootStore.syncUserInfo === 'function') {
+      rootStore.syncUserInfo();
       }
     }, 100);
   },

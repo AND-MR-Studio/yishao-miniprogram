@@ -26,7 +26,7 @@ Page({
       this.rootStoreBindings = createStoreBindings(this, {
         store: rootStore,
         fields: ['userId', 'isFirstVisit', 'showGuide'],
-        actions: ['syncUserId', 'showGuideManually', 'closeGuide']
+        actions: ['showGuideManually', 'closeGuide'] // 移除了 'syncUserId'
       });
 
       // 创建chatStore绑定 - 管理聊天相关的所有状态
@@ -60,7 +60,7 @@ Page({
       }
 
       // 同步用户ID
-      await this.syncUserId();
+      await rootStore.syncUserInfo(); // 修改为直接调用 rootStore.syncUserInfo()
 
       // 获取汤面数据并初始化 - 使用chatStore的方法
       const soupData = await this.fetchSoupForChat(soupId);

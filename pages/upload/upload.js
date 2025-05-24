@@ -79,11 +79,16 @@ Page({
    */
   async loadData() {
     try {
+      // 确保用户信息已同步
+      await rootStore.syncUserInfo();
+
       // 加载已发布的汤
       if (rootStore.isLoggedIn) {
         await this.loadPublishedSoups();
-
         // 获取用户信息，更新创建的汤数量
+        this.updateCreatedSoupCount();
+      } else {
+        // 如果未登录，也尝试更新数量（可能为0）
         this.updateCreatedSoupCount();
       }
     } catch (error) {
@@ -96,17 +101,10 @@ Page({
    */
   updateCreatedSoupCount() {
     try {
-      // 检查用户是否已登录
-      if (!rootStore.isLoggedIn) {
-        this.setData({ createdSoupCount: 0 });
-        return;
-      }
+      // 检查用户是否已登录，并从 rootStore 获取 userInfo
+      const userInfo = rootStore.userInfo;
 
-      // 从rootStore获取用户信息
-      const userInfo = wx.getStorageSync('userInfo');
-
-      // 更新创建的汤数量
-      if (userInfo && userInfo.creationCount !== undefined) {
+      if (rootStore.isLoggedIn && userInfo && userInfo.creationCount !== undefined) {
         // 使用creationCount字段
         this.setData({ createdSoupCount: userInfo.creationCount || 0 });
       } else {

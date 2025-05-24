@@ -33,7 +33,7 @@ Page({
     this.rootStoreBindings = createStoreBindings(this, {
       store: rootStore,
       fields: ["userId", "isLoggedIn", "isFirstVisit", "showGuide"],
-      actions: ["syncUserId", "closeGuide"]
+      actions: ["closeGuide"] // 确保 syncUserId 已从 actions 中移除
     });
 
     // 创建soupStore绑定 - 汤面相关字段和方法
@@ -44,7 +44,7 @@ Page({
     });
 
     // 同步用户ID - 确保获取最新的用户状态
-    await this.syncUserId();
+    await rootStore.syncUserInfo(); // 确保 onLoad 中也使用 rootStore.syncUserInfo()
 
     try {
       // 统一数据获取路径：无论是否有soupId，都通过统一的fetchSoup方法获取数据
@@ -77,6 +77,10 @@ Page({
    * 页面显示时执行
    * 设置底部TabBar选中状态并同步用户ID
    */
+  /**
+   * 页面显示时执行
+   * 设置底部TabBar选中状态并同步用户ID
+   */
   onShow() {
     // 设置底部TabBar选中状态
     if (typeof this.getTabBar === "function" && this.getTabBar()) {
@@ -85,8 +89,8 @@ Page({
       });
     }
 
-    // 同步用户ID - 使用绑定的方法
-    this.syncUserId();
+    // 同步用户ID - 直接调用 rootStore 的方法
+    rootStore.syncUserInfo();
   },
 
   /**

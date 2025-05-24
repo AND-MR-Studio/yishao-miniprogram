@@ -181,7 +181,7 @@
 
 ## 数据流与交互
 
-1. **页面加载**: `index.js` 的 `onLoad` 调用 `rootStore.syncUserId` 同步用户状态，然后调用 `soupStore.fetchSoup(options.soupId)` 或 `soupStore.getRandomSoup()` 获取汤面数据。`fetchSoup` 内部会调用 `soupService` 获取汤面详情，并根据登录状态调用 `userService` 获取点赞/收藏状态，最后更新 `soupStore` 的可观察状态。
+1. **页面加载**: `index.js` 的 `onLoad` 调用 `rootStore.syncUserInfo` 同步用户状态，然后调用 `soupStore.fetchSoup(options.soupId)` 或 `soupStore.getRandomSoup()` 获取汤面数据。`fetchSoup` 内部会调用 `soupService` 获取汤面详情，并根据登录状态调用 `userService` 获取点赞/收藏状态，最后更新 `soupStore` 的可观察状态。
 2. **状态绑定**: 页面通过 `createStoreBindings` 监听 `soupStore` 和 `rootStore` 的可观察状态变化，当状态更新时，页面 `data` 会自动同步，触发页面 UI 重新渲染。
 3. **用户交互**: 用户在页面上的滑动、双击等操作由 `interactionManager` 捕获，并触发页面对应的方法（如 `switchSoup`, `handleDoubleTap`）。
 4. **逻辑处理**: 页面的事件处理方法（如 `switchSoup`, `handleDoubleTap`, `onStartSoup`）调用 `soupStore` 中对应的 Action/Flow 方法（如 `getRandomSoup`, `toggleFavorite`, `setButtonLoading`）。

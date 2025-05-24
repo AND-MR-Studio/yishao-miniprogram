@@ -1,10 +1,10 @@
 const { makeAutoObservable, flow } = require("mobx-miniprogram");
 const soupService = require("../service/soupService");
-const userService = require("../service/userService");
 
 /**
  * 汤面Store类 - 管理汤面数据和交互状态
  * 负责汤面数据的获取、更新和交互状态管理
+ * 通过userStore获取用户信息和处理用户交互
  */
 class SoupStore {
   // ===== 可观察状态 =====
@@ -120,13 +120,13 @@ class SoupStore {
       // 只有在用户已登录的情况下获取交互状态
       if (this.isLoggedIn) {
         parallelRequests.push(
-          userService.isLikedSoup(soupId).then(result => {
+          this.rootStore.isLikedSoup(soupId).then(result => {
             requestResults.isLiked = result;
           })
         );
         
         parallelRequests.push(
-          userService.isFavoriteSoup(soupId).then(result => {
+          this.rootStore.isFavoriteSoup(soupId).then(result => {
             requestResults.isFavorite = result;
           })
         );
@@ -194,7 +194,7 @@ class SoupStore {
 
       // 并行更新用户记录和汤面记录
       const [userResult, result] = yield Promise.all([
-        userService.updateLikedSoup(soupId, newStatus),
+        this.rootStore.toggleLikeSoup(soupId),
         soupService.likeSoup(soupId, newStatus)
       ]);
 
@@ -250,7 +250,7 @@ class SoupStore {
 
       // 并行更新用户记录和汤面记录
       const [userResult, result] = yield Promise.all([
-        userService.updateFavoriteSoup(soupId, newStatus),
+        this.rootStore.toggleFavoriteSoup(soupId),
         soupService.favoriteSoup(soupId, newStatus)
       ]);
 

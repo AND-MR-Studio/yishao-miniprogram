@@ -12,7 +12,7 @@ module.exports = {
   // 导出rootStore及其方法
   rootStore,
   userId: rootStore.userId,
-  syncUserId: rootStore.syncUserId.bind(rootStore),
+  syncUserInfo: rootStore.syncUserInfo.bind(rootStore),
 
   // 导出子Store，提供向后兼容性
   soupStore: rootStore.soupStore,
