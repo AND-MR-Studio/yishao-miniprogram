@@ -4,12 +4,11 @@
 const api = require('../../config/api');
 // 引入rootStore 和 mobx-miniprogram-bindings
 const { rootStore } = require('../../stores/rootStore');
-const { storeBindingsBehavior, createStoreBindings, destroyStoreBindings } = require('mobx-miniprogram-bindings');
+const { createStoreBindings, destroyStoreBindings } = require('mobx-miniprogram-bindings');
 // 引入 userStore
 const { userStore } = require('../../stores/userStore');
 
 Page({
-  behaviors: [storeBindingsBehavior],
   /**
    * 页面的初始数据
    */
@@ -26,9 +25,11 @@ Page({
     // 汤面列表弹窗
     showSoupListModal: false,
     // 汤面列表类型: 'unsolved', 'solved', 'creations', 'favorites'
-    soupListType: 'unsolved'
+    soupListType: 'unsolved',
+    // 编辑中的昵称和头像，用于用户信息设置弹窗
+    editingNickName: '',
+    editingAvatarUrl: ''
   },
-
   /**
    * 生命周期函数--监听页面加载
    */
@@ -36,30 +37,28 @@ Page({
     // 页面加载时不主动刷新数据，等待onShow处理
     // 这样可以避免onLoad和onShow重复刷新
 
-    // 在 onLoad 中手动创建 store 绑定实例
+    // 手动创建 rootStore 绑定实例
     this.rootStoreBindings = createStoreBindings(this, {
       store: rootStore,
-      fields: ['isLoggedIn'],
-      actions: { // 将 actions 改回对象形式
-        syncUserInfo: 'syncUserInfo' // 明确绑定页面方法名到 Store action，使用 syncUserInfo
-      }
+      fields: ["isLoggedIn"],
+      actions: ["syncUserInfo"]
     });
 
+    // 手动创建 userStore 绑定实例
     this.userStoreBindings = createStoreBindings(this, {
       store: userStore,
       fields: [
-        'userInfo',
-        'detectiveInfo',
-        'hasSignedIn',
-        'totalSoupCount',
-        'pointsCount'
+        "userInfo",
+        "detectiveInfo",
+        "hasSignedIn",
+        "totalSoupCount",
+        "pointsCount",
+        "userAvatar", // 绑定 userStore 的计算属性
+        "remainingAnswers", // 绑定 userStore 的计算属性
+        "detectiveId" // 绑定 userStore 的计算属性
       ],
-      actions: { // 将 actions 改回对象形式
-        updateAvatarAction: 'updateAvatar', // 明确绑定页面方法名到 Store action
-        updateUserProfile: 'updateUserProfile', // 明确绑定页面方法名到 Store action
-        loginAction: 'login', // 将 signInAction 替换为 loginAction
-        logoutAction: 'logout' // 添加 logout action 绑定
-      }
+      actions: ["updateAvatar",  "updateUserProfile","login","logout" ] // 绑定 userStore 的 updateAvatar action
+      
     });
   },
 
@@ -73,14 +72,18 @@ Page({
       });
     }
 
-    // 直接调用绑定的 Store action 刷新数据，改为调用 syncUserInfo
-    await this.syncUserInfo();
+    // 直接调用 rootStore 的 syncUserInfo action 刷新数据
+    await rootStore.syncUserInfo();
     // 根据登录状态更新按钮
     this.updateButtonConfig();
   },
 
+  /**
+   * 更新登录/退出登录按钮的配置
+   */
   updateButtonConfig() {
-    if (rootStore.isLoggedIn) {
+    // 直接访问绑定的 isLoggedIn 字段
+    if (this.data.isLoggedIn) {
       this.setData({
         buttonConfig: {
           type: 'unlight',
@@ -125,6 +128,7 @@ Page({
       // 添加延迟，确保微信内部的chooseAvatar操作完全结束
       await new Promise(resolve => setTimeout(resolve, 500));
       // 调用 store action 更新头像
+      // 直接调用绑定的 updateAvatarAction
       await this.updateAvatarAction(avatarUrl);
       wx.showToast({
         title: '头像上传成功',
@@ -196,8 +200,8 @@ Page({
     this._isOpeningUserInfoModal = true;
 
     try {
-      // 检查登录状态
-      if (!rootStore.isLoggedIn) {
+      // 检查登录状态，直接访问绑定的 isLoggedIn 字段
+      if (!this.data.isLoggedIn) {
         wx.showToast({
           title: '请先登录',
           icon: 'none',
@@ -206,15 +210,15 @@ Page({
         return;
       }
 
-      // 从 store 获取用户信息
+      // 从 store 获取用户信息，直接访问绑定的 userInfo 字段
       // 如果用户信息不完整，尝试刷新
-      if (!userStore.userInfo || !userStore.userInfo.nickname || !userStore.userInfo.avatarUrl) {
+      if (!this.data.userInfo || !this.data.userInfo.nickname || !this.data.userInfo.avatarUrl) {
         // 调用绑定的 syncUserInfo action 刷新用户信息
         await this.syncUserInfo();
       }
 
-      // 如果刷新后仍然没有用户信息，给出提示并返回
-      if (!userStore.userInfo || !userStore.userInfo.nickname || !userStore.userInfo.avatarUrl) {
+      // 如果刷新后仍然没有用户信息，给出提示并返回，直接访问绑定的 userInfo 字段
+      if (!this.data.userInfo || !this.data.userInfo.nickname || !this.data.userInfo.avatarUrl) {
         wx.showToast({
           title: '获取用户信息失败，请稍后重试',
           icon: 'none',
@@ -223,11 +227,11 @@ Page({
         return;
       }
 
-      // 设置弹窗数据，直接使用 userStore.userInfo
+      // 设置弹窗数据，直接使用绑定的 userInfo 字段
       this.setData({
         showUserInfoModal: true,
-        editingNickName: userStore.userInfo.nickname,
-        editingAvatarUrl: userStore.userInfo.avatarUrl
+        editingNickName: this.data.userInfo.nickname,
+        editingAvatarUrl: this.data.userInfo.avatarUrl
       });
 
       if (showToast) {
@@ -351,7 +355,8 @@ Page({
     this._isHandlingLogin = true;
 
     try {
-      if (rootStore.isLoggedIn) {
+      // 直接访问绑定的 isLoggedIn 字段
+      if (this.data.isLoggedIn) {
         // 已登录，执行退出登录
         this.setData({
           isLoggingOut: true
@@ -376,7 +381,7 @@ Page({
             icon: 'none',
             duration: 2000
           });
-        }
+        }律师
       } else {
         // 未登录，执行登录
         // 调用绑定的 loginAction
@@ -390,16 +395,24 @@ Page({
           // 登录成功后，调用绑定的 syncUserInfo action 刷新用户信息
           await this.syncUserInfo();
           this.updateButtonConfig();
-          // 登录成功后检查是否需要完善信息，直接使用 userStore.userInfo
-          if (!userStore.userInfo || !userStore.userInfo.nickname || !userStore.userInfo.avatarUrl) {
+          // 登录成功后检查是否需要完善信息，直接访问绑定的 userInfo 字段
+          if (!this.data.userInfo || !this.data.userInfo.nickname || !this.data.userInfo.avatarUrl) {
             this.openUserInfoModal(true);
           } else {
-            wx.showToast({
-              title: loginResult.message || '登录失败',
-              icon: 'none',
+            // 登录成功但无需完善信息时，也显示登录成功提示
+             wx.showToast({
+              title: '登录成功',
+              icon: 'success',
               duration: 2000
             });
           }
+        } else {
+           // 登录失败时显示错误信息
+           wx.showToast({
+             title: loginResult.message || '登录失败',
+             icon: 'none',
+             duration: 2000
+           });
         }
       }
     } catch (error) {
