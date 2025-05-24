@@ -137,6 +137,8 @@ class SoupStore {
       // 重置加载状态和请求标志
       this.soupLoading = false;
       this._fetchingId = null;
+      // 重置模糊效果
+      this.resetBlurAmount();
     }
   }
 
