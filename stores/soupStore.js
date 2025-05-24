@@ -1,10 +1,10 @@
 const { makeAutoObservable, flow } = require("mobx-miniprogram");
 const soupService = require("../service/soupService");
-const userService = require("../service/userService");
 
 /**
  * 汤面Store类 - 管理汤面数据和交互状态
  * 负责汤面数据的获取、更新和交互状态管理
+ * 通过userStore获取用户信息和处理用户交互
  */
 class SoupStore {
   // ===== 可观察状态 =====
@@ -22,6 +22,9 @@ class SoupStore {
   soupLoading = false; // 是否正在加载汤面数据
   buttonLoading = false; // 开始喝汤按钮的加载状态
 
+  // UI状态
+  blurAmount = 0; // 模糊程度（0-10px）
+
   // 防止重复请求的标志
   _fetchingId = null; // 当前正在获取数据的soupId
 
@@ -35,11 +38,12 @@ class SoupStore {
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
       // 标记异步方法为flow
-      fetchSoup: flow,
       toggleLike: flow,
       toggleFavorite: flow,
+      fetchSoup: flow, // 将 fetchSoup 标记为 flow，因为它是 generator 函数
 
       // 普通方法，不需要flow
+      // fetchSoup: false, // async 方法需要标记为普通方法
       setButtonLoading: false,
       resetButtonLoading: false,
 
@@ -88,7 +92,7 @@ class SoupStore {
         soupData = yield soupService.getRandomSoup();
         if (!soupData) {
           throw new Error("获取汤面数据失败");
-        }
+        } 
         // 更新soupId为随机汤面的ID
         soupId = soupData.id;
       }
@@ -108,8 +112,8 @@ class SoupStore {
       if (this.isLoggedIn) {
         // 并行获取用户交互状态
         const [isLiked, isFavorite] = yield Promise.all([
-          userService.isLikedSoup(soupId),
-          userService.isFavoriteSoup(soupId)
+          this.rootStore.isLikedSoup(soupId),
+          this.rootStore.isFavoriteSoup(soupId)
         ]);
 
         // 更新交互状态
@@ -133,6 +137,8 @@ class SoupStore {
       // 重置加载状态和请求标志
       this.soupLoading = false;
       this._fetchingId = null;
+      // 重置模糊效果
+      this.resetBlurAmount();
     }
   }
 
@@ -156,16 +162,18 @@ class SoupStore {
       // 确定新状态
       const newStatus = !this.isLiked;
 
-      // 更新用户记录
-      const userResult = yield userService.updateLikedSoup(soupId, newStatus);
+      // 并行更新用户记录和汤面记录
+      const [userResult, result] = yield Promise.all([
+        this.rootStore.toggleLikeSoup(soupId),
+        soupService.likeSoup(soupId, newStatus)
+      ]);
 
+      // 验证用户记录更新结果
       if (!userResult || !userResult.success) {
         return { success: false, message: "点赞状态更新失败，请重试" };
       }
 
-      // 更新汤面记录
-      const result = yield soupService.likeSoup(soupId, newStatus);
-
+      // 验证汤面记录更新结果
       if (!result || !result.success || result.likes === undefined) {
         return { success: false, message: "点赞状态更新失败，请重试" };
       }
@@ -210,16 +218,18 @@ class SoupStore {
       // 确定新状态
       const newStatus = !this.isFavorite;
 
-      // 更新用户记录
-      const userResult = yield userService.updateFavoriteSoup(soupId, newStatus);
+      // 并行更新用户记录和汤面记录
+      const [userResult, result] = yield Promise.all([
+        this.rootStore.toggleFavoriteSoup(soupId),
+        soupService.favoriteSoup(soupId, newStatus)
+      ]);
 
+      // 验证用户记录更新结果
       if (!userResult || !userResult.success) {
         return { success: false, message: "收藏状态更新失败，请重试" };
       }
 
-      // 更新汤面记录
-      const result = yield soupService.favoriteSoup(soupId, newStatus);
-
+      // 验证汤面记录更新结果
       if (!result || !result.success || result.favorites === undefined) {
         return { success: false, message: "收藏状态更新失败，请重试" };
       }
@@ -247,6 +257,7 @@ class SoupStore {
   /**
    * 获取随机汤面数据
    * 直接调用soupService的getRandomSoup方法，然后使用fetchSoup加载完整数据
+   * fetchSoup内部已经实现了并行请求优化，可以同时获取汤面数据和交互状态
    * @returns {Promise<Object>} 随机汤面数据
    */
   async getRandomSoup() {
@@ -254,6 +265,7 @@ class SoupStore {
       const randomSoup = await soupService.getRandomSoup();
       if (randomSoup && randomSoup.id) {
         // 使用fetchSoup加载完整数据
+        // fetchSoup内部已经实现了并行请求优化
         return await this.fetchSoup(randomSoup.id);
       }
       return null;
@@ -294,6 +306,22 @@ class SoupStore {
       clearTimeout(this._buttonLoadingTimeout);
       this._buttonLoadingTimeout = null;
     }
+  }
+
+  /**
+   * 设置模糊效果
+   * @param {number} amount 模糊程度（0-10px）
+   */
+  setBlurAmount(amount) {
+    // 确保值在有效范围内
+    this.blurAmount = Math.max(0, Math.min(10, amount));
+  }
+
+  /**
+   * 重置模糊效果
+   */
+  resetBlurAmount() {
+    this.blurAmount = 0;
   }
 }
 

@@ -22,6 +22,13 @@ page {
   --color-background-light:rgb(58, 70, 87);
   --color-background-dark: #03091A;
 
+  /* 玻璃质感背景 */
+  --glass-bg-dark: rgba(10, 0, 20, 0.7);
+  --glass-bg-purple: rgba(40, 10, 80, 0.6);
+  --glass-bg-light: rgba(30, 30, 50, 0.5);
+  --glass-blur: blur(10px);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+
   /* 文本颜色 */
   --color-text-primary: #FFFFFF;
   --color-text-secondary: rgba(255, 255, 255, 0.7);
@@ -103,10 +110,22 @@ page {
   --shadow-lg: 0 6rpx 16rpx rgba(0, 0, 0, 0.25);
   --shadow-xl: 0 8rpx 24rpx rgba(0, 0, 0, 0.3);
 
+  /* 玻璃拟物风格阴影 */
+  --shadow-glass-sm: 0 4rpx 12rpx rgba(0, 0, 0, 0.3), inset 0 1rpx 2rpx rgba(255, 255, 255, 0.1);
+  --shadow-glass-md: 0 6rpx 16rpx rgba(0, 0, 0, 0.4), inset 0 1rpx 3rpx rgba(255, 255, 255, 0.15);
+  --shadow-glass-lg: 0 8rpx 24rpx rgba(0, 0, 0, 0.5), inset 0 1rpx 4rpx rgba(255, 255, 255, 0.2);
+  --shadow-glass-xl: 0 12rpx 36rpx rgba(0, 0, 0, 0.6), inset 0 2rpx 6rpx rgba(255, 255, 255, 0.25);
+
+  /* 紫色阴影 */
+  --shadow-purple-sm: 0 4rpx 12rpx rgba(87, 44, 239, 0.3);
+  --shadow-purple-md: 0 6rpx 16rpx rgba(87, 44, 239, 0.4);
+  --shadow-purple-lg: 0 8rpx 24rpx rgba(87, 44, 239, 0.5);
+  --shadow-purple-xl: 0 12rpx 36rpx rgba(87, 44, 239, 0.6);
+
   /* 发光效果 */
   --glow-primary: 0 0 15rpx rgba(87, 44, 239, 0.6);
   --glow-accent: 0 0 15rpx rgba(92, 232, 33, 0.6);
-  --text-glow-primary: 2rpx 2rpx 0rpx rgba(33, 123, 15, 0.58), 0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.58);
+  --text-glow-primary: 0rpx 0rpx 10rpx rgba(0, 255, 0, 0.9), 0rpx 0rpx 20rpx rgba(0, 255, 0, 0.8), 0rpx 0rpx 30rpx rgba(0, 255, 0, 0.7);
   --text-glow-secondary: 2rpx 2rpx 0rpx rgba(43, 255, 0, 0.3), 0rpx 0rpx 33.2rpx rgba(23, 255, 93, 0.3);
 
   /* 动画相关变量 */
@@ -189,6 +208,9 @@ page {
 /* 文字发光效果样式 */
 .text-glow-primary {
   text-shadow: var(--text-glow-primary);
+  animation: green-text-flicker 2s infinite;
+  color: #FFFFFF;
+  font-weight: var(--font-weight-medium);
 }
 
 .text-glow-secondary {
@@ -323,4 +345,47 @@ page {
 .icon-xl {
   width: 80rpx;
   height: 80rpx;
+}
+
+/* 玻璃拟物风格卡片样式 */
+.glass-card {
+  background-color: var(--glass-bg-dark);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-glass-md);
+  padding: var(--spacing-md);
+  overflow: hidden;
+  position: relative;
+}
+
+.glass-card-purple {
+  background-color: var(--glass-bg-purple);
+  box-shadow: var(--shadow-purple-md), var(--shadow-glass-sm);
+}
+
+.glass-card-light {
+  background-color: var(--glass-bg-light);
+}
+
+/* 卡片层级样式 */
+.z-level-1 {
+  z-index: 10;
+  box-shadow: var(--shadow-glass-sm);
+}
+
+.z-level-2 {
+  z-index: 20;
+  box-shadow: var(--shadow-glass-md);
+}
+
+.z-level-3 {
+  z-index: 30;
+  box-shadow: var(--shadow-glass-lg);
+}
+
+.z-level-4 {
+  z-index: 40;
+  box-shadow: var(--shadow-glass-xl);
 }

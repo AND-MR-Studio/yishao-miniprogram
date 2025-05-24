@@ -156,6 +156,7 @@
 /* 退出登录按钮容器样式 */
 .logout-container {
   padding: 20rpx 0;
+
   margin-top: auto;
   display: flex;
   justify-content: center;
@@ -163,8 +164,14 @@
 }
 
 .login-button-wrapper {
-  transform: scale(0.85);
-  margin: -10rpx 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* 确保退出按钮样式正确 */
+.login-button-wrapper .btn-unlight {
+  min-width: 400rpx;
 }
 
 /* 用户信息弹窗样式 */
@@ -359,6 +366,21 @@
 .user-info-footer {
   padding: 30rpx;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 确保弹窗中的按钮样式正确 */
+.user-info-footer .btn-light {
+  width: 80% !important;
+  max-width: none !important;
+  padding: 15rpx 30rpx !important;
+  box-sizing: border-box !important;
+  font-size: 30rpx !important;
+}
+
+/* 覆盖弹窗中按钮的容器样式 */
+.user-info-footer .jelly-effect-container,
+.user-info-footer .btn-container {
+  width: 100% !important;
 }
 
 .skip-btn {

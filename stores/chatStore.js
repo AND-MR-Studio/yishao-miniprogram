@@ -119,7 +119,13 @@ class ChatStore {
 
   // 切换到汤底状态
   showTruth() {
+    const oldState = this.chatState;
     this.chatState = CHAT_STATE.TRUTH;
+
+    // 通知tipStore页面状态已变化
+    if (this.rootStore && this.rootStore.tipStore) {
+      this.rootStore.tipStore.handlePageStateChange(CHAT_STATE.TRUTH, oldState);
+    }
   }
 
   /**
@@ -223,7 +229,13 @@ class ChatStore {
       // 检查最新消息是否包含进入真相的标记
       const latestMessage = this.messages[this.messages.length - 1];
       if (latestMessage && latestMessage.content && latestMessage.content.includes('TRUTH')) {
+        const oldState = this.chatState;
         this.chatState = CHAT_STATE.TRUTH;
+
+        // 通知tipStore页面状态已变化
+        if (this.rootStore && this.rootStore.tipStore) {
+          this.rootStore.tipStore.handlePageStateChange(CHAT_STATE.TRUTH, oldState);
+        }
       }
 
       return true;

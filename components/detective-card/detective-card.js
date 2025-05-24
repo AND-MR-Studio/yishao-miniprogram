@@ -16,7 +16,7 @@ Component({
     },
     defaultAvatarUrl: {
       type: String,
-      value: api.default_avatar_url
+      value: null
     },
     // 是否已经签到
     hasSignedIn: {
@@ -36,7 +36,7 @@ Component({
     isLoggedIn: false,
     // 等级称号
     levelTitle: '未知侦探',
-    // 剩余回答次数
+    // 剩余提问次数
     remainingAnswers: 0,
     // 四栏数据
     unsolvedCount: 0,
@@ -203,8 +203,8 @@ Component({
         // 创建一个新对象，避免直接修改原对象
         const updatedInfo = { ...this.properties.detectiveInfo };
 
-        // 添加时间戳参数，避免缓存问题
-        const defaultUrl = this.properties.defaultAvatarUrl + '?t=' + new Date().getTime();
+        // 使用默认头像，不添加时间戳参数（微信会自动处理缓存）
+        const defaultUrl = this.properties.defaultAvatarUrl;
         updatedInfo.avatarUrl = defaultUrl;
 
         // 更新组件属性

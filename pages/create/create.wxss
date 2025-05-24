@@ -1,0 +1,405 @@
+/* pages/create/create.wxss */
+@import "../../styles/animation.wxss";
+
+/* 页面基础样式 */
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  position: relative;
+  overflow-x: hidden;
+}
+
+
+
+/* 容器样式 */
+.container {
+  padding: 30rpx;
+  padding-top: 180rpx; /* 为导航栏留出空间 */
+}
+
+/* 表单容器 - 暗黑玻璃新拟物风格 */
+.form-container {
+  background: rgba(6, 20, 41, 0.6);
+  border-radius: var(--radius-lg);
+  padding: 40rpx;
+  box-shadow: 0 12rpx 30rpx rgba(0, 0, 0, 0.4),
+              inset 0 2rpx 10rpx rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(87, 44, 239, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 表单容器内部光晕效果 */
+.form-container::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle at center,
+    rgba(87, 44, 239, 0.08) 0%,
+    rgba(87, 44, 239, 0.03) 30%,
+    transparent 70%
+  );
+  opacity: 0.7;
+  z-index: -1;
+}
+
+/* 表单项 */
+.form-item {
+  margin-bottom: 40rpx;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+/* 表单标签 */
+.form-label {
+  font-size: 28rpx;
+  color: var(--color-text-secondary);
+  margin-bottom: 16rpx;
+  letter-spacing: var(--letter-spacing-wide);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+}
+
+/* 输入框 - 新拟物风格 */
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(87, 44, 239, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  padding: 0 24rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.2),
+              0 2rpx 4rpx rgba(87, 44, 239, 0.05);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.form-input:focus {
+  border-color: rgba(87, 44, 239, 0.4);
+  box-shadow: 0 0 15rpx rgba(87, 44, 239, 0.2),
+              inset 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 文本域 - 新拟物风格 */
+.form-textarea {
+  width: 100%;
+  min-height: 200rpx;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(87, 44, 239, 0.2);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  padding: 24rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  line-height: 1.6;
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.2),
+              0 2rpx 4rpx rgba(87, 44, 239, 0.05);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+.form-textarea:focus {
+  border-color: rgba(87, 44, 239, 0.4);
+  box-shadow: 0 0 15rpx rgba(87, 44, 239, 0.2),
+              inset 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+}
+
+/* 错误状态的输入框 */
+.input-error {
+  border-color: var(--color-error) !important;
+  box-shadow: 0 0 15rpx rgba(255, 59, 48, 0.2),
+              inset 0 2rpx 8rpx rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 错误文本 */
+.error-text {
+  color: var(--color-error);
+  font-size: 24rpx;
+  margin-top: 10rpx;
+  opacity: 0.9;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+  animation: fadeIn 0.3s ease;
+}
+
+/* 字数统计 */
+.char-count {
+  position: absolute;
+  right: 16rpx;
+  bottom: 12rpx;
+  font-size: 24rpx;
+  color: var(--color-text-hint);
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+/* 字数接近上限时的警告样式 */
+.char-count.warning {
+  color: var(--color-warning);
+  background: rgba(255, 204, 0, 0.15);
+}
+
+
+
+/* 标签相关样式 */
+.tag-hint {
+  font-size: 24rpx;
+  color: var(--color-text-hint);
+  margin-left: 12rpx;
+  opacity: 0.8;
+}
+
+/* 已选标签容器 - 新拟物风格 */
+.selected-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  margin-bottom: 30rpx;
+  min-height: 60rpx;
+  padding: 20rpx;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(87, 44, 239, 0.2);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 2rpx 10rpx rgba(0, 0, 0, 0.25),
+              0 2rpx 4rpx rgba(87, 44, 239, 0.05);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+}
+
+/* 无标签提示 */
+.no-tags-selected {
+  color: var(--color-text-hint);
+  font-size: 28rpx;
+  width: 100%;
+  text-align: center;
+  padding: 30rpx 0;
+  letter-spacing: var(--letter-spacing-wide);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+}
+
+/* 已选标签样式 */
+.selected-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  background: rgba(87, 44, 239, 0.7);
+  border-radius: 30rpx;
+  font-size: 26rpx;
+  color: #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  margin: 10rpx;
+  transition: all 0.3s ease;
+  animation: jelly-animation 0.6s var(--transition-ease);
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.2);
+}
+
+/* 标签删除按钮 */
+.tag-remove {
+  margin-left: 12rpx;
+  width: 36rpx;
+  height: 36rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: bold;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.2);
+}
+
+/* 标签删除按钮点击效果 */
+.tag-remove:active {
+  transform: scale(0.9);
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
+}
+
+/* 标签池容器 - 新拟物风格 */
+.tag-pool {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 24rpx;
+  padding: 16rpx;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius-md);
+  justify-content: center;
+  border: 1px solid rgba(87, 44, 239, 0.1);
+  box-shadow: inset 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* 删除不再使用的pool-tag样式 */
+
+/* 标签按钮样式 */
+.tag-button {
+  margin: 10rpx;
+  padding: 0 24rpx;
+  height: 60rpx;
+  line-height: 60rpx;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 20rpx;
+  border-radius: 30rpx;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: inline-block;
+  text-align: center;
+  min-width: 70rpx;
+  box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+/* 选中状态 */
+.tag-button.selected {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 点击效果 */
+.tag-button:active {
+  transform: scale(0.95);
+  background: rgba(87, 44, 239, 0.5);
+}
+
+/* 表单操作按钮 */
+.form-actions {
+  display: flex;
+  justify-content: center; /* 居中对齐 */
+  align-items: center;
+  margin-top: 50rpx;
+  width: 100%;
+  padding: 20rpx 0;
+  gap: 30rpx; /* 按钮之间的间距 */
+}
+
+/* 自定义按钮样式覆盖 */
+.custom-draft-btn {
+  width: 40%;
+  height: 88rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  border-radius: 60rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1rpx solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+.custom-draft-btn:active {
+  transform: scale(0.95);
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1rpx 4rpx rgba(0, 0, 0, 0.2);
+}
+
+.custom-draft-btn text {
+  color: rgb(157, 157, 157);
+  font-size: 28rpx;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+}
+
+.custom-create-btn {
+  width: 60%;
+  height: 88rpx;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 6rpx 20rpx;
+  gap: 8rpx;
+  border-radius: 60rpx;
+  background: var(--color-accent, #5ce821);
+  box-shadow: 0rpx 10rpx 20rpx rgba(4, 244, 77, 0.2);
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.custom-create-btn:active {
+  transform: scale(0.95);
+  background: #4bc71a;
+  box-shadow: 0rpx 5rpx 10rpx rgba(4, 244, 77, 0.15);
+}
+
+.custom-create-btn text {
+  color: #000000;
+  font-size: 32rpx;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* 加载中状态 */
+.custom-create-btn.submitting {
+  opacity: 0.8;
+}
+
+/* 加载动画 */
+.loading-dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.loading-dots .dot {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #000000;
+  opacity: 0;
+  animation: dot-animation 1.4s infinite;
+  margin: 0 -4rpx;
+}
+
+.loading-dots .dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.loading-dots .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes dot-animation {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}

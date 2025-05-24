@@ -4,9 +4,11 @@
   <view class="noise-overlay"></view>
   <!-- 导航栏 -->
   <nav-bar
+    isTabBarPage="{{true}}"
     bind:settingchange="handleSettingChange"
     bind:close="onSettingClose"
     bind:clearcontext="clearContext"
+    bind:refreshPage="onRefreshHome"
   />
 
   <view class="container"
@@ -18,7 +20,6 @@
     <view class="soup-display-wrapper">
       <soup-display
         id="soupDisplay"
-        blurAmount="{{blurAmount}}"
         swipeDirection="{{swipeDirection}}"
         class="soup-display-component"
         bind:swipe="handleSoupSwipe"

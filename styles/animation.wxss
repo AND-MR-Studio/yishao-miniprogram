@@ -252,3 +252,12 @@
   background-color: rgba(74, 78, 87, 0.3);
   border-color: rgba(74, 78, 87, 0.6);
 }
+
+/* 绿色文字闪烁发光动画 */
+@keyframes green-text-flicker {
+  0% { text-shadow: 0rpx 0rpx 10rpx rgba(0, 255, 0, 0.9), 0rpx 0rpx 20rpx rgba(0, 255, 0, 0.8), 0rpx 0rpx 30rpx rgba(0, 255, 0, 0.7); }
+  25% { text-shadow: 0rpx 0rpx 5rpx rgba(0, 255, 0, 0.6), 0rpx 0rpx 15rpx rgba(0, 255, 0, 0.5), 0rpx 0rpx 25rpx rgba(0, 255, 0, 0.4); }
+  50% { text-shadow: 0rpx 0rpx 15rpx rgba(0, 255, 0, 1), 0rpx 0rpx 25rpx rgba(0, 255, 0, 0.9), 0rpx 0rpx 35rpx rgba(0, 255, 0, 0.8); }
+  75% { text-shadow: 0rpx 0rpx 8rpx rgba(0, 255, 0, 0.7), 0rpx 0rpx 18rpx rgba(0, 255, 0, 0.6), 0rpx 0rpx 28rpx rgba(0, 255, 0, 0.5); }
+  100% { text-shadow: 0rpx 0rpx 10rpx rgba(0, 255, 0, 0.9), 0rpx 0rpx 20rpx rgba(0, 255, 0, 0.8), 0rpx 0rpx 30rpx rgba(0, 255, 0, 0.7); }
+}

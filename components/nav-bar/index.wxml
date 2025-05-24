@@ -3,7 +3,8 @@
   <view class="nav-bar-content">
     <view class="nav-bar-left">
       <view wx:if="{{showLeft}}" class="nav-icon-wrapper left-icon" bindtap="onClickLeft">
-        <view class="icon-home-green"></view>
+        <view wx:if="{{isTabBarPage}}" class="icon-home iconfont"></view>
+        <view wx:else class="icon-back iconfont"></view>
       </view>
       <view wx:if="{{showRight}}" class="nav-icon-wrapper right-icon" bindtap="onClickRight">
         <text class="icon-more-green"></text>
@@ -20,9 +21,6 @@
   pageState="{{pageState}}"
   bind:close="onSettingClose"
   bind:switchchange="onSwitchChange"
-  bind:fontsizechange="onFontSizeChange"
-  bind:clickleft="onClickLeft"
-  bind:clickright="onClickRight"
   bind:contact="onContact"
   bind:about="onAbout"
   bind:clearcontext="onClearContext"

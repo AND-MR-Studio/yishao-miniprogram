@@ -1,17 +1,17 @@
-<!--components/tip-module/index.wxml-->
-<view class="tip-module-container {{(visible || tipStore.visible) && !isPeeking ? 'visible' : 'hidden'}}">
+<!--components/tip-box/index.wxml-->
+<view class="tip-box-container {{state !== 'HIDDEN' && !isPeeking ? 'visible' : 'hidden'}} {{state !== 'HIDDEN' && !isPeeking ? 'tip-enter' : 'tip-leave'}}">
   <!-- 内容区域 -->
   <view class="tip-content">
     <!-- 顶部GIF动画 -->
     <view class="avatar-container">
-      <view class="icon-avatar-gif"></view>
+      <image class="avatar-gif" src="{{assets.remote.ui.xiaoshao_avatar}}" mode="aspectFit"></image>
     </view>
 
     <!-- 文本内容区域 -->
     <view class="text-container">
       <!-- 提示标题 -->
       <view class="text-title">
-        <text>{{title || tipTitle}}</text>
+        <text>{{title}}</text>
       </view>
       <!-- 提示内容 - 可滚动区域 -->
       <view class="tip-scroll-view">
@@ -19,7 +19,7 @@
           <view
             wx:for="{{currentTipContent}}"
             wx:key="index"
-            class="text-line {{item.isScrollingOut ? 'scrolling-out' : ''}}"
+            class="text-line {{item.isScrollingOut ? 'scrolling-out' : ''}} {{isContentSwitching ? 'tip-leave' : 'tip-enter'}}"
             style="animation-delay: {{index * 100}}ms;">
             <text>{{item.text || item}}</text>
           </view>

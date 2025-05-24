@@ -1,1 +1,555 @@
 /* pages/upload/upload.wxss */
+@import "../../styles/animation.wxss";
+@import "../../static/css/icon.wxss";
+
+/* 页面基础样式 */
+.page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: var(--color-background);
+  position: fixed;
+  overflow-x: hidden;
+  padding-bottom: 40rpx;
+  /* 添加渐变背景 */
+  --default-gradient: radial-gradient(ellipse at 20% 30%, rgba(87, 44, 239, 0.3) 0%, rgba(25, 0, 112, 0.2) 20%, transparent 60%),
+                     radial-gradient(ellipse at 80% 85%, rgba(0, 30, 255, 0.2) 0%, rgba(0, 10, 80, 0.1) 30%, transparent 60%),
+                     radial-gradient(ellipse at 50% 50%, rgba(87, 44, 239, 0.1) 0%, rgba(50, 0, 120, 0.05) 20%, transparent 50%),
+                     radial-gradient(ellipse at 65% 20%, rgba(92, 232, 33, 0.3) 0%, rgba(0, 180, 90, 0.2) 20%, transparent 50%);
+}
+
+/* 渐变背景效果 */
+.page::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--default-gradient);
+  filter: blur(120px);
+  z-index: 1;
+  opacity: 0.85;
+  mix-blend-mode: screen;
+}
+
+/* 容器样式 */
+.container {
+  padding: 30rpx;
+  padding-top: 180rpx; /* 为导航栏留出空间 */
+}
+
+/* 卡片网格布局 */
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 24rpx;
+  margin-bottom: 40rpx;
+}
+
+/* 卡片基础样式 */
+.card {
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.3),
+              inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* 卡片玻璃质感效果 */
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 40%,
+                rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 卡片头部样式 */
+.card-header {
+  padding: 20rpx 24rpx;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  justify-content: left;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.card-badge {
+  background: var(--color-primary);
+  color: white;
+  font-size: 22rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 20rpx;
+  min-width: 40rpx;
+  text-align: center;
+}
+
+/* 卡片内容样式 */
+.card-content {
+  padding: 24rpx;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 小勺背景图片样式 - 移至页面背景 */
+.xiaoshao-background {
+  position: fixed;
+  left: 40rpx;
+  top: 160rpx; /* 导航栏下方 */
+  width: 220rpx;
+  height: 220rpx;
+  z-index: 0; /* 确保在最底层，不会遮挡任何元素 */
+  pointer-events: none; /* 确保不会拦截点击事件 */
+}
+
+.xiaoshao-gif {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none; /* 确保不会拦截点击事件 */
+}
+
+/* 欢迎文案样式 - 移至顶部 */
+.welcome-header {
+  position: fixed;
+  top: 240rpx; /* 导航栏下方 */
+  right: 100rpx;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hello-text {
+  font-size: 42rpx;
+  font-weight: bold;
+  color: 00000; /* 紫色文字 */
+  margin-bottom: 8rpx;
+  letter-spacing: 2rpx;
+}
+
+.welcome-title {
+  font-size: 36rpx;
+  color:00000;
+  font-weight: 500;
+}
+
+/* 新建创作卡片样式 */
+.create-card {
+  grid-column: 1 / span 2; /* 占据整行 */
+  grid-row: 1;
+  background: linear-gradient(135deg, rgba(87, 44, 239, 0.7), rgba(140, 91, 255, 0.7)); /* 紫色渐变背景 */
+  min-height: 380rpx; /* 卡片高度 */
+  padding-bottom: 30rpx; /* 底部内边距 */
+  position: relative;
+  overflow: visible; /* 修改为visible，确保子元素不被裁剪 */
+  border: 1px solid rgba(255, 255, 255, 0.2); /* 轻微白色边框 */
+  box-shadow: 0 10rpx 25rpx rgba(87, 44, 239, 0.3),
+              inset 0 1px 2px rgba(255, 255, 255, 0.1); /* 增强阴影效果 */
+  border-radius: 30rpx; /* 大圆角 */
+  margin-bottom: 30rpx; /* 与下方卡片的间距 */
+  margin-top: 180rpx; /* 为顶部欢迎文案留出空间 */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 3; /* 确保卡片在适当的层级 */
+}
+
+/* 创作卡片玻璃质感效果 */
+.create-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.15) 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+  border-radius: 30rpx; /* 确保与卡片圆角一致 */
+}
+
+.create-card-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 30rpx;
+  position: relative;
+  box-sizing: border-box;
+  z-index: 4; /* 确保内容在上层 */
+}
+
+.create-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0 20rpx;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 4; /* 确保内容在上层 */
+  position: relative; /* 确保定位正确 */
+}
+
+/* 标题输入框样式 */
+.title-input-container {
+  position: relative;
+  margin-bottom: 40rpx;
+  width: 100%;
+  max-width: 600rpx;
+  align-self: center;
+  z-index: 5; /* 确保输入框在最上层 */
+}
+
+.title-input {
+  width: 100%;
+  height: 90rpx; /* 输入框高度 */
+  background: rgba(255, 255, 255, 0.15); /* 稍微增加透明度，使输入框更明显 */
+  border: 1px solid rgba(255, 255, 255, 0.25); /* 增加边框可见度 */
+  border-radius: 16rpx; /* 圆角 */
+  color: #ffffff; /* 白色文字 */
+  padding: 0 25rpx;
+  font-size: 32rpx; /* 字体大小 */
+  box-sizing: border-box;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1),
+              inset 0 1px 2px rgba(0, 0, 0, 0.1); /* 增强阴影效果 */
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  position: relative; /* 确保定位正确 */
+}
+
+.title-input-counter {
+  position: absolute;
+  right: 15rpx;
+  bottom: -35rpx;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.7); /* 白色文字 */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); /* 文字阴影 */
+  z-index: 5; /* 确保计数器在最上层 */
+}
+
+/* 创作按钮区域 */
+.create-button-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin-top: 40rpx;
+  position: relative;
+}
+
+/* 创作按钮样式 */
+.create-card-button {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* 文字居中 */
+  color:rgb(0, 0, 0); /* 黑色文字 */
+  font-size: 34rpx; /* 字体大小 */
+  font-weight: bold; /* 加粗 */
+  background: linear-gradient(135deg, var(--color-accent), var(--color-accent-light)); /* 绿色渐变背景 */
+  padding: 18rpx 50rpx; /* 内边距 */
+  border-radius: 45rpx; /* 圆角 */
+  box-shadow: 0rpx 8rpx 16rpx rgba(64, 197, 86, 0.3),
+              inset 0 1px 2px rgba(255, 255, 255, 0.2); /* 增强阴影效果 */
+  width: 70%; /* 宽度 */
+  max-width: 500rpx;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 按钮玻璃质感效果 */
+.create-card-button::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.2) 0%,
+                rgba(255, 255, 255, 0.05) 50%,
+                rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.arrow {
+  margin-left: 15rpx;
+  font-size: 36rpx;
+}
+
+/* 小提示文本样式 */
+.create-card-tip {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: 50rpx;
+  text-align: center;
+  font-weight: 300;
+}
+
+/* 草稿图标样式 - 仅保留margin-right */
+.draft-icon {
+  margin-right: 20rpx;
+}
+
+/* 我发布的汤卡片样式 */
+.published-card {
+  grid-column: 1 / span 2; /* 占据整行 */
+  grid-row: 2;
+  background: linear-gradient(135deg, rgba(10, 20, 40, 0.7), rgba(140, 91, 255, 0.05));
+  min-height: 300rpx; /* 确保卡片有足够高度 */
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.3),
+              inset 0 1px 1px rgba(255, 255, 255, 0.05),
+              0 0 15rpx rgba(87, 44, 239, 0.1); /* 紫色光晕 */
+}
+
+
+
+/* 已发布列表项 */
+.published-item {
+  padding: 20rpx;
+  background: rgba(10, 20, 40, 0.3);
+  border-radius: 10rpx;
+  margin-bottom: 20rpx;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 列表项玻璃质感效果 */
+.published-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.published-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.published-title {
+  font-size: 28rpx;
+  color: var(--color-text-primary);
+  margin-bottom: 10rpx;
+}
+
+
+
+.published-status {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10rpx;
+}
+
+.status-tag {
+  font-size: 24rpx;
+  margin-right: 10rpx;
+}
+
+.status-reviewing {
+  color: #F5A623; /* 黄色 */
+}
+
+.status-published {
+  color: #29D26D; /* 绿色 */
+}
+
+.status-rejected {
+  color: #FF3B30; /* 红色 */
+}
+
+.published-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.published-rating {
+  font-size: 24rpx;
+  color: #F5A623; /* 黄色 */
+}
+
+.published-action {
+  font-size: 24rpx;
+  color: var(--color-primary);
+}
+
+.published-item-rejected {
+  border: 1px solid rgba(255, 59, 48, 0.3);
+}
+
+.empty-list {
+  padding: 30rpx 0;
+  text-align: center;
+  color: var(--color-text-hint);
+  font-size: 28rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300rpx;
+}
+
+.empty-illustration {
+  width: 200rpx;
+  height: 200rpx;
+  margin-bottom: 20rpx;
+}
+
+.empty-text {
+  margin-bottom: 20rpx;
+}
+
+.empty-button {
+  margin-top: 20rpx;
+}
+
+.empty-text {
+  font-size: 32rpx;
+  color: var(--color-text-secondary);
+  margin-bottom: 30rpx;
+}
+
+/* 表单容器 - 保留这些样式以便在创建页面使用 */
+.form-container {
+  background: rgba(10, 20, 40, 0.5);
+  border-radius: 20rpx;
+  padding: 30rpx;
+  box-shadow: 0 8rpx 20rpx rgba(0, 0, 0, 0.3),
+              inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+/* 表单容器玻璃质感效果 */
+.form-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.05) 40%,
+                rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* 表单项 */
+.form-item {
+  margin-bottom: 30rpx;
+  position: relative;
+}
+
+/* 表单标签 */
+.form-label {
+  font-size: 28rpx;
+  color: var(--color-text-secondary);
+  margin-bottom: 10rpx;
+}
+
+/* 输入框 */
+.form-input {
+  width: 100%;
+  height: 80rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10rpx;
+  color: var(--color-text-primary);
+  padding: 0 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  box-shadow: inset 0 2rpx 5rpx rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* 文本域 */
+.form-textarea {
+  width: 100%;
+  min-height: 200rpx;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10rpx;
+  color: var(--color-text-primary);
+  padding: 20rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  line-height: 1.5;
+  box-shadow: inset 0 2rpx 5rpx rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* 错误状态的输入框 */
+.input-error {
+  border-color: var(--color-error);
+}
+
+/* 错误文本 */
+.error-text {
+  color: var(--color-error);
+  font-size: 24rpx;
+  margin-top: 8rpx;
+}
+
+/* 字数统计 */
+.char-count {
+  position: absolute;
+  right: 10rpx;
+  bottom: 10rpx;
+  font-size: 24rpx;
+  color: var(--color-text-hint);
+}
+
+
+/* 表单操作按钮 */
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 50rpx;
+}
+

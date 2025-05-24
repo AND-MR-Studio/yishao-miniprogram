@@ -7,18 +7,19 @@
   <view class="soup-content {{isPeeking ? 'peeking' : ''}}">
     <!-- 标题和内容分开显示 -->
     <view class="title-container" wx:if="{{soupData.title}}">
-      <view class="case-line">
-        <text class="case-text text-glow-primary">汤面</text><text class="case-number text-glow-primary">{{soupData.id}}</text>
-      </view>
       <view class="title-line">
-        <text class="title-text text-glow-secondary">《{{soupData.title}}》</text>
+        <view class="soup-id-container">
+          <text class="case-text">海龟汤</text><text class="case-number">{{soupData.id}}</text>
+        </view>
+        <text class="title-text title-glitch"> 《{{soupData.title}}》</text>
       </view>
     </view>
+
     <!-- 有图片时的排版方式 -->
-    <block wx:if="{{soupData.image || mockImage}}">
+    <block wx:if="{{hasImage && coverUrl}}">
       <view class="soup-text-with-image">
         <text class="soup-text-left">{{soupData.soup_surface || ''}}</text>
-        <image class="soup-image" src="{{soupData.image || mockImage}}" mode="aspectFill" lazy-load="true"></image>
+        <image class="soup-image" src="{{coverUrl}}" mode="aspectFill" lazy-load="true"></image>
       </view>
     </block>
 
@@ -31,6 +32,5 @@
   <!-- 使用独立的交互底部组件 - 使用MobX管理状态 -->
   <interaction-footer
     id="interactionFooter"
-    isDrinking="{{isDrinking}}"
   ></interaction-footer>
 </view>

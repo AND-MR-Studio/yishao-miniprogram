@@ -1,0 +1,119 @@
+<!--pages/create/create.wxml - 海龟汤创建页面-->
+<view class="page">
+  <!-- 导航栏 -->
+  <nav-bar title="创建海龟汤" showBack="{{true}}" bind:back="handleBack" />
+
+  <view class="container">
+    <view class="form-container">
+      <!-- 标题输入 -->
+      <view class="form-item">
+        <view class="form-label">标题</view>
+        <input
+          class="form-input {{validation.titleError ? 'input-error' : ''}}"
+          placeholder="示例：神秘来电 | 一个简短不剧透的标题"
+          maxlength="15"
+          value="{{formData.title}}"
+          bindinput="handleTitleInput"
+        />
+        <view class="error-text" wx:if="{{validation.titleError}}">{{validation.titleError}}</view>
+        <view class="char-count">
+          {{titleLength}}/15
+        </view>
+      </view>
+
+      <!-- 汤面内容输入 -->
+      <view class="form-item">
+        <view class="form-label">汤面内容</view>
+        <textarea
+          class="form-textarea {{validation.contentError ? 'input-error' : ''}}"
+          placeholder="示例：她每天同一时间都会的无声电话💡 请描述一个引人入胜的谜题情境，引发读者的好奇心。"
+          maxlength="100"
+          value="{{formData.content}}"
+          bindinput="handleContentInput"
+          auto-height
+        />
+        <view class="error-text" wx:if="{{validation.contentError}}">{{validation.contentError}}</view>
+        <view class="char-count">
+          {{contentLength}}/100
+        </view>
+      </view>
+
+      <!-- 汤底内容输入 -->
+      <view class="form-item">
+        <view class="form-label">汤底内容</view>
+        <textarea
+          class="form-textarea {{validation.truthError ? 'input-error' : ''}}"
+          placeholder="示例：电话是丈夫打的，用来确认她是否在家，以便安排惊喜💡 请揭示故事的真相，解释汤面中的谜团。"
+          maxlength="500"
+          value="{{formData.truth}}"
+          bindinput="handleTruthInput"
+          auto-height
+        />
+        <view class="error-text" wx:if="{{validation.truthError}}">{{validation.truthError}}</view>
+        <view class="char-count">
+          {{truthLength}}/500
+        </view>
+      </view>
+
+      <!-- 标签选择 -->
+      <view class="form-item">
+        <view class="form-label">标签 <text class="tag-hint">(最多选择3个，不公开展示)</text></view>
+
+        <!-- 已选标签显示区域 -->
+        <view class="selected-tags-container">
+          <view wx:if="{{selectedTags.length === 0}}" class="no-tags-selected">
+            请从下方选择标签
+          </view>
+          <block wx:for="{{selectedTags}}" wx:key="*this">
+            <view class="selected-tag">
+              <text>{{item}}</text>
+              <view class="tag-remove" bindtap="handleTagRemove" data-tag="{{item}}">×</view>
+            </view>
+          </block>
+        </view>
+
+        <!-- 标签池 - 已选标签会从池中移除 -->
+        <view class="tag-pool">
+          <block wx:for="{{tagPool}}" wx:key="*this">
+            <view
+              class="tag-button"
+              bindtap="handleTagClick"
+              data-tag="{{item}}"
+            >{{item}}</view>
+          </block>
+        </view>
+      </view>
+
+      <!-- 提交按钮 -->
+      <view class="form-actions">
+        <!-- 保存草稿按钮 -->
+        <view class="custom-draft-btn" bindtap="handleSaveDraft">
+          <text>保存草稿</text>
+        </view>
+
+        <!-- 创建按钮 -->
+        <view class="custom-create-btn {{isSubmitting ? 'submitting' : ''}}" bindtap="handleSubmit">
+          <text wx:if="{{!isSubmitting}}">创建海龟汤</text>
+          <view wx:else class="loading-dots">
+            <text class="dot">.</text>
+            <text class="dot">.</text>
+            <text class="dot">.</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 登录提示弹窗 -->
+  <popup
+    id="loginPopup"
+    title="侦探大人，想创作海龟汤吗？"
+    content="先去「个人中心」登录一下吧～"
+    confirmText="去登录→"
+    cancelText="再想想"
+    showClose="{{false}}"
+    showLoginIcon="{{true}}"
+    bind:confirm="onLoginConfirm"
+    bind:cancel="onLoginCancel"
+  ></popup>
+</view>

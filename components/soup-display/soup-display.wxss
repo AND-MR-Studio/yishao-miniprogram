@@ -37,7 +37,7 @@
   align-items: center;
   padding: 20rpx 0;
   margin-bottom: 20rpx;
-  min-height: 700rpx; /* 最小高度而非固定高度，允许内容扩展 */
+  min-height: 800rpx; /* 增加最小高度，确保能容纳固定位置的图片 */
   position: relative;
   transition: all 0.6s var(--transition-decelerated);
   will-change: transform, opacity;
@@ -65,52 +65,151 @@
 .title-line {
   width: 100%;
   text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
 }
 
-/* "汤面"文本样式 */
+/* 汤号容器样式 */
+.soup-id-container {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  left: 50rpx;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+/* "海龟汤"文本样式 */
 .case-text {
   font-family: var(--font-family-mincho);
-  font-size: 28rpx; /* 小一号字体 */
+  font-size: var(--font-size-sm); /* 小一号字体 */
   font-weight: normal;
-  letter-spacing: 4rpx;
+  letter-spacing: 2rpx;
   white-space: nowrap;
-  display: inline-block;
-  color: var(--color-text-primary);
+  display: inine-block;
+  color:var(--color-text-secondary);
 }
 
 /* 汤面编号样式 */
 .case-number {
   font-family: var(--font-family-mincho);
-  font-size: 34rpx; /* 符合小程序设计规范 - 列表标题/导航标题 */
+  font-size: var(--font-size-md); /* 符合小程序设计规范 - 列表标题/导航标题 */
   font-weight: bold; /* 加粗 */
   letter-spacing: 4rpx;
   white-space: nowrap;
   display: inline-block;
-  color: var(--color-text-primary);
+  color:var(--color-text-secondary);
+}
+
+/* 标题故障效果 */
+.title-glitch {
+  text-shadow: 0rpx 0rpx 8rpx rgba(255, 255, 255, 0.9), 0rpx 0rpx 2rpx rgba(43, 255, 0, 0.8);
+  color: var(--color-text-accent);
+  position: relative;
+  animation: title-glitch 7s infinite;
+}
+
+/* 标题故障动画 - 更明显的电子设备故障效果 */
+@keyframes title-glitch {
+  0%, 100% {
+    opacity: 1;
+    text-shadow: 0rpx 0rpx 8rpx rgba(255, 255, 255, 0.9), 0rpx 0rpx 2rpx rgba(43, 255, 0, 0.3);
+  }
+  /* 第一次闪烁 - 中等 */
+  20% {
+    opacity: 0.9;
+    text-shadow: 0rpx 0rpx 3rpx rgba(255, 255, 255, 0.5);
+  }
+  20.1% {
+    opacity: 0.7;
+    text-shadow: 0rpx 0rpx 15rpx rgba(43, 255, 0, 0.6), 0rpx 0rpx 5rpx rgba(255, 255, 255, 0.5);
+  }
+  20.2% {
+    opacity: 1;
+    text-shadow: 0rpx 0rpx 8rpx rgba(255, 255, 255, 0.9), 0rpx 0rpx 2rpx rgba(43, 255, 0, 0.3);
+  }
+  /* 第二次闪烁 - 强烈 */
+  45% {
+    opacity: 0.85;
+    text-shadow: 0rpx 0rpx 4rpx rgba(255, 255, 255, 0.6), 1rpx 0rpx 0rpx rgba(255, 255, 255, 0.5);
+  }
+  45.1% {
+    opacity: 0.6;
+    text-shadow: 2rpx 2rpx 20rpx rgba(43, 255, 0, 0.8), -1rpx 0rpx 2rpx rgba(255, 255, 255, 0.4);
+  }
+  45.2% {
+    opacity: 0.9;
+    text-shadow: 0rpx 0rpx 10rpx rgba(43, 255, 0, 0.5), 0rpx 0rpx 5rpx rgba(255, 255, 255, 0.7);
+  }
+  45.3% {
+    opacity: 1;
+    text-shadow: 0rpx 0rpx 8rpx rgba(255, 255, 255, 0.9), 0rpx 0rpx 2rpx rgba(43, 255, 0, 0.3);
+  }
+  /* 第三次闪烁 - 非常强烈 */
+  70% {
+    opacity: 1;
+    text-shadow: 0rpx 0rpx 8rpx rgba(255, 255, 255, 0.9), 0rpx 0rpx 2rpx rgba(43, 255, 0, 0.3);
+  }
+  70.1% {
+    opacity: 0.5;
+    text-shadow: 1rpx 1rpx 25rpx rgba(43, 255, 0, 0.9), -1rpx -1rpx 0rpx rgba(255, 255, 255, 0.3);
+  }
+  70.2% {
+    opacity: 0.7;
+    text-shadow: 0rpx 0rpx 15rpx rgba(43, 255, 0, 0.7), 0rpx 0rpx 4rpx rgba(255, 255, 255, 0.6);
+  }
+  70.3% {
+    opacity: 0.9;
+    text-shadow: 0rpx 0rpx 10rpx rgba(43, 255, 0, 0.5), 0rpx 0rpx 8rpx rgba(255, 255, 255, 0.8);
+  }
+  70.4% {
+    opacity: 1;
+    text-shadow: 0rpx 0rpx 8rpx rgba(255, 255, 255, 0.9), 0rpx 0rpx 2rpx rgba(43, 255, 0, 0.3);
+  }
+  /* 第四次闪烁 - 中等 */
+  85% {
+    opacity: 0.9;
+    text-shadow: 0rpx 0rpx 3rpx rgba(255, 255, 255, 0.5);
+  }
+  85.1% {
+    opacity: 0.8;
+    text-shadow: 0rpx 0rpx 12rpx rgba(43, 255, 0, 0.6), 0rpx 0rpx 5rpx rgba(255, 255, 255, 0.6);
+  }
+  85.2% {
+    opacity: 1;
+    text-shadow: 0rpx 0rpx 8rpx rgba(255, 255, 255, 0.9), 0rpx 0rpx 2rpx rgba(43, 255, 0, 0.3);
+  }
 }
 
 /* 标题文本样式  */
 .title-text {
   font-family: var(--font-family-mincho);
-  font-size: var(--font-size-lg); /* 34rpx - 符合小程序设计规范的次标题 */
-  font-weight: var(--font-weight-normal); /* 使用主题变量 */
+  font-size: var(--font-size-md); /* 28rpx - 按要求调小字体 */
+  font-weight: var(--font-weight-medium); /* 使用中等字重，增强可读性 */
   letter-spacing: var(--letter-spacing-wide); /* 使用主题变量 */
   white-space: nowrap;
   display: inline-block;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
   line-height: var(--line-height-md); /* 添加行高变量 */
+  margin-left: 10rpx; /* 添加左边距，与汤号保持一定距离 */
 }
+
+/* 标题文本基础样式 */
 
 /* 汤面文本样式 - 无图片时居中排版 */
 .soup-text {
   font-family: var(--font-family-mincho);
-  font-size: var(--font-size-md); /* 28rpx - 符合小程序设计规范的正文内容 */
-  line-height: var(--line-height-lg); /* 使用主题变量，更宽松的行高 */
+  font-size: var(--font-size-lg); /* 28rpx - 符合小程序设计规范的正文内容 */
+  line-height: 3; /* 使用主题变量，更宽松的行高 */
   padding: var(--spacing-xl); /* 使用主题变量 */
   text-align: center;
   white-space: pre-wrap;
   word-break: break-all;
   width: 100%;
+    color: var(--color-text-primary);
+  text-shadow:var(--text-glow-secondary);
   letter-spacing: var(--letter-spacing-wide); /* 使用主题变量 */
   box-sizing: border-box;
   flex: 1;
@@ -121,14 +220,10 @@
 /* 有图片时的容器样式 */
 .soup-text-with-image {
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0rpx 0;
+  height: 50vh; /* 固定高度容器 */
+  position: relative; /* 相对定位，作为子元素的定位参考 */
   box-sizing: border-box;
-  overflow: visible; /* 修改为visible，确保图片不被剪裁 */
-  flex: 1;
-  position: relative; /* 添加相对定位，便于子元素定位 */
+  overflow: visible; /* 确保图片不被剪裁 */
   z-index: 1; /* 确保容器在适当的层级 */
 }
 
@@ -136,32 +231,43 @@
 .soup-text-left {
   font-family: var(--font-family-mincho);
   font-size: var(--font-size-md); /* 28rpx - 符合小程序设计规范的正文内容 */
-  line-height: var(--line-height-md); /* 使用主题变量 */
+  line-height: var(--line-height-lg); /* 使用主题变量 */
   padding: 10rpx 50rpx 0; /* 移除底部内边距，为图片留出更多空间 */
   text-align: left;
   white-space: normal; /* 允许换行 */
   width: 100%;
-  letter-spacing: var(--letter-spacing-normal); /* 使用主题变量 */
+  letter-spacing: var(--letter-spacing-wide); /* 使用主题变量 */
   box-sizing: border-box;
   color: var(--color-text-primary);
+  text-shadow:var(--text-glow-secondary);
   overflow: visible; /* 修改为visible，确保不会影响图片显示 */
   text-indent: 2em; /* 首行缩进2个字符 */
-  max-height: 300rpx; /* 限制文本高度，确保图片有足够空间显示 */
+  max-height: 400rpx; /* 限制文本高度 */
+  position: absolute; /* 绝对定位 */
+  top: 0; /* 顶部对齐 */
+  left: 0; /* 左侧对齐 */
 }
 
 /* 图片样式 */
 .soup-image {
   width: 550rpx; /* 固定宽度 */
   height: 550rpx; /* 固定高度，保持正方形 */
-  margin: 40rpx auto 120rpx; /* 增加上下边距，使图片更靠近开始按钮 */
   box-sizing: border-box;
   object-fit: cover; /* 保持图片比例，裁剪多余部分 */
   border-radius: 20rpx; /* 添加圆角 */
-  box-shadow: 0 0 20rpx 10rpx rgba(0, 0, 0, 0.39); /* 增强阴影效果，实现边缘模糊 */
+  box-shadow: 0 0 30rpx 15rpx rgba(0, 0, 0, 0.5), /* 主阴影，更深更广 */
+              0 0 60rpx 5rpx rgba(0, 0, 0, 0.3), /* 外层柔和阴影 */
+              0 0 3rpx 2rpx rgba(255, 255, 255, 0.1), /* 微妙的边缘发光 */
+              inset 0 0 10rpx rgba(255, 255, 255, 0.1); /* 内阴影，增加立体感 */
   display: block; /* 确保居中有效 */
   mix-blend-mode: multiply; /* 使用正片叠底混合模式 */
-  position: relative; /* 添加相对定位 */
+  position: absolute; /* 绝对定位 */
+  bottom: -0rpx; /* 固定位置，距离顶部350rpx */
+  left: 50%; /* 水平居中 */
+  transform: translateX(-50%) translateZ(0); /* 水平居中修正，启用GPU加速 */
   z-index: 5; /* 确保图片在文字上方 */
+  transition: box-shadow 0.3s ease; /* 平滑过渡效果 */
+  animation: float-shadow 6s ease-in-out infinite; /* 应用悬浮动画，缓慢循环 */
 }
 
 /* 底部控件样式已移至interaction-footer组件 */
@@ -194,6 +300,31 @@
   0% { filter: blur(0px); }
   50% { filter: blur(5px); }
   100% { filter: blur(0px); }
+}
+
+/* 图片悬浮动画 */
+@keyframes float-shadow {
+  0% {
+    transform: translateX(-50%) translateY(0) translateZ(0);
+    box-shadow: 0 0 30rpx 15rpx rgba(0, 0, 0, 0.5),
+                0 0 60rpx 5rpx rgba(0, 0, 0, 0.3),
+                0 0 3rpx 2rpx rgba(255, 255, 255, 0.1),
+                inset 0 0 10rpx rgba(255, 255, 255, 0.1);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-10rpx) translateZ(0);
+    box-shadow: 0 10rpx 40rpx 15rpx rgba(0, 0, 0, 0.5),
+                0 10rpx 70rpx 5rpx rgba(0, 0, 0, 0.3),
+                0 0 3rpx 2rpx rgba(255, 255, 255, 0.1),
+                inset 0 0 10rpx rgba(255, 255, 255, 0.1);
+  }
+  100% {
+    transform: translateX(-50%) translateY(0) translateZ(0);
+    box-shadow: 0 0 30rpx 15rpx rgba(0, 0, 0, 0.5),
+                0 0 60rpx 5rpx rgba(0, 0, 0, 0.3),
+                0 0 3rpx 2rpx rgba(255, 255, 255, 0.1),
+                inset 0 0 10rpx rgba(255, 255, 255, 0.1);
+  }
 }
 
 

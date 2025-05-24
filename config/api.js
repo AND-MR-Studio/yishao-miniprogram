@@ -7,6 +7,8 @@ const App = getApp();
 const baseUrl = App.globalData.config.baseUrl;
 const ysUrl = App.globalData.config.ysUrl;
 const memoryUrl = App.globalData.config.memory;
+const assetsBaseUrl = App.globalData.config.assetsBaseUrl;
+
 const {
   request,
   requestOpen,
@@ -21,58 +23,70 @@ const {
 
 // 基础路径
 const paths = {
-  user: 'user/',
-  soup: 'soup/',
-  dialog: 'dialog/',
-  asset: 'asset/'
+  // API路径
+  api: {
+    user: 'user/',
+    soup: 'soup/',
+    dialog: 'dialog/',
+    asset: 'asset/'
+  },
+  // 资源文件路径
+  assets: {
+    images: 'images/',
+    fonts: 'fonts/',
+    icons: 'icons/',
+    avatars: 'avatars/',
+    ui: 'images/ui/',
+    covers:'images/covers/',
+    banners:'images/banners/'
+  }
 };
 
 // API端点定义
 const api = {
   // 用户服务
   user: {
-    login: ysUrl + paths.user + 'login',
-    update: ysUrl + paths.user + 'update',
-    info: ysUrl + paths.user + 'info',
-    signin: ysUrl + paths.user + 'signin',
-    list: ysUrl + paths.user + 'list',
-    viewedSoup: ysUrl + paths.user + 'viewed-soup',
-    answeredSoup: ysUrl + paths.user + 'answered-soup',
-    createdSoup: ysUrl + paths.user + 'created-soup',
-    favoriteSoup: ysUrl + paths.user + 'favorite-soup',
-    likedSoup: ysUrl + paths.user + 'liked-soup',
-    solvedSoup: ysUrl + paths.user + 'solved-soup'
+    login: `${ysUrl}${paths.api.user}login`,
+    update: `${ysUrl}${paths.api.user}update`,
+    info: `${ysUrl}${paths.api.user}info`,
+    signin: `${ysUrl}${paths.api.user}signin`,
+    list: `${ysUrl}${paths.api.user}list`,
+    viewedSoup: `${ysUrl}${paths.api.user}viewed-soup`,
+    answeredSoup: `${ysUrl}${paths.api.user}answered-soup`,
+    createdSoup: `${ysUrl}${paths.api.user}created-soup`,
+    favoriteSoup: `${ysUrl}${paths.api.user}favorite-soup`,
+    likedSoup: `${ysUrl}${paths.api.user}liked-soup`,
+    solvedSoup: `${ysUrl}${paths.api.user}solved-soup`
   },
 
   // 资源服务
   asset: {
-    base: ysUrl + paths.asset,
-    list: ysUrl + paths.asset + 'all',
-    byType: ysUrl + paths.asset + 'type/',
-    avatar: ysUrl + paths.asset + 'avatar/',
-    upload: ysUrl + paths.asset + 'upload'
+    base: `${ysUrl}${paths.api.asset}`,
+    byType: (type) => `${ysUrl}${paths.api.asset}type/${type}`,
+    avatar: (id) => `${ysUrl}${paths.api.asset}avatar/${id}`,
+    upload: `${ysUrl}${paths.api.asset}upload`
   },
 
   // 海龟汤服务
   soup: {
-    base: memoryUrl + paths.soup,
-    random: memoryUrl + '/api/soups/random',
+    base: `${memoryUrl}${paths.api.soup}`,
+    random: `${memoryUrl}/api/soups/random`,
     get: (soupId) => `${memoryUrl}/api/soups/${soupId}`,
     view: (soupId) => `${memoryUrl}/api/soups/${soupId}/view`,
     like: (soupId) => `${memoryUrl}/api/soups/${soupId}/like`,
     unlike: (soupId) => `${memoryUrl}/api/soups/${soupId}/unlike`,
     favorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/favor`,
     unfavorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/unfavor`,
-    map: memoryUrl + paths.soup + 'map'
+    create: `${memoryUrl}/api/soups/create`,
   },
 
   // 对话服务
   dialog: {
-    base: ysUrl + paths.dialog,
-    create: ysUrl + paths.dialog + 'create',
-    list: ysUrl + paths.dialog + 'list',
-    byUser: ysUrl + paths.dialog + 'user/',
-    bySoup: ysUrl + paths.dialog + 'soup/'
+    base: `${ysUrl}${paths.api.dialog}`,
+    create: `${ysUrl}${paths.api.dialog}create`,
+    list: `${ysUrl}${paths.api.dialog}list`,
+    byUser: (userId) => `${ysUrl}${paths.api.dialog}user/${userId}`,
+    bySoup: (soupId) => `${ysUrl}${paths.api.dialog}soup/${soupId}`
   },
 
   // Agent服务
@@ -81,10 +95,54 @@ const api = {
   }
 };
 
-// 默认资源
-const defaults = {
-  avatar: '/static/images/default-avatar.jpg',
-  shareImage: 'https://and-tech.cn/uploads/images/78e17666-0671-487e-80bc-a80c0b8d0e07.png'
+// 资源管理
+const assets = {
+  // 本地静态资源
+  local: {
+    avatar: '/static/images/default-avatar.jpg'
+  },
+
+  // 远程资源
+  remote: {
+    // 图片资源
+    images: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.images}${filename}`,
+      share: `${assetsBaseUrl}/${paths.assets.images}test.webp`
+    },
+
+    // 图标资源
+    icons: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.icons}${filename}`
+    },
+
+    // 头像资源
+    avatars: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.avatars}${filename}`
+    },
+
+    // UI资源
+    ui: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.ui}${filename}`,
+      notFound: `${assetsBaseUrl}/${paths.assets.ui}404.webp`,
+      xiaoshao_avatar: `${assetsBaseUrl}/${paths.assets.ui}xiaoshao.heif`,
+      popup: `${assetsBaseUrl}/${paths.assets.ui}popup.png`
+    },
+
+    // 字体资源
+    fonts: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.fonts}${filename}`
+    },
+
+    // 海龟汤配图资源
+    cover: {
+      get: (soupId) => `${assetsBaseUrl}/${paths.assets.covers}${soupId}.jpeg`
+    },
+
+    // Banner资源
+    banners: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.banners}${filename}`
+    }
+  }
 };
 
 module.exports = {
@@ -102,64 +160,15 @@ module.exports = {
   // 导出基础URL
   baseUrl,
   ysUrl,
+  memoryUrl,
+  assetsBaseUrl,
 
   // 导出API端点
   api,
 
-  // 导出默认资源
-  defaults,
+  // 导出资源管理
+  assets,
 
-  // 为了向后兼容，保留旧的导出
-  // 基础路径
-  userBasePath: paths.user,
-  soupBasePath: paths.soup,
-  dialogBasePath: paths.dialog,
-  assetBasePath: paths.asset,
-
-  // 用户相关接口URL
-  user_login_url: api.user.login,
-  user_update_url: api.user.update,
-  user_info_url: api.user.info,
-  user_signin_url: api.user.signin,
-  user_list_url: api.user.list,
-  user_viewed_soup_url: api.user.viewedSoup,
-  user_answered_soup_url: api.user.answeredSoup,
-  user_created_soup_url: api.user.createdSoup,
-  user_favorite_soup_url: api.user.favoriteSoup,
-  user_liked_soup_url: api.user.likedSoup,
-  user_solved_soup_url: api.user.solvedSoup,
-  default_avatar_url: defaults.avatar,
-  default_share_image: defaults.shareImage,
-
-  // 系统相关接口URL
-  asset_list_url: api.asset.list,
-  asset_by_id_url: api.asset.base,
-  asset_by_type_url: api.asset.byType,
-  asset_avatar_url: api.asset.avatar,
-  asset_upload_url: api.asset.upload,
-
-  // 汤面相关接口URL
-  soup_base_url: api.soup.base,
-  soup_by_id_url: api.soup.base,
-  soup_random_url: api.soup.random,
-  soup_like_url: api.soup.like,
-  soup_view_url: api.soup.view,
-  soup_favorite_url: api.soup.favorite,
-  soup_map_url: api.soup.map,
-  soup_unlike_url: api.soup.base,
-  soup_by_tag_url: api.soup.base,
-  soup_by_type_url: api.soup.base,
-
-  // 对话相关接口URL
-  dialog_create_url: api.dialog.create,
-  dialog_send_url: api.dialog.base,
-  dialog_save_url: api.dialog.base,
-  dialog_list_url: api.dialog.list,
-  dialog_detail_url: api.dialog.base,
-  dialog_user_url: api.dialog.byUser,
-  dialog_soup_url: api.dialog.bySoup,
-  dialog_delete_url: api.dialog.base,
-
-  // Agent相关接口URL
-  agent_chat_url: api.agent.chat
+  // 导出路径配置
+  paths
 };

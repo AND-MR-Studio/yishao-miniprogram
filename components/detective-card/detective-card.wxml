@@ -31,11 +31,11 @@
   <!-- 分隔线 -->
   <view class="card-divider"></view>
 
-  <!-- 底部区域：剩余回答次数和签到 -->
+  <!-- 底部区域：剩余提问次数和签到 -->
   <view class="bottom-section">
-    <view class="brain-icon"></view>
+    <view class="icon-tiwen iconfont"></view>
     <view class="answer-count">
-      <text class="answer-label">剩余回答次数: </text>
+      <text class="answer-label">剩余提问次数: </text>
       <text class="answer-value">{{remainingAnswers || 0}}</text>
     </view>
     <view class="sign-in-btn {{hasSignedIn ? 'disabled' : ''}}" bindtap="handleSignIn">

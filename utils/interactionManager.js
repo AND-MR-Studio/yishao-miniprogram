@@ -59,6 +59,9 @@ function createInteractionManager(options = {}) {
     // 数据更新方法
     setData: options.setData || (() => {}),
 
+    // 模糊效果更新方法
+    setBlurAmount: options.setBlurAmount || (() => {}),
+
     // 回调函数
     callbacks: {
       // 滑动相关回调
@@ -327,11 +330,13 @@ function createInteractionManager(options = {}) {
       const blurAmount = progress * maxBlur;
       state.blurAmount = blurAmount;
 
-      // 更新页面数据
+      // 更新模糊效果 - 通过专门的回调函数
+      config.setBlurAmount(blurAmount);
+
+      // 更新页面数据 - 不再包含blurAmount
       config.setData({
         swipeDirection: direction,
-        swipeStarted: true,
-        blurAmount: blurAmount
+        swipeStarted: true
       });
     } else {
       // 不使用模糊特效，只更新方向
@@ -373,11 +378,13 @@ function createInteractionManager(options = {}) {
       state.swipeStarted = false;
       state.blurAmount = 0;
 
-      // 更新页面数据
+      // 重置模糊效果 - 通过专门的回调函数
+      config.setBlurAmount(0);
+
+      // 更新页面数据 - 不再包含blurAmount
       config.setData({
         swiping: false,
-        swipeStarted: false,
-        blurAmount: 0
+        swipeStarted: false
       });
     } else {
       // 不使用模糊特效，只更新滑动状态
@@ -422,11 +429,13 @@ function createInteractionManager(options = {}) {
     // 不重置背景效果，保持当前背景状态
 
     if (config.enableBlurEffect) {
+      // 重置模糊效果 - 通过专门的回调函数
+      config.setBlurAmount(0);
+
       config.setData({
         swiping: false,
         swipeDirection: SWIPE_DIRECTION.NONE,
-        swipeStarted: false,
-        blurAmount: 0
+        swipeStarted: false
       });
     } else {
       config.setData({

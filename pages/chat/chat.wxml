@@ -15,7 +15,6 @@
       <soup-display
         id="soupDisplay"
         soupData="{{soupData}}"
-        loading="{{isLoading}}"
         isDrinking="{{true}}"
         isPeeking="{{isPeeking}}"
         class="soup-display-component {{isPeeking ? 'peeking' : ''}}"
@@ -61,9 +60,13 @@
   />
 
   <!-- 提示模块组件 -->
-  <tip-module
-    pageState="{{chatState || 'drinking'}}"
-    bind:close="onTipModuleClose"
+  <tip-box
     bind:visibleChange="onTipVisibleChange"
-  ></tip-module>
+  ></tip-box>
+
+  <!-- 新用户引导层组件 -->
+  <guide-overlay
+    show="{{showGuide}}"
+    bind:close="closeGuide">
+  </guide-overlay>
 </view>

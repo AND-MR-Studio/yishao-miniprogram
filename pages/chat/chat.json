@@ -3,8 +3,8 @@
     "nav-bar": "/components/nav-bar/index",
     "dialog-component": "/components/dialog/index",
     "soup-display": "/components/soup-display/soup-display",
-    "tip-module": "/components/tip-module/index",
-    "input-bar": "/components/input-bar/index"
-    
+    "tip-box": "/components/tip-box/index",
+    "input-bar": "/components/input-bar/index",
+    "guide-overlay": "/components/guide-overlay/guide-overlay"
   }
 }

@@ -5,7 +5,7 @@
  * 无状态设计：所有方法都接受必要的参数，不在服务中存储状态
  */
 const { agentRequest } = require('../utils/request');
-const { agent_chat_url } = require('../config/api');
+const { api } = require('../config/api');
 const dialogService = require('./dialogService'); // 添加dialogService引用
 
 // 用于防止并发请求的简单锁
@@ -46,11 +46,17 @@ class AgentService {
             }
 
             if (!params.soup) {
-                throw new Error('发送消息失败: 缺少汤面ID');
+                throw new Error('发送消息失败: 缺少汤面数据');
             }
 
-            // 使用传入的汤面ID
-            const soupId = params.soup;
+            // 从传入的soup参数中获取soupId
+            // 支持直接传入soupId字符串或包含id属性的对象
+            const soupId = typeof params.soup === 'string' ? params.soup : (params.soup.id || '');
+
+            // 验证soupId不为空
+            if (!soupId) {
+                throw new Error('发送消息失败: 无效的汤面ID');
+            }
 
             // 构建请求数据
             const requestData = {
@@ -60,7 +66,7 @@ class AgentService {
 
             // 发送请求到Agent API
             const response = await agentRequest({
-                url: agent_chat_url,
+                url: api.agent.chat,
                 method: 'POST',
                 data: requestData
             });
