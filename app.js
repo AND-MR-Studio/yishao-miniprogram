@@ -9,13 +9,6 @@ App({
     console.log('基础URL:', this.globalData.config.baseUrl);
     console.log('一勺服务URL:', this.globalData.config.ysUrl);
 
-    // 应用初始化完成后，延迟同步用户ID
-    setTimeout(() => {
-      const { rootStore } = require('./stores/rootStore');
-      if (rootStore && typeof rootStore.syncUserInfo === 'function') {
-      rootStore.syncUserInfo();
-      }
-    }, 100);
   },
 
   globalData: {

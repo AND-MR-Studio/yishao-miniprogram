@@ -212,26 +212,7 @@ function logout() {
   };
 }
 
-/**
- * 检查登录状态
- * @param {boolean} showToast - 是否显示提示
- * @returns {boolean} - 是否已登录
- */
-function checkLoginStatus(showToast = true) {
-  // 只检查token，不触发登录流程
-  const token = wx.getStorageSync(TOKEN_KEY);
-  if (!token) {
-    if (showToast) {
-      wx.showToast({
-        title: '请先登录',
-        icon: 'none',
-        duration: 2000
-      });
-    }
-    return false;
-  }
-  return true;
-}
+
 /**
  * 更新用户回答过的汤
  * 将当前回答的汤ID添加到用户的answeredSoups数组中
@@ -497,8 +478,7 @@ module.exports = {
   updateAnsweredSoup,
   updateFavoriteSoup,
   isFavoriteSoup,
-  updateLikedSoup,
-  isLikedSoup,
+  updateLikedSoup,  isLikedSoup,
   updateCreatedSoup,
   updateSolvedSoup,
   isSolvedSoup

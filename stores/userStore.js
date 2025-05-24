@@ -35,13 +35,6 @@ class UserStore {
     return this.rootStore.userInfo?.avatarUrl || DEFAULT_AVATAR_URL;
   }
 
-  /**
-   * 获取当前用户ID，从 rootStore 中获取
-   * @returns {string} 用户ID
-   */
-  get currentUserId() {
-    return this.rootStore.userId;
-  }
 
   /**
    * 获取剩余提问次数，从 rootStore.userInfo 中获取
@@ -72,7 +65,7 @@ class UserStore {
       return { success: false, message: '用户未登录，请先登录' };
     }
 
-    const userId = this.currentUserId;
+    const userId = this.rootStore.userId;
     if (!userId) {
       return { success: false, message: '获取用户ID失败' };
     }
