@@ -37,7 +37,8 @@ const paths = {
     icons: 'icons/',
     avatars: 'avatars/',
     ui: 'images/ui/',
-    covers:'images/covers/'
+    covers:'images/covers/',
+    banners:'images/banners/'
   }
 };
 
@@ -77,7 +78,6 @@ const api = {
     favorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/favor`,
     unfavorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/unfavor`,
     create: `${memoryUrl}/api/soups/create`,
-    map: `${memoryUrl}${paths.api.soup}map`
   },
 
   // 对话服务
@@ -136,6 +136,11 @@ const assets = {
     // 海龟汤配图资源
     cover: {
       get: (soupId) => `${assetsBaseUrl}/${paths.assets.covers}${soupId}.jpeg`
+    },
+
+    // Banner资源
+    banners: {
+      get: (filename) => `${assetsBaseUrl}/${paths.assets.banners}${filename}`
     }
   }
 };

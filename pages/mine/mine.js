@@ -9,32 +9,25 @@ const { storeBindingsBehavior } = require('mobx-miniprogram-bindings');
 
 Page({
   behaviors: [storeBindingsBehavior],
-
-  storeBindings: {
+  storeBindings: [{
     store: rootStore,
+    fields: ['isLoggedIn']
+  }, {
+    store: rootStore.userStore,
     fields: {
-      // 将 rootStore.userStore.userInfo 映射到 this.data.userInfo
-      userInfo: () => rootStore.userStore.userInfo,
-      // 将 rootStore.userStore.detectiveInfo 映射到 this.data.detectiveInfo
-      detectiveInfo: () => rootStore.userStore.detectiveInfo,
-      // 将 rootStore.userStore.hasSignedIn 映射到 this.data.hasSignedIn
-      hasSignedIn: () => rootStore.userStore.hasSignedIn,
-      // 将 rootStore.userStore.totalSoupCount 映射到 this.data.totalSoupCount
-      totalSoupCount: () => rootStore.userStore.totalSoupCount,
-      // 将 rootStore.userStore.pointsCount 映射到 this.data.pointsCount
-      pointsCount: () => rootStore.userStore.pointsCount,
+      userInfo: 'userInfo',
+      detectiveInfo: 'detectiveInfo',
+      hasSignedIn: 'hasSignedIn',
+      totalSoupCount: 'totalSoupCount',
+      pointsCount: 'pointsCount'
     },
     actions: {
-      // 将 rootStore.userStore.updateAvatar 映射到 this.updateAvatarAction
-      updateAvatarAction: 'userStore/updateAvatar',
-      // 将 rootStore.userStore.updateUserProfile 映射到 this.updateUserProfile
-      updateUserProfile: 'userStore/updateUserProfile',
-      // 将 rootStore.userStore.signIn 映射到 this.signInAction
-      signInAction: 'userStore/signIn',
-      // 将 rootStore.userStore.refreshPageData 映射到 this.refreshPageDataStore
-      refreshPageDataStore: 'userStore/refreshPageData',
-    },
-  },
+      updateAvatarAction: 'updateAvatar',
+      updateUserProfile: 'updateUserProfile',
+      signInAction: 'signIn',
+      refreshPageDataStore: 'refreshPageData'
+    }
+  }],
 
   /**
    * 页面的初始数据
@@ -65,23 +58,15 @@ Page({
 
   /**
    * 生命周期函数--监听页面显示
-   */
-  onShow() {
+   */  async onShow() {
     if (typeof this.getTabBar === 'function' && this.getTabBar()) {
       this.getTabBar().setData({
         selected: 2
       });
     }
 
-    // 同步用户ID，确保用户状态最新
-    // refreshPageDataStore 会处理 rootStore.syncUserInfo
-    this.refreshPageDataStore();
-    // 更新tabBar状态
-    if (typeof this.getTabBar === 'function' && this.getTabBar()) {
-      this.getTabBar().setData({
-        selected: 2
-      });
-    }
+    // 使用refreshPageData方法，它会正确处理刷新逻辑和按钮状态
+    await this.refreshPageData(false);
   },
 
   /**
