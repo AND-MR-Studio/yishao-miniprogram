@@ -33,7 +33,7 @@ Page({
   /**
    * 生命周期函数--监听页面加载
    */
-  onLoad() {
+  async onLoad() {
     // 页面加载时不主动刷新数据，等待onShow处理
     // 这样可以避免onLoad和onShow重复刷新
 
@@ -57,8 +57,8 @@ Page({
         "remainingAnswers", // 绑定 userStore 的计算属性
         "detectiveId" // 绑定 userStore 的计算属性
       ],
-      actions: ["updateAvatar",  "updateUserProfile","login","logout" ] // 绑定 userStore 的 updateAvatar action
-      
+      actions: ["updateAvatar", "updateUserProfile", "login", "logout"] // 绑定 userStore 的 updateAvatar action
+
     });
   },
 
@@ -156,7 +156,7 @@ Page({
    * 处理昵称输入
    * 使用防抖技术优化输入处理
    */
-  onInputNickname: function(e) {
+  onInputNickname: function (e) {
     // 清除之前的定时器
     if (this.nicknameDebounceTimer) {
       clearTimeout(this.nicknameDebounceTimer);
@@ -381,7 +381,7 @@ Page({
             icon: 'none',
             duration: 2000
           });
-        }律师
+        } 律师
       } else {
         // 未登录，执行登录
         // 调用绑定的 loginAction
@@ -400,19 +400,19 @@ Page({
             this.openUserInfoModal(true);
           } else {
             // 登录成功但无需完善信息时，也显示登录成功提示
-             wx.showToast({
+            wx.showToast({
               title: '登录成功',
               icon: 'success',
               duration: 2000
             });
           }
         } else {
-           // 登录失败时显示错误信息
-           wx.showToast({
-             title: loginResult.message || '登录失败',
-             icon: 'none',
-             duration: 2000
-           });
+          // 登录失败时显示错误信息
+          wx.showToast({
+            title: loginResult.message || '登录失败',
+            icon: 'none',
+            duration: 2000
+          });
         }
       }
     } catch (error) {
@@ -469,14 +469,14 @@ Page({
   /**
    * 处理页面滚动
    */
-  onPageScroll: function(e) {
+  onPageScroll: function (e) {
     // console.log(e)
   },
 
   /**
    * 处理分享到朋友圈
    */
-  onShareTimeline: function() {
+  onShareTimeline: function () {
     return {
       title: '来一起玩烧脑的文字推理游戏！',
       query: '',
@@ -487,7 +487,7 @@ Page({
   /**
    * 处理分享给朋友
    */
-  onShareAppMessage: function() {
+  onShareAppMessage: function () {
     return {
       title: '来一起玩烧脑的文字推理游戏！',
       path: '/pages/index/index',
