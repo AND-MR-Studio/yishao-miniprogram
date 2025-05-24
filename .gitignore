@@ -18,3 +18,9 @@ node_modules/
 project.private.config.json
 .trae/rules/project_rules.md
 local-server/data/soups.json
+/.idea/modules.xml
+/.idea/.gitignore
+/.idea/vcs.xml
+/.idea/yishao-miniprogram.iml
+/.idea/MarsCodeWorkspaceAppSettings.xml
+/.idea/jsLibraryMappings.xml
