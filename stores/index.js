@@ -11,7 +11,6 @@ const { TIP_STATE, tipConfig } = require('./tipStore');
 module.exports = {
   // 导出rootStore及其方法
   rootStore,
-  userId: rootStore.userId,
   // 注意：syncUserInfo 已移除，请直接使用 rootStore.userStore.syncUserInfo()
 
   // 导出子Store，提供向后兼容性

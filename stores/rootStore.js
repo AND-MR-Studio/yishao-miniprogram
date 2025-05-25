@@ -68,20 +68,6 @@ class RootStore {
   // ===== 计算属性 - 从userStore获取数据，避免重复存储 =====
 
   /**
-   * 用户信息 - 从userStore获取，作为单一数据源
-   */
-  get userInfo() {
-    return this.userStore?.userInfo || null;
-  }
-
-  /**
-   * 用户ID - 从userStore计算得出
-   */
-  get userId() {
-    return this.userStore?.userId || '';
-  }
-
-  /**
    * 登录状态 - 从userStore计算得出
    */
   get isLoggedIn() {
