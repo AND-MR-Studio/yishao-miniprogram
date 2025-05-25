@@ -31,7 +31,7 @@
 页面通过 `mobx-miniprogram-bindings` 绑定了 `rootStore` 和 `soupStore`：
 
 - **rootStore 绑定**: 获取全局用户状态 (`userId`, `isLoggedIn`, `isFirstVisit`, `showGuide`)，并绑定同步用户 ID (`syncUserId`) 和关闭引导层 (`closeGuide`) 方法。
-- **soupStore 绑定**: 获取汤面相关状态 (`soupLoading`, `buttonLoading`, `soupData`, `blurAmount`)，并绑定汤面相关操作方法 (`setButtonLoading`, `resetButtonLoading`, `fetchSoup`, `setBlurAmount`, `resetBlurAmount`)。
+- **soupStore 绑定**: 获取汤面相关状态 (`soupLoading`, `buttonLoading`, `soupData`, `blurAmount`)，并绑定汤面相关操作方法 (`toggleButtonLoading`, `fetchSoup`, `setBlurAmount`, `resetBlurAmount`)。
 
 ### 关键方法
 
@@ -159,15 +159,10 @@
   - **出参**: Promise<Object | null>，获取到的随机汤面数据或 null。
   - **功能**: 获取随机汤面 ID，然后调用 `fetchSoup` 加载完整数据和交互状态。
 
-- `setButtonLoading()`:
-  - **入参**: 无。
+- `toggleButtonLoading(isLoading)`:
+  - **入参**: `isLoading` (boolean)，是否设置为加载状态。
   - **出参**: 无。
-  - **功能**: 设置按钮加载状态为 true，并设置超时自动重置。
-
-- `resetButtonLoading()`:
-  - **入参**: 无。
-  - **出参**: 无。
-  - **功能**: 重置按钮加载状态为 false，并清理超时计时器。
+  - **功能**: 统一的按钮加载状态控制方法，使用MobX的action装饰器确保状态更新的响应式。设置为加载状态时会自动设置超时保护，重置时会清理超时计时器。
 
 - `setBlurAmount(amount)`:
   - **入参**: `amount` (number)，模糊程度 (0-10)。
@@ -184,7 +179,7 @@
 1. **页面加载**: `index.js` 的 `onLoad` 调用 `rootStore.syncUserInfo` 同步用户状态，然后调用 `soupStore.fetchSoup(options.soupId)` 或 `soupStore.getRandomSoup()` 获取汤面数据。`fetchSoup` 内部会调用 `soupService` 获取汤面详情，并根据登录状态调用 `userService` 获取点赞/收藏状态，最后更新 `soupStore` 的可观察状态。
 2. **状态绑定**: 页面通过 `createStoreBindings` 监听 `soupStore` 和 `rootStore` 的可观察状态变化，当状态更新时，页面 `data` 会自动同步，触发页面 UI 重新渲染。
 3. **用户交互**: 用户在页面上的滑动、双击等操作由 `interactionManager` 捕获，并触发页面对应的方法（如 `switchSoup`, `handleDoubleTap`）。
-4. **逻辑处理**: 页面的事件处理方法（如 `switchSoup`, `handleDoubleTap`, `onStartSoup`）调用 `soupStore` 中对应的 Action/Flow 方法（如 `getRandomSoup`, `toggleFavorite`, `setButtonLoading`）。
+4. **逻辑处理**: 页面的事件处理方法（如 `switchSoup`, `handleDoubleTap`, `onStartSoup`）调用 `soupStore` 中对应的 Action/Flow 方法（如 `getRandomSoup`, `toggleFavorite`, `toggleButtonLoading`）。
 5. **Store 业务逻辑**: `soupStore` 中的 Action/Flow 方法执行具体的业务逻辑，例如调用 `soupService` 或 `userService` 进行网络请求，然后更新 `soupStore` 的状态。
 6. **UI 更新**: `soupStore` 状态的改变通过 MobX 绑定自动同步到页面 `data`，驱动页面 UI 更新。
 

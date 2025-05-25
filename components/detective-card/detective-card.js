@@ -1,5 +1,4 @@
 // components/detective-card/detective-card.js
-const api = require('../../config/api');
 
 Component({
   /**
@@ -153,15 +152,6 @@ Component({
           this._isSigningIn = false;
         }, 300);
       }
-    },
-
-    /**
-     * 刷新用户信息
-     * 通知父页面刷新用户信息
-     */
-    refreshUserInfo() {
-      // 通知父页面刷新用户信息
-      this.triggerEvent('refreshuserinfo');
     },
 
     /**

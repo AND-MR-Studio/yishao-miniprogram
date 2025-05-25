@@ -1,19 +1,18 @@
-// pages/mine/mine.js
+// pages/mine/mine.js - 纯UI页面层
 
 // 引入API模块
 const api = require('../../config/api');
-// 引入rootStore 和 mobx-miniprogram-bindings
-const { rootStore } = require('../../stores/rootStore');
+// 引入userStore 和 mobx-miniprogram-bindings
+const { userStore } = require('../../stores/index');
 const { createStoreBindings, destroyStoreBindings } = require('mobx-miniprogram-bindings');
-// 引入 userStore
-const { userStore } = require('../../stores/userStore');
 
 Page({
   /**
    * 页面的初始数据
    */
   data: {
-    // userInfo, detectiveInfo, hasSignedIn, totalSoupCount, pointsCount 将由 storeBindings 提供
+    // 用户相关数据将由 userStore 绑定提供：
+    // userInfo, detectiveInfo, hasSignedIn, isLoggedIn, loading
     defaultAvatarUrl: api.assets.local.avatar,
     buttonConfig: {
       type: 'light',
@@ -34,31 +33,28 @@ Page({
    * 生命周期函数--监听页面加载
    */
   async onLoad() {
-    // 页面加载时不主动刷新数据，等待onShow处理
-    // 这样可以避免onLoad和onShow重复刷新
-
-    // 手动创建 rootStore 绑定实例
-    this.rootStoreBindings = createStoreBindings(this, {
-      store: rootStore,
-      fields: ["isLoggedIn"],
-      actions: ["syncUserInfo"]
-    });
-
-    // 手动创建 userStore 绑定实例
+    // 创建userStore绑定 - 直接绑定userStore，符合新的架构模式
     this.userStoreBindings = createStoreBindings(this, {
       store: userStore,
       fields: [
-        "userInfo",
-        "detectiveInfo",
-        "hasSignedIn",
-        "totalSoupCount",
-        "pointsCount",
-        "userAvatar", // 绑定 userStore 的计算属性
-        "remainingAnswers", // 绑定 userStore 的计算属性
-        "detectiveId" // 绑定 userStore 的计算属性
-      ],
-      actions: ["updateAvatar", "updateUserProfile", "login", "logout"] // 绑定 userStore 的 updateAvatar action
+        // 核心用户数据
+        "userInfo",           // 原始用户信息对象
+        "isLoggedIn",         // 登录状态 - 按钮显示需要
 
+        // 侦探相关信息
+        "detectiveInfo",      // 完整侦探信息 - detective-card组件需要
+        "hasSignedIn",        // 签到状态 - detective-card组件需要
+
+        // 加载状态 - 直接访问loading对象
+        "loading"             // 统一加载状态对象
+      ],
+      actions: [
+        "syncUserInfo",       // 同步用户信息
+        "login",              // 登录操作
+        "logout",             // 退出登录操作
+        "updateAvatar",       // 更新头像
+        "updateUserProfile"   // 更新用户资料
+      ]
     });
   },
 
@@ -72,8 +68,8 @@ Page({
       });
     }
 
-    // 直接调用 rootStore 的 syncUserInfo action 刷新数据
-    await rootStore.syncUserInfo();
+    // 调用绑定的syncUserInfo action刷新数据
+    await this.syncUserInfo();
     // 根据登录状态更新按钮
     this.updateButtonConfig();
   },
@@ -105,50 +101,42 @@ Page({
 
   /**
    * 处理头像选择
-   * 增强版本，解决chooseAvatar:fail another chooseAvatar is in progress错误
    */
   async onChooseAvatar(e) {
-    // 防止重复调用 - 使用更严格的检查
-    if (this._isUploadingAvatar || this._isChoosingAvatar) {
+    // 防止重复调用
+    if (this.data.loading.avatar) {
       return;
     }
 
-    // 设置两个状态标志，分别跟踪选择和上传过程
-    this._isChoosingAvatar = true;
-    this._isUploadingAvatar = true;
-
     const { avatarUrl } = e.detail;
     if (!avatarUrl) {
-      this._isChoosingAvatar = false;
-      this._isUploadingAvatar = false;
       return;
     }
 
     try {
-      // 添加延迟，确保微信内部的chooseAvatar操作完全结束
-      await new Promise(resolve => setTimeout(resolve, 500));
-      // 调用 store action 更新头像
-      // 直接调用绑定的 updateAvatarAction
-      await this.updateAvatarAction(avatarUrl);
-      wx.showToast({
-        title: '头像上传成功',
-        icon: 'success',
-        duration: 2000
-      });
+      // 调用绑定的updateAvatar action
+      const result = await this.updateAvatar(avatarUrl);
+
+      if (result.success) {
+        wx.showToast({
+          title: '头像上传成功',
+          icon: 'success',
+          duration: 2000
+        });
+      } else {
+        wx.showToast({
+          title: result.error || '头像上传失败',
+          icon: 'none',
+          duration: 2000
+        });
+      }
     } catch (error) {
+      console.error('头像上传失败:', error);
       wx.showToast({
         title: '头像上传失败',
         icon: 'none',
         duration: 2000
       });
-    } finally {
-      // 延迟重置标志，避免快速连续点击
-      // 使用更长的延迟时间
-      setTimeout(() => {
-        this._isUploadingAvatar = false;
-        // 确保两个状态都被重置
-        this._isChoosingAvatar = false;
-      }, 2000);
     }
   },
 
@@ -269,10 +257,9 @@ Page({
    */
   async saveUserInfo() {
     // 防止重复提交
-    if (this._isSavingUserInfo) {
+    if (this.data.loading.profile) {
       return;
     }
-    this._isSavingUserInfo = true;
 
     const { editingNickName, editingAvatarUrl } = this.data;
 
@@ -283,39 +270,35 @@ Page({
         icon: 'none',
         duration: 2000
       });
-      this._isSavingUserInfo = false;
       return;
     }
 
-    // 检查头像是否为默认头像，如果是则提示用户选择头像
+    // 检查头像是否为默认头像
     if (editingAvatarUrl === this.data.defaultAvatarUrl) {
       wx.showToast({
         title: '请选择您的头像',
         icon: 'none',
         duration: 2000
       });
-      this._isSavingUserInfo = false;
       return;
     }
 
     try {
-      // 调用绑定的 updateUserProfile action 更新用户信息
-      const updateResult = await this.updateUserProfile({
+      // 调用绑定的updateUserProfile action
+      const result = await this.updateUserProfile({
         nickname: editingNickName
       });
 
-      if (updateResult.success) {
+      if (result.success) {
         wx.showToast({
           title: '用户信息保存成功',
           icon: 'success',
           duration: 2000
         });
         this.closeUserInfoModal();
-        // 保存成功后，调用绑定的 syncUserInfo action 刷新用户信息
-        this.syncUserInfo();
       } else {
         wx.showToast({
-          title: updateResult.message || '用户信息保存失败',
+          title: result.error || '用户信息保存失败',
           icon: 'none',
           duration: 2000
         });
@@ -327,8 +310,6 @@ Page({
         icon: 'none',
         duration: 2000
       });
-    } finally {
-      this._isSavingUserInfo = false;
     }
   },
 
@@ -349,67 +330,48 @@ Page({
    */
   async handleLogin() {
     // 防止重复点击
-    if (this._isHandlingLogin) {
+    if (this.data.loading.login || this.data.loading.logout) {
       return;
     }
-    this._isHandlingLogin = true;
 
     try {
-      // 直接访问绑定的 isLoggedIn 字段
       if (this.data.isLoggedIn) {
         // 已登录，执行退出登录
-        this.setData({
-          isLoggingOut: true
-        });
-        // 调用绑定的 logoutAction
-        const logoutResult = await this.logoutAction();
-        this.setData({
-          isLoggingOut: false
-        });
-        if (logoutResult.success) {
+        const result = await this.logout();
+
+        if (result.success) {
           wx.showToast({
             title: '退出登录成功',
             icon: 'success',
             duration: 2000
           });
-          // 退出登录成功后，调用绑定的 syncUserInfo action 刷新用户信息
-          await this.syncUserInfo();
           this.updateButtonConfig();
         } else {
           wx.showToast({
-            title: logoutResult.message || '退出登录失败',
+            title: result.error || '退出登录失败',
             icon: 'none',
             duration: 2000
           });
-        } 律师
+        }
       } else {
         // 未登录，执行登录
-        // 调用绑定的 loginAction
-        const loginResult = await this.loginAction();
-        if (loginResult.success) {
+        const result = await this.login();
+
+        if (result.success) {
           wx.showToast({
             title: '登录成功',
             icon: 'success',
             duration: 2000
           });
-          // 登录成功后，调用绑定的 syncUserInfo action 刷新用户信息
-          await this.syncUserInfo();
           this.updateButtonConfig();
-          // 登录成功后检查是否需要完善信息，直接访问绑定的 userInfo 字段
+
+          // 检查是否需要完善信息
           if (!this.data.userInfo || !this.data.userInfo.nickname || !this.data.userInfo.avatarUrl) {
             this.openUserInfoModal(true);
-          } else {
-            // 登录成功但无需完善信息时，也显示登录成功提示
-            wx.showToast({
-              title: '登录成功',
-              icon: 'success',
-              duration: 2000
-            });
           }
         } else {
-          // 登录失败时显示错误信息
           wx.showToast({
-            title: loginResult.message || '登录失败',
+            title: result.error || '登录失败',
             icon: 'none',
             duration: 2000
           });
@@ -422,27 +384,16 @@ Page({
         icon: 'none',
         duration: 2000
       });
-    } finally {
-      this._isHandlingLogin = false;
     }
-  },
-
-  /**
-   * 刷新用户信息（供其他地方调用）
-   * 此方法已废弃，请直接调用绑定的 syncUserInfo action
-   */
-  async refreshUserInfo() {
-    console.warn('refreshUserInfo 方法已废弃，请直接调用绑定的 syncUserInfo action');
-    // 废弃方法不再执行实际逻辑
   },
 
   /**
    * 处理页面下拉刷新
    */
   async onPullDownRefresh() {
-    // 调用绑定的 syncUserInfo action 刷新用户信息
+    // 调用绑定的syncUserInfo action刷新用户信息
     await this.syncUserInfo();
-    wx.stopPullDownRefresh(); // 停止下拉刷新动画
+    wx.stopPullDownRefresh();
   },
 
   /**
@@ -467,20 +418,13 @@ Page({
   },
 
   /**
-   * 处理页面滚动
-   */
-  onPageScroll: function (e) {
-    // console.log(e)
-  },
-
-  /**
    * 处理分享到朋友圈
    */
   onShareTimeline: function () {
     return {
       title: '来一起玩烧脑的文字推理游戏！',
       query: '',
-      imageUrl: api.assets.local.shareImage // 使用本地分享图片
+      imageUrl: api.assets.local.shareImage
     };
   },
 
@@ -491,17 +435,8 @@ Page({
     return {
       title: '来一起玩烧脑的文字推理游戏！',
       path: '/pages/index/index',
-      imageUrl: api.assets.local.shareImage // 使用本地分享图片
+      imageUrl: api.assets.local.shareImage
     };
-  },
-
-  /**
-   * 处理点击页面刷新按钮（如果需要）
-   * 此方法已废弃，请使用 onPullDownRefresh 或直接调用 syncUserInfo
-   */
-  async onRefreshPage() {
-    console.warn('onRefreshPage 方法已废弃，请使用 onPullDownRefresh 或直接调用 syncUserInfo');
-    // 废弃方法不再执行实际逻辑
   },
 
   /**
@@ -526,51 +461,62 @@ Page({
   },
 
   /**
-   * 生命周期函数--监听页面初次渲染完成
+   * 处理头像加载错误
    */
-  onReady() {
-
+  handleAvatarError() {
+    console.error('头像加载失败，使用默认头像');
   },
 
   /**
-   * 生命周期函数--监听页面隐藏
+   * 处理签到结果 - detective-card 组件事件
    */
-  onHide() {
-
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh() {
-    // 调用绑定的 syncUserInfo action 刷新用户信息
-    this.syncUserInfo().finally(() => {
-      wx.stopPullDownRefresh(); // 停止下拉刷新动画
+  handleSignInResult(event) {
+    const { success, message } = event.detail;
+    wx.showToast({
+      title: message || (success ? '签到成功' : '签到失败'),
+      icon: success ? 'success' : 'none',
+      duration: 2000
     });
   },
 
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom() {
 
+  /**
+   * 处理侦探卡片签到 - detective-card 组件事件
+   */
+  handleDetectiveCardSignIn() {
+    // 这里可以添加签到逻辑，或者委托给 userStore
+    console.log('处理侦探卡片签到');
   },
 
   /**
-   * 用户点击右上角分享
+   * 处理 Banner 点击事件
    */
-  onShareAppMessage() {
+  handleBannerTap(event) {
+    console.log('Banner 点击事件:', event.detail);
+  },
 
+  /**
+   * 导航到关于页面
+   */
+  navigateToAbout() {
+    wx.navigateTo({
+      url: '/pages/about/about',
+      fail: (err) => {
+        console.error('导航到关于页面失败:', err);
+        wx.showToast({
+          title: '跳转失败，请稍后重试',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+    });
   },
 
   /**
    * 生命周期函数--监听页面卸载
    */
   onUnload() {
-    // 在 onUnload 中销毁 store 绑定实例，避免内存泄漏
-    if (this.rootStoreBindings) {
-      destroyStoreBindings(this, this.rootStoreBindings);
-    }
+    // 销毁store绑定实例，避免内存泄漏
     if (this.userStoreBindings) {
       destroyStoreBindings(this, this.userStoreBindings);
     }

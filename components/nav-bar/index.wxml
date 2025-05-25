@@ -24,4 +24,5 @@
   bind:contact="onContact"
   bind:about="onAbout"
   bind:clearcontext="onClearContext"
+  bind:showguide="onShowGuide"
 />

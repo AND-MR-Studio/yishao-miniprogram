@@ -26,7 +26,7 @@ Page({
       this.rootStoreBindings = createStoreBindings(this, {
         store: rootStore,
         fields: ['userId', 'isFirstVisit', 'showGuide'],
-        actions: ['showGuideManually', 'closeGuide'] // 移除了 'syncUserId'
+        actions: ['toggleGuide'] // 使用新的统一方法
       });
 
       // 创建chatStore绑定 - 管理聊天相关的所有状态
@@ -34,14 +34,19 @@ Page({
         store: chatStore,
         fields: [
           'dialogId', 'chatState', 'soupId', 'soupData',
-          'isPeeking', 'isSending', 'isAnimating', 'isLoading',
-          'isDrinking', 'isTruth', 'messages', 'inputValue'
+          'isPeeking', 'canSendMessage', 'messages', 'inputValue'
         ],
         actions: [
-          'updateState', 'setPeekingStatus', 'setInputValue',
-          'setAnimatingStatus', 'setSendingStatus', 'showTruth',
-          'createDialog', 'fetchMessages', 'sendMessage', 'fetchSoupForChat'
+          'setPeekingStatus', 'setInputValue', 'setLoadingState', 'restoreChatState',
+          'showTruth', 'getChatData', 'fetchMessages', 'sendMessage'
         ]
+      });
+
+      // 创建soupStore绑定 - 管理汤面交互状态
+      this.soupStoreBindings = createStoreBindings(this, {
+        store: rootStore.soupStore,
+        fields: ['isLiked', 'isFavorite', 'likeCount', 'favoriteCount'],
+        actions: ['fetchSoup', 'toggleLike', 'toggleFavorite']
       });
 
       // 创建tipStore绑定 - 管理提示信息状态
@@ -62,29 +67,28 @@ Page({
       // 同步用户ID
       await rootStore.syncUserInfo(); // 修改为直接调用 rootStore.syncUserInfo()
 
-      // 获取汤面数据并初始化 - 使用chatStore的方法
-      const soupData = await this.fetchSoupForChat(soupId);
+      // 获取汤面数据并初始化 - 使用soupStore的方法
+      const soupData = await rootStore.soupStore.fetchSoup(soupId, false);
 
       if (!soupData) {
         throw new Error('获取汤面数据失败');
       }
 
       // 设置chatStore的基本数据
-      chatStore.updateState({
-        chatState: CHAT_STATE.DRINKING,
-        dialogId: dialogId
-      });
+      chatStore.chatState = CHAT_STATE.DRINKING;
+      chatStore.dialogId = dialogId;
 
       // 确保tipStore显示默认提示
       tipStore.showTip(tipConfig.defaultTitle, tipConfig.defaultContent, 0, TIP_STATE.DEFAULT);
 
-      // 初始化对话
+      // 初始化对话 - 使用新的getChatData方法
       if (dialogId) {
-        // 使用现有对话ID，直接从chatStore加载消息
+        // 使用现有对话ID，设置到chatStore并加载消息
+        chatStore.dialogId = dialogId;
         await chatStore.fetchMessages();
       } else {
-        // 创建新对话
-        await chatStore.createDialog();
+        // 获取聊天数据（后端处理对话创建逻辑）
+        await chatStore.getChatData(rootStore.userStore.userId, soupId);
       }
     } catch (error) {
       console.error('页面加载失败:', error);
@@ -100,15 +104,15 @@ Page({
    */
   async createNewDialog() {
     try {
-      // 使用chatStore创建对话
-      const success = await chatStore.createDialog();
+      // 使用chatStore获取聊天数据
+      const success = await chatStore.getChatData(rootStore.userStore.userId, chatStore.soupId);
 
       if (!success) {
-        throw new Error('无法创建对话');
+        throw new Error('无法获取聊天数据');
       }
     } catch (error) {
-      console.error('创建对话失败:', error);
-      this.showErrorToast('无法创建对话，请重试');
+      console.error('获取聊天数据失败:', error);
+      this.showErrorToast('无法获取聊天数据，请重试');
     }
   },
 
@@ -132,6 +136,9 @@ Page({
     if (this.chatStoreBindings) {
       this.chatStoreBindings.destroyStoreBindings();
     }
+    if (this.soupStoreBindings) {
+      this.soupStoreBindings.destroyStoreBindings();
+    }
     if (this.tipStoreBindings) {
       this.tipStoreBindings.destroyStoreBindings();
     }
@@ -144,8 +151,8 @@ Page({
    * @returns {Object} 分享配置对象
    */
   onShareAppMessage() {
-    // 获取当前汤面数据
-    const shareSoup = chatStore.soupData;
+    // 获取当前汤面数据 - 从soupStore获取
+    const shareSoup = rootStore.soupStore.soupData;
 
     // 构建分享标题 - 使用汤面标题或默认标题
     const shareTitle = shareSoup?.title
@@ -183,8 +190,8 @@ Page({
    * @returns {Object} 分享配置对象
    */
   onShareTimeline() {
-    // 获取当前汤面数据
-    const shareSoup = chatStore.soupData;
+    // 获取当前汤面数据 - 从soupStore获取
+    const shareSoup = rootStore.soupStore.soupData;
 
     // 构建分享标题 - 使用汤面标题或默认标题
     const shareTitle = shareSoup?.title
@@ -324,7 +331,7 @@ Page({
     try {
       // 更新用户回答过的汤记录
       try {
-        const soupId = chatStore.soupData ? chatStore.soupData.id : '';
+        const soupId = rootStore.soupStore.soupData ? rootStore.soupStore.soupData.id : '';
         if (soupId) {
           await userService.updateAnsweredSoup(soupId);
         }
@@ -404,6 +411,24 @@ Page({
     const { type, value } = e.detail;
     console.log('设置变化:', type, value);
     // 处理设置变化
+  },
+
+  /**
+   * 处理显示引导事件
+   * 通过nav-bar组件转发的setting组件事件
+   */
+  onShowGuide() {
+    // 调用rootStore的toggleGuide方法显示引导层
+    rootStore.toggleGuide(true);
+  },
+
+  /**
+   * 处理关闭引导事件
+   * 引导层组件的关闭事件
+   */
+  onCloseGuide() {
+    // 调用rootStore的toggleGuide方法隐藏引导层
+    this.toggleGuide(false);
   }
 
 });

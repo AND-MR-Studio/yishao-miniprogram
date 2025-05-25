@@ -97,7 +97,7 @@ class TipStore {
 
   // 获取用户ID的计算属性
   get userId() {
-    return this.rootStore.userId;
+    return this.rootStore?.userStore?.userId || '';
   }
 
   // 提示可见性计算属性

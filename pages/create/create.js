@@ -38,17 +38,31 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad(options) {
-    // 创建MobX Store绑定
+    // 创建MobX Store绑定 - 优化版本，只绑定页面实际使用的具体字段
     this.storeBindings = createStoreBindings(this, {
       store: uploadStore,
       fields: [
-        'formData',
-        'validation',
-        'isSubmitting',
+        // 表单数据 - 独立字段绑定，减少响应式更新范围
+        'title',
+        'content',
+        'truth',
+        'tags',
+        // 验证状态 - 独立字段绑定
+        'titleError',
+        'contentError',
+        'truthError',
+        'tagsError',
+        // 计算属性
         'titleLength',
         'contentLength',
         'truthLength',
-        'hasDraft'
+        'isFormValid',
+        // 其他状态
+        'isSubmitting',
+        'hasDraft',
+        // 向后兼容的computed属性（如果需要）
+        'formData',
+        'validation'
       ],
       actions: [
         'updateField',

@@ -12,15 +12,24 @@ const DRAFT_STORAGE_KEY = 'soup_draft';
 /**
  * UploadStore类
  * 管理海龟汤创建页面的状态
+ *
+ * 优化说明：
+ * 1. 将formData和validation对象拆分为独立的observable属性
+ * 2. 减少响应式更新范围，提高性能
+ * 3. 使用computed属性组合多个字段的场景
  */
 class UploadStore {
-  // 核心状态
-  formData = {
-    title: '',     // 标题
-    content: '',   // 汤面内容
-    truth: '',     // 汤底内容
-    tags: [],      // 标签（数组）
-  };
+  // ===== 表单数据 - 拆分为独立observable属性 =====
+  title = '';        // 标题
+  content = '';      // 汤面内容
+  truth = '';        // 汤底内容
+  tags = [];         // 标签（数组）
+
+  // ===== 表单验证状态 - 拆分为独立observable属性 =====
+  titleError = '';
+  contentError = '';
+  truthError = '';
+  tagsError = '';
 
   // 预设标签池
   tagPool = [
@@ -30,30 +39,20 @@ class UploadStore {
     '心理', '哲理', '社会', '日常'
   ];
 
-  // 表单验证状态
-  validation = {
-    titleError: '',
-    contentError: '',
-    truthError: '',
-    tagsError: '',
-  };
-
   // 加载状态
   isSubmitting = false;  // 是否正在提交
 
   // 草稿状态
   hasDraft = false;      // 是否有草稿
 
-
-
   // 已发布的汤
   publishedSoups = [];   // 已发布的汤列表
 
-  // 引用rootStore
+  // 引用rootStore和userStore
   rootStore = null;
 
   constructor(rootStore) {
-    // 保存rootStore引用
+    // 保存rootStore和userStore引用
     this.rootStore = rootStore;
 
     // 使用makeAutoObservable实现全自动响应式
@@ -72,32 +71,59 @@ class UploadStore {
 
   // 获取用户ID的计算属性
   get userId() {
-    return this.rootStore.userId;
+    return this.rootStore?.userStore?.userId || '';
   }
 
   // 获取登录状态的计算属性
   get isLoggedIn() {
-    return this.rootStore.isLoggedIn;
+    return this.rootStore?.userStore?.isLoggedIn || false;
   }
+
+  // ===== Computed属性 - 优化后使用独立字段 =====
 
   // 标题字数计算属性
   get titleLength() {
-    return this.formData.title ? this.formData.title.length : 0;
+    return this.title ? this.title.length : 0;
   }
 
   // 汤面内容字数计算属性
   get contentLength() {
-    return this.formData.content ? this.formData.content.length : 0;
+    return this.content ? this.content.length : 0;
   }
 
   // 汤底内容字数计算属性
   get truthLength() {
-    return this.formData.truth ? this.formData.truth.length : 0;
+    return this.truth ? this.truth.length : 0;
   }
 
   // 已选标签数量
   get tagsLength() {
-    return this.formData.tags ? this.formData.tags.length : 0;
+    return this.tags ? this.tags.length : 0;
+  }
+
+  // 表单整体验证状态 - 新增computed属性
+  get isFormValid() {
+    return !this.titleError && !this.contentError && !this.truthError && !this.tagsError;
+  }
+
+  // 向后兼容：formData对象 - 通过computed属性组合
+  get formData() {
+    return {
+      title: this.title,
+      content: this.content,
+      truth: this.truth,
+      tags: this.tags
+    };
+  }
+
+  // 向后兼容：validation对象 - 通过computed属性组合
+  get validation() {
+    return {
+      titleError: this.titleError,
+      contentError: this.contentError,
+      truthError: this.truthError,
+      tagsError: this.tagsError
+    };
   }
 
   // 是否显示空态的计算属性
@@ -119,110 +145,122 @@ class UploadStore {
   }
 
   /**
-   * 更新表单字段
+   * 更新表单字段 - 优化版本，直接操作独立属性
    * @param {string} field 字段名
-   * @param {string} value 字段值
+   * @param {string|array} value 字段值
    */
   updateField(field, value) {
-    if (field in this.formData) {
-      this.formData[field] = value;
-      // 清除对应的验证错误
-      const errorField = `${field}Error`;
-      if (errorField in this.validation) {
-        this.validation[errorField] = '';
-      }
+    // 直接更新对应的独立属性
+    if (field === 'title') {
+      this.title = value;
+      this.titleError = ''; // 清除对应的验证错误
+    } else if (field === 'content') {
+      this.content = value;
+      this.contentError = '';
+    } else if (field === 'truth') {
+      this.truth = value;
+      this.truthError = '';
+    } else if (field === 'tags') {
+      this.tags = value;
+      this.tagsError = '';
     }
   }
 
   /**
-   * 添加标签
+   * 添加标签 - 优化版本，直接操作独立属性
    * @param {string} tag 要添加的标签
    */
   addTag(tag) {
     // 如果标签已存在或已达到最大数量，不添加
-    if (this.formData.tags.includes(tag) || this.formData.tags.length >= 3) {
+    if (this.tags.includes(tag) || this.tags.length >= 3) {
       return;
     }
 
     // 添加标签
-    this.formData.tags.push(tag);
+    this.tags.push(tag);
 
     // 清除标签错误
-    this.validation.tagsError = '';
+    this.tagsError = '';
   }
 
   /**
-   * 移除标签
+   * 移除标签 - 优化版本，直接操作独立属性
    * @param {string} tag 要移除的标签
    */
   removeTag(tag) {
     // 移除标签
-    this.formData.tags = this.formData.tags.filter(t => t !== tag);
+    this.tags = this.tags.filter(t => t !== tag);
 
     // 清除标签错误
-    this.validation.tagsError = '';
+    this.tagsError = '';
   }
 
   /**
-   * 验证表单
+   * 验证表单 - 优化版本，直接操作独立属性
    * @returns {boolean} 表单是否有效
    */
   validateForm() {
     let isValid = true;
 
     // 验证标题
-    if (!this.formData.title.trim()) {
-      this.validation.titleError = '请输入标题';
+    if (!this.title.trim()) {
+      this.titleError = '请输入标题';
       isValid = false;
-    } else if (this.formData.title.length > 15) {
-      this.validation.titleError = '标题不能超过15个字符';
+    } else if (this.title.length > 15) {
+      this.titleError = '标题不能超过15个字符';
       isValid = false;
+    } else {
+      this.titleError = '';
     }
 
     // 验证汤面内容
-    if (!this.formData.content.trim()) {
-      this.validation.contentError = '请输入汤面内容';
+    if (!this.content.trim()) {
+      this.contentError = '请输入汤面内容';
       isValid = false;
-    } else if (this.formData.content.length > 100) {
-      this.validation.contentError = '汤面内容不能超过100个字符';
+    } else if (this.content.length > 100) {
+      this.contentError = '汤面内容不能超过100个字符';
       isValid = false;
+    } else {
+      this.contentError = '';
     }
 
     // 验证汤底内容
-    if (!this.formData.truth.trim()) {
-      this.validation.truthError = '请输入汤底内容';
+    if (!this.truth.trim()) {
+      this.truthError = '请输入汤底内容';
       isValid = false;
-    } else if (this.formData.truth.length > 500) {
-      this.validation.truthError = '汤底内容不能超过500个字符';
+    } else if (this.truth.length > 500) {
+      this.truthError = '汤底内容不能超过500个字符';
       isValid = false;
+    } else {
+      this.truthError = '';
     }
 
     // 验证标签
-    if (this.formData.tags.length > 3) {
-      this.validation.tagsError = '最多选择3个标签';
+    if (this.tags.length > 3) {
+      this.tagsError = '最多选择3个标签';
       isValid = false;
+    } else {
+      this.tagsError = '';
     }
 
     return isValid;
   }
 
   /**
-   * 重置表单
+   * 重置表单 - 优化版本，直接重置独立属性
    */
   resetForm() {
-    this.formData = {
-      title: '',
-      content: '',
-      truth: '',
-      tags: [],
-    };
+    // 重置表单数据
+    this.title = '';
+    this.content = '';
+    this.truth = '';
+    this.tags = [];
 
-    this.validation = {
-      titleError: '',
-      contentError: '',
-      truthError: '',
-      tagsError: '',
-    };
+    // 重置验证状态
+    this.titleError = '';
+    this.contentError = '';
+    this.truthError = '';
+    this.tagsError = '';
   }
 
   /**
@@ -239,17 +277,17 @@ class UploadStore {
   }
 
   /**
-   * 保存草稿
+   * 保存草稿 - 优化版本，使用独立属性
    * 将当前表单内容保存到本地缓存
    */
   saveDraft() {
     try {
       // 保存当前表单数据到本地缓存
       wx.setStorageSync(DRAFT_STORAGE_KEY, {
-        title: this.formData.title,
-        content: this.formData.content,
-        truth: this.formData.truth,
-        tags: this.formData.tags,
+        title: this.title,
+        content: this.content,
+        truth: this.truth,
+        tags: this.tags,
         timestamp: Date.now() // 添加时间戳，便于显示保存时间
       });
 
@@ -264,7 +302,7 @@ class UploadStore {
   }
 
   /**
-   * 加载草稿
+   * 加载草稿 - 优化版本，直接设置独立属性
    * 从本地缓存加载草稿数据
    */
   loadDraft() {
@@ -273,10 +311,10 @@ class UploadStore {
 
       if (draftData) {
         // 更新表单数据
-        this.formData.title = draftData.title || '';
-        this.formData.content = draftData.content || '';
-        this.formData.truth = draftData.truth || '';
-        this.formData.tags = draftData.tags || [];
+        this.title = draftData.title || '';
+        this.content = draftData.content || '';
+        this.truth = draftData.truth || '';
+        this.tags = draftData.tags || [];
 
         return true;
       }
@@ -318,12 +356,12 @@ class UploadStore {
     try {
       this.isSubmitting = true;
 
-      // 准备提交数据
+      // 准备提交数据 - 使用独立属性
       const soupData = {
-        title: this.formData.title.trim(),
-        soup_surface: this.formData.content.trim(),
-        soup_bottom: this.formData.truth.trim(),
-        tags: this.formData.tags
+        title: this.title.trim(),
+        soup_surface: this.content.trim(),
+        soup_bottom: this.truth.trim(),
+        tags: this.tags
       };
 
       // 调用创建接口

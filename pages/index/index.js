@@ -9,7 +9,7 @@ const {
     createInteractionManager,
 } = require("../../utils/interactionManager");
 const {createStoreBindings} = require("mobx-miniprogram-bindings");
-const {rootStore, soupStore} = require("../../stores/index");
+const {rootStore, soupStore, userStore} = require("../../stores/index");
 const api = require("../../config/api");
 
 Page({
@@ -29,22 +29,29 @@ Page({
      * @param {Object} options - 页面参数，可能包含soupId
      */
     async onLoad(options) {
-        // 创建rootStore绑定 - 用于获取用户ID、登录状态和引导层状态
+        // 创建rootStore绑定 - 仅用于引导层状态管理
         this.rootStoreBindings = createStoreBindings(this, {
             store: rootStore,
-            fields: ["userId", "isLoggedIn", "isFirstVisit", "showGuide"],
-            actions: ["closeGuide"] // 确保 syncUserId 已从 actions 中移除
+            fields: ["showGuide"], // 移除过时的 userId, isLoggedIn, isFirstVisit
+            actions: ["toggleGuide"]
+        });
+
+        // 创建userStore绑定 - 用于获取用户登录状态
+        this.userStoreBindings = createStoreBindings(this, {
+            store: userStore,
+            fields: ["isLoggedIn"], // 只绑定登录状态，用于权限检查
+            actions: ["syncUserInfo"]
         });
 
         // 创建soupStore绑定 - 汤面相关字段和方法
         this.soupStoreBindings = createStoreBindings(this, {
             store: soupStore,
             fields: ["soupLoading", "buttonLoading", "soupData", "blurAmount"],
-            actions: ["setButtonLoading", "resetButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
+            actions: ["toggleButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
         });
 
-        // 同步用户ID - 确保获取最新的用户状态
-        await rootStore.syncUserInfo(); // 确保 onLoad 中也使用 rootStore.syncUserInfo()
+        // 同步用户信息 - 确保获取最新的用户状态
+        await this.syncUserInfo();
 
         try {
             // 统一数据获取路径：无论是否有soupId，都通过统一的fetchSoup方法获取数据
@@ -89,8 +96,8 @@ Page({
             });
         }
 
-        // 同步用户ID - 直接调用 rootStore 的方法
-        rootStore.syncUserInfo();
+        // 同步用户信息 - 调用 userStore 的方法，避免循环调用
+        this.syncUserInfo();
     },
 
     /**
@@ -101,6 +108,9 @@ Page({
         // 清理MobX绑定
         if (this.rootStoreBindings) {
             this.rootStoreBindings.destroyStoreBindings();
+        }
+        if (this.userStoreBindings) {
+            this.userStoreBindings.destroyStoreBindings();
         }
         if (this.soupStoreBindings) {
             this.soupStoreBindings.destroyStoreBindings();
@@ -198,7 +208,7 @@ Page({
                 loginPopup.show();
             }
             // 重置按钮加载状态
-            this.resetButtonLoading();
+            this.toggleButtonLoading(false);
             return;
         }
 
@@ -208,12 +218,12 @@ Page({
             success: () => {
                 // 跳转成功后重置按钮状态
                 setTimeout(() => {
-                    this.resetButtonLoading();
+                    this.toggleButtonLoading(false);
                 }, 500);
             },
             fail: () => {
                 // 跳转失败立即重置按钮状态
-                this.resetButtonLoading();
+                this.toggleButtonLoading(false);
                 this.showErrorToast("跳转失败，请重试");
             }
         });
@@ -230,12 +240,38 @@ Page({
     },
 
     /**
+     * 处理登录弹窗取消按钮点击事件
+     */
+    onLoginCancel() {
+        // 取消登录，不执行任何操作，弹窗会自动关闭
+        console.log('用户取消登录');
+    },
+
+    /**
      * 处理导航栏首页按钮点击事件，刷新首页数据
      */
     onRefreshHome() {
         console.log('刷新首页数据');
         // 重新加载随机汤面
         this.switchSoup();
+    },
+
+    /**
+     * 处理显示引导事件
+     * 通过nav-bar组件转发的setting组件事件
+     */
+    onShowGuide() {
+        // 调用rootStore的toggleGuide方法显示引导层
+        rootStore.toggleGuide(true);
+    },
+
+    /**
+     * 处理关闭引导事件
+     * 引导层组件的关闭事件
+     */
+    onCloseGuide() {
+        // 调用rootStore的toggleGuide方法隐藏引导层
+        this.toggleGuide(false);
     },
 
     // ===== 汤面切换相关 =====
@@ -290,7 +326,7 @@ Page({
      */
     async handleDoubleTap() {
         if (soupStore.soupData?.id) {
-            // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
+            // 检查用户是否已登录 - 使用userStore的isLoggedIn属性
             if (!this.data.isLoggedIn) {
                 // 显示登录提示弹窗
                 const loginPopup = this.selectComponent("#loginPopup");
@@ -300,8 +336,8 @@ Page({
                 return;
             }
 
-            // 用户已登录，调用store的方法
-            await soupStore.toggleFavorite(soupStore.soupData.id);
+            // 用户已登录，直接调用 userStore 的便捷方法
+            await userStore.toggleFavorite(soupStore.soupData.id);
         }
     },
 

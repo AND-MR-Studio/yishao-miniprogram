@@ -118,6 +118,11 @@ Component({
       this.triggerEvent('about');
     },
 
+    // 处理显示引导事件
+    onShowGuide() {
+      this.triggerEvent('showguide');
+    },
+
     // 处理清理上下文事件
     onClearContext(e) {
       const { dialogId, userId } = e.detail;
