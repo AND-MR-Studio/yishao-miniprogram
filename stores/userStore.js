@@ -33,6 +33,9 @@ class UserStore {
       updateAvatar: flow,
       updateUserProfile: flow,
       syncUserInfo: flow,
+      favoriteSoup: flow,
+      likeSoup: flow,
+      solveSoup: flow,
 
       // 标记为非观察属性
       rootStore: false,
@@ -309,86 +312,142 @@ class UserStore {
     }
   }
 
-  // ===== 用户交互相关方法 =====
+  // ===== 用户交互相关方法 - 重构为直接操作模式 =====
 
   /**
-   * 更新用户收藏状态
+   * 收藏/取消收藏汤面
+   * 直接发起操作请求，后端统一处理状态更新
+   * @param {string} soupId - 汤ID
+   * @param {boolean} isFavorite - 是否收藏
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
-  async updateFavoriteSoup(soupId, isFavorite) {
+  *favoriteSoup(soupId, isFavorite) {
     if (!this.isLoggedIn) {
       return { success: false, error: '用户未登录' };
-    }
-    return await userService.updateFavoriteSoup(soupId, isFavorite);
-  }
-
-  /**
-   * 检查用户是否收藏了某个汤
-   */
-  async isFavoriteSoup(soupId) {
-    if (!this.isLoggedIn) {
-      return { success: true, data: false }; // 未登录默认未收藏
     }
 
     try {
-      if (this.userInfo && Array.isArray(this.userInfo.favoriteSoups)) {
-        const isFavorite = this.userInfo.favoriteSoups.includes(soupId);
-        return { success: true, data: isFavorite };
+      // 直接发起操作请求
+      const result = yield userService.updateFavoriteSoup(soupId, isFavorite);
+
+      if (result.success) {
+        // 操作成功后同步用户信息，获取最新状态
+        yield this.syncUserInfo();
+        return {
+          success: true,
+          data: result.data,
+          message: isFavorite ? '收藏成功' : '已取消收藏'
+        };
       } else {
-        return { success: true, data: false };
+        return result;
       }
     } catch (error) {
-      return { success: false, error: '检查收藏状态失败' };
+      console.error('收藏操作失败:', error);
+      return { success: false, error: '收藏操作失败' };
     }
   }
 
   /**
-   * 更新用户点赞状态
+   * 点赞/取消点赞汤面
+   * 直接发起操作请求，后端统一处理状态更新
+   * @param {string} soupId - 汤ID
+   * @param {boolean} isLike - 是否点赞
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
-  async updateLikedSoup(soupId, isLike) {
+  *likeSoup(soupId, isLike) {
     if (!this.isLoggedIn) {
       return { success: false, error: '用户未登录' };
     }
-    return await userService.updateLikedSoup(soupId, isLike);
+
+    try {
+      // 直接发起操作请求
+      const result = yield userService.updateLikedSoup(soupId, isLike);
+
+      if (result.success) {
+        // 操作成功后同步用户信息，获取最新状态
+        yield this.syncUserInfo();
+        return {
+          success: true,
+          data: result.data,
+          message: isLike ? '点赞成功' : '已取消点赞'
+        };
+      } else {
+        return result;
+      }
+    } catch (error) {
+      console.error('点赞操作失败:', error);
+      return { success: false, error: '点赞操作失败' };
+    }
+  }
+
+  /**
+   * 标记汤面为已解决
+   * 直接发起操作请求，后端统一处理状态更新
+   * @param {string} soupId - 汤ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
+  *solveSoup(soupId) {
+    if (!this.isLoggedIn) {
+      return { success: false, error: '用户未登录' };
+    }
+
+    try {
+      // 直接发起操作请求
+      const result = yield userService.updateSolvedSoup(soupId);
+
+      if (result.success) {
+        // 操作成功后同步用户信息，获取最新状态
+        yield this.syncUserInfo();
+        return {
+          success: true,
+          data: result.data,
+          message: '已标记为解决'
+        };
+      } else {
+        return result;
+      }
+    } catch (error) {
+      console.error('标记解决失败:', error);
+      return { success: false, error: '标记解决失败' };
+    }
+  }
+
+  // ===== 状态查询方法 - 从本地 userInfo 直接读取 =====
+
+  /**
+   * 检查用户是否收藏了某个汤
+   * @param {string} soupId - 汤ID
+   * @returns {boolean} 是否收藏
+   */
+  isFavoriteSoup(soupId) {
+    if (!this.isLoggedIn || !this.userInfo) {
+      return false;
+    }
+    return Array.isArray(this.userInfo.favoriteSoups) && this.userInfo.favoriteSoups.includes(soupId);
   }
 
   /**
    * 检查用户是否点赞了某个汤
+   * @param {string} soupId - 汤ID
+   * @returns {boolean} 是否点赞
    */
-  async isLikedSoup(soupId) {
-    if (!this.isLoggedIn) {
-      return { success: true, data: false }; // 未登录默认未点赞
+  isLikedSoup(soupId) {
+    if (!this.isLoggedIn || !this.userInfo) {
+      return false;
     }
-
-    try {
-      if (this.userInfo && Array.isArray(this.userInfo.likedSoups)) {
-        const isLiked = this.userInfo.likedSoups.includes(soupId);
-        return { success: true, data: isLiked };
-      } else {
-        return { success: true, data: false };
-      }
-    } catch (error) {
-      return { success: false, error: '检查点赞状态失败' };
-    }
+    return Array.isArray(this.userInfo.likedSoups) && this.userInfo.likedSoups.includes(soupId);
   }
 
   /**
    * 检查用户是否已解决某个汤
+   * @param {string} soupId - 汤ID
+   * @returns {boolean} 是否已解决
    */
-  async isSolvedSoup(soupId) {
-    if (!this.isLoggedIn) {
-      return { success: true, data: false }; // 未登录默认未解决
+  isSolvedSoup(soupId) {
+    if (!this.isLoggedIn || !this.userInfo) {
+      return false;
     }
-
-    try {
-      if (this.userInfo && Array.isArray(this.userInfo.solvedSoups)) {
-        const isSolved = this.userInfo.solvedSoups.includes(soupId);
-        return { success: true, data: isSolved };
-      } else {
-        return { success: true, data: false };
-      }
-    } catch (error) {
-      return { success: false, error: '检查解决状态失败' };
-    }
+    return Array.isArray(this.userInfo.solvedSoups) && this.userInfo.solvedSoups.includes(soupId);
   }
 }
 

@@ -157,11 +157,36 @@ async function updateLikedSoup(soupId, isLike) {
   }
 }
 
+/**
+ * 更新用户已解决的汤
+ * @param {string} soupId - 汤ID
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+async function updateSolvedSoup(soupId) {
+  if (!soupId) {
+    return { success: false, error: '汤ID为空' };
+  }
+
+  try {
+    const config = {
+      url: api.user.solvedSoup,
+      method: 'POST',
+      data: { soupId }
+    };
+
+    const res = await userRequest(config);
+    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新解决记录失败' };
+  } catch (error) {
+    return { success: false, error: '更新解决记录失败' };
+  }
+}
+
 module.exports = {
   getUserInfo,
   login,
   logout,
   updateUserInfo,
   updateFavoriteSoup,
-  updateLikedSoup
+  updateLikedSoup,
+  updateSolvedSoup
 };

@@ -90,29 +90,67 @@ class RootStore {
     return this.userStore?.isLoggedIn || false;
   }
 
-  // 用户与汤面交互的方法 - 委托给userStore
-  async isLikedSoup(soupId) {
-    return await this.userStore.isLikedSoup(soupId);
-  }
+  // 用户与汤面交互的方法 - 重构为直接操作模式
 
-  async isFavoriteSoup(soupId) {
-    return await this.userStore.isFavoriteSoup(soupId);
-  }
-
+  /**
+   * 切换点赞状态
+   * 直接发起操作请求，后端统一处理状态更新
+   * @param {string} soupId - 汤ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
   async toggleLikeSoup(soupId) {
-    const currentStatus = await this.userStore.isLikedSoup(soupId);
-    if (currentStatus.success) {
-      return await this.userStore.updateLikedSoup(soupId, !currentStatus.data);
+    if (!this.userStore) {
+      return { success: false, error: 'userStore 未初始化' };
     }
-    return currentStatus;
+
+    // 获取当前状态
+    const currentStatus = this.userStore.isLikedSoup(soupId);
+    // 直接发起操作请求
+    return await this.userStore.likeSoup(soupId, !currentStatus);
   }
 
+  /**
+   * 切换收藏状态
+   * 直接发起操作请求，后端统一处理状态更新
+   * @param {string} soupId - 汤ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
   async toggleFavoriteSoup(soupId) {
-    const currentStatus = await this.userStore.isFavoriteSoup(soupId);
-    if (currentStatus.success) {
-      return await this.userStore.updateFavoriteSoup(soupId, !currentStatus.data);
+    if (!this.userStore) {
+      return { success: false, error: 'userStore 未初始化' };
     }
-    return currentStatus;
+
+    // 获取当前状态
+    const currentStatus = this.userStore.isFavoriteSoup(soupId);
+    // 直接发起操作请求
+    return await this.userStore.favoriteSoup(soupId, !currentStatus);
+  }
+
+  /**
+   * 标记汤面为已解决
+   * 直接发起操作请求，后端统一处理状态更新
+   * @param {string} soupId - 汤ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
+  async solveSoup(soupId) {
+    if (!this.userStore) {
+      return { success: false, error: 'userStore 未初始化' };
+    }
+
+    return await this.userStore.solveSoup(soupId);
+  }
+
+  // 状态查询方法 - 委托给userStore
+  isLikedSoup(soupId) {
+    return this.userStore?.isLikedSoup(soupId) || false;
+  }
+
+  isFavoriteSoup(soupId) {
+    return this.userStore?.isFavoriteSoup(soupId) || false;
+  }
+
+  isSolvedSoup(soupId) {
+    return this.userStore?.isSolvedSoup(soupId) || false;
   }
 
   /**

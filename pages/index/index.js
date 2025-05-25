@@ -40,7 +40,7 @@ Page({
         this.soupStoreBindings = createStoreBindings(this, {
             store: soupStore,
             fields: ["soupLoading", "buttonLoading", "soupData", "blurAmount"],
-            actions: ["setButtonLoading", "resetButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
+            actions: ["toggleButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
         });
 
         // 同步用户信息 - 确保获取最新的用户状态
@@ -198,7 +198,7 @@ Page({
                 loginPopup.show();
             }
             // 重置按钮加载状态
-            this.resetButtonLoading();
+            this.toggleButtonLoading(false);
             return;
         }
 
@@ -208,12 +208,12 @@ Page({
             success: () => {
                 // 跳转成功后重置按钮状态
                 setTimeout(() => {
-                    this.resetButtonLoading();
+                    this.toggleButtonLoading(false);
                 }, 500);
             },
             fail: () => {
                 // 跳转失败立即重置按钮状态
-                this.resetButtonLoading();
+                this.toggleButtonLoading(false);
                 this.showErrorToast("跳转失败，请重试");
             }
         });

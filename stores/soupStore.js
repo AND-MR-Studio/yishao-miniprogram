@@ -44,8 +44,7 @@ class SoupStore {
 
       // 普通方法，不需要flow
       // fetchSoup: false, // async 方法需要标记为普通方法
-      setButtonLoading: false,
-      resetButtonLoading: false,
+      toggleButtonLoading: false,
 
       // 标记为非观察属性
       _fetchingId: false,
@@ -92,7 +91,7 @@ class SoupStore {
         soupData = yield soupService.getRandomSoup();
         if (!soupData) {
           throw new Error("获取汤面数据失败");
-        } 
+        }
         // 更新soupId为随机汤面的ID
         soupId = soupData.id;
       }
@@ -143,7 +142,7 @@ class SoupStore {
   }
 
   /**
-   * 切换点赞状态
+   * 切换点赞状态 - 重构为直接操作模式
    * @param {string} soupId 汤面ID
    * @returns {Promise<Object>} 操作结果，包含成功状态和消息
    */
@@ -159,27 +158,28 @@ class SoupStore {
     }
 
     try {
-      // 确定新状态
-      const newStatus = !this.isLiked;
+      // 获取当前状态
+      const currentStatus = this.rootStore.isLikedSoup(soupId);
+      const newStatus = !currentStatus;
 
       // 并行更新用户记录和汤面记录
-      const [userResult, result] = yield Promise.all([
+      const [userResult, soupResult] = yield Promise.all([
         this.rootStore.toggleLikeSoup(soupId),
         soupService.likeSoup(soupId, newStatus)
       ]);
 
       // 验证用户记录更新结果
       if (!userResult || !userResult.success) {
-        return { success: false, message: "点赞状态更新失败，请重试" };
+        return { success: false, message: userResult?.error || "点赞状态更新失败，请重试" };
       }
 
       // 验证汤面记录更新结果
-      if (!result || !result.success || result.likes === undefined) {
+      if (!soupResult || !soupResult.success) {
         return { success: false, message: "点赞状态更新失败，请重试" };
       }
 
-      // 更新状态
-      this.likeCount = result.likes;
+      // 更新本地状态
+      this.likeCount = soupResult.likes || this.likeCount;
       this.isLiked = newStatus;
 
       // 返回成功结果
@@ -199,7 +199,7 @@ class SoupStore {
   }
 
   /**
-   * 切换收藏状态
+   * 切换收藏状态 - 重构为直接操作模式
    * @param {string} soupId 汤面ID
    * @returns {Promise<Object>} 操作结果，包含成功状态和消息
    */
@@ -215,27 +215,28 @@ class SoupStore {
     }
 
     try {
-      // 确定新状态
-      const newStatus = !this.isFavorite;
+      // 获取当前状态
+      const currentStatus = this.rootStore.isFavoriteSoup(soupId);
+      const newStatus = !currentStatus;
 
       // 并行更新用户记录和汤面记录
-      const [userResult, result] = yield Promise.all([
+      const [userResult, soupResult] = yield Promise.all([
         this.rootStore.toggleFavoriteSoup(soupId),
         soupService.favoriteSoup(soupId, newStatus)
       ]);
 
       // 验证用户记录更新结果
       if (!userResult || !userResult.success) {
-        return { success: false, message: "收藏状态更新失败，请重试" };
+        return { success: false, message: userResult?.error || "收藏状态更新失败，请重试" };
       }
 
       // 验证汤面记录更新结果
-      if (!result || !result.success || result.favorites === undefined) {
+      if (!soupResult || !soupResult.success) {
         return { success: false, message: "收藏状态更新失败，请重试" };
       }
 
-      // 更新状态
-      this.favoriteCount = result.favorites;
+      // 更新本地状态
+      this.favoriteCount = soupResult.favorites || this.favoriteCount;
       this.isFavorite = newStatus;
 
       // 返回成功结果
@@ -278,33 +279,30 @@ class SoupStore {
 
 
   /**
-   * 设置按钮加载状态
-   * 将按钮状态设置为加载中，并设置自动超时
+   * 统一的按钮加载状态控制方法
+   * 使用MobX的action装饰器确保状态更新的响应式
+   * @param {boolean} isLoading 是否设置为加载状态
    */
-  setButtonLoading() {
-    this.buttonLoading = true;
+  toggleButtonLoading(isLoading) {
+    this.buttonLoading = isLoading;
 
-    // 设置一个超时，如果5秒后仍在加载，则自动重置
-    if (this._buttonLoadingTimeout) {
-      clearTimeout(this._buttonLoadingTimeout);
-    }
+    // 如果设置为加载状态，设置自动超时保护
+    if (isLoading) {
+      // 清理之前的超时计时器
+      if (this._buttonLoadingTimeout) {
+        clearTimeout(this._buttonLoadingTimeout);
+      }
 
-    this._buttonLoadingTimeout = setTimeout(() => {
-      this.resetButtonLoading();
-    }, 5000);
-  }
-
-  /**
-   * 重置按钮加载状态
-   * 将按钮状态设置为非加载中
-   */
-  resetButtonLoading() {
-    this.buttonLoading = false;
-
-    // 清理超时计时器
-    if (this._buttonLoadingTimeout) {
-      clearTimeout(this._buttonLoadingTimeout);
-      this._buttonLoadingTimeout = null;
+      // 设置一个超时，如果5秒后仍在加载，则自动重置
+      this._buttonLoadingTimeout = setTimeout(() => {
+        this.toggleButtonLoading(false);
+      }, 5000);
+    } else {
+      // 清理超时计时器
+      if (this._buttonLoadingTimeout) {
+        clearTimeout(this._buttonLoadingTimeout);
+        this._buttonLoadingTimeout = null;
+      }
     }
   }
 

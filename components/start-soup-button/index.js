@@ -43,7 +43,7 @@ Component({
       }
 
       // 立即设置按钮为加载状态 - 使用store方法
-      this.setButtonLoading();
+      this.toggleButtonLoading(true);
 
       // 触发tap事件，由父组件处理业务逻辑
       this.triggerEvent('tap');
@@ -59,7 +59,7 @@ Component({
       this.storeBindings = createStoreBindings(this, {
         store: soupStore,
         fields: ['soupLoading', 'buttonLoading'],
-        actions: ['setButtonLoading', 'resetButtonLoading'],
+        actions: ['toggleButtonLoading'],
       });
     },
 
