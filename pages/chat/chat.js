@@ -26,7 +26,7 @@ Page({
       this.rootStoreBindings = createStoreBindings(this, {
         store: rootStore,
         fields: ['userId', 'isFirstVisit', 'showGuide'],
-        actions: ['showGuideManually', 'closeGuide'] // 移除了 'syncUserId'
+        actions: ['toggleGuide'] // 使用新的统一方法
       });
 
       // 创建chatStore绑定 - 管理聊天相关的所有状态
@@ -404,6 +404,24 @@ Page({
     const { type, value } = e.detail;
     console.log('设置变化:', type, value);
     // 处理设置变化
+  },
+
+  /**
+   * 处理显示引导事件
+   * 通过nav-bar组件转发的setting组件事件
+   */
+  onShowGuide() {
+    // 调用rootStore的toggleGuide方法显示引导层
+    rootStore.toggleGuide(true);
+  },
+
+  /**
+   * 处理关闭引导事件
+   * 引导层组件的关闭事件
+   */
+  onCloseGuide() {
+    // 调用rootStore的toggleGuide方法隐藏引导层
+    this.toggleGuide(false);
   }
 
 });

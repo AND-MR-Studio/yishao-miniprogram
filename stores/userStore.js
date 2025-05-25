@@ -1,81 +1,257 @@
-// stores/userStore.js
+// stores/userStore.js - 标准MobX用户状态管理
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 const userService = require('../service/userService');
-const { api, assets, userRequest, assetRequestOpen, uploadFile } = require('../config/api'); // 引入需要的API配置和请求方法
+const { api, assets, uploadFile } = require('../config/api');
 
 // 定义常量
-const TOKEN_KEY = 'token'; // 使用token作为唯一的本地存储键
-// 本地默认头像URL，仅作为前端兜底显示
 const DEFAULT_AVATAR_URL = assets.local.avatar;
+const TOKEN_KEY = 'token';
+const LOGIN_TIMESTAMP_KEY = 'loginTimestamp';
 
 class UserStore {
+  // ===== 可观察状态 =====
+  // 用户基础信息
+  userInfo = null; // 用户信息
+
+  // 加载状态
+  isLoading = false; // 是否正在加载
+  loginLoading = false; // 登录加载状态
+  logoutLoading = false; // 退出登录加载状态
+  avatarUploading = false; // 头像上传状态
+  profileUpdating = false; // 资料更新状态
+
+  // 引用rootStore
   rootStore = null;
-  // 用户相关的状态，例如：
-  // settings = {}; // 用户设置
-  // activityHistory = []; // 用户活动历史
 
   constructor(rootStore) {
+    this.rootStore = rootStore;
+
     makeAutoObservable(this, {
-      rootStore: false, // rootStore 不需要响应式
-      // 异步操作标记为 flow
-      // exampleAsyncAction: flow,
+      // 标记异步方法为flow
+      login: flow,
+      logout: flow,
       updateAvatar: flow,
       updateUserProfile: flow,
+      syncUserInfo: flow,
+
+      // 标记为非观察属性
+      rootStore: false,
     });
-    this.rootStore = rootStore;
   }
 
-  // 可以在这里定义用户相关的 actions 和 computed properties
+  // ===== 计算属性 =====
 
   /**
-   * 获取当前用户头像，优先从 rootStore.userInfo 中获取，如果不存在则使用默认头像
-   * @returns {string} 头像URL
+   * 用户ID - 单一数据源
+   */
+  get userId() {
+    return this.userInfo?.id || '';
+  }
+
+  /**
+   * 登录状态
+   */
+  get isLoggedIn() {
+    return !!this.userId;
+  }
+
+  /**
+   * 用户头像
    */
   get userAvatar() {
-    return this.rootStore.userInfo?.avatarUrl || DEFAULT_AVATAR_URL;
+    return this.userInfo?.avatarUrl || DEFAULT_AVATAR_URL;
   }
 
-
   /**
-   * 获取剩余提问次数，从 rootStore.userInfo 中获取
-   * @returns {number} 剩余提问次数
+   * 剩余提问次数
    */
   get remainingAnswers() {
-    return this.rootStore.userInfo?.remainingAnswers || 0;
+    return this.userInfo?.remainingAnswers || 0;
   }
 
   /**
-   * 获取用户侦探ID，从 rootStore.userInfo 中获取
-   * @returns {string | null} 侦探ID或null
+   * 侦探ID
    */
   get detectiveId() {
-    return this.rootStore.userInfo?.detectiveId || null;
+    return this.userInfo?.detectiveId || null;
   }
 
   /**
-   * 上传用户头像图片
-   * @param {string} avatarPath - 头像临时文件路径
-   * @returns {Promise<object>} 上传结果 { success: boolean, avatarUrl?: string, message: string }
+   * 用户昵称
    */
-  *updateAvatar(avatarPath) {
-    if (!avatarPath) return { success: false, message: '头像路径为空' };
+  get nickname() {
+    return this.userInfo?.nickname || '';
+  }
 
-    const token = wx.getStorageSync(TOKEN_KEY);
-    if (!token) {
-      return { success: false, message: '用户未登录，请先登录' };
-    }
+  /**
+   * 用户统计信息
+   */
+  get userStats() {
+    const info = this.userInfo;
+    return {
+      totalSoupCount: info?.totalSoupCount || 0,
+      solvedCount: info?.solvedSoups?.length || 0,
+      createdCount: info?.createSoups?.length || 0,
+      favoriteCount: info?.favoriteSoups?.length || 0,
+      pointsCount: info?.pointsCount || 0
+    };
+  }
 
-    const userId = this.rootStore.userId;
-    if (!userId) {
-      return { success: false, message: '获取用户ID失败' };
+  // ===== Actions =====
+
+  /**
+   * 同步用户信息 - 优化版本，避免循环调用
+   * userStore 作为用户信息的单一数据源
+   */
+  *syncUserInfo() {
+    // 防止重复调用
+    if (this.isLoading) {
+      console.log('用户信息正在同步中，跳过重复调用');
+      return { success: false, error: '正在同步中' };
     }
 
     try {
-      wx.showToast({
-        title: '上传头像中...',
-        icon: 'loading',
-        duration: 10000
-      });
+      this.isLoading = true;
+      const result = yield userService.getUserInfo();
+
+      if (result.success) {
+        // 检查数据是否有变化，避免不必要的更新
+        const hasChanged = JSON.stringify(this.userInfo) !== JSON.stringify(result.data);
+        if (hasChanged) {
+          this.userInfo = result.data;
+          console.log('用户信息已更新');
+        } else {
+          console.log('用户信息无变化，跳过更新');
+        }
+      } else {
+        // 获取失败，清空用户信息
+        this.userInfo = null;
+        console.log('用户信息获取失败，已清空本地数据');
+      }
+
+      return result;
+    } catch (error) {
+      console.error('同步用户信息失败:', error);
+      this.userInfo = null;
+      return { success: false, error: '同步用户信息失败' };
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  /**
+   * 登录 - 包含本地存储管理
+   */
+  *login() {
+    if (this.loginLoading) {
+      return { success: false, error: '正在登录中' };
+    }
+
+    try {
+      this.loginLoading = true;
+
+      // 检查是否已经登录
+      const token = wx.getStorageSync(TOKEN_KEY);
+      if (token) {
+        // 已登录，获取用户信息
+        const userInfoResult = yield userService.getUserInfo();
+        if (userInfoResult.success) {
+          this.userInfo = userInfoResult.data;
+          return { success: true, data: userInfoResult.data };
+        } else {
+          // token可能已过期，继续执行登录流程
+          this.clearLocalStorage();
+        }
+      }
+
+      const result = yield userService.login();
+
+      if (result.success) {
+        // 保存token和用户信息到本地存储
+        if (result.data.token) {
+          wx.setStorageSync(TOKEN_KEY, result.data.token);
+          wx.setStorageSync(LOGIN_TIMESTAMP_KEY, Date.now());
+        }
+        this.userInfo = result.data;
+        console.log('登录成功，用户信息已更新');
+      }
+
+      return result;
+    } catch (error) {
+      console.error('登录失败:', error);
+      return { success: false, error: '登录失败' };
+    } finally {
+      this.loginLoading = false;
+    }
+  }
+
+  /**
+   * 退出登录 - 包含本地存储清理
+   */
+  *logout() {
+    if (this.logoutLoading) {
+      return { success: false, error: '正在退出登录中' };
+    }
+
+    try {
+      this.logoutLoading = true;
+      const result = yield userService.logout();
+
+      if (result.success) {
+        // 清理本地存储和状态
+        this.clearLocalStorage();
+        this.userInfo = null;
+        console.log('退出登录成功，用户信息已清空');
+      }
+
+      return result;
+    } catch (error) {
+      console.error('退出登录失败:', error);
+      return { success: false, error: '退出登录失败' };
+    } finally {
+      this.logoutLoading = false;
+    }
+  }
+
+  /**
+   * 清理本地存储
+   */
+  clearLocalStorage() {
+    try {
+      wx.removeStorageSync(TOKEN_KEY);
+      wx.removeStorageSync(LOGIN_TIMESTAMP_KEY);
+      wx.removeStorageSync('userStats');
+      wx.removeStorageSync('userLevel');
+
+      // 清除全局数据
+      const app = getApp();
+      if (app && app.globalData) {
+        if (app.globalData.userInfo) {
+          app.globalData.userInfo = null;
+        }
+        if (app.globalData.detectiveInfo) {
+          app.globalData.detectiveInfo = null;
+        }
+      }
+    } catch (error) {
+      console.error('清理本地存储失败:', error);
+    }
+  }
+
+  /**
+   * 上传头像
+   */
+  *updateAvatar(avatarPath) {
+    if (!avatarPath) {
+      return { success: false, error: '头像路径为空' };
+    }
+
+    if (!this.isLoggedIn) {
+      return { success: false, error: '用户未登录' };
+    }
+
+    try {
+      this.avatarUploading = true;
 
       const result = yield uploadFile({
         url: api.asset.upload,
@@ -83,116 +259,135 @@ class UserStore {
         name: 'file',
         formData: {
           type: 'avatar',
-          userId: userId,
+          userId: this.userId,
           timestamp: new Date().getTime()
         }
       });
 
-      wx.hideToast();
-
       if (result.success && result.data && result.data.url) {
-        // 头像上传成功后，调用 rootStore.syncUserInfo 来刷新整个用户信息
-        // 这会确保 userInfo.avatarUrl 以及其他可能变更的信息得到更新
-        yield this.rootStore.syncUserInfo(); 
-        wx.showToast({
-          title: '头像上传成功',
-          icon: 'success',
-          duration: 2000
-        });
-        return {
-          success: true,
-          avatarUrl: result.data.url,
-          message: '头像上传成功'
-        };
+        // 上传成功后同步用户信息
+        yield this.syncUserInfo();
+        return { success: true, data: result.data.url };
       } else {
-        wx.showToast({
-          title: result.error || '上传头像失败',
-          icon: 'none',
-          duration: 2000
-        });
-        return { success: false, message: result.error || '上传头像失败' };
+        return { success: false, error: result.error || '上传头像失败' };
       }
     } catch (error) {
-      wx.hideToast();
-      wx.showToast({
-        title: '上传失败，请重试',
-        icon: 'none',
-        duration: 2000
-      });
-      console.error('Update avatar error:', error);
-      return { success: false, message: '上传失败，请重试' };
+      console.error('上传头像失败:', error);
+      return { success: false, error: '上传头像失败' };
+    } finally {
+      this.avatarUploading = false;
     }
   }
 
   /**
-   * 登录
-   * @returns {Promise<object>} 登录结果 { success: boolean, message: string }
-   */
-  *login() {
-    try {
-      const res = yield userService.login(); // 调用 userService 中的登录逻辑
-      if (res.success) {
-        yield this.rootStore.syncUserInfo(); // 登录成功后同步用户信息
-        return { success: true, message: '登录成功' };
-      } else {
-        return { success: false, message: res.error || '登录失败' };
-      }
-    } catch (error) {
-      console.error('Login error:', error);
-      return { success: false, message: '登录失败，请重试' };
-    }
-  }
-
-  /**
-   * 退出登录
-   * @returns {Promise<object>} 退出登录结果 { success: boolean, message: string }
-   */
-  *logout() {
-    try {
-      const res = yield userService.logout(); // 调用 userService 中的退出登录逻辑
-      if (res.success) {
-        yield this.rootStore.syncUserInfo(); // 退出登录成功后同步用户信息（会清除本地缓存和store中的用户信息）
-        return { success: true, message: '退出登录成功' };
-      } else {
-        return { success: false, message: res.error || '退出登录失败' };
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-      return { success: false, message: '退出登录失败，请重试' };
-    }
-  }
-
-  /**
-   * 更新用户昵称等基本信息
-   * @param {object} profileData - 需要更新的用户信息，例如 { nickname: '新的昵称' }
-   * @returns {Promise<object>} 更新结果 { success: boolean, message: string, data?: object }
+   * 更新用户资料
    */
   *updateUserProfile(profileData) {
     if (!profileData || Object.keys(profileData).length === 0) {
-      return { success: false, message: '无更新内容' };
+      return { success: false, error: '无更新内容' };
     }
-    const token = wx.getStorageSync(TOKEN_KEY);
-    if (!token) {
-      return { success: false, message: '用户未登录' };
+
+    if (!this.isLoggedIn) {
+      return { success: false, error: '用户未登录' };
     }
 
     try {
-      const config = {
-        url: api.user.update, // 假设存在更新用户信息的API端点
-        method: 'POST',
-        data: profileData
-      };
-      const response = yield userRequest(config);
-      if (response.success) {
-        // 更新成功后，也需要同步 rootStore 中的用户信息
-        yield this.rootStore.syncUserInfo();
-        return { success: true, message: '用户信息更新成功', data: response.data };
+      this.profileUpdating = true;
+      const result = yield userService.updateUserInfo(profileData);
+
+      if (result.success) {
+        // 更新成功后同步用户信息
+        yield this.syncUserInfo();
+      }
+
+      return result;
+    } catch (error) {
+      console.error('更新用户资料失败:', error);
+      return { success: false, error: '更新用户资料失败' };
+    } finally {
+      this.profileUpdating = false;
+    }
+  }
+
+  // ===== 用户交互相关方法 =====
+
+  /**
+   * 更新用户收藏状态
+   */
+  async updateFavoriteSoup(soupId, isFavorite) {
+    if (!this.isLoggedIn) {
+      return { success: false, error: '用户未登录' };
+    }
+    return await userService.updateFavoriteSoup(soupId, isFavorite);
+  }
+
+  /**
+   * 检查用户是否收藏了某个汤
+   */
+  async isFavoriteSoup(soupId) {
+    if (!this.isLoggedIn) {
+      return { success: true, data: false }; // 未登录默认未收藏
+    }
+
+    try {
+      if (this.userInfo && Array.isArray(this.userInfo.favoriteSoups)) {
+        const isFavorite = this.userInfo.favoriteSoups.includes(soupId);
+        return { success: true, data: isFavorite };
       } else {
-        return { success: false, message: response.error || '用户信息更新失败' };
+        return { success: true, data: false };
       }
     } catch (error) {
-      console.error('Update user profile error:', error);
-      return { success: false, message: '用户信息更新失败，请重试' };
+      return { success: false, error: '检查收藏状态失败' };
+    }
+  }
+
+  /**
+   * 更新用户点赞状态
+   */
+  async updateLikedSoup(soupId, isLike) {
+    if (!this.isLoggedIn) {
+      return { success: false, error: '用户未登录' };
+    }
+    return await userService.updateLikedSoup(soupId, isLike);
+  }
+
+  /**
+   * 检查用户是否点赞了某个汤
+   */
+  async isLikedSoup(soupId) {
+    if (!this.isLoggedIn) {
+      return { success: true, data: false }; // 未登录默认未点赞
+    }
+
+    try {
+      if (this.userInfo && Array.isArray(this.userInfo.likedSoups)) {
+        const isLiked = this.userInfo.likedSoups.includes(soupId);
+        return { success: true, data: isLiked };
+      } else {
+        return { success: true, data: false };
+      }
+    } catch (error) {
+      return { success: false, error: '检查点赞状态失败' };
+    }
+  }
+
+  /**
+   * 检查用户是否已解决某个汤
+   */
+  async isSolvedSoup(soupId) {
+    if (!this.isLoggedIn) {
+      return { success: true, data: false }; // 未登录默认未解决
+    }
+
+    try {
+      if (this.userInfo && Array.isArray(this.userInfo.solvedSoups)) {
+        const isSolved = this.userInfo.solvedSoups.includes(soupId);
+        return { success: true, data: isSolved };
+      } else {
+        return { success: true, data: false };
+      }
+    } catch (error) {
+      return { success: false, error: '检查解决状态失败' };
     }
   }
 }

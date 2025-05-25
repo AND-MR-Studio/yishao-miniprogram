@@ -9,6 +9,7 @@
     bind:close="onSettingClose"
     bind:clearcontext="clearContext"
     bind:refreshPage="onRefreshHome"
+    bind:showguide="onShowGuide"
   />
 
   <view class="container"
@@ -46,7 +47,7 @@
   <!-- 新用户引导层组件 -->
   <guide-overlay
     show="{{showGuide}}"
-    bind:close="closeGuide">
+    bind:close="onCloseGuide">
   </guide-overlay>
 
   <!-- 登录提示弹窗 -->

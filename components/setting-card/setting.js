@@ -1,7 +1,7 @@
 // components/setting-card/setting.js
 const { createPanelDragManager } = require('../../utils/panelDrag');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { chatStore, rootStore } = require('../../stores/index');
+const { chatStore } = require('../../stores/index');
 
 Component({
 
@@ -273,8 +273,8 @@ Component({
     showGuide() {
       this.triggerVibration();
 
-      // 调用rootStore的showGuideManually方法
-      rootStore.showGuideManually();
+      // 触发显示引导事件，让页面处理
+      this.triggerEvent('showguide');
 
       // 关闭设置面板
       this.closePanel();

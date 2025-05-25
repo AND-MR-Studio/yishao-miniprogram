@@ -2,16 +2,20 @@
  * rootStore.js
  * 根存储器 - 实现MobX的RootStore模式
  * 作为所有Store的容器，管理全局共享状态和Store之间的依赖关系
+ *
+ * 优化说明：
+ * 1. userInfo 作为 userStore 的引用，避免重复数据
+ * 2. 使用 MobX computed 实现响应式数据流
+ * 3. 避免循环调用，明确数据流向：userStore -> rootStore
  */
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
-const userService = require('../service/userService');
 
 // 导入Store类（而非实例）
 const { ChatStoreClass } = require('./chatStore');
 const { SoupStoreClass } = require('./soupStore');
 const { TipStoreClass } = require('./tipStore');
 const { UploadStoreClass } = require('./uploadStore');
-const { UserStoreClass } = require('./userStore'); // 引入 UserStore
+const { UserStoreClass } = require('./userStore');
 
 /**
  * RootStore类
@@ -19,7 +23,6 @@ const { UserStoreClass } = require('./userStore'); // 引入 UserStore
  */
 class RootStore {
   // ===== 全局共享状态 =====
-  userInfo = null; // 用户信息
   isFirstVisit = false; // 是否首次访问
   showGuide = false; // 是否显示引导层
 
@@ -28,7 +31,7 @@ class RootStore {
   soupStore = null;
   tipStore = null;
   uploadStore = null;
-  userStore = null; // 新增 userStore 实例
+  userStore = null;
 
   constructor() {
     // 初始化子Store，传入this(rootStore)作为参数
@@ -36,26 +39,26 @@ class RootStore {
     this.soupStore = new SoupStoreClass(this);
     this.tipStore = new TipStoreClass(this);
     this.uploadStore = new UploadStoreClass(this);
-    this.userStore = new UserStoreClass(this); // 实例化 UserStore
+    this.userStore = new UserStoreClass(this);
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
-      // 只标记异步方法为flow
+      // 标记异步方法为flow
       syncUserInfo: flow,
 
-      // 子Store不需要标记为非观察属性（默认不会被观察）
+      // 子Store不需要标记为非观察属性
       chatStore: false,
       soupStore: false,
       tipStore: false,
       uploadStore: false,
-      userStore: false // userStore 不需要标记为非观察属性
+      userStore: false
     });
 
     // 调用初始化方法
     this.initialize();
   }
 
-  // 新增初始化方法
+  // 初始化方法
   initialize() {
     // 初始化时同步用户信息
     this.syncUserInfo();
@@ -64,56 +67,69 @@ class RootStore {
     this.checkFirstVisit();
   }
 
-  // 用户ID计算属性
-  get userId() {
-    return this.userInfo?.id || '';
-  }
+  // ===== 计算属性 - 从userStore获取数据，避免重复存储 =====
 
-  // 登录状态计算属性
-  get isLoggedIn() {
-    return !!this.userId;
-  }
-
-  // 设置用户信息
-  setUserInfo(info) {
-    this.userInfo = info;
-  }
-
-  // 用户与汤面交互的方法
-  async isLikedSoup(soupId) {
-    return await userService.isLikedSoup(soupId);
-  }
-  
-  async isFavoriteSoup(soupId) {
-    return await userService.isFavoriteSoup(soupId);
-  }
-  
-  async toggleLikeSoup(soupId) {
-    return await userService.toggleLikeSoup(soupId);
-  }
-  
-  async toggleFavoriteSoup(soupId) {
-    return await userService.toggleFavoriteSoup(soupId);
+  /**
+   * 用户信息 - 从userStore获取，作为单一数据源
+   */
+  get userInfo() {
+    return this.userStore?.userInfo || null;
   }
 
   /**
-   * 同步用户信息
-   * 从userService获取最新的用户信息并更新到store中
-   * @returns {Promise<void>}
+   * 用户ID - 从userStore计算得出
+   */
+  get userId() {
+    return this.userStore?.userId || '';
+  }
+
+  /**
+   * 登录状态 - 从userStore计算得出
+   */
+  get isLoggedIn() {
+    return this.userStore?.isLoggedIn || false;
+  }
+
+  // 用户与汤面交互的方法 - 委托给userStore
+  async isLikedSoup(soupId) {
+    return await this.userStore.isLikedSoup(soupId);
+  }
+
+  async isFavoriteSoup(soupId) {
+    return await this.userStore.isFavoriteSoup(soupId);
+  }
+
+  async toggleLikeSoup(soupId) {
+    const currentStatus = await this.userStore.isLikedSoup(soupId);
+    if (currentStatus.success) {
+      return await this.userStore.updateLikedSoup(soupId, !currentStatus.data);
+    }
+    return currentStatus;
+  }
+
+  async toggleFavoriteSoup(soupId) {
+    const currentStatus = await this.userStore.isFavoriteSoup(soupId);
+    if (currentStatus.success) {
+      return await this.userStore.updateFavoriteSoup(soupId, !currentStatus.data);
+    }
+    return currentStatus;
+  }
+
+  /**
+   * 同步用户信息 - 委托给userStore，避免循环调用
+   * 这是对外的统一接口，内部委托给userStore处理
    */
   *syncUserInfo() {
+    if (!this.userStore) {
+      console.warn('userStore 未初始化');
+      return { success: false, error: 'userStore 未初始化' };
+    }
+
     try {
-      // 获取最新的用户信息
-      const userInfo = yield userService.getUserInfo();
-      
-      // 更新用户信息（如果从服务器获取成功，则覆盖本地的）
-      this.userInfo = userInfo;
+      return yield this.userStore.syncUserInfo();
     } catch (error) {
-      console.error('同步用户信息失败:', error);
-      // 如果网络请求失败，但本地有数据，则保留本地数据，否则置为null
-      if (!this.userInfo) {
-        this.userInfo = null;
-      }
+      console.error('rootStore.syncUserInfo 调用失败:', error);
+      return { success: false, error: '同步用户信息失败' };
     }
   }
 
@@ -143,30 +159,27 @@ class RootStore {
   }
 
   /**
-   * 关闭引导层
-   * 设置本地存储，标记用户已访问过
+   * 统一的引导层控制方法
+   * 合并原有的closeGuide、showGuideManually方法
+   * @param {boolean} show - true表示显示引导，false表示隐藏引导
    */
-  closeGuide() {
-    // 设置本地存储，标记用户已访问过
-    try {
-      wx.setStorageSync('hasVisitedSoupPage', true);
-      console.log('已保存访问记录');
-    } catch (error) {
-      console.error('保存访问记录失败:', error);
+  toggleGuide(show) {
+    if (show) {
+      // 显示引导层
+      this.showGuide = true;
+      console.log('显示引导层');
+    } else {
+      // 隐藏引导层并保存访问记录
+      try {
+        wx.setStorageSync('hasVisitedSoupPage', true);
+        console.log('已保存访问记录');
+      } catch (error) {
+        console.error('保存访问记录失败:', error);
+      }
+
+      this.showGuide = false;
+      console.log('隐藏引导层');
     }
-
-    // 隐藏引导层
-    this.showGuide = false;
-  }
-
-  /**
-   * 手动显示引导层
-   * 不修改isFirstVisit标志，只显示引导层
-   */
-  showGuideManually() {
-    // 显示引导层
-    this.showGuide = true;
-    console.log('手动显示引导层');
   }
 
 }

@@ -33,7 +33,7 @@ Page({
         this.rootStoreBindings = createStoreBindings(this, {
             store: rootStore,
             fields: ["userId", "isLoggedIn", "isFirstVisit", "showGuide"],
-            actions: ["closeGuide"] // 确保 syncUserId 已从 actions 中移除
+            actions: ["toggleGuide"] // 使用新的统一方法
         });
 
         // 创建soupStore绑定 - 汤面相关字段和方法
@@ -43,8 +43,8 @@ Page({
             actions: ["setButtonLoading", "resetButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
         });
 
-        // 同步用户ID - 确保获取最新的用户状态
-        await rootStore.syncUserInfo(); // 确保 onLoad 中也使用 rootStore.syncUserInfo()
+        // 同步用户信息 - 确保获取最新的用户状态
+        await rootStore.userStore.syncUserInfo();
 
         try {
             // 统一数据获取路径：无论是否有soupId，都通过统一的fetchSoup方法获取数据
@@ -89,8 +89,8 @@ Page({
             });
         }
 
-        // 同步用户ID - 直接调用 rootStore 的方法
-        rootStore.syncUserInfo();
+        // 同步用户信息 - 调用 userStore 的方法，避免循环调用
+        rootStore.userStore.syncUserInfo();
     },
 
     /**
@@ -236,6 +236,24 @@ Page({
         console.log('刷新首页数据');
         // 重新加载随机汤面
         this.switchSoup();
+    },
+
+    /**
+     * 处理显示引导事件
+     * 通过nav-bar组件转发的setting组件事件
+     */
+    onShowGuide() {
+        // 调用rootStore的toggleGuide方法显示引导层
+        rootStore.toggleGuide(true);
+    },
+
+    /**
+     * 处理关闭引导事件
+     * 引导层组件的关闭事件
+     */
+    onCloseGuide() {
+        // 调用rootStore的toggleGuide方法隐藏引导层
+        this.toggleGuide(false);
     },
 
     // ===== 汤面切换相关 =====

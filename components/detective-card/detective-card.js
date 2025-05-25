@@ -1,5 +1,4 @@
 // components/detective-card/detective-card.js
-const api = require('../../config/api');
 
 Component({
   /**

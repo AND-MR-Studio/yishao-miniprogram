@@ -6,6 +6,7 @@
     bind:settingchange="handleSettingChange"
     bind:close="onDialogClose"
     bind:clearcontext="clearContext"
+    bind:showguide="onShowGuide"
     showBackButton="{{true}}"
   />
 
@@ -67,6 +68,6 @@
   <!-- 新用户引导层组件 -->
   <guide-overlay
     show="{{showGuide}}"
-    bind:close="closeGuide">
+    bind:close="onCloseGuide">
   </guide-overlay>
 </view>
