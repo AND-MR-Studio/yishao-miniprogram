@@ -250,6 +250,21 @@ class SoupStore {
         }
     }
 
+    /**
+     * 获取随机汤面并返回汤面ID - 专门为ChatStore设计
+     * 调用getRandomSoup方法，但只返回汤面ID
+     * @returns {Promise<string>} 随机汤面ID
+     */
+    async fetchRandom() {
+        try {
+            const soupData = await this.getRandomSoup();
+            return soupData ? soupData.id : null;
+        } catch (error) {
+            console.error("获取随机汤面ID失败:", error);
+            return null;
+        }
+    }
+
 
     /**
      * 统一的按钮加载状态控制方法

@@ -28,7 +28,7 @@
     <soup-truth
       id="soupTruth"
       soupId="{{soupId}}"
-      wx:if="{{isTruth}}"
+      wx:if="{{chatState === 'truth'}}"
     ></soup-truth>
   </view>
 
@@ -38,7 +38,7 @@
     mode="single"
     messages="{{chatStore.messages}}"
     isPeeking="{{isPeeking}}"
-    loading="{{isLoading}}"
+    loading="{{chatState === 'loading'}}"
     enableTypeAnimation="{{true}}"
     bind:close="onDialogClose"
     bind:messageTap="handleMessageTap"
@@ -50,8 +50,8 @@
   <input-bar
     id="inputBar"
     inputValue="{{inputValue}}"
-    disabled="{{isAnimating || isSending}}"
-    sending="{{isSending}}"
+    disabled="{{isAnimating || chatState === 'loading'}}"
+    sending="{{chatState === 'loading'}}"
     showTestButton="{{true}}"
     bind:input="handleInputChange"
     bind:send="handleSend"

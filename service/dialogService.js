@@ -220,59 +220,6 @@ class DialogService {
   }
 
   /**
-   * 创建新对话
-   * @param {string} userId 用户ID
-   * @param {string} soupId 汤面ID
-   * @returns {Promise<Object>} 创建的对话数据，包含dialogId和soupData
-   */
-  async createDialog(userId, soupId) {
-    if (!userId) {
-      throw new Error("创建对话失败: 缺少用户ID");
-    }
-
-    if (!soupId) {
-      throw new Error("创建对话失败: 缺少汤面ID");
-    }
-
-    try {
-      // 先获取汤面数据，确保存在
-      const soupData = await soupService.getSoup(soupId);
-      if (!soupData) {
-        throw new Error("创建对话失败: 无法获取汤面数据");
-      }
-
-      // 构建请求URL
-      const url = `${getBaseUrl()}dialog/create`;
-
-      const response = await dialogRequest({
-        url: url,
-        method: "POST",
-        data: {
-          userId: userId,
-          soupId: soupId,
-        },
-      });
-
-      if (!response.success) {
-        throw new Error(response.error || "创建对话失败");
-      }
-
-      // 返回包含对话ID和汤面数据的对象
-      if (response.data && response.data.dialogId) {
-        return {
-          ...response.data,
-          soupData: soupData,
-        };
-      } else {
-        throw new Error("创建对话失败: 服务器未返回对话ID");
-      }
-    } catch (error) {
-      console.error("创建对话失败:", error);
-      throw error;
-    }
-  }
-
-  /**
    * 获取用户特定汤面的对话数据
    * @param {string} userId 用户ID
    * @param {string} soupId 汤面ID
@@ -294,11 +241,8 @@ class DialogService {
         throw new Error("获取对话失败: 无法获取汤面数据");
       }
 
-      // 构建请求URL
-      const url = `${getBaseUrl()}dialog/user/${userId}/soup/${soupId}`;
-
       const response = await dialogRequest({
-        url: url,
+        url: api.dialog.get,
         method: "GET",
       });
 
@@ -325,6 +269,56 @@ class DialogService {
       }
     } catch (error) {
       console.error("获取用户对话失败:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取聊天数据 - 统一的聊天数据获取方法
+   * 后端始终返回包含dialogId的chatData对象
+   * @param {string} userId 用户ID
+   * @param {string} soupId 汤面ID
+   * @returns {Promise<Object>} 聊天数据，包含dialogId
+   */
+  async getChatData(userId, soupId) {
+    if (!userId) {
+      throw new Error("获取聊天数据失败: 缺少用户ID");
+    }
+
+    if (!soupId) {
+      throw new Error("获取聊天数据失败: 缺少汤面ID");
+    }
+
+    try {
+      // 构建请求URL
+      const url = `${getBaseUrl()}dialog/chat-data`;
+
+      const response = await dialogRequest({
+        url: url,
+        method: "POST",
+        data: {
+          userId: userId,
+          soupId: soupId,
+        },
+      });
+
+      if (!response.success) {
+        throw new Error(response.error || "获取聊天数据失败");
+      }
+
+      // 后端始终返回包含dialogId的chatData对象
+      if (response.data && response.data.dialogId) {
+        return {
+          dialogId: response.data.dialogId,
+          soupId: soupId,
+          userId: userId,
+          ...response.data, // 包含其他可能的聊天数据
+        };
+      } else {
+        throw new Error("获取聊天数据失败: 服务器未返回对话ID");
+      }
+    } catch (error) {
+      console.error("获取聊天数据失败:", error);
       throw error;
     }
   }

@@ -83,7 +83,7 @@ const api = {
   // 对话服务
   dialog: {
     base: `${ysUrl}${paths.api.dialog}`,
-    create: `${ysUrl}${paths.api.dialog}create`,
+    get: `${ysUrl}${paths.api.dialog}get`,
     list: `${ysUrl}${paths.api.dialog}list`,
     byUser: (userId) => `${ysUrl}${paths.api.dialog}user/${userId}`,
     bySoup: (soupId) => `${ysUrl}${paths.api.dialog}soup/${soupId}`
