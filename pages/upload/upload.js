@@ -46,19 +46,30 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad() {
-    // 创建uploadStore绑定
+    // 创建uploadStore绑定 - 优化版本，只绑定页面实际使用的具体字段
     this.uploadStoreBindings = createStoreBindings(this, {
       store: uploadStore,
       fields: [
-        'formData',
-        'validation',
-        'isSubmitting',
+        // 表单数据 - 独立字段绑定，减少响应式更新范围
+        'title',
+        'content',
+        'truth',
+        'tags',
+        // 验证状态 - 独立字段绑定
+        'titleError',
+        'contentError',
+        'truthError',
+        'tagsError',
+        // 计算属性
         'titleLength',
         'contentLength',
         'truthLength',
+        'isFormValid',
+        // 其他状态
+        'isSubmitting',
         'showEmptyState',
         'publishedSoups',
-        'hasDraft'
+        'hasDraft',
       ],
       actions: [
         'updateField',

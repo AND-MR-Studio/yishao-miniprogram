@@ -336,8 +336,8 @@ Page({
                 return;
             }
 
-            // 用户已登录，调用store的方法
-            await soupStore.toggleFavorite(soupStore.soupData.id);
+            // 用户已登录，直接调用 userStore 的便捷方法
+            await userStore.toggleFavorite(soupStore.soupData.id);
         }
     },
 

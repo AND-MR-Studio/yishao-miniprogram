@@ -3,7 +3,7 @@
  * 包含点赞、收藏和感谢作者功能
  * 使用MobX管理状态，组件负责渲染状态和处理用户交互
  */
-const { rootStore, soupStore } = require('../../stores/index');
+const { rootStore, soupStore, userStore } = require('../../stores/index');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
@@ -77,8 +77,8 @@ Component({
       }
 
       try {
-        // 调用store的action并处理结果
-        const result = await soupStore.toggleFavorite(soupId);
+        // 直接调用 userStore 的便捷方法
+        const result = await userStore.toggleFavorite(soupId);
 
         // 只显示成功操作的提示
         if (result && result.success) {
@@ -125,8 +125,8 @@ Component({
       }
 
       try {
-        // 调用store的action并处理结果
-        const result = await soupStore.toggleLike(soupId);
+        // 直接调用 userStore 的便捷方法
+        const result = await userStore.toggleLike(soupId);
 
         // 只显示成功操作的提示
         if (result && result.success) {

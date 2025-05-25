@@ -36,6 +36,8 @@ class UserStore {
       favoriteSoup: flow,
       likeSoup: flow,
       solveSoup: flow,
+      toggleFavorite: flow,
+      toggleLike: flow,
 
       // 标记为非观察属性
       rootStore: false,
@@ -349,6 +351,17 @@ class UserStore {
   }
 
   /**
+   * 切换收藏状态 - 便捷方法
+   * 自动判断当前状态并切换
+   * @param {string} soupId - 汤ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
+  *toggleFavorite(soupId) {
+    const currentStatus = this.isFavoriteSoup(soupId);
+    return yield this.favoriteSoup(soupId, !currentStatus);
+  }
+
+  /**
    * 点赞/取消点赞汤面
    * 直接发起操作请求，后端统一处理状态更新
    * @param {string} soupId - 汤ID
@@ -379,6 +392,17 @@ class UserStore {
       console.error('点赞操作失败:', error);
       return { success: false, error: '点赞操作失败' };
     }
+  }
+
+  /**
+   * 切换点赞状态 - 便捷方法
+   * 自动判断当前状态并切换
+   * @param {string} soupId - 汤ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
+  *toggleLike(soupId) {
+    const currentStatus = this.isLikedSoup(soupId);
+    return yield this.likeSoup(soupId, !currentStatus);
   }
 
   /**

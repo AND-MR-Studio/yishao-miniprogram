@@ -145,9 +145,9 @@ class SoupStore {
       // 直接内联获取当前状态并计算新状态
       const newStatus = !this.userStore.isLikedSoup(soupId);
 
-      // 并行更新用户记录和汤面记录，后端处理登录状态检查
+      // 并行更新用户记录和汤面记录，使用 userStore 的便捷方法
       const [userResult, soupResult] = yield Promise.all([
-        this.userStore.likeSoup(soupId, newStatus),
+        this.userStore.toggleLike(soupId),
         soupService.likeSoup(soupId, newStatus)
       ]);
 
@@ -196,9 +196,9 @@ class SoupStore {
       // 直接内联获取当前状态并计算新状态
       const newStatus = !this.userStore.isFavoriteSoup(soupId);
 
-      // 并行更新用户记录和汤面记录，后端处理登录状态检查
+      // 并行更新用户记录和汤面记录，使用 userStore 的便捷方法
       const [userResult, soupResult] = yield Promise.all([
-        this.userStore.favoriteSoup(soupId, newStatus),
+        this.userStore.toggleFavorite(soupId),
         soupService.favoriteSoup(soupId, newStatus)
       ]);
 
