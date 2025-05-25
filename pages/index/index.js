@@ -326,7 +326,7 @@ Page({
      */
     async handleDoubleTap() {
         if (soupStore.soupData?.id) {
-            // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
+            // 检查用户是否已登录 - 使用userStore的isLoggedIn属性
             if (!this.data.isLoggedIn) {
                 // 显示登录提示弹窗
                 const loginPopup = this.selectComponent("#loginPopup");

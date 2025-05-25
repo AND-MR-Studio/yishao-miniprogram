@@ -67,13 +67,6 @@ class RootStore {
 
   // ===== 计算属性 - 从userStore获取数据，避免重复存储 =====
 
-  /**
-   * 登录状态 - 从userStore计算得出
-   */
-  get isLoggedIn() {
-    return this.userStore?.isLoggedIn || false;
-  }
-
   // ===== 跨 Store 数据流控制方法 =====
 
   /**
