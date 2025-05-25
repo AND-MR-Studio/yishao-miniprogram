@@ -14,31 +14,24 @@ class ChatStore {
   // 当前聊天状态
   chatState = CHAT_STATE.DRINKING;
 
-  // 核心数据
-  soupId = '';       // 当前汤面ID（不再存储完整soupData）
-  dialogId = '';     // 当前对话ID
-  soupData = null;   // 当前汤面数据（从soupService获取）
-
-  // UI状态
-  isPeeking = false;   // 是否处于偷看模式
-  isSending = false;   // 是否正在发送消息
-  isAnimating = false; // 是否正在执行动画（包含回复动画）
-  inputValue = '';     // 输入框的值
-
   // 对话数据
+  dialogId = '';     // 当前对话ID
   messages = [];       // 对话消息列表
 
-  // 加载状态
+  // UI状态
+  isPeeking = false;   // 查看底部汤面
+  isSending = false;   // 是否正在发送消息
+  isAnimating = false; // 是否正在执行动画（包含回复动画）
   isLoading = false;   // 是否正在加载数据
+
+  inputValue = '';     // 输入框的值
 
   // 引用rootStore和userStore
   rootStore = null;
-  userStore = null;
 
-  constructor(rootStore, userStore) {
+  constructor(rootStore) {
     // 保存rootStore和userStore引用
     this.rootStore = rootStore;
-    this.userStore = userStore;
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
@@ -50,13 +43,12 @@ class ChatStore {
 
       // 标记为非观察属性
       rootStore: false,
-      userStore: false
     });
   }
 
   // 获取用户ID的计算属性
   get userId() {
-    return this.userStore?.userId || '';
+    return this.rootStore?.userStore?.userId || '';
   }
 
   // 不再需要soupData的计算属性，因为我们现在直接在chatStore中存储soupData

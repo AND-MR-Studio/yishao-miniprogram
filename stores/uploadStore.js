@@ -50,12 +50,10 @@ class UploadStore {
 
   // 引用rootStore和userStore
   rootStore = null;
-  userStore = null;
 
-  constructor(rootStore, userStore) {
+  constructor(rootStore) {
     // 保存rootStore和userStore引用
     this.rootStore = rootStore;
-    this.userStore = userStore;
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
@@ -65,7 +63,6 @@ class UploadStore {
 
       // 标记为非观察属性
       rootStore: false,
-      userStore: false,
     });
 
     // 检查是否有草稿
@@ -74,12 +71,12 @@ class UploadStore {
 
   // 获取用户ID的计算属性
   get userId() {
-    return this.userStore?.userId || '';
+    return this.rootStore?.userStore?.userId || '';
   }
 
   // 获取登录状态的计算属性
   get isLoggedIn() {
-    return this.userStore?.isLoggedIn || false;
+    return this.rootStore?.userStore?.isLoggedIn || false;
   }
 
   // ===== Computed属性 - 优化后使用独立字段 =====
