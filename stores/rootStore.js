@@ -46,8 +46,6 @@ class RootStore {
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
-      // 标记异步方法为flow
-      syncAllStores: flow,
 
       // 子Store不需要标记为非观察属性
       chatStore: false,
@@ -91,31 +89,6 @@ class RootStore {
   }
 
   // ===== 跨 Store 数据流控制方法 =====
-
-  /**
-   * 全局用户信息同步协调方法
-   * 当需要跨多个 Store 同步用户状态时使用
-   * 例如：登录后需要同时更新 userStore、soupStore、chatStore 等
-   */
-  *syncAllStores() {
-    try {
-      // 首先同步用户信息
-      const userResult = yield this.userStore.syncUserInfo();
-
-      if (userResult.success) {
-        // 可以在这里添加其他 Store 的同步逻辑
-        // 例如：清理 soupStore 的缓存状态、重置 chatStore 等
-        console.log('全局 Store 同步完成');
-      }
-
-      return userResult;
-    } catch (error) {
-      console.error('全局 Store 同步失败:', error);
-      return { success: false, error: '全局同步失败' };
-    }
-  }
-
-
 
   /**
    * 检查用户是否首次访问
