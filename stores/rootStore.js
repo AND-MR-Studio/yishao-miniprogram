@@ -8,7 +8,7 @@
  * 2. 使用 MobX computed 实现响应式数据流
  * 3. 避免循环调用，明确数据流向：userStore -> rootStore
  */
-const { makeAutoObservable, flow } = require('mobx-miniprogram');
+const { makeAutoObservable } = require('mobx-miniprogram');
 
 // 导入Store类（而非实例）
 const { ChatStoreClass } = require('./chatStore');

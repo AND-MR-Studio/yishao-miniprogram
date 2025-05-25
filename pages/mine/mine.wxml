@@ -16,7 +16,6 @@
       defaultAvatarUrl="{{defaultAvatarUrl}}"
       hasSignedIn="{{hasSignedIn}}"
       bind:signinresult="handleSignInResult"
-      bind:refreshuserinfo="refreshUserInfo"
       bind:signin="handleDetectiveCardSignIn"
       bind:navigate="handleNavigate"
       bind:editprofile="openUserInfoModal">
@@ -51,7 +50,7 @@
           type="{{isLoggedIn ? 'unlight' : 'light'}}"
           text="{{isLoggedIn ? '退出登录' : '微信一键登录'}}"
           bind:tap="handleLogin"
-          loading="{{loginLoading || logoutLoading}}"
+          loading="{{loading.login || loading.logout}}"
         />
       </view>
     </view>
@@ -69,16 +68,16 @@
       <view class="user-info-body">
         <!-- 头像选择 - 居中显示 -->
         <view class="avatar-container-centered">
-          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" hover-class="none" disabled="{{avatarUploading}}">
+          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" hover-class="none" disabled="{{loading.avatar}}">
             <view class="avatar-btn-centered-before"></view>
             <image
               class="avatar-preview-centered"
-              src="{{userAvatar}}"
+              src="{{userInfo.avatarUrl || defaultAvatarUrl}}"
               mode="aspectFill"
               binderror="handleAvatarError"
             ></image>
             <!-- 点击更换提示 -->
-            <view class="avatar-change-tip">{{avatarUploading ? '上传中...' : '点击更换'}}</view>
+            <view class="avatar-change-tip">{{loading.avatar ? '上传中...' : '点击更换'}}</view>
           </button>
         </view>
 
@@ -89,7 +88,7 @@
             class="nickname-input-centered nickname-input-text"
             placeholder="请输入昵称"
             placeholder-style="text-align: center;"
-            value="{{editingNickName || nickname}}"
+            value="{{editingNickName || userInfo.nickname}}"
             bindinput="onInputNickname"
             adjust-position="false"
             maxlength="10"
@@ -103,7 +102,7 @@
           type="light"
           text="确认信息"
           bind:tap="saveUserInfo"
-          loading="{{profileUpdating}}"
+          loading="{{loading.profile}}"
         />
         <view class="skip-btn" bindtap="skipUserInfo">暂不设置</view>
       </view>
@@ -114,7 +113,7 @@
   <soup-list-modal
     visible="{{showSoupListModal}}"
     type="{{soupListType}}"
-    userInfo="{{detectiveInfo}}"
+    userInfo="{{userInfo}}"
     bind:close="closeSoupListModal"
   ></soup-list-modal>
 </view>

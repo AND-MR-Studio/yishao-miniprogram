@@ -110,6 +110,5 @@
     showClose="{{false}}"
     showLoginIcon="{{true}}"
     bind:confirm="onLoginConfirm"
-    bind:cancel="onLoginCancel"
   ></popup>
 </view>

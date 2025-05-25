@@ -12,8 +12,7 @@ Page({
    */
   data: {
     // 用户相关数据将由 userStore 绑定提供：
-    // userInfo, detectiveInfo, hasSignedIn, userStats, isLoggedIn, userAvatar, nickname, detectiveId, remainingAnswers
-    // 加载状态：isLoading, loginLoading, logoutLoading, avatarUploading, profileUpdating
+    // userInfo, detectiveInfo, hasSignedIn, isLoggedIn, loading
     defaultAvatarUrl: api.assets.local.avatar,
     buttonConfig: {
       type: 'light',
@@ -41,24 +40,13 @@ Page({
         // 核心用户数据
         "userInfo",           // 原始用户信息对象
         "isLoggedIn",         // 登录状态 - 按钮显示需要
-        "userAvatar",         // 用户头像 - 弹窗显示需要
-        "nickname",           // 用户昵称 - 弹窗显示需要
 
         // 侦探相关信息
         "detectiveInfo",      // 完整侦探信息 - detective-card组件需要
         "hasSignedIn",        // 签到状态 - detective-card组件需要
-        "detectiveId",        // 侦探ID - 页面显示需要
-        "remainingAnswers",   // 剩余提问次数 - 页面显示需要
 
-        // 统计信息
-        "userStats",          // 用户统计数据 - 页面显示需要
-
-        // 加载状态 - 控制UI交互状态（通过向后兼容的计算属性获取）
-        "loginLoading",       // 登录按钮加载状态 - 对应 loading.login
-        "logoutLoading",      // 退出登录按钮加载状态 - 对应 loading.logout
-        "avatarUploading",    // 头像上传状态 - 弹窗交互需要 - 对应 loading.avatar
-        "profileUpdating"     // 资料更新状态 - 弹窗交互需要 - 对应 loading.profile
-        // 移除 "isLoading" - 页面不需要显示通用加载状态（对应 loading.sync）
+        // 加载状态 - 直接访问loading对象
+        "loading"             // 统一加载状态对象
       ],
       actions: [
         "syncUserInfo",       // 同步用户信息
@@ -116,7 +104,7 @@ Page({
    */
   async onChooseAvatar(e) {
     // 防止重复调用
-    if (this.data.avatarUploading) {
+    if (this.data.loading.avatar) {
       return;
     }
 
@@ -269,7 +257,7 @@ Page({
    */
   async saveUserInfo() {
     // 防止重复提交
-    if (this.data.profileUpdating) {
+    if (this.data.loading.profile) {
       return;
     }
 
@@ -342,7 +330,7 @@ Page({
    */
   async handleLogin() {
     // 防止重复点击
-    if (this.data.loginLoading || this.data.logoutLoading) {
+    if (this.data.loading.login || this.data.loading.logout) {
       return;
     }
 
@@ -491,12 +479,6 @@ Page({
     });
   },
 
-  /**
-   * 刷新用户信息 - detective-card 组件事件
-   */
-  refreshUserInfo() {
-    this.syncUserInfo();
-  },
 
   /**
    * 处理侦探卡片签到 - detective-card 组件事件

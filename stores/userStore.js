@@ -59,48 +59,6 @@ class UserStore {
   }
 
   /**
-   * 用户头像
-   */
-  get userAvatar() {
-    return this.userInfo?.avatarUrl || DEFAULT_AVATAR_URL;
-  }
-
-  /**
-   * 剩余提问次数
-   */
-  get remainingAnswers() {
-    return this.userInfo?.remainingAnswers || 0;
-  }
-
-  /**
-   * 侦探ID
-   */
-  get detectiveId() {
-    return this.userInfo?.detectiveId || null;
-  }
-
-  /**
-   * 用户昵称
-   */
-  get nickname() {
-    return this.userInfo?.nickname || '';
-  }
-
-  /**
-   * 用户统计信息
-   */
-  get userStats() {
-    const info = this.userInfo;
-    return {
-      totalSoupCount: info?.totalSoupCount || 0,
-      solvedCount: info?.solvedSoups?.length || 0,
-      createdCount: info?.createSoups?.length || 0,
-      favoriteCount: info?.favoriteSoups?.length || 0,
-      pointsCount: info?.pointsCount || 0
-    };
-  }
-
-  /**
    * 侦探信息 - 为 detective-card 组件提供完整的侦探信息
    */
   get detectiveInfo() {
@@ -113,7 +71,7 @@ class UserStore {
       isLoggedIn: true,
       nickName: info.nickname || '',
       detectiveId: info.detectiveId || '',
-      levelTitle: info.levelTitle || '新手侦探', // 直接使用后端返回的称号
+      levelTitle: info.levelTitle || '新手侦探',
       remainingAnswers: info.remainingAnswers || 0,
       unsolvedCount: info.unsolvedCount || 0,
       solvedCount: info.solvedSoups?.length || 0,
