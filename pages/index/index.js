@@ -9,7 +9,7 @@ const {
     createInteractionManager,
 } = require("../../utils/interactionManager");
 const {createStoreBindings} = require("mobx-miniprogram-bindings");
-const {rootStore, soupStore} = require("../../stores/index");
+const {rootStore, soupStore, userStore} = require("../../stores/index");
 const api = require("../../config/api");
 
 Page({
@@ -29,11 +29,18 @@ Page({
      * @param {Object} options - 页面参数，可能包含soupId
      */
     async onLoad(options) {
-        // 创建rootStore绑定 - 用于获取用户ID、登录状态和引导层状态
+        // 创建rootStore绑定 - 仅用于引导层状态管理
         this.rootStoreBindings = createStoreBindings(this, {
             store: rootStore,
-            fields: ["userId", "isLoggedIn", "isFirstVisit", "showGuide"],
-            actions: ["toggleGuide"] // 使用新的统一方法
+            fields: ["showGuide"], // 移除过时的 userId, isLoggedIn, isFirstVisit
+            actions: ["toggleGuide"]
+        });
+
+        // 创建userStore绑定 - 用于获取用户登录状态
+        this.userStoreBindings = createStoreBindings(this, {
+            store: userStore,
+            fields: ["isLoggedIn"], // 只绑定登录状态，用于权限检查
+            actions: ["syncUserInfo"]
         });
 
         // 创建soupStore绑定 - 汤面相关字段和方法
@@ -44,7 +51,7 @@ Page({
         });
 
         // 同步用户信息 - 确保获取最新的用户状态
-        await rootStore.userStore.syncUserInfo();
+        await this.syncUserInfo();
 
         try {
             // 统一数据获取路径：无论是否有soupId，都通过统一的fetchSoup方法获取数据
@@ -90,7 +97,7 @@ Page({
         }
 
         // 同步用户信息 - 调用 userStore 的方法，避免循环调用
-        rootStore.userStore.syncUserInfo();
+        this.syncUserInfo();
     },
 
     /**
@@ -101,6 +108,9 @@ Page({
         // 清理MobX绑定
         if (this.rootStoreBindings) {
             this.rootStoreBindings.destroyStoreBindings();
+        }
+        if (this.userStoreBindings) {
+            this.userStoreBindings.destroyStoreBindings();
         }
         if (this.soupStoreBindings) {
             this.soupStoreBindings.destroyStoreBindings();

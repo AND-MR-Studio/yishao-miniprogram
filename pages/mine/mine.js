@@ -2,8 +2,8 @@
 
 // 引入API模块
 const api = require('../../config/api');
-// 引入rootStore 和 mobx-miniprogram-bindings
-const { rootStore } = require('../../stores/rootStore');
+// 引入userStore 和 mobx-miniprogram-bindings
+const { userStore } = require('../../stores/index');
 const { createStoreBindings, destroyStoreBindings } = require('mobx-miniprogram-bindings');
 
 Page({
@@ -11,7 +11,9 @@ Page({
    * 页面的初始数据
    */
   data: {
-    // userInfo, detectiveInfo, hasSignedIn, totalSoupCount, pointsCount 将由 storeBindings 提供
+    // 用户相关数据将由 userStore 绑定提供：
+    // userInfo, detectiveInfo, hasSignedIn, userStats, isLoggedIn, userAvatar, nickname, detectiveId, remainingAnswers
+    // 加载状态：isLoading, loginLoading, logoutLoading, avatarUploading, profileUpdating
     defaultAvatarUrl: api.assets.local.avatar,
     buttonConfig: {
       type: 'light',
@@ -32,29 +34,38 @@ Page({
    * 生命周期函数--监听页面加载
    */
   async onLoad() {
-    // 创建userStore绑定
+    // 创建userStore绑定 - 直接绑定userStore，符合新的架构模式
     this.userStoreBindings = createStoreBindings(this, {
-      store: rootStore.userStore,
+      store: userStore,
       fields: [
-        "userInfo",
-        "isLoggedIn",
-        "userAvatar",
-        "remainingAnswers",
-        "detectiveId",
-        "nickname",
-        "userStats",
-        "isLoading",
-        "loginLoading",
-        "logoutLoading",
-        "avatarUploading",
-        "profileUpdating"
+        // 核心用户数据
+        "userInfo",           // 原始用户信息对象
+        "isLoggedIn",         // 登录状态 - 按钮显示需要
+        "userAvatar",         // 用户头像 - 弹窗显示需要
+        "nickname",           // 用户昵称 - 弹窗显示需要
+
+        // 侦探相关信息
+        "detectiveInfo",      // 完整侦探信息 - detective-card组件需要
+        "hasSignedIn",        // 签到状态 - detective-card组件需要
+        "detectiveId",        // 侦探ID - 页面显示需要
+        "remainingAnswers",   // 剩余提问次数 - 页面显示需要
+
+        // 统计信息
+        "userStats",          // 用户统计数据 - 页面显示需要
+
+        // 加载状态 - 控制UI交互状态（通过向后兼容的计算属性获取）
+        "loginLoading",       // 登录按钮加载状态 - 对应 loading.login
+        "logoutLoading",      // 退出登录按钮加载状态 - 对应 loading.logout
+        "avatarUploading",    // 头像上传状态 - 弹窗交互需要 - 对应 loading.avatar
+        "profileUpdating"     // 资料更新状态 - 弹窗交互需要 - 对应 loading.profile
+        // 移除 "isLoading" - 页面不需要显示通用加载状态（对应 loading.sync）
       ],
       actions: [
-        "syncUserInfo",
-        "login",
-        "logout",
-        "updateAvatar",
-        "updateUserProfile"
+        "syncUserInfo",       // 同步用户信息
+        "login",              // 登录操作
+        "logout",             // 退出登录操作
+        "updateAvatar",       // 更新头像
+        "updateUserProfile"   // 更新用户资料
       ]
     });
   },
@@ -459,6 +470,64 @@ Page({
         }
       });
     }
+  },
+
+  /**
+   * 处理头像加载错误
+   */
+  handleAvatarError() {
+    console.error('头像加载失败，使用默认头像');
+  },
+
+  /**
+   * 处理签到结果 - detective-card 组件事件
+   */
+  handleSignInResult(event) {
+    const { success, message } = event.detail;
+    wx.showToast({
+      title: message || (success ? '签到成功' : '签到失败'),
+      icon: success ? 'success' : 'none',
+      duration: 2000
+    });
+  },
+
+  /**
+   * 刷新用户信息 - detective-card 组件事件
+   */
+  refreshUserInfo() {
+    this.syncUserInfo();
+  },
+
+  /**
+   * 处理侦探卡片签到 - detective-card 组件事件
+   */
+  handleDetectiveCardSignIn() {
+    // 这里可以添加签到逻辑，或者委托给 userStore
+    console.log('处理侦探卡片签到');
+  },
+
+  /**
+   * 处理 Banner 点击事件
+   */
+  handleBannerTap(event) {
+    console.log('Banner 点击事件:', event.detail);
+  },
+
+  /**
+   * 导航到关于页面
+   */
+  navigateToAbout() {
+    wx.navigateTo({
+      url: '/pages/about/about',
+      fail: (err) => {
+        console.error('导航到关于页面失败:', err);
+        wx.showToast({
+          title: '跳转失败，请稍后重试',
+          icon: 'none',
+          duration: 2000
+        });
+      }
+    });
   },
 
   /**

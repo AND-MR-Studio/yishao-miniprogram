@@ -28,12 +28,13 @@ class SoupStore {
   // 防止重复请求的标志
   _fetchingId = null; // 当前正在获取数据的soupId
 
-  // 引用rootStore
   rootStore = null;
+  userStore = null;
 
-  constructor(rootStore) {
-    // 保存rootStore引用
+  constructor(rootStore, userStore) {
+    // 保存rootStore和userStore引用
     this.rootStore = rootStore;
+    this.userStore = userStore;
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
@@ -49,17 +50,18 @@ class SoupStore {
       // 标记为非观察属性
       _fetchingId: false,
       rootStore: false,
+      userStore: false,
     });
   }
 
   // 获取用户ID的计算属性
   get userId() {
-    return this.rootStore.userId;
+    return this.userStore?.userId || '';
   }
 
   // 获取登录状态的计算属性
   get isLoggedIn() {
-    return this.rootStore.isLoggedIn;
+    return this.userStore?.isLoggedIn || false;
   }
 
   /**
@@ -107,22 +109,9 @@ class SoupStore {
         this.viewCount = soupData.views || 0;
       }
 
-      // 只有在用户已登录的情况下获取交互状态
-      if (this.isLoggedIn) {
-        // 并行获取用户交互状态
-        const [isLiked, isFavorite] = yield Promise.all([
-          this.rootStore.isLikedSoup(soupId),
-          this.rootStore.isFavoriteSoup(soupId)
-        ]);
-
-        // 更新交互状态
-        this.isLiked = isLiked;
-        this.isFavorite = isFavorite;
-      } else {
-        // 用户未登录，默认未点赞和未收藏
-        this.isLiked = false;
-        this.isFavorite = false;
-      }
+      // 直接从 userStore 获取用户交互状态，后端处理未登录情况
+      this.isLiked = this.userStore.isLikedSoup(soupId);
+      this.isFavorite = this.userStore.isFavoriteSoup(soupId);
 
       // 更新计数
       this.likeCount = soupData.likes || 0;
@@ -142,7 +131,7 @@ class SoupStore {
   }
 
   /**
-   * 切换点赞状态 - 重构为直接操作模式
+   * 切换点赞状态 - 直接调用 userStore 和 soupService，后端处理登录检查
    * @param {string} soupId 汤面ID
    * @returns {Promise<Object>} 操作结果，包含成功状态和消息
    */
@@ -152,19 +141,13 @@ class SoupStore {
       return { success: false, message: "缺少汤面ID" };
     }
 
-    // 检查用户是否已登录
-    if (!this.isLoggedIn) {
-      return { success: false, message: "请先登录", needLogin: true };
-    }
-
     try {
-      // 获取当前状态
-      const currentStatus = this.rootStore.isLikedSoup(soupId);
-      const newStatus = !currentStatus;
+      // 直接内联获取当前状态并计算新状态
+      const newStatus = !this.userStore.isLikedSoup(soupId);
 
-      // 并行更新用户记录和汤面记录
+      // 并行更新用户记录和汤面记录，后端处理登录状态检查
       const [userResult, soupResult] = yield Promise.all([
-        this.rootStore.toggleLikeSoup(soupId),
+        this.userStore.likeSoup(soupId, newStatus),
         soupService.likeSoup(soupId, newStatus)
       ]);
 
@@ -199,7 +182,7 @@ class SoupStore {
   }
 
   /**
-   * 切换收藏状态 - 重构为直接操作模式
+   * 切换收藏状态 - 直接调用 userStore 和 soupService，后端处理登录检查
    * @param {string} soupId 汤面ID
    * @returns {Promise<Object>} 操作结果，包含成功状态和消息
    */
@@ -209,19 +192,13 @@ class SoupStore {
       return { success: false, message: "缺少汤面ID" };
     }
 
-    // 检查用户是否已登录
-    if (!this.isLoggedIn) {
-      return { success: false, message: "请先登录", needLogin: true };
-    }
-
     try {
-      // 获取当前状态
-      const currentStatus = this.rootStore.isFavoriteSoup(soupId);
-      const newStatus = !currentStatus;
+      // 直接内联获取当前状态并计算新状态
+      const newStatus = !this.userStore.isFavoriteSoup(soupId);
 
-      // 并行更新用户记录和汤面记录
+      // 并行更新用户记录和汤面记录，后端处理登录状态检查
       const [userResult, soupResult] = yield Promise.all([
-        this.rootStore.toggleFavoriteSoup(soupId),
+        this.userStore.favoriteSoup(soupId, newStatus),
         soupService.favoriteSoup(soupId, newStatus)
       ]);
 

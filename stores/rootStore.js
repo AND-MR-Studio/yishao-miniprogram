@@ -34,17 +34,20 @@ class RootStore {
   userStore = null;
 
   constructor() {
-    // 初始化子Store，传入this(rootStore)作为参数
-    this.chatStore = new ChatStoreClass(this);
-    this.soupStore = new SoupStoreClass(this);
-    this.tipStore = new TipStoreClass(this);
-    this.uploadStore = new UploadStoreClass(this);
+    // 按照依赖关系顺序初始化子Store
+    // 1. 首先创建基础Store（无依赖）
     this.userStore = new UserStoreClass(this);
+
+    // 2. 创建依赖于userStore的Store
+    this.soupStore = new SoupStoreClass(this, this.userStore);
+    this.chatStore = new ChatStoreClass(this, this.userStore);
+    this.tipStore = new TipStoreClass(this);
+    this.uploadStore = new UploadStoreClass(this, this.userStore);
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
       // 标记异步方法为flow
-      syncUserInfo: flow,
+      syncAllStores: flow,
 
       // 子Store不需要标记为非观察属性
       chatStore: false,
@@ -60,9 +63,6 @@ class RootStore {
 
   // 初始化方法
   initialize() {
-    // 初始化时同步用户信息
-    this.syncUserInfo();
-
     // 检查用户是否首次访问
     this.checkFirstVisit();
   }
@@ -90,86 +90,32 @@ class RootStore {
     return this.userStore?.isLoggedIn || false;
   }
 
-  // 用户与汤面交互的方法 - 重构为直接操作模式
+  // ===== 跨 Store 数据流控制方法 =====
 
   /**
-   * 切换点赞状态
-   * 直接发起操作请求，后端统一处理状态更新
-   * @param {string} soupId - 汤ID
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   * 全局用户信息同步协调方法
+   * 当需要跨多个 Store 同步用户状态时使用
+   * 例如：登录后需要同时更新 userStore、soupStore、chatStore 等
    */
-  async toggleLikeSoup(soupId) {
-    if (!this.userStore) {
-      return { success: false, error: 'userStore 未初始化' };
-    }
-
-    // 获取当前状态
-    const currentStatus = this.userStore.isLikedSoup(soupId);
-    // 直接发起操作请求
-    return await this.userStore.likeSoup(soupId, !currentStatus);
-  }
-
-  /**
-   * 切换收藏状态
-   * 直接发起操作请求，后端统一处理状态更新
-   * @param {string} soupId - 汤ID
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */
-  async toggleFavoriteSoup(soupId) {
-    if (!this.userStore) {
-      return { success: false, error: 'userStore 未初始化' };
-    }
-
-    // 获取当前状态
-    const currentStatus = this.userStore.isFavoriteSoup(soupId);
-    // 直接发起操作请求
-    return await this.userStore.favoriteSoup(soupId, !currentStatus);
-  }
-
-  /**
-   * 标记汤面为已解决
-   * 直接发起操作请求，后端统一处理状态更新
-   * @param {string} soupId - 汤ID
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */
-  async solveSoup(soupId) {
-    if (!this.userStore) {
-      return { success: false, error: 'userStore 未初始化' };
-    }
-
-    return await this.userStore.solveSoup(soupId);
-  }
-
-  // 状态查询方法 - 委托给userStore
-  isLikedSoup(soupId) {
-    return this.userStore?.isLikedSoup(soupId) || false;
-  }
-
-  isFavoriteSoup(soupId) {
-    return this.userStore?.isFavoriteSoup(soupId) || false;
-  }
-
-  isSolvedSoup(soupId) {
-    return this.userStore?.isSolvedSoup(soupId) || false;
-  }
-
-  /**
-   * 同步用户信息 - 委托给userStore，避免循环调用
-   * 这是对外的统一接口，内部委托给userStore处理
-   */
-  *syncUserInfo() {
-    if (!this.userStore) {
-      console.warn('userStore 未初始化');
-      return { success: false, error: 'userStore 未初始化' };
-    }
-
+  *syncAllStores() {
     try {
-      return yield this.userStore.syncUserInfo();
+      // 首先同步用户信息
+      const userResult = yield this.userStore.syncUserInfo();
+
+      if (userResult.success) {
+        // 可以在这里添加其他 Store 的同步逻辑
+        // 例如：清理 soupStore 的缓存状态、重置 chatStore 等
+        console.log('全局 Store 同步完成');
+      }
+
+      return userResult;
     } catch (error) {
-      console.error('rootStore.syncUserInfo 调用失败:', error);
-      return { success: false, error: '同步用户信息失败' };
+      console.error('全局 Store 同步失败:', error);
+      return { success: false, error: '全局同步失败' };
     }
   }
+
+
 
   /**
    * 检查用户是否首次访问

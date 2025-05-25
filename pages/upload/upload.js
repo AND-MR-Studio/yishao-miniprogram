@@ -3,7 +3,7 @@
  * 负责创建新的海龟汤内容
  */
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { uploadStore, rootStore } = require('../../stores/index');
+const { uploadStore, userStore } = require('../../stores/index');
 const { assets } = require('../../config/api');
 
 Page({
@@ -46,8 +46,8 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad() {
-    // 创建MobX Store绑定
-    this.storeBindings = createStoreBindings(this, {
+    // 创建uploadStore绑定
+    this.uploadStoreBindings = createStoreBindings(this, {
       store: uploadStore,
       fields: [
         'formData',
@@ -70,6 +70,18 @@ Page({
       ]
     });
 
+    // 创建userStore绑定 - 用于获取用户信息和登录状态
+    this.userStoreBindings = createStoreBindings(this, {
+      store: userStore,
+      fields: [
+        'userInfo',
+        'isLoggedIn'
+      ],
+      actions: [
+        'syncUserInfo'
+      ]
+    });
+
     // 加载已发布的汤
     this.loadData();
   },
@@ -80,10 +92,10 @@ Page({
   async loadData() {
     try {
       // 确保用户信息已同步
-      await rootStore.syncUserInfo();
+      await this.syncUserInfo();
 
       // 加载已发布的汤
-      if (rootStore.isLoggedIn) {
+      if (this.data.isLoggedIn) {
         await this.loadPublishedSoups();
         // 获取用户信息，更新创建的汤数量
         this.updateCreatedSoupCount();
@@ -101,10 +113,10 @@ Page({
    */
   updateCreatedSoupCount() {
     try {
-      // 检查用户是否已登录，并从 rootStore 获取 userInfo
-      const userInfo = rootStore.userInfo;
+      // 检查用户是否已登录，并从 userStore 获取 userInfo
+      const userInfo = this.data.userInfo;
 
-      if (rootStore.isLoggedIn && userInfo && userInfo.creationCount !== undefined) {
+      if (this.data.isLoggedIn && userInfo && userInfo.creationCount !== undefined) {
         // 使用creationCount字段
         this.setData({ createdSoupCount: userInfo.creationCount || 0 });
       } else {
@@ -141,7 +153,12 @@ Page({
    */
   onUnload() {
     // 解绑MobX Store
-    this.storeBindings.destroyStoreBindings();
+    if (this.uploadStoreBindings) {
+      this.uploadStoreBindings.destroyStoreBindings();
+    }
+    if (this.userStoreBindings) {
+      this.userStoreBindings.destroyStoreBindings();
+    }
   },
 
   /**
@@ -187,7 +204,7 @@ Page({
    */
   handleShowForm() {
     // 检查用户是否已登录
-    if (!rootStore.isLoggedIn) {
+    if (!this.data.isLoggedIn) {
       // 显示登录提示弹窗
       const loginPopup = this.selectComponent("#loginPopup");
       if (loginPopup) {
@@ -259,7 +276,7 @@ Page({
    */
   handleSubmit() {
     // 检查用户是否已登录
-    if (!rootStore.isLoggedIn) {
+    if (!this.data.isLoggedIn) {
       wx.showModal({
         title: '提示',
         content: '请先登录后再创建海龟汤',
@@ -306,7 +323,7 @@ Page({
    */
   handleOpenDraft() {
     // 检查用户是否已登录
-    if (!rootStore.isLoggedIn) {
+    if (!this.data.isLoggedIn) {
       // 显示登录提示弹窗
       const loginPopup = this.selectComponent("#loginPopup");
       if (loginPopup) {

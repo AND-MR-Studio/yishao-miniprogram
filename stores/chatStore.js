@@ -31,12 +31,14 @@ class ChatStore {
   // 加载状态
   isLoading = false;   // 是否正在加载数据
 
-  // 引用rootStore
+  // 引用rootStore和userStore
   rootStore = null;
+  userStore = null;
 
-  constructor(rootStore) {
-    // 保存rootStore引用
+  constructor(rootStore, userStore) {
+    // 保存rootStore和userStore引用
     this.rootStore = rootStore;
+    this.userStore = userStore;
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
@@ -47,13 +49,14 @@ class ChatStore {
       fetchSoupForChat: flow,
 
       // 标记为非观察属性
-      rootStore: false
+      rootStore: false,
+      userStore: false
     });
   }
 
   // 获取用户ID的计算属性
   get userId() {
-    return this.rootStore.userId;
+    return this.userStore?.userId || '';
   }
 
   // 不再需要soupData的计算属性，因为我们现在直接在chatStore中存储soupData

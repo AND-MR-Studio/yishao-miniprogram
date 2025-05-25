@@ -13,19 +13,19 @@ class UserStore {
   // 用户基础信息
   userInfo = null; // 用户信息
 
-  // 加载状态
-  isLoading = false; // 是否正在加载
-  loginLoading = false; // 登录加载状态
-  logoutLoading = false; // 退出登录加载状态
-  avatarUploading = false; // 头像上传状态
-  profileUpdating = false; // 资料更新状态
+  // 统一加载状态管理 - MobX 最佳实践
+  loading = {
+    login: false,      // 登录操作加载状态
+    logout: false,     // 退出登录操作加载状态
+    avatar: false,     // 头像上传加载状态
+    profile: false,    // 资料更新加载状态
+    sync: false        // 用户信息同步加载状态（对应原来的 isLoading）
+  };
 
   // 引用rootStore
   rootStore = null;
 
-  constructor(rootStore) {
-    this.rootStore = rootStore;
-
+  constructor() {
     makeAutoObservable(this, {
       // 标记异步方法为flow
       login: flow,
@@ -100,7 +100,50 @@ class UserStore {
     };
   }
 
+  /**
+   * 侦探信息 - 为 detective-card 组件提供完整的侦探信息
+   */
+  get detectiveInfo() {
+    if (!this.isLoggedIn || !this.userInfo) {
+      return null;
+    }
+
+    const info = this.userInfo;
+    return {
+      isLoggedIn: true,
+      nickName: info.nickname || '',
+      detectiveId: info.detectiveId || '',
+      levelTitle: info.levelTitle || '新手侦探', // 直接使用后端返回的称号
+      remainingAnswers: info.remainingAnswers || 0,
+      unsolvedCount: info.unsolvedCount || 0,
+      solvedCount: info.solvedSoups?.length || 0,
+      creationCount: info.createSoups?.length || 0,
+      favoriteCount: info.favoriteSoups?.length || 0,
+      avatarUrl: info.avatarUrl || DEFAULT_AVATAR_URL
+    };
+  }
+
+  /**
+   * 是否已签到 - 直接使用后端返回的签到状态
+   */
+  get hasSignedIn() {
+    return this.userInfo?.hasSignedIn || false;
+  }
+
   // ===== Actions =====
+
+  /**
+   * 统一的加载状态管理方法
+   * @param {string} type - 加载类型：'login', 'logout', 'avatar', 'profile', 'sync'
+   * @param {boolean} status - 加载状态：true 表示开始加载，false 表示结束加载
+   */
+  setLoading(type, status) {
+    if (this.loading.hasOwnProperty(type)) {
+      this.loading[type] = status;
+    } else {
+      console.warn(`未知的加载类型: ${type}`);
+    }
+  }
 
   /**
    * 同步用户信息 - 优化版本，避免循环调用
@@ -108,13 +151,13 @@ class UserStore {
    */
   *syncUserInfo() {
     // 防止重复调用
-    if (this.isLoading) {
+    if (this.loading.sync) {
       console.log('用户信息正在同步中，跳过重复调用');
       return { success: false, error: '正在同步中' };
     }
 
     try {
-      this.isLoading = true;
+      this.setLoading('sync', true);
       const result = yield userService.getUserInfo();
 
       if (result.success) {
@@ -138,7 +181,7 @@ class UserStore {
       this.userInfo = null;
       return { success: false, error: '同步用户信息失败' };
     } finally {
-      this.isLoading = false;
+      this.setLoading('sync', false);
     }
   }
 
@@ -146,12 +189,12 @@ class UserStore {
    * 登录 - 包含本地存储管理
    */
   *login() {
-    if (this.loginLoading) {
+    if (this.loading.login) {
       return { success: false, error: '正在登录中' };
     }
 
     try {
-      this.loginLoading = true;
+      this.setLoading('login', true);
 
       // 检查是否已经登录
       const token = wx.getStorageSync(TOKEN_KEY);
@@ -184,7 +227,7 @@ class UserStore {
       console.error('登录失败:', error);
       return { success: false, error: '登录失败' };
     } finally {
-      this.loginLoading = false;
+      this.setLoading('login', false);
     }
   }
 
@@ -192,12 +235,12 @@ class UserStore {
    * 退出登录 - 包含本地存储清理
    */
   *logout() {
-    if (this.logoutLoading) {
+    if (this.loading.logout) {
       return { success: false, error: '正在退出登录中' };
     }
 
     try {
-      this.logoutLoading = true;
+      this.setLoading('logout', true);
       const result = yield userService.logout();
 
       if (result.success) {
@@ -212,7 +255,7 @@ class UserStore {
       console.error('退出登录失败:', error);
       return { success: false, error: '退出登录失败' };
     } finally {
-      this.logoutLoading = false;
+      this.setLoading('logout', false);
     }
   }
 
@@ -254,7 +297,7 @@ class UserStore {
     }
 
     try {
-      this.avatarUploading = true;
+      this.setLoading('avatar', true);
 
       const result = yield uploadFile({
         url: api.asset.upload,
@@ -278,7 +321,7 @@ class UserStore {
       console.error('上传头像失败:', error);
       return { success: false, error: '上传头像失败' };
     } finally {
-      this.avatarUploading = false;
+      this.setLoading('avatar', false);
     }
   }
 
@@ -295,7 +338,7 @@ class UserStore {
     }
 
     try {
-      this.profileUpdating = true;
+      this.setLoading('profile', true);
       const result = yield userService.updateUserInfo(profileData);
 
       if (result.success) {
@@ -308,7 +351,7 @@ class UserStore {
       console.error('更新用户资料失败:', error);
       return { success: false, error: '更新用户资料失败' };
     } finally {
-      this.profileUpdating = false;
+      this.setLoading('profile', false);
     }
   }
 

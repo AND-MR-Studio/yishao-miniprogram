@@ -12,13 +12,14 @@ module.exports = {
   // 导出rootStore及其方法
   rootStore,
   userId: rootStore.userId,
-  syncUserInfo: rootStore.syncUserInfo.bind(rootStore),
+  // 注意：syncUserInfo 已移除，请直接使用 rootStore.userStore.syncUserInfo()
 
   // 导出子Store，提供向后兼容性
   soupStore: rootStore.soupStore,
   chatStore: rootStore.chatStore,
   tipStore: rootStore.tipStore,
   uploadStore: rootStore.uploadStore,
+  userStore: rootStore.userStore, // 添加 userStore 的直接导出
 
   // 导出常量
   CHAT_STATE,
