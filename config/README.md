@@ -132,10 +132,10 @@ if (app.globalData.isProduction()) {
 
 ```javascript
 // 获取开发环境配置
-const devConfig = app.globalData.environments.development;
+const devConfig = app.api.environments.development;
 
 // 获取正式环境配置
-const prodConfig = app.globalData.environments.production;
+const prodConfig = app.api.environments.production;
 ```
 
 ## 注意事项
@@ -163,7 +163,7 @@ config/
 A: 需要重新编译小程序，热重载可能不会重新执行 app.js 中的初始化代码。
 
 **Q: 如何确认当前使用的是哪个环境？**
-A: 查看控制台输出的环境配置信息，或者检查 `app.globalData.config.name`。
+A: 查看控制台输出的环境配置信息，或者检查 `app.api.config.name`。
 
 **Q: 可以添加更多环境吗？**
 A: 可以在 `environments` 对象中添加新的环境配置，并相应修改环境判断逻辑。

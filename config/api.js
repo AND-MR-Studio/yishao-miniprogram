@@ -4,10 +4,10 @@
  * 简化版本 - 只返回soupId
  */
 const App = getApp();
-const baseUrl = App.globalData.config.baseUrl;
-const ysUrl = App.globalData.config.ysUrl;
-const memoryUrl = App.globalData.config.memory;
-const assetsBaseUrl = App.globalData.config.assetsBaseUrl;
+const baseUrl = App.api.url.baseUrl;
+const ysUrl = App.api.url.ysUrl;
+const memoryUrl = App.api.url.memory;
+const assetsBaseUrl = App.api.url.assetsBaseUrl;
 
 const {
   request,

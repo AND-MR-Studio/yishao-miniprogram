@@ -10,7 +10,7 @@
 const MANUAL_ENV = null; // 可选值: null, 'dev', 'prod'
 
 // ==================== 环境配置定义 ====================
-const environments = {
+const urlConfig = {
   // 开发环境配置
   dev: {
     name: '开发环境',
@@ -65,25 +65,20 @@ function getCurrentEnvironment() {
 
 // ==================== 配置导出 ====================
 const currentEnv = getCurrentEnvironment();
-const config = environments[currentEnv];
+const url = urlConfig[currentEnv];
 
 // 添加当前环境信息到配置中
-config.currentEnv = currentEnv;
-config.envVersion = wx.getAccountInfoSync().miniProgram.envVersion;
+url.currentEnv = currentEnv;
+url.envVersion = wx.getAccountInfoSync().miniProgram.envVersion;
 
 /**
  * 全局配置导出
  */
 module.exports = {
   // 当前环境配置
-  config,
-  
-  // 向后兼容的配置项
-  memory: config.memory,
-  assetsBaseUrl: config.assetsBaseUrl,
-  
+  url,
   // 环境管理工具
-  environments,
+  environments: urlConfig,
   getCurrentEnvironment,
   
   // 环境切换工具函数
@@ -91,5 +86,5 @@ module.exports = {
   isProduction: () => currentEnv === 'prod',
   
   // 获取指定环境的配置
-  getEnvironmentConfig: (env) => environments[env] || environments.dev
+  getEnvironmentConfig: (env) => urlConfig[env] || urlConfig.dev
 };
