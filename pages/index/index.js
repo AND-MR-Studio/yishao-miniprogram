@@ -6,16 +6,15 @@
 // ===== 导入依赖 =====
 const {
     SWIPE_DIRECTION,
-    createInteractionManager,
-} = require("../../utils/interactionManager");
+    createGestureManager,
+} = require("../../utils/gestureManager");
 const {createStoreBindings} = require("mobx-miniprogram-bindings");
-const {rootStore, soupStore, userStore} = require("../../stores/index");
+const {soupStore, userStore, settingStore} = require("../../stores/index");
 const api = require("../../config/api");
 
 Page({
     // ===== 页面数据 =====
-    data: {
-        // 交互相关 - 由interactionManager管理
+    data: {        // 交互相关 - 由统一手势管理器管理
         swiping: false, // 是否正在滑动中
         swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
         swipeStarted: false, // 是否开始滑动
@@ -29,11 +28,11 @@ Page({
      * @param {Object} options - 页面参数，可能包含soupId
      */
     async onLoad(options) {
-        // 创建rootStore绑定 - 仅用于引导层状态管理
-        this.rootStoreBindings = createStoreBindings(this, {
-            store: rootStore,
-            fields: ["showGuide"], // 移除过时的 userId, isLoggedIn, isFirstVisit
-            actions: ["toggleGuide"]
+        // 创建settingStore绑定 - 用于引导层状态管理
+        this.settingStoreBindings = createStoreBindings(this, {
+            store: settingStore,
+            fields: ["showGuide"], // 引导层显示状态
+            actions: ["toggleGuide"] // 引导层控制方法
         });
 
         // 创建userStore绑定 - 用于获取用户登录状态
@@ -74,8 +73,7 @@ Page({
         } catch (error) {
             console.error("加载汤面过程中发生错误:", error);
             this.showErrorToast("加载失败，请检查网络或稍后重试");
-        } finally {
-            // 初始化交互管理器
+        } finally {            // 初始化手势管理器
             this.initInteractionManager();
         }
     },
@@ -106,20 +104,18 @@ Page({
      */
     onUnload() {
         // 清理MobX绑定
-        if (this.rootStoreBindings) {
-            this.rootStoreBindings.destroyStoreBindings();
+        if (this.settingStoreBindings) {
+            this.settingStoreBindings.destroyStoreBindings();
         }
         if (this.userStoreBindings) {
             this.userStoreBindings.destroyStoreBindings();
         }
         if (this.soupStoreBindings) {
             this.soupStoreBindings.destroyStoreBindings();
-        }
-
-        // 清理交互管理器
-        if (this.interactionManager) {
-            this.interactionManager.destroy();
-            this.interactionManager = null;
+        }        // 清理手势管理器
+        if (this.gestureManager) {
+            this.gestureManager.destroy();
+            this.gestureManager = null;
         }
     },
 
@@ -261,8 +257,8 @@ Page({
      * 通过nav-bar组件转发的setting组件事件
      */
     onShowGuide() {
-        // 调用rootStore的toggleGuide方法显示引导层
-        rootStore.toggleGuide(true);
+        // 调用settingStore的toggleGuide方法显示引导层
+        settingStore.toggleGuide(true);
     },
 
     /**
@@ -270,7 +266,7 @@ Page({
      * 引导层组件的关闭事件
      */
     onCloseGuide() {
-        // 调用rootStore的toggleGuide方法隐藏引导层
+        // 调用settingStore的toggleGuide方法隐藏引导层
         this.toggleGuide(false);
     },
 
@@ -353,33 +349,35 @@ Page({
             duration: 2000,
         });
     },
-
-
-    // ===== 交互管理器相关 =====
+    // ===== 手势管理器相关 =====
     /**
-     * 初始化交互管理器
-     * 创建交互管理器实例并设置回调函数
+     * 初始化手势管理器
+     * 创建统一手势管理器实例并设置回调函数
      */
     initInteractionManager() {
-        // 创建交互管理器实例
-        this.interactionManager = createInteractionManager({
-            // 设置数据更新方法 - 直接传递页面的setData方法
+        // 创建统一手势管理器实例
+        this.gestureManager = createGestureManager({
+            // 启用滑动功能
+            enableSwipe: true,
+            enableBlurEffect: true,
+            enableBackgroundEffect: true,
+            enableDoubleTap: true,
+            
+            // 设置数据更新方法
             setData: this.setData.bind(this),
-            // 设置模糊效果更新方法 - 使用store中的方法
             setBlurAmount: this.setBlurAmount.bind(this),
-            // 回调函数 - 简化为直接调用页面方法
+            
+            // 滑动回调函数
             onSwipeLeft: () => this.switchSoup("next"),
             onSwipeRight: () => this.switchSoup("previous"),
             onDoubleTap: this.handleDoubleTap.bind(this),
         });
-    },
-
-    /**
+    },    /**
      * 触摸开始事件处理
      * @param {Object} e 触摸事件对象
      */
     handleTouchStart(e) {
-        this.interactionManager?.handleTouchStart(e, !this.data.soupLoading);
+        this.gestureManager?.handleTouchStart(e, { canInteract: !this.data.soupLoading });
     },
 
     /**
@@ -387,7 +385,7 @@ Page({
      * @param {Object} e 触摸事件对象
      */
     handleTouchMove(e) {
-        this.interactionManager?.handleTouchMove(e, !this.data.soupLoading);
+        this.gestureManager?.handleTouchMove(e, { canInteract: !this.data.soupLoading });
     },
 
     /**
@@ -395,6 +393,14 @@ Page({
      * @param {Object} e 触摸事件对象
      */
     handleTouchEnd(e) {
-        this.interactionManager?.handleTouchEnd(e, !this.data.soupLoading);
+        this.gestureManager?.handleTouchEnd(e, { canInteract: !this.data.soupLoading });
+    },
+
+    /**
+     * 检查是否可以进行交互
+     * @returns {boolean} 是否可以交互
+     */
+    canInteract() {
+        return !this.data.soupLoading;
     },
 });

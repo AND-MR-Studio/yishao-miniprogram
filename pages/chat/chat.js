@@ -4,7 +4,7 @@
  */
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { rootStore, chatStore, tipStore, CHAT_STATE, TIP_STATE, tipConfig } = require('../../stores/index');
+const { rootStore, chatStore, tipStore, settingStore, CHAT_STATE, TIP_STATE, tipConfig } = require('../../stores/index');
 const userService = require('../../service/userService');
 
 Page({
@@ -22,11 +22,17 @@ Page({
    */
   async onLoad(options) {
     try {
-      // 创建rootStore绑定 - 用于获取用户ID和引导层状态
+      // 创建rootStore绑定 - 用于获取用户ID
       this.rootStoreBindings = createStoreBindings(this, {
         store: rootStore,
-        fields: ['userId', 'isFirstVisit', 'showGuide'],
-        actions: ['toggleGuide'] // 使用新的统一方法
+        fields: ['userId']
+      });
+
+      // 创建settingStore绑定 - 用于引导层状态管理
+      this.settingStoreBindings = createStoreBindings(this, {
+        store: settingStore,
+        fields: ['showGuide'],
+        actions: ['toggleGuide']
       });
 
       // 创建chatStore绑定 - 管理聊天相关的所有状态
@@ -65,7 +71,7 @@ Page({
       }
 
       // 同步用户ID
-      await rootStore.syncUserInfo(); // 修改为直接调用 rootStore.syncUserInfo()
+      await rootStore.userStore.syncUserInfo();
 
       // 获取汤面数据并初始化 - 使用soupStore的方法
       const soupData = await rootStore.soupStore.fetchSoup(soupId, false);
@@ -132,6 +138,9 @@ Page({
     // 清理MobX绑定
     if (this.rootStoreBindings) {
       this.rootStoreBindings.destroyStoreBindings();
+    }
+    if (this.settingStoreBindings) {
+      this.settingStoreBindings.destroyStoreBindings();
     }
     if (this.chatStoreBindings) {
       this.chatStoreBindings.destroyStoreBindings();
@@ -418,8 +427,8 @@ Page({
    * 通过nav-bar组件转发的setting组件事件
    */
   onShowGuide() {
-    // 调用rootStore的toggleGuide方法显示引导层
-    rootStore.toggleGuide(true);
+    // 调用settingStore的toggleGuide方法显示引导层
+    settingStore.toggleGuide(true);
   },
 
   /**
@@ -427,7 +436,7 @@ Page({
    * 引导层组件的关闭事件
    */
   onCloseGuide() {
-    // 调用rootStore的toggleGuide方法隐藏引导层
+    // 调用settingStore的toggleGuide方法隐藏引导层
     this.toggleGuide(false);
   }
 
