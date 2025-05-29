@@ -3,7 +3,7 @@
  * 负责创建新的海龟汤内容
  */
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { uploadStore, userStore } = require('../../stores/index');
+const { uploadStore, userStore, settingStore } = require('../../stores/index');
 const { assets } = require('../../config/api');
 
 Page({
@@ -79,9 +79,7 @@ Page({
         'loadPublishedSoups',
         'checkDraft'
       ]
-    });
-
-    // 创建userStore绑定 - 用于获取用户信息和登录状态
+    });    // 创建userStore绑定 - 用于获取用户信息和登录状态
     this.userStoreBindings = createStoreBindings(this, {
       store: userStore,
       fields: [
@@ -91,6 +89,13 @@ Page({
       actions: [
         'syncUserInfo'
       ]
+    });
+
+    // 创建settingStore绑定 - 用于引导层管理
+    this.settingStoreBindings = createStoreBindings(this, {
+      store: settingStore,
+      fields: ['showGuide'], // 引导层显示状态
+      actions: []
     });
 
     // 加载已发布的汤
@@ -161,14 +166,16 @@ Page({
 
   /**
    * 生命周期函数--监听页面卸载
-   */
-  onUnload() {
+   */  onUnload() {
     // 解绑MobX Store
     if (this.uploadStoreBindings) {
       this.uploadStoreBindings.destroyStoreBindings();
     }
     if (this.userStoreBindings) {
       this.userStoreBindings.destroyStoreBindings();
+    }
+    if (this.settingStoreBindings) {
+      this.settingStoreBindings.destroyStoreBindings();
     }
   },
 
@@ -351,7 +358,6 @@ Page({
       });
     }
   },
-
   /**
    * 刷新页面数据
    * 当导航栏左侧按钮点击时触发
@@ -362,5 +368,23 @@ Page({
     this.loadData();
     // 检查是否有草稿
     this.checkDraft();
+  },
+
+  /**
+   * 处理显示引导事件
+   * 通过nav-bar组件转发的setting组件事件
+   */
+  onShowGuide() {
+    // 调用settingStore的toggleGuide方法显示引导层
+    settingStore.toggleGuide(true);
+  },
+
+  /**
+   * 处理关闭引导事件
+   * 引导层组件的关闭事件
+   */
+  onCloseGuide() {
+    // 调用settingStore的toggleGuide方法隐藏引导层
+    settingStore.toggleGuide(false);
   }
 })

@@ -19,6 +19,7 @@ module.exports = {
   tipStore: rootStore.tipStore,
   uploadStore: rootStore.uploadStore,
   userStore: rootStore.userStore, // 添加 userStore 的直接导出
+  settingStore: rootStore.settingStore, // 添加 settingStore 的直接导出
 
   // 导出常量
   CHAT_STATE,
