@@ -5,17 +5,8 @@
  *
  * 无状态设计：所有方法都接受必要的参数，不在服务中存储状态
  */
-const { dialogRequest } = require("../config/api");
+const dialogApiImpl = require("../api/dialogApiImpl");
 const soupService = require("./soupService");
-
-// 获取基础 URL
-const getBaseUrl = () => {
-  const app = getApp();
-  return app.globalData.config.ysUrl;
-};
-
-// 用于防止并发请求的简单锁
-let _isProcessingRequest = false;
 
 class DialogService {
   /**
@@ -70,44 +61,9 @@ class DialogService {
    * @returns {Promise<Object>} 回复消息的Promise
    */
   async sendMessage(params) {
-    // 防止重复请求
-    if (_isProcessingRequest) {
-      throw new Error("正在处理请求，请稍后再试");
-    }
-
-    _isProcessingRequest = true;
-
     try {
-      // 必要参数检查
-      if (!params.message) {
-        throw new Error("发送消息失败: 缺少消息内容");
-      }
-
-      if (!params.userId) {
-        throw new Error("发送消息失败: 缺少用户ID");
-      }
-
-      if (!params.dialogId) {
-        throw new Error("发送消息失败: 缺少对话ID");
-      }
-
-      // 获取用户消息ID
-      const messageId = params.messageId || `msg_${Date.now()}`;
-
-      // 构建请求URL
-      const url = `${getBaseUrl()}dialog/${params.dialogId}/send`;
-
-      // 发送请求到后端
-      const response = await dialogRequest({
-        url: url,
-        method: "POST",
-        data: {
-          userId: params.userId,
-          message: params.message,
-          messageId: messageId,
-          timestamp: Date.now(),
-        },
-      });
+      // 调用API实现层发送消息
+      const response = await dialogApiImpl.sendMessage(params);
 
       // 处理响应数据
       let replyContent = "";
@@ -135,9 +91,9 @@ class DialogService {
         dialogId: response.data?.dialogId || params.dialogId, // 返回对话ID，便于调用方更新
       };
     } catch (error) {
+      // 确保在错误情况下重置API层的请求锁
+      dialogApiImpl.resetRequestLock();
       throw error;
-    } finally {
-      _isProcessingRequest = false;
     }
   }
 
@@ -152,12 +108,8 @@ class DialogService {
     }
 
     try {
-      const url = `${getBaseUrl()}dialog/${dialogId}`;
-
-      const response = await dialogRequest({
-        url: url,
-        method: "GET",
-      });
+      // 调用API实现层获取对话记录
+      const response = await dialogApiImpl.fetchMessages(dialogId);
 
       // 检查响应格式
       if (!response || typeof response !== "object") {
@@ -241,10 +193,8 @@ class DialogService {
         throw new Error("获取对话失败: 无法获取汤面数据");
       }
 
-      const response = await dialogRequest({
-        url: api.dialog.get,
-        method: "GET",
-      });
+      // 调用API实现层获取用户对话
+      const response = await dialogApiImpl.getUserDialog(userId, soupId);
 
       if (!response.success) {
         throw new Error(response.error || "获取对话失败");
@@ -290,17 +240,8 @@ class DialogService {
     }
 
     try {
-      // 构建请求URL
-      const url = `${getBaseUrl()}dialog/chat-data`;
-
-      const response = await dialogRequest({
-        url: url,
-        method: "POST",
-        data: {
-          userId: userId,
-          soupId: soupId,
-        },
-      });
+      // 调用API实现层获取聊天数据
+      const response = await dialogApiImpl.getChatData(userId, soupId);
 
       if (!response.success) {
         throw new Error(response.error || "获取聊天数据失败");
@@ -344,17 +285,8 @@ class DialogService {
     }
 
     try {
-      // 构建请求URL
-      const url = `${getBaseUrl()}dialog/${dialogId}/save`;
-
-      const response = await dialogRequest({
-        url: url,
-        method: "POST",
-        data: {
-          userId: userId,
-          messages: messages,
-        },
-      });
+      // 调用API实现层保存对话记录
+      const response = await dialogApiImpl.saveDialogMessages(dialogId, userId, messages);
 
       if (!response.success) {
         throw new Error(response.error || "保存对话失败");

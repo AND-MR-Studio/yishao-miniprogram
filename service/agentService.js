@@ -3,13 +3,10 @@
  * 处理与Agent API的通信
  *
  * 无状态设计：所有方法都接受必要的参数，不在服务中存储状态
+ * 使用agentApiImpl接口层处理底层API调用
  */
-const { agentRequest } = require('../utils/request');
-const { api } = require('../config/api');
+const agentApiImpl = require('../api/agentApiImpl');
 const dialogService = require('./dialogService'); // 添加dialogService引用
-
-// 用于防止并发请求的简单锁
-let _isProcessingRequest = false;
 
 class AgentService {
 
@@ -24,13 +21,6 @@ class AgentService {
      * @returns {Promise<Object>} 回复消息的Promise
      */
     async sendAgent(params) {
-        // 防止重复请求
-        if (_isProcessingRequest) {
-            throw new Error('正在处理请求，请稍后再试');
-        }
-
-        _isProcessingRequest = true;
-
         try {
             // 必要参数检查
             if (!params.messages || !Array.isArray(params.messages)) {
@@ -58,24 +48,23 @@ class AgentService {
                 throw new Error('发送消息失败: 无效的汤面ID');
             }
 
-            // 构建请求数据
-            const requestData = {
+            // 构建API调用参数
+            const apiParams = {
                 messages: params.messages,
-                soupId: soupId
+                soupId: soupId,
+                userId: params.userId,
+                dialogId: params.dialogId,
+                saveToCloud: params.saveToCloud
             };
 
-            // 发送请求到Agent API
-            const response = await agentRequest({
-                url: api.agent.chat,
-                method: 'POST',
-                data: requestData
-            });
+            // 调用API接口层发送消息
+            const response = await agentApiImpl.sendMessage(apiParams);
 
             // 处理响应数据
             let replyContent = '';
             let replyId = `msg_${Date.now()}`;
 
-            if (Array.isArray(response) ) {
+            if (Array.isArray(response)) {
               replyContent = response[0].content || '';
             }
 
@@ -121,9 +110,9 @@ class AgentService {
             return replyMessage;
         } catch (error) {
             console.error('发送Agent消息失败:', error);
+            // 确保重置API层的请求锁
+            agentApiImpl.resetRequestLock();
             throw error;
-        } finally {
-            _isProcessingRequest = false;
         }
     }
 }

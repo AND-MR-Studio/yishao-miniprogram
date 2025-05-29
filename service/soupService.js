@@ -1,7 +1,7 @@
 /**
- * 海龟汤服务 - 前端调用封装
+ * 海龟汤服务 - 业务逻辑层
  * 提供符合RESTful规范的海龟汤数据操作
- * 遵循简洁设计原则，只提供必要的API接口
+ * 遵循简洁设计原则，只提供必要的业务逻辑
  *
  * 支持两种模式：
  * 1. 默认模式：只返回soupId（适合列表展示）
@@ -17,8 +17,8 @@
  * - 管理收藏和点赞状态
  * - 增加汤面阅读数
  */
-const {soupRequest, api} = require("../config/api");
-const {get, post} = require("../utils/request");
+const soupApiImpl = require("../api/soupApiImpl");
+
 
 const soupService = {
     /**
@@ -27,23 +27,13 @@ const soupService = {
      * @returns {Promise<Object>} 海龟汤ID或完整数据
      */
     async getSoup(soupId) {
-        try {
-            // todo: 这里有个问题，soupId会传入soupdata
-            // 原因是index onLoad处，随机获取的时候返回的是soupdata，而不是soupId
-            // 得全盘梳理下soupid和soupdata的传递关系
-            if (soupId && typeof soupId === "object") {
-                return soupId;
-            }
-
-            // 获取单个海龟汤
-            const response = await get("get_soup_by_id", {
-                url: api.soup.get(soupId),
-            });
-            return response ? response : null;
-        } catch (error) {
-            console.error("获取海龟汤失败:", error);
-            return null;
+        // 处理已经是对象的情况
+        if (soupId && typeof soupId === "object") {
+            return soupId;
         }
+        
+        // 调用API接口层获取汤面
+        return await soupApiImpl.getSoup(soupId);
     },
 
     /**
@@ -60,18 +50,8 @@ const soupService = {
             return null;
         }
 
-        try {
-            // 使用新的创建接口
-            const response = await post("create_soup", {
-                url: api.soup.create,
-                data: soupData,
-            });
-
-            return response || null;
-        } catch (error) {
-            console.error("创建海龟汤失败:", error);
-            return null;
-        }
+        // 调用API接口层创建汤面
+        return await soupApiImpl.createSoup(soupData);
     },
 
     /**
@@ -79,17 +59,8 @@ const soupService = {
      * @returns {Promise<Object>} 随机汤面数据
      * */
     async getRandomSoup() {
-        try {
-            // 直接使用随机海龟汤API
-            const response = await get("soup", {
-                url: api.soup.random,
-            });
-            // 根据新接口契约，直接返回soupId
-            return response ? response : null;
-        } catch (error) {
-            console.error("获取随机海龟汤失败:", error);
-            return null;
-        }
+        // 调用API接口层获取随机汤面
+        return await soupApiImpl.getRandomSoup();
     },
 
     /**
@@ -102,10 +73,12 @@ const soupService = {
         if (!soupId) {
             return {success: false, message: "缺少汤面ID"};
         }
+        
         try {
-            // 直接使用API，不依赖this或soupService
-            const url = isLike ? api.soup.like(soupId) : api.soup.unlike(soupId);
-            const response = await post("soup_status", {url: url});
+            // 根据操作类型调用不同的API接口
+            const response = isLike ? 
+                await soupApiImpl.likeSoup(soupId) : 
+                await soupApiImpl.unlikeSoup(soupId);
 
             // 确保返回格式正确
             if (response) {
@@ -138,10 +111,12 @@ const soupService = {
         if (!soupId) {
             return {success: false, message: "缺少汤面ID"};
         }
+        
         try {
-            // 直接使用API，不依赖this或soupService
-            const url = isFavorite ? api.soup.favorite(soupId) : api.soup.unfavorite(soupId);
-            const response = await post("soup_status", {url: url});
+            // 根据操作类型调用不同的API接口
+            const response = isFavorite ? 
+                await soupApiImpl.favoriteSoup(soupId) : 
+                await soupApiImpl.unfavoriteSoup(soupId);
 
             // 确保返回格式正确
             if (response) {
@@ -173,20 +148,15 @@ const soupService = {
         if (!soupId) {
             return null;
         }
-        // todo: 这里有个问题，soupId会传入soupdata
-        // 得全盘梳理下soupid和soupdata的传递关系
+        
+        // 处理传入对象的情况
         if (soupId && typeof soupId === "object" && !Array.isArray(soupId)) {
             soupId = soupId.id;
         }
-        try {
-            // 根据最新接口契约，使用 /:soupId/view 端点
-            const response = await await post("soup_view", {
-                url: api.soup.view(soupId),
-            });
-            return response ? response.views : null;
-        } catch (error) {
-            return null;
-        }
+        
+        // 调用API接口层增加浏览量
+        const response = await soupApiImpl.viewSoup(soupId);
+        return response ? response.views : null;
     },
 
     /**
@@ -199,7 +169,13 @@ const soupService = {
             return [];
         }
 
+        // 这个方法暂时保留原有实现，因为它依赖于用户服务API
+        // 未来可以考虑将其移动到userApiImpl中
         try {
+            // 使用旧的API调用方式，后续可以迁移到专门的userApiImpl
+            const {get} = require("../utils/request");
+            const {api} = require("../config/api");
+            
             const response = await get("user_created_soup", {
                 url: api.user.createdSoup,
                 data: {userId}
