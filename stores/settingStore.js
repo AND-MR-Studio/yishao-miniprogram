@@ -9,12 +9,6 @@
  */
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 
-// 设置存储键名常量
-const STORAGE_KEYS = {
-  FIRST_VISIT: 'hasVisitedSoupPage',
-  USER_SETTINGS: 'soupSettings'
-};
-
 // 默认设置配置
 const DEFAULT_SETTINGS = {
   soundOn: true,
@@ -74,11 +68,10 @@ class SettingStore {
   /**
    * 检查用户是否首次访问
    * 使用wx.getStorageSync检查本地存储中是否有首次访问标记
-   */
-  checkFirstVisit() {
+   */  checkFirstVisit() {
     try {
-      // 从本地存储中获取首次访问标记
-      const hasVisited = wx.getStorageSync(STORAGE_KEYS.FIRST_VISIT);
+      // 直接使用存储键名，简化代码
+      const hasVisited = wx.getStorageSync('hasVisitedSoupPage');
 
       // 如果没有访问记录，则设置为首次访问
       if (!hasVisited) {
@@ -107,11 +100,10 @@ class SettingStore {
     if (show) {
       // 显示引导层
       this.showGuide = true;
-      console.log('显示引导层');
-    } else {
+      console.log('显示引导层');    } else {
       // 隐藏引导层并保存访问记录
       try {
-        wx.setStorageSync(STORAGE_KEYS.FIRST_VISIT, true);
+        wx.setStorageSync('hasVisitedSoupPage', true);
         console.log('已保存访问记录');
       } catch (error) {
         console.error('保存访问记录失败:', error);
@@ -128,12 +120,11 @@ class SettingStore {
   /**
    * 加载用户设置
    * 从本地存储读取用户设置并更新状态
-   */
-  *loadSettings() {
+   */  *loadSettings() {
     try {
       this.setLoading('settings', true);
       
-      const settings = wx.getStorageSync(STORAGE_KEYS.USER_SETTINGS) || {};
+      const settings = wx.getStorageSync('soupSettings') || {};
       
       // 合并默认设置和用户设置
       this.soundOn = settings.soundOn ?? DEFAULT_SETTINGS.soundOn;
@@ -153,8 +144,7 @@ class SettingStore {
   /**
    * 保存用户设置
    * 将当前设置状态保存到本地存储
-   */
-  *saveSettings() {
+   */  *saveSettings() {
     try {
       this.setLoading('settings', true);
       
@@ -163,7 +153,7 @@ class SettingStore {
         vibrationOn: this.vibrationOn
       };
       
-      wx.setStorageSync(STORAGE_KEYS.USER_SETTINGS, settings);
+      wx.setStorageSync('soupSettings', settings);
       console.log('用户设置保存成功:', settings);
     } catch (error) {
       console.error('保存用户设置失败:', error);
@@ -247,6 +237,5 @@ class SettingStore {
 // 导出Store类
 module.exports = {
   SettingStoreClass: SettingStore,
-  STORAGE_KEYS,
   DEFAULT_SETTINGS
 };

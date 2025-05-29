@@ -5,7 +5,6 @@
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { rootStore, chatStore, tipStore, settingStore, CHAT_STATE, TIP_STATE, tipConfig } = require('../../stores/index');
-const userService = require('../../service/userService');
 
 Page({
   // ===== 页面数据 =====
@@ -21,11 +20,17 @@ Page({
    * @param {Object} options - 页面参数，包含soupId和可能的dialogId
    */
   async onLoad(options) {
-    try {
-      // 创建rootStore绑定 - 用于获取用户ID
+    try {      // 创建rootStore绑定 - 用于获取用户ID和userStore方法
       this.rootStoreBindings = createStoreBindings(this, {
         store: rootStore,
-        fields: ['userId']
+        fields: ['userId'],
+        actions: ['syncUserInfo']
+      });
+
+      // 创建userStore绑定 - 用于用户相关操作
+      this.userStoreBindings = createStoreBindings(this, {
+        store: rootStore.userStore,
+        actions: ['updateAnsweredSoup']
       });
 
       // 创建settingStore绑定 - 用于引导层状态管理
@@ -127,7 +132,6 @@ Page({
     // 页面加载完成时的处理逻辑
     // 不再需要注册事件监听器，使用组件事件绑定替代
   },
-
   /**
    * 页面卸载时执行
    * 清理资源
@@ -136,6 +140,9 @@ Page({
     // 清理MobX绑定
     if (this.rootStoreBindings) {
       this.rootStoreBindings.destroyStoreBindings();
+    }
+    if (this.userStoreBindings) {
+      this.userStoreBindings.destroyStoreBindings();
     }
     if (this.settingStoreBindings) {
       this.settingStoreBindings.destroyStoreBindings();
@@ -333,14 +340,11 @@ Page({
     if (!chatStore.canSendMessage) {
       this.showTip('请稍等', ['正在回复中，请稍候...'], 2000);
       return;
-    }
-
-    try {
-      // 更新用户回答过的汤记录
+    }    try {      // 更新用户回答过的汤记录 - 通过 userStore 而不是直接调用 userService
       try {
         const soupId = rootStore.soupStore.soupData ? rootStore.soupStore.soupData.id : '';
         if (soupId) {
-          await userService.updateAnsweredSoup(soupId);
+          await this.updateAnsweredSoup(soupId);
         }
       } catch (err) {
         console.error('更新用户回答汤记录失败:', err);

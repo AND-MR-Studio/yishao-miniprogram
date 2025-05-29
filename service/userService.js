@@ -181,6 +181,30 @@ async function updateSolvedSoup(soupId) {
   }
 }
 
+/**
+ * 更新用户回答过的汤
+ * @param {string} soupId - 汤ID
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+async function updateAnsweredSoup(soupId) {
+  if (!soupId) {
+    return { success: false, error: '汤ID为空' };
+  }
+
+  try {
+    const config = {
+      url: api.user.answeredSoup,
+      method: 'POST',
+      data: { soupId }
+    };
+
+    const res = await userRequest(config);
+    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新回答记录失败' };
+  } catch (error) {
+    return { success: false, error: '更新回答记录失败' };
+  }
+}
+
 module.exports = {
   getUserInfo,
   login,
@@ -188,5 +212,6 @@ module.exports = {
   updateUserInfo,
   updateFavoriteSoup,
   updateLikedSoup,
-  updateSolvedSoup
+  updateSolvedSoup,
+  updateAnsweredSoup
 };
