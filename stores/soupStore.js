@@ -49,16 +49,14 @@ class SoupStore {
             _fetchingId: false,
             rootStore: false,
         });
-    }
-
-    // 获取用户ID的计算属性
+    }    // 获取用户ID的计算属性 - 通过rootStore统一访问
     get userId() {
-        return this.rootStore?.userStore?.userId || '';
+        return this.rootStore?.userId || '';
     }
 
-    // 获取登录状态的计算属性
+    // 获取登录状态的计算属性 - 通过rootStore统一访问
     get isLoggedIn() {
-        return this.rootStore?.userStore?.isLoggedIn || false;
+        return this.rootStore?.isLoggedIn || false;
     }
 
     /**

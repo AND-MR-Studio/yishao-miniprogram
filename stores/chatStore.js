@@ -45,15 +45,14 @@ class ChatStore {
   get userId() {
     return this.rootStore?.userStore?.userId || '';
   }
-
-  // 从 soupStore 获取汤面数据的计算属性
+  // 从 rootStore 获取汤面数据的计算属性（统一数据访问）
   get soupData() {
-    return this.rootStore?.soupStore?.soupData || null;
+    return this.rootStore?.soupData || null;
   }
 
-  // 获取汤面ID的便捷方法（从soupData中获取）
+  // 获取汤面ID的便捷方法（从rootStore统一接口获取）
   get soupId() {
-    return this.soupData?.id || '';
+    return this.rootStore?.soupId || '';
   }
 
   // ===== 计算属性 =====
