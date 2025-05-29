@@ -65,18 +65,11 @@ const api = {
     byType: (type) => `${ysUrl}${paths.api.asset}type/${type}`,
     avatar: (id) => `${ysUrl}${paths.api.asset}avatar/${id}`,
     upload: `${ysUrl}${paths.api.asset}upload`
-  },
-
-  // 海龟汤服务
+  },  // 海龟汤服务
   soup: {
     base: `${memoryUrl}${paths.api.soup}`,
     random: `${memoryUrl}/api/soups/random`,
     get: (soupId) => `${memoryUrl}/api/soups/${soupId}`,
-    view: (soupId) => `${memoryUrl}/api/soups/${soupId}/view`,
-    like: (soupId) => `${memoryUrl}/api/soups/${soupId}/like`,
-    unlike: (soupId) => `${memoryUrl}/api/soups/${soupId}/unlike`,
-    favorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/favor`,
-    unfavorite: (soupId) => `${memoryUrl}/api/soups/${soupId}/unfavor`,
     create: `${memoryUrl}/api/soups/create`,
   },
 

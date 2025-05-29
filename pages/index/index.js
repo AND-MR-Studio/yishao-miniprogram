@@ -26,8 +26,7 @@ Page({
      * 页面加载时执行
      * 获取用户ID并加载汤面
      * @param {Object} options - 页面参数，可能包含soupId
-     */
-    async onLoad(options) {
+     */    async onLoad(options) {
         // 创建settingStore绑定 - 用于引导层状态管理
         this.settingStoreBindings = createStoreBindings(this, {
             store: settingStore,
@@ -49,6 +48,9 @@ Page({
             actions: ["toggleButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
         });
 
+        // 检查首次访问状态，必须在页面加载时执行
+        settingStore.checkFirstVisit();
+
         // 同步用户信息 - 确保获取最新的用户状态
         await this.syncUserInfo();
 
@@ -59,8 +61,7 @@ Page({
                 await soupStore.fetchSoup(options.soupId);
             } else {
                 // 获取随机汤面
-                await soupStore.getRandomSoup();
-            }
+                await soupStore.getRandomSoup();            }
 
             // 检查数据有效性
             if (!soupStore.soupData) {
@@ -68,8 +69,6 @@ Page({
                 this.showErrorToast("加载失败，请重试");
                 return;
             }
-
-            // 注意：不再需要调用viewSoup，已在fetchSoup中处理
         } catch (error) {
             console.error("加载汤面过程中发生错误:", error);
             this.showErrorToast("加载失败，请检查网络或稍后重试");
@@ -314,13 +313,11 @@ Page({
         wx.nextTick(() => {
             this.switchSoup(direction);
         });
-    },
-
-    /**
-     * 处理双击收藏事件
+    },    /**
+     * 处理双击点赞事件
      * 检查登录状态，未登录时显示登录弹窗
      */
-    async handleDoubleTap() {
+    async handleDoubleTapLike() {
         if (soupStore.soupData?.id) {
             // 检查用户是否已登录 - 使用userStore的isLoggedIn属性
             if (!this.data.isLoggedIn) {
@@ -332,10 +329,68 @@ Page({
                 return;
             }
 
-            // 用户已登录，直接调用 userStore 的便捷方法
-            await userStore.toggleFavorite(soupStore.soupData.id);
+            // 用户已登录，调用 userStore 的点赞方法
+            try {
+                const result = await userStore.toggleLike(soupStore.soupData.id);
+                
+                // 显示操作反馈
+                if (result && result.success) {
+                    wx.showToast({
+                        title: result.message,
+                        icon: 'none',
+                        duration: 1500
+                    });
+
+                    // 触发震动反馈
+                    if (wx.vibrateShort) {
+                        wx.vibrateShort();
+                    }
+                }
+            } catch (error) {
+                console.error('双击点赞失败:', error);
+            }
         }
     },
+
+    /**
+     * 处理长按收藏事件
+     * 检查登录状态，未登录时显示登录弹窗
+     */
+    async handleLongPressFavorite() {
+        if (soupStore.soupData?.id) {
+            // 检查用户是否已登录 - 使用userStore的isLoggedIn属性
+            if (!this.data.isLoggedIn) {
+                // 显示登录提示弹窗
+                const loginPopup = this.selectComponent("#loginPopup");
+                if (loginPopup) {
+                    loginPopup.show();
+                }
+                return;
+            }
+
+            // 用户已登录，调用 userStore 的收藏方法
+            try {
+                const result = await userStore.toggleFavorite(soupStore.soupData.id);
+                
+                // 显示操作反馈
+                if (result && result.success) {
+                    wx.showToast({
+                        title: result.message,
+                        icon: 'none',
+                        duration: 1500
+                    });
+
+                    // 触发震动反馈
+                    if (wx.vibrateShort) {
+                        wx.vibrateShort();
+                    }
+                }
+            } catch (error) {
+                console.error('长按收藏失败:', error);
+            }
+        }
+    },
+
 
     // ===== 辅助方法 =====
     /**
@@ -347,8 +402,23 @@ Page({
             title: message,
             icon: "none",
             duration: 2000,
-        });
+        });    },    // ===== 指南相关事件处理 =====
+    /**
+     * 显示指南层
+     * 通过settingStore统一管理指南状态
+     */
+    onShowGuide() {
+        settingStore.toggleGuide(true);
     },
+
+    /**
+     * 关闭指南层
+     * 通过settingStore统一管理指南状态
+     */
+    onCloseGuide() {
+        settingStore.toggleGuide(false);
+    },
+
     // ===== 手势管理器相关 =====
     /**
      * 初始化手势管理器
@@ -361,7 +431,10 @@ Page({
             enableSwipe: true,
             enableBlurEffect: true,
             enableBackgroundEffect: true,
+            
+            // 启用双击和长按功能
             enableDoubleTap: true,
+            enableLongPress: true,
             
             // 设置数据更新方法
             setData: this.setData.bind(this),
@@ -370,9 +443,14 @@ Page({
             // 滑动回调函数
             onSwipeLeft: () => this.switchSoup("next"),
             onSwipeRight: () => this.switchSoup("previous"),
-            onDoubleTap: this.handleDoubleTap.bind(this),
-        });
-    },    /**
+            
+            // 双击点赞回调函数
+            onDoubleTap: this.handleDoubleTapLike.bind(this),
+            
+            // 长按收藏回调函数
+            onLongPressStart: this.handleLongPressFavorite.bind(this),        });
+    },
+    /**
      * 触摸开始事件处理
      * @param {Object} e 触摸事件对象
      */

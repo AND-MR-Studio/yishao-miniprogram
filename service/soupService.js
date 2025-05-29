@@ -3,19 +3,15 @@
  * 提供符合RESTful规范的海龟汤数据操作
  * 遵循简洁设计原则，只提供必要的API接口
  *
- * 支持两种模式：
- * 1. 默认模式：只返回soupId（适合列表展示）
- * 2. 详情模式：返回完整汤面数据（适合快速滑动查看详情）
- *
  * 主要功能：
  * - 获取海龟汤（ID或完整数据）
- * - 批量获取海龟汤详情
  * - 创建海龟汤
- * - 批量删除海龟汤
- * - 获取相邻海龟汤（上一个或下一个）
  * - 获取随机海龟汤
- * - 管理收藏和点赞状态
- * - 增加汤面阅读数
+ * 
+ * 架构说明：
+ * - Service层专注API调用，不做状态管理
+ * - 所有用户相关操作移至 userService
+ * - 数据状态管理由对应的 Store 层处理
  */
 const {soupRequest, api} = require("../config/api");
 const {get, post} = require("../utils/request");
@@ -70,145 +66,23 @@ const soupService = {
             return response || null;
         } catch (error) {
             console.error("创建海龟汤失败:", error);
-            return null;
-        }
-    },
-
-    /**
-     * 获取随机海龟汤ID
+            return null;        }
+    },    /**
+     * 获取随机海龟汤 - Service层专注API调用
+     * 只负责API调用，返回原始数据，不做状态管理
      * @returns {Promise<Object>} 随机汤面数据
-     * */
+     */
     async getRandomSoup() {
         try {
-            // 直接使用随机海龟汤API
+            // 直接调用随机海龟汤API
             const response = await get("soup", {
                 url: api.soup.random,
             });
-            // 根据新接口契约，直接返回soupId
+            // 根据API约定，直接返回数据
             return response ? response : null;
         } catch (error) {
             console.error("获取随机海龟汤失败:", error);
             return null;
-        }
-    },
-
-    /**
-     * 点赞/取消点赞海龟汤
-     * @param {string} soupId 海龟汤ID
-     * @param {boolean} [isLike=true] 是否点赞，false表示取消点赞
-     * @returns {Promise<Object>} 点赞结果，包含likes数量
-     */
-    async likeSoup(soupId, isLike = true) {
-        if (!soupId) {
-            return {success: false, message: "缺少汤面ID"};
-        }
-        try {
-            // 直接使用API，不依赖this或soupService
-            const url = isLike ? api.soup.like(soupId) : api.soup.unlike(soupId);
-            const response = await post("soup_status", {url: url});
-
-            // 确保返回格式正确
-            if (response) {
-                return {
-                    success: true,
-                    likes: response.likes || 0,
-                    message: isLike ? "点赞成功" : "取消点赞成功"
-                };
-            } else {
-                return {
-                    success: false,
-                    message: "点赞操作失败，请重试"
-                };
-            }
-        } catch (error) {
-            return {
-                success: false,
-                message: "点赞操作失败: " + (error.message || "未知错误")
-            };
-        }
-    },
-
-    /**
-     * 收藏/取消收藏海龟汤
-     * @param {string} soupId 海龟汤ID
-     * @param {boolean} [isFavorite=true] 是否收藏，false表示取消收藏
-     * @returns {Promise<Object>} 结果，包含favorites数量
-     */
-    async favoriteSoup(soupId, isFavorite = true) {
-        if (!soupId) {
-            return {success: false, message: "缺少汤面ID"};
-        }
-        try {
-            // 直接使用API，不依赖this或soupService
-            const url = isFavorite ? api.soup.favorite(soupId) : api.soup.unfavorite(soupId);
-            const response = await post("soup_status", {url: url});
-
-            // 确保返回格式正确
-            if (response) {
-                return {
-                    success: true,
-                    favorites: response.favorites || 0,
-                    message: isFavorite ? "收藏成功" : "取消收藏成功"
-                };
-            } else {
-                return {
-                    success: false,
-                    message: "收藏操作失败，请重试"
-                };
-            }
-        } catch (error) {
-            return {
-                success: false,
-                message: "收藏操作失败: " + (error.message || "未知错误")
-            };
-        }
-    },
-
-    /**
-     * 增加汤面阅读数
-     * @param {string} soupId 海龟汤ID
-     * @returns {Promise<Object>} 结果，包含更新后的阅读数
-     */
-    async viewSoup(soupId) {
-        if (!soupId) {
-            return null;
-        }
-        // todo: 这里有个问题，soupId会传入soupdata
-        // 得全盘梳理下soupid和soupdata的传递关系
-        if (soupId && typeof soupId === "object" && !Array.isArray(soupId)) {
-            soupId = soupId.id;
-        }
-        try {
-            // 根据最新接口契约，使用 /:soupId/view 端点
-            const response = await await post("soup_view", {
-                url: api.soup.view(soupId),
-            });
-            return response ? response.views : null;
-        } catch (error) {
-            return null;
-        }
-    },
-
-    /**
-     * 获取用户创建的海龟汤列表
-     * @param {string} userId 用户ID
-     * @returns {Promise<Array>} 用户创建的海龟汤列表
-     */
-    async getUserCreatedSoups(userId) {
-        if (!userId) {
-            return [];
-        }
-
-        try {
-            const response = await get("user_created_soup", {
-                url: api.user.createdSoup,
-                data: {userId}
-            });
-
-            return response && Array.isArray(response) ? response : [];
-        } catch (error) {
-            console.error("获取用户创建的汤失败:", error);
-            return [];
         }
     },
 };

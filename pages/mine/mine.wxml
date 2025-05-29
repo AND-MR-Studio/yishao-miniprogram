@@ -1,11 +1,11 @@
 <!--pages/mine/mine.wxml-->
 <view class="page">
-  <view class="page-background"></view>
-  <!-- 导航栏 -->
+  <view class="page-background"></view>  <!-- 导航栏 -->
   <nav-bar
     title="个人中心"
     isTabBarPage="{{true}}"
     bind:refreshPage="onRefreshPage"
+    bind:showguide="onShowGuide"
   />
 
   <view class="container">
@@ -108,7 +108,6 @@
       </view>
     </view>
   </view>
-
   <!-- 汤面列表弹窗 -->
   <soup-list-modal
     visible="{{showSoupListModal}}"
@@ -116,4 +115,10 @@
     userInfo="{{userInfo}}"
     bind:close="closeSoupListModal"
   ></soup-list-modal>
+
+  <!-- 新用户引导层组件 -->
+  <guide-overlay
+    show="{{showGuide}}"
+    bind:close="onCloseGuide">
+  </guide-overlay>
 </view>

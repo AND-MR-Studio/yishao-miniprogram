@@ -71,10 +71,8 @@ Page({
       }
 
       // 同步用户ID
-      await rootStore.userStore.syncUserInfo();
-
-      // 获取汤面数据并初始化 - 使用soupStore的方法
-      const soupData = await rootStore.soupStore.fetchSoup(soupId, false);
+      await rootStore.userStore.syncUserInfo();      // 获取汤面数据并初始化 - 使用soupStore的方法
+      const soupData = await rootStore.soupStore.fetchSoup(soupId);
 
       if (!soupData) {
         throw new Error('获取汤面数据失败');
@@ -430,14 +428,13 @@ Page({
     // 调用settingStore的toggleGuide方法显示引导层
     settingStore.toggleGuide(true);
   },
-
   /**
    * 处理关闭引导事件
    * 引导层组件的关闭事件
    */
   onCloseGuide() {
     // 调用settingStore的toggleGuide方法隐藏引导层
-    this.toggleGuide(false);
+    settingStore.toggleGuide(false);
   }
 
 });

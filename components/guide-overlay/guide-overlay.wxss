@@ -1,19 +1,24 @@
-/* 新用户引导层样式 - 半透明设计 */
+/**
+ * 新用户引导层样式
+ * 使用主题色系统，简化结构，去除多余嵌套
+ */
+
+/* ===== 引导层容器 ===== */
 .guide-overlay {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.3); /* 降低背景透明度 */
+  background-color: var(--glass-bg-dark);
+  backdrop-filter: var(--glass-blur);
   z-index: 1000;
   display: flex;
   justify-content: center;
   align-items: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease;
-  backdrop-filter: blur(2px); /* 减少模糊效果 */
+  transition: opacity var(--transition-duration) ease;
 }
 
 .guide-overlay.show {
@@ -21,108 +26,150 @@
   pointer-events: auto;
 }
 
-/* 引导内容容器 - 调整为不完全遮挡内容 */
+/* ===== 引导内容区域 ===== */
 .guide-content {
   width: 90%;
   max-width: 600rpx;
+  position: absolute;
+  bottom: 200rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 30rpx; /* 减小间距以容纳更多内容 */
-  padding: 30rpx;
-  position: absolute; /* 使用绝对定位 */
-  bottom: 200rpx; /* 调整位置，确保能看到所有引导项 */
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
 }
 
-/* 引导项目通用样式 */
+/* ===== 引导项通用样式 ===== */
 .guide-item {
+  width: 100%;
+  max-width: 500rpx;
+  height: 180rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between; /* 均匀分布内容 */
-  gap: 15rpx; /* 减小内部间距 */
-  background: rgba(0, 0, 0, 0.8); /* 增加背景不透明度，提高可读性 */
-  border-radius: 20rpx;
-  padding: 15rpx 20rpx; /* 减小上下内边距 */
-  border: 1px solid rgb(86, 44, 239);
-  width: 100%;
-  max-width: 500rpx; /* 限制最大宽度 */
-  height: 180rpx; /* 设置固定高度 */
-  box-sizing: border-box; /* 确保内边距包含在高度内 */
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--glass-bg-dark);
+  border: var(--border-width-thin) solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  box-sizing: border-box;
 }
 
-/* 引导文字样式 */
+/* ===== 引导文字 ===== */
 .guide-text {
-  font-size: 28rpx; /* 减小字体大小 */
-  color: rgba(255, 255, 255, 0.9);
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
   text-align: center;
-  letter-spacing: 1rpx; /* 减小字间距 */
-  height: 40rpx; /* 固定高度 */
-  line-height: 40rpx; /* 与高度一致，确保垂直居中 */
-  margin: 10rpx 0; /* 统一外边距 */
+  letter-spacing: var(--letter-spacing-normal);
+  height: 40rpx;
+  line-height: 40rpx;
+  margin: var(--spacing-xs) 0;
 }
 
-/* 手型指示器容器 */
-.hand-container {
-  position: relative;
-  width: 80rpx; /* 减小尺寸 */
-  height: 80rpx; /* 减小尺寸 */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* 手型指示器图片 */
-.hand-indicator {
-  width: 100%;
-  height: 100%;
-  animation: hand-swipe 2s infinite ease-in-out;
-  filter: drop-shadow(0 0 5rpx rgba(92, 232, 33, 0.7));
-}
-
-/* 手型指示器左右滑动动画 */
-@keyframes hand-swipe {
-  0%, 100% {
-    transform: translateX(-40rpx) rotate(0deg);
-    opacity: 0.7;
-  }
-  25% {
-    transform: translateX(0) rotate(0deg);
-    opacity: 1;
-  }
-  50% {
-    transform: translateX(40rpx) rotate(0deg);
-    opacity: 0.7;
-  }
-  75% {
-    transform: translateX(0) rotate(0deg);
-    opacity: 1;
-  }
-}
-
-/* 双击指示器样式 */
-.tap-indicator {
+/* ===== 指示器容器通用样式 ===== */
+.hand-container,
+.tap-indicator,
+.press-indicator {
   position: relative;
   width: 80rpx;
   height: 80rpx;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0; /* 确保没有外边距 */
 }
 
-/* 双击圆圈动画 */
+/* ===== 手型指示器 ===== */
+.hand-indicator {
+  width: 100%;
+  height: 100%;
+  animation: hand-swipe 2s infinite ease-in-out;
+  filter: drop-shadow(0 0 5rpx var(--color-accent));
+}
+
+/* ===== 双击指示器 ===== */
 .tap-circle {
   position: absolute;
   width: 60rpx;
   height: 60rpx;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: rgba(92, 232, 33, 0.2);
-  border: 2rpx solid rgba(92, 232, 33, 0.5);
+  border: var(--border-width-normal) solid var(--color-accent);
   animation: double-tap 2s infinite;
 }
 
-/* 双击动画 */
+.tap-circle.tap-like {
+  background: rgba(92, 232, 33, 0.2);
+  border-color: var(--color-accent);
+  animation: double-tap-like 2s infinite;
+}
+
+/* ===== 长按指示器 ===== */
+.press-finger {
+  position: absolute;
+  width: 40rpx;
+  height: 40rpx;
+  border-radius: var(--radius-circle);
+  background: var(--color-text-primary);
+  box-shadow: var(--shadow-md);
+  z-index: 2;
+  animation: press-finger 2s infinite;
+}
+
+.press-finger.press-favorite {
+  background: var(--color-warning);
+  box-shadow: 0 0 10rpx var(--color-warning);
+  animation: press-finger-favorite 2s infinite;
+}
+
+.press-ripple {
+  position: absolute;
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: var(--radius-circle);
+  background: transparent;
+  border: var(--border-width-normal) solid var(--color-accent);
+  z-index: 1;
+  animation: press-ripple 2s infinite;
+}
+
+/* ===== 关闭按钮 ===== */
+.guide-close-btn {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-sm) 50rpx;
+  background: var(--color-primary);
+  border-radius: 50rpx;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+  text-align: center;
+  transition: all var(--transition-duration) ease;
+}
+
+.guide-close-btn:active {
+  transform: scale(0.95);
+  background: var(--color-primary-dark);
+  box-shadow: var(--glow-primary);
+}
+
+/* ===== 动画效果 ===== */
+
+/* 手型滑动动画 */
+@keyframes hand-swipe {
+  0%, 100% {
+    transform: translateX(-40rpx);
+    opacity: 0.7;
+  }
+  25%, 75% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateX(40rpx);
+    opacity: 0.7;
+  }
+}
+
+/* 双击通用动画 */
 @keyframes double-tap {
   0%, 100% {
     transform: scale(1);
@@ -146,39 +193,30 @@
   }
 }
 
-/* 长按指示器样式 */
-.press-indicator {
-  position: relative;
-  width: 80rpx;
-  height: 80rpx;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0; /* 确保没有外边距 */
-}
-
-/* 长按手指样式 */
-.press-finger {
-  position: absolute;
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 10rpx rgba(255, 255, 255, 0.5);
-  z-index: 2;
-  animation: press-finger 2s infinite;
-}
-
-/* 长按波纹效果 */
-.press-ripple {
-  position: absolute;
-  width: 60rpx;
-  height: 60rpx;
-  border-radius: 50%;
-  background: transparent;
-  border: 2rpx solid rgba(92, 232, 33, 0.5);
-  z-index: 1;
-  animation: press-ripple 2s infinite;
+/* 双击点赞动画 */
+@keyframes double-tap-like {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  10%, 40% {
+    transform: scale(1.2);
+    opacity: 0.8;
+    box-shadow: var(--glow-accent);
+  }
+  15%, 35% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  60%, 90% {
+    transform: scale(1.2);
+    opacity: 0.8;
+    box-shadow: var(--glow-accent);
+  }
+  65%, 85% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
 }
 
 /* 长按手指动画 */
@@ -190,6 +228,19 @@
   50% {
     transform: scale(0.9);
     opacity: 1;
+  }
+}
+
+/* 长按收藏手指动画 */
+@keyframes press-finger-favorite {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(0.9);
+    opacity: 1;
+    box-shadow: 0 0 15rpx var(--color-warning);
   }
 }
 
@@ -213,24 +264,4 @@
     transform: scale(2);
     opacity: 0;
   }
-}
-
-
-
-/* 关闭按钮样式 */
-.guide-close-btn {
-  margin-top: 15rpx; /* 减小上边距 */
-  padding: 15rpx 50rpx; /* 减小内边距 */
-  background: var(--color-primary);
-  border-radius: 50rpx;
-  color: white;
-  font-size: 26rpx; /* 减小字体大小 */
-  text-align: center;
-  transition: all 0.3s ease;
-}
-
-.guide-close-btn:active {
-  transform: scale(0.95);
-  background: rgba(87, 44, 239, 0.5);
-  box-shadow: 0 0 20rpx rgba(87, 44, 239, 0.6);
 }

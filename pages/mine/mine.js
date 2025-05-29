@@ -2,8 +2,8 @@
 
 // 引入API模块
 const api = require('../../config/api');
-// 引入userStore 和 mobx-miniprogram-bindings
-const { userStore } = require('../../stores/index');
+// 引入 stores 和 mobx-miniprogram-bindings
+const { userStore, settingStore } = require('../../stores/index');
 const { createStoreBindings, destroyStoreBindings } = require('mobx-miniprogram-bindings');
 
 Page({
@@ -31,8 +31,7 @@ Page({
   },
   /**
    * 生命周期函数--监听页面加载
-   */
-  async onLoad() {
+   */  async onLoad() {
     // 创建userStore绑定 - 直接绑定userStore，符合新的架构模式
     this.userStoreBindings = createStoreBindings(this, {
       store: userStore,
@@ -55,6 +54,13 @@ Page({
         "updateAvatar",       // 更新头像
         "updateUserProfile"   // 更新用户资料
       ]
+    });
+
+    // 创建settingStore绑定 - 用于引导层管理
+    this.settingStoreBindings = createStoreBindings(this, {
+      store: settingStore,
+      fields: ['showGuide'], // 引导层显示状态
+      actions: []
     });
   },
 
@@ -494,7 +500,6 @@ Page({
   handleBannerTap(event) {
     console.log('Banner 点击事件:', event.detail);
   },
-
   /**
    * 导航到关于页面
    */
@@ -513,12 +518,32 @@ Page({
   },
 
   /**
-   * 生命周期函数--监听页面卸载
+   * 处理显示引导事件
+   * 通过nav-bar组件转发的setting组件事件
    */
-  onUnload() {
+  onShowGuide() {
+    // 调用settingStore的toggleGuide方法显示引导层
+    settingStore.toggleGuide(true);
+  },
+
+  /**
+   * 处理关闭引导事件
+   * 引导层组件的关闭事件
+   */
+  onCloseGuide() {
+    // 调用settingStore的toggleGuide方法隐藏引导层
+    settingStore.toggleGuide(false);
+  },
+
+  /**
+   * 生命周期函数--监听页面卸载
+   */  onUnload() {
     // 销毁store绑定实例，避免内存泄漏
     if (this.userStoreBindings) {
       destroyStoreBindings(this, this.userStoreBindings);
+    }
+    if (this.settingStoreBindings) {
+      destroyStoreBindings(this, this.settingStoreBindings);
     }
   },
 
