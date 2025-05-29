@@ -150,30 +150,10 @@ async function updateAnsweredSoup(soupId) {
   }
 
   try {
-    const config = {
-      url: api.user.answeredSoup,
-      method: 'POST',
-      data: { soupId }
-    };
-
-    const res = await userRequest(config);
+    const res = await userApiImpl.updateAnsweredSoup(soupId);
     return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新回答记录失败' };
   } catch (error) {
     return { success: false, error: '更新回答记录失败' };
-  }
-}
-
-/**
- * 获取用户创建的汤列表
- * @returns {Promise<{success: boolean, data?: any, error?: string}>}
- */
-async function getUserCreatedSoups() {
-  try {
-    // 调用API实现层获取用户创建的汤列表
-    const res = await userApiImpl.getUserCreatedSoups();
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '获取用户创建的汤列表失败' };
-  } catch (error) {
-    return { success: false, error: '获取用户创建的汤列表失败' };
   }
 }
 
@@ -184,8 +164,6 @@ module.exports = {
   updateUserInfo,
   updateFavoriteSoup,
   updateLikedSoup,
-  updateSolvedSoup,
-  getUserCreatedSoups
   updateSolvedSoup,
   updateAnsweredSoup
 };

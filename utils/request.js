@@ -4,37 +4,33 @@
 
 /**
  * 服务特定的GET请求方法
- * @param {string} service - 服务名称
- * @param {string} url - 请求地址
- * @param {Object} [data] - 请求参数
- * @param {Object} [header] - 请求头
  * @returns {Promise} 返回Promise对象
+ * @param mark
+ * @param param
  */
-const get = (mark, getOptions) => {
+const get = (mark, param) => {
   return request({
     service: mark,
-    url: getOptions.url,
+    url: param.url,
     method: "GET",
-    data: getOptions.data,
-    header: getOptions.header,
+    data: param.data,
+    header: param.header,
   });
 };
 
 /**
  * 服务特定的POST请求方法
  * @param {string} mark - 服务名称
- * @param {string} url - 请求地址
- * @param {Object} [data] - 请求数据
- * @param {Object} [header] - 请求头
+ * @param param
  * @returns {Promise} 返回Promise对象
  */
-const post = (mark, postOptions) => {
+const post = (mark, param) => {
   return request({
     service: mark,
-    url: postOptions.url,
+    url: param.url,
     method: "POST",
-    data: postOptions.data,
-    header: postOptions.header,
+    data: param.data,
+    header: param.header,
   });
 };
 
@@ -109,53 +105,6 @@ const request = (options) => {
   });
 };
 
-/**
- * 汤面服务专用请求方法
- * @param {Object} options - 请求配置
- * @returns {Promise} 返回Promise对象
- */
-const soupRequest = (options) => {
-  return request({
-    ...options,
-    service: "soup",
-  });
-};
-
-/**
- * 一勺Agent服务专用请求方法
- * @param {Object} options - 请求配置
- * @returns {Promise} 返回Promise对象
- */
-const agentRequest = (options) => {
-  return request({
-    ...options,
-    service: "agent",
-  });
-};
-
-/**
- * 对话服务专用请求方法
- * @param {Object} options - 请求配置
- * @returns {Promise} 返回Promise对象
- */
-const dialogRequest = (options) => {
-  return request({
-    ...options,
-    service: "dialog",
-  });
-};
-
-/**
- * 用户服务专用请求方法
- * @param {Object} options - 请求配置
- * @returns {Promise} 返回Promise对象
- */
-const userRequest = (options) => {
-  return request({
-    ...options,
-    service: "user",
-  });
-};
 
 /**
  * 开放请求方法（不需要身份验证）
@@ -256,18 +205,6 @@ const uploadFile = (options) => {
 };
 
 /**
- * 资源服务专用请求方法
- * @param {Object} options - 请求配置
- * @returns {Promise} 返回Promise对象
- */
-const assetRequest = (options) => {
-  return request({
-    ...options,
-    service: "asset",
-  });
-};
-
-/**
  * 资源服务开放请求方法（不需要身份验证）
  * @param {Object} options - 请求配置
  * @returns {Promise} 返回Promise对象
@@ -281,11 +218,6 @@ const assetRequestOpen = (options) => {
 module.exports = {
   request,
   requestOpen,
-  soupRequest,
-  dialogRequest,
-  userRequest,
-  agentRequest,
-  assetRequest,
   assetRequestOpen,
   uploadFile,
   get,

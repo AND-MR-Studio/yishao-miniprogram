@@ -9,18 +9,6 @@ const ysUrl = App.api.url.ysUrl;
 const memoryUrl = App.api.url.memory;
 const assetsBaseUrl = App.api.url.assetsBaseUrl;
 
-const {
-  request,
-  requestOpen,
-  soupRequest,
-  dialogRequest,
-  userRequest,
-  assetRequest,
-  assetRequestOpen,
-  uploadFile,
-  agentRequest
-} = require('../utils/request');
-
 // 基础路径
 const paths = {
   // API路径
@@ -139,16 +127,6 @@ const assets = {
 };
 
 module.exports = {
-  // 导出请求方法
-  request,
-  requestOpen,
-  soupRequest,
-  dialogRequest,
-  userRequest,
-  assetRequest,
-  assetRequestOpen,
-  uploadFile,
-  agentRequest,
 
   // 导出基础URL
   baseUrl,
