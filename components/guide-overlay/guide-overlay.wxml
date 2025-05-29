@@ -8,13 +8,20 @@
       <view class="hand-container">
         <image class="hand-indicator" src="/static/images/upward.png" mode="aspectFit"></image>
       </view>
+    </view>    <!-- 双击点赞提示 -->
+    <view class="guide-item double-tap-guide">
+      <view class="guide-text">双击点赞喜欢的汤面</view>
+      <view class="tap-indicator">
+        <view class="tap-circle tap-like"></view>
+      </view>
     </view>
 
-    <!-- 双击收藏提示 -->
-    <view class="guide-item double-tap-guide">
-      <view class="guide-text">双击收藏喜欢的汤面</view>
-      <view class="tap-indicator">
-        <view class="tap-circle"></view>
+    <!-- 长按收藏提示 -->
+    <view class="guide-item long-press-guide">
+      <view class="guide-text">长按收藏喜欢的汤面</view>
+      <view class="press-indicator">
+        <view class="press-finger press-favorite"></view>
+        <view class="press-ripple"></view>
       </view>
     </view>
 

@@ -68,15 +68,14 @@ class UploadStore {
     // 检查是否有草稿
     this.checkDraft();
   }
-
-  // 获取用户ID的计算属性
+  // 获取用户ID的计算属性 - 通过rootStore统一访问
   get userId() {
-    return this.rootStore?.userStore?.userId || '';
+    return this.rootStore?.userId || '';
   }
 
-  // 获取登录状态的计算属性
+  // 获取登录状态的计算属性 - 通过rootStore统一访问
   get isLoggedIn() {
-    return this.rootStore?.userStore?.isLoggedIn || false;
+    return this.rootStore?.isLoggedIn || false;
   }
 
   // ===== Computed属性 - 优化后使用独立字段 =====
@@ -194,53 +193,36 @@ class UploadStore {
     // 清除标签错误
     this.tagsError = '';
   }
-
   /**
-   * 验证表单 - 优化版本，直接操作独立属性
+   * 基础表单验证 - 简化版本，仅检查必填项
    * @returns {boolean} 表单是否有效
    */
   validateForm() {
     let isValid = true;
 
-    // 验证标题
+    // 基础验证：检查必填项
     if (!this.title.trim()) {
       this.titleError = '请输入标题';
       isValid = false;
-    } else if (this.title.length > 15) {
-      this.titleError = '标题不能超过15个字符';
+    } else if (this.title.length > 50) {
+      this.titleError = '标题过长';
       isValid = false;
     } else {
       this.titleError = '';
     }
 
-    // 验证汤面内容
     if (!this.content.trim()) {
       this.contentError = '请输入汤面内容';
-      isValid = false;
-    } else if (this.content.length > 100) {
-      this.contentError = '汤面内容不能超过100个字符';
       isValid = false;
     } else {
       this.contentError = '';
     }
 
-    // 验证汤底内容
     if (!this.truth.trim()) {
       this.truthError = '请输入汤底内容';
       isValid = false;
-    } else if (this.truth.length > 500) {
-      this.truthError = '汤底内容不能超过500个字符';
-      isValid = false;
     } else {
       this.truthError = '';
-    }
-
-    // 验证标签
-    if (this.tags.length > 3) {
-      this.tagsError = '最多选择3个标签';
-      isValid = false;
-    } else {
-      this.tagsError = '';
     }
 
     return isValid;
@@ -342,21 +324,22 @@ class UploadStore {
   }
 
 
-
   /**
-   * 提交表单创建海龟汤
+   * 提交表单 - 简化版本，纯接口调用
    * @returns {Promise<Object>} 创建结果
    */
   *submitForm() {
-    // 表单验证
     if (!this.validateForm()) {
       return { success: false, message: '请完善表单信息' };
+    }
+
+    if (!this.isLoggedIn) {
+      return { success: false, message: '请先登录' };
     }
 
     try {
       this.isSubmitting = true;
 
-      // 准备提交数据 - 使用独立属性
       const soupData = {
         title: this.title.trim(),
         soup_surface: this.content.trim(),
@@ -364,52 +347,49 @@ class UploadStore {
         tags: this.tags
       };
 
-      // 调用创建接口
       const response = yield soupService.createSoup(soupData);
-
-      if (!response) {
-        throw new Error('创建失败，请稍后重试');
+      
+      if (!response?.success) {
+        return { success: false, message: response?.message || '创建失败' };
       }
 
-      // 重置表单
+      // 成功后重置表单
       this.resetForm();
-
-      // 清除草稿
       this.clearDraft();
-
-      // 加载已发布的汤
-      yield this.loadPublishedSoups();
 
       return {
         success: true,
         message: '创建成功',
-        soupId: response.soupId || response.id
+        data: response.data
       };
     } catch (error) {
-      console.error('创建海龟汤失败:', error);
-      return {
-        success: false,
-        message: '创建失败: ' + (error.message || '未知错误')
-      };
+      console.error('创建失败:', error);
+      return { success: false, message: '创建失败，请重试' };
     } finally {
       this.isSubmitting = false;
     }
-  }
-
-  /**
-   * 加载已发布的汤
+  }  /**
+   * 加载已发布的汤 - 优化版本，直接从 userInfo 获取
    */
   *loadPublishedSoups() {
     try {
-      // 调用API获取用户创建的汤
-      if (!this.userId) {
+      // 检查登录状态
+      if (!this.isLoggedIn) {
         this.publishedSoups = [];
         return [];
       }
 
-      // 调用真实API获取用户创建的汤
-      const response = yield soupService.getUserCreatedSoups(this.userId);
-      this.publishedSoups = response && Array.isArray(response) ? response : [];
+      // 确保用户信息是最新的
+      yield this.rootStore.userStore.syncUserInfo();
+      
+      // 直接从 userInfo 获取创建的汤列表
+      const userInfo = this.rootStore.userStore.userInfo;
+      if (userInfo && Array.isArray(userInfo.createSoups)) {
+        this.publishedSoups = userInfo.createSoups;
+      } else {
+        this.publishedSoups = [];
+      }
+      
       return this.publishedSoups;
     } catch (error) {
       console.error('加载已发布的汤失败:', error);

@@ -4,8 +4,7 @@
  */
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { rootStore, chatStore, tipStore, CHAT_STATE, TIP_STATE, tipConfig } = require('../../stores/index');
-const userService = require('../../service/userService');
+const { rootStore, chatStore, tipStore, settingStore, CHAT_STATE, TIP_STATE, tipConfig } = require('../../stores/index');
 
 Page({
   // ===== 页面数据 =====
@@ -21,12 +20,24 @@ Page({
    * @param {Object} options - 页面参数，包含soupId和可能的dialogId
    */
   async onLoad(options) {
-    try {
-      // 创建rootStore绑定 - 用于获取用户ID和引导层状态
+    try {      // 创建rootStore绑定 - 用于获取用户ID和userStore方法
       this.rootStoreBindings = createStoreBindings(this, {
         store: rootStore,
-        fields: ['userId', 'isFirstVisit', 'showGuide'],
-        actions: ['toggleGuide'] // 使用新的统一方法
+        fields: ['userId'],
+        actions: ['syncUserInfo']
+      });
+
+      // 创建userStore绑定 - 用于用户相关操作
+      this.userStoreBindings = createStoreBindings(this, {
+        store: rootStore.userStore,
+        actions: ['updateAnsweredSoup']
+      });
+
+      // 创建settingStore绑定 - 用于引导层状态管理
+      this.settingStoreBindings = createStoreBindings(this, {
+        store: settingStore,
+        fields: ['showGuide'],
+        actions: ['toggleGuide']
       });
 
       // 创建chatStore绑定 - 管理聊天相关的所有状态
@@ -65,10 +76,8 @@ Page({
       }
 
       // 同步用户ID
-      await rootStore.syncUserInfo(); // 修改为直接调用 rootStore.syncUserInfo()
-
-      // 获取汤面数据并初始化 - 使用soupStore的方法
-      const soupData = await rootStore.soupStore.fetchSoup(soupId, false);
+      await rootStore.userStore.syncUserInfo();      // 获取汤面数据并初始化 - 使用soupStore的方法
+      const soupData = await rootStore.soupStore.fetchSoup(soupId);
 
       if (!soupData) {
         throw new Error('获取汤面数据失败');
@@ -123,7 +132,6 @@ Page({
     // 页面加载完成时的处理逻辑
     // 不再需要注册事件监听器，使用组件事件绑定替代
   },
-
   /**
    * 页面卸载时执行
    * 清理资源
@@ -132,6 +140,12 @@ Page({
     // 清理MobX绑定
     if (this.rootStoreBindings) {
       this.rootStoreBindings.destroyStoreBindings();
+    }
+    if (this.userStoreBindings) {
+      this.userStoreBindings.destroyStoreBindings();
+    }
+    if (this.settingStoreBindings) {
+      this.settingStoreBindings.destroyStoreBindings();
     }
     if (this.chatStoreBindings) {
       this.chatStoreBindings.destroyStoreBindings();
@@ -326,14 +340,11 @@ Page({
     if (!chatStore.canSendMessage) {
       this.showTip('请稍等', ['正在回复中，请稍候...'], 2000);
       return;
-    }
-
-    try {
-      // 更新用户回答过的汤记录
+    }    try {      // 更新用户回答过的汤记录 - 通过 userStore 而不是直接调用 userService
       try {
         const soupId = rootStore.soupStore.soupData ? rootStore.soupStore.soupData.id : '';
         if (soupId) {
-          await userService.updateAnsweredSoup(soupId);
+          await this.updateAnsweredSoup(soupId);
         }
       } catch (err) {
         console.error('更新用户回答汤记录失败:', err);
@@ -418,17 +429,16 @@ Page({
    * 通过nav-bar组件转发的setting组件事件
    */
   onShowGuide() {
-    // 调用rootStore的toggleGuide方法显示引导层
-    rootStore.toggleGuide(true);
+    // 调用settingStore的toggleGuide方法显示引导层
+    settingStore.toggleGuide(true);
   },
-
   /**
    * 处理关闭引导事件
    * 引导层组件的关闭事件
    */
   onCloseGuide() {
-    // 调用rootStore的toggleGuide方法隐藏引导层
-    this.toggleGuide(false);
+    // 调用settingStore的toggleGuide方法隐藏引导层
+    settingStore.toggleGuide(false);
   }
 
 });

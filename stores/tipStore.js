@@ -94,10 +94,9 @@ class TipStore {
       rootStore: false,
     });
   }
-
-  // 获取用户ID的计算属性
+  // 获取用户ID的计算属性 - 通过rootStore统一访问
   get userId() {
-    return this.rootStore?.userStore?.userId || '';
+    return this.rootStore?.userId || '';
   }
 
   // 提示可见性计算属性

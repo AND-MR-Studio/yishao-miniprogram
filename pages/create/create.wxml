@@ -1,7 +1,6 @@
 <!--pages/create/create.wxml - 海龟汤创建页面-->
-<view class="page">
-  <!-- 导航栏 -->
-  <nav-bar title="创建海龟汤" showBack="{{true}}" bind:back="handleBack" />
+<view class="page">  <!-- 导航栏 -->
+  <nav-bar title="创建海龟汤" showBack="{{true}}" bind:back="handleBack" bind:showguide="onShowGuide" />
 
   <view class="container">
     <view class="form-container">
@@ -111,8 +110,13 @@
     content="先去「个人中心」登录一下吧～"
     confirmText="去登录→"
     cancelText="再想想"
-    showClose="{{false}}"
-    showLoginIcon="{{true}}"
+    showClose="{{false}}"    showLoginIcon="{{true}}"
     bind:confirm="onLoginConfirm"
   ></popup>
+
+  <!-- 新用户引导层组件 -->
+  <guide-overlay
+    show="{{showGuide}}"
+    bind:close="onCloseGuide">
+  </guide-overlay>
 </view>

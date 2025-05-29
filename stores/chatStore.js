@@ -45,37 +45,36 @@ class ChatStore {
   get userId() {
     return this.rootStore?.userStore?.userId || '';
   }
-
-  // 从 soupStore 获取汤面数据的计算属性
+  // 从 rootStore 获取汤面数据的计算属性（统一数据访问）
   get soupData() {
-    return this.rootStore?.soupStore?.soupData || null;
+    return this.rootStore?.soupData || null;
   }
 
-  // 获取汤面ID的便捷方法（从soupData中获取）
+  // 获取汤面ID的便捷方法（从rootStore统一接口获取）
   get soupId() {
-    return this.soupData?.id || '';
+    return this.rootStore?.soupId || '';
   }
-
   // ===== 计算属性 =====
   // 判断是否可以发送消息
   get canSendMessage() {
-    return this.chatState !== CHAT_STATE.LOADING;
+    return this.chatState !== CHAT_STATE.LOADING && this.inputValue.trim().length > 0;
   }
 
-  // 获取最新消息（统一的消息获取逻辑）
+  // 获取最新消息
   get latestMessage() {
     return this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
   }
 
   // ===== Action方法 =====
-  // 统一的加载状态管理
-  setLoadingState() {
-    this.chatState = CHAT_STATE.LOADING;
-  }
-
-  // 恢复到喝汤状态
-  restoreChatState() {
-    this.chatState = CHAT_STATE.DRINKING;
+  // 设置聊天状态
+  setChatState(state) {
+    const oldState = this.chatState;
+    this.chatState = state;
+    
+    // 通知tipStore页面状态变化
+    if (this.rootStore?.tipStore && state === CHAT_STATE.TRUTH) {
+      this.rootStore.tipStore.handlePageStateChange(CHAT_STATE.TRUTH, oldState);
+    }
   }
 
   // 设置偷看状态
@@ -88,40 +87,27 @@ class ChatStore {
     this.inputValue = value;
   }
 
-  // 切换到汤底状态
-  showTruth() {
-    const oldState = this.chatState;
-    this.chatState = CHAT_STATE.TRUTH;
 
-    // 通知tipStore页面状态已变化
-    if (this.rootStore && this.rootStore.tipStore) {
-      this.rootStore.tipStore.handlePageStateChange(CHAT_STATE.TRUTH, oldState);
-    }
-  }
-
-
-
-  // 获取聊天数据 - 异步流程
+  // ===== 异步方法 =====
+  
+  /**
+   * 获取聊天数据 - 纯数据获取
+   */
   *getChatData(userId, soupId) {
     if (!userId || !soupId) {
-      console.error('无法获取聊天数据: 缺少用户ID或汤面ID');
+      console.error('获取聊天数据: 缺少必要参数');
       return false;
     }
 
     try {
-      this.setLoadingState();
+      this.setChatState(CHAT_STATE.LOADING);
 
-      // 调用dialogService的getChatData方法
       const chatData = yield dialogService.getChatData(userId, soupId);
-
-      if (!chatData || !chatData.dialogId) {
-        throw new Error('无法获取聊天数据');
+      if (!chatData?.dialogId) {
+        throw new Error('获取聊天数据失败');
       }
 
-      // 设置dialogId
       this.dialogId = chatData.dialogId;
-
-      // 自动获取历史消息
       yield this.fetchMessages();
 
       return true;
@@ -129,46 +115,65 @@ class ChatStore {
       console.error('获取聊天数据失败:', error);
       return false;
     } finally {
-      this.restoreChatState();
+      this.setChatState(CHAT_STATE.DRINKING);
     }
   }
 
-  // 获取对话消息 - 异步流程
+  /**
+   * 获取对话消息 - 纯数据获取
+   */
   *fetchMessages() {
+    if (!this.dialogId) return false;
+
     try {
-      // 如果当前不是加载状态，则设置加载状态
-      if (this.chatState !== CHAT_STATE.LOADING) {
-        this.setLoadingState();
-      }
-
-      // 获取对话消息
       const result = yield dialogService.getDialogMessages(this.dialogId);
+      if (!result?.messages) return false;
 
-      if (!result || !result.messages) {
-        return false;
-      }
-
-      // 更新消息列表
       this.messages = result.messages;
-
-      // 检查最新消息是否包含进入真相的标记
-      if ('TRUTH') {
-        this.chatState = CHAT_STATE.TRUTH;
-
+      
+      // 检查是否需要切换到真相状态
+      const hasEndMarker = this.messages.some(msg => 
+        msg.type === 'system' && msg.content.includes('TRUTH')
+      );
+      
+      if (hasEndMarker) {
+        this.setChatState(CHAT_STATE.TRUTH);
       }
 
       return true;
     } catch (error) {
       console.error('获取消息失败:', error);
       return false;
-    } 
-    
+    }
   }
 
-
-
-  // 发送消息 - 统一的异步流程
+  /**
+   * 发送消息 - 纯接口调用
+   */
   *sendMessage(content) {
+    if (!content?.trim() || !this.dialogId) return false;
+
+    try {
+      this.setChatState(CHAT_STATE.LOADING);
+
+      const result = yield dialogService.sendMessage(this.dialogId, content.trim());
+      if (!result?.success) return false;
+
+      // 刷新消息列表
+      yield this.fetchMessages();
+      
+      // 清空输入框
+      this.setInputValue('');
+
+      return true;
+    } catch (error) {
+      console.error('发送消息失败:', error);
+      return false;
+    } finally {
+      if (this.chatState === CHAT_STATE.LOADING) {
+        this.setChatState(CHAT_STATE.DRINKING);
+      }
+    }
   }
 }
 

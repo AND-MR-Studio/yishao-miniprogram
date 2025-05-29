@@ -1,7 +1,7 @@
 // components/setting-card/setting.js
-const { createPanelDragManager } = require('../../utils/panelDrag');
+const { createGestureManager } = require('../../utils/gestureManager');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { chatStore } = require('../../stores/index');
+const { chatStore, settingStore } = require('../../stores/index');
 
 Component({
 
@@ -21,16 +21,14 @@ Component({
 
   /**
    * 组件的初始数据
+   * 注意：soundOn, vibrationOn 现在由 settingStore 通过 MobX 绑定提供
    */
   data: {
-    soundOn: true,
-    vibrationOn: false,
     statusBarHeight: 0,
     // 拖拽相关变量 - 供panelDrag工具类使用
     moveDistance: 0,
     panelStyle: '',
     isDragging: false,
-    isVibrating: false,
     // 防止重复触发标志
     isProcessingContext: false
   },
@@ -39,24 +37,27 @@ Component({
     attached() {
       // 获取状态栏高度
       const { statusBarHeight } = wx.getWindowInfo();
-      this.setData({ statusBarHeight });
-
-      // 初始化设置状态
-      this.loadSettings();
-
-      // 初始化面板拖拽管理器
-      this.panelDragManager = createPanelDragManager({
-        closeThreshold: 200, // 直接设置下拉关闭阈值
+      this.setData({ statusBarHeight });      // 初始化手势管理器
+      this.gestureManager = createGestureManager({
+        enablePanelDrag: true,  // 启用面板拖拽功能
+        closeThreshold: 200,
         dampingFactor: 0.6,
-        onClose: this.handlePanelClose.bind(this),
+        onPanelClose: this.handlePanelClose.bind(this),
         onVibrate: this.triggerVibration.bind(this),
         setData: this.setData.bind(this)
       });
 
       // 创建chatStore绑定
-      this.storeBindings = createStoreBindings(this, {
+      this.chatStoreBindings = createStoreBindings(this, {
         store: chatStore,
         fields: ['dialogId', 'userId'],
+      });
+
+      // 创建settingStore绑定 - 管理用户设置
+      this.settingStoreBindings = createStoreBindings(this, {
+        store: settingStore,
+        fields: ['soundOn', 'vibrationOn'],
+        actions: ['toggleSound', 'toggleVibration']
       });
     },
 
@@ -68,17 +69,18 @@ Component({
       }
 
       // 重置震动状态
-      this.isVibrating = false;
-
-      // 销毁面板拖拽管理器
-      if (this.panelDragManager) {
-        this.panelDragManager.destroy();
-        this.panelDragManager = null;
+      this.isVibrating = false;      // 销毁手势管理器
+      if (this.gestureManager) {
+        this.gestureManager.destroy();
+        this.gestureManager = null;
       }
 
       // 清理MobX绑定
-      if (this.storeBindings) {
-        this.storeBindings.destroyStoreBindings();
+      if (this.chatStoreBindings) {
+        this.chatStoreBindings.destroyStoreBindings();
+      }
+      if (this.settingStoreBindings) {
+        this.settingStoreBindings.destroyStoreBindings();
       }
     }
   },
@@ -88,42 +90,12 @@ Component({
    */
   methods: {
     /**
-     * 加载设置 - 只在面板初始化时调用一次
-     * 从本地存储读取用户设置并应用到组件
+     * 触发震动反馈
+     * 使用 settingStore 绑定的 vibrationOn 状态
      */
-    loadSettings() {
-      try {
-        const settings = wx.getStorageSync('soupSettings') || {};
-        this.setData({
-          soundOn: settings.soundOn ?? true,
-          vibrationOn: settings.vibrationOn ?? false
-        });
-      } catch (e) {
-        // 读取设置失败
-      }
-    },
-
-    /**
-     * 保存设置 - 只在面板关闭时调用一次
-     * 将当前组件的设置状态保存到本地存储
-     */
-    saveSettings() {
-      try {
-        const settings = {
-          soundOn: this.data.soundOn,
-          vibrationOn: this.data.vibrationOn
-        };
-        wx.setStorageSync('soupSettings', settings);
-      } catch (e) {
-        // 保存设置失败
-      }
-    },
-
-
-
-    // 触发震动反馈
     triggerVibration() {
-      if (!this.data.vibrationOn) return;
+      // 使用 MobX 绑定的 vibrationOn 状态
+      if (!this.vibrationOn) return;
 
       // 设置防抖标志，防止短时间内重复触发
       if (this.isVibrating) return;
@@ -132,7 +104,8 @@ Component({
       // 立即执行震动，不使用setTimeout
       wx.vibrateShort({
         fail: () => {
-          // 震动失败
+          // 震动失败，静默处理
+          console.warn('震动反馈失败');
         },
         complete: () => {
           // 设置一个较短的冷却时间，避免系统震动API被连续调用
@@ -143,21 +116,45 @@ Component({
       });
     },
 
-    // 切换开关
+    /**
+     * 切换设置开关
+     * 直接调用 settingStore 的方法，确保数据流向：UI → settingStore → Service
+     * @param {Object} e 事件对象
+     */
     toggleSwitch(e) {
       const { type, checked } = e.detail;
-      if (!type) return;
+      if (!type) {
+        console.warn('toggleSwitch: 缺少 type 参数');
+        return;
+      }
 
-      // 更新对应的状态
-      this.setData({ [type]: checked }, () => {
-        // 只在开启任意开关时触发震动，关闭开关时不触发
-        if (this.data.vibrationOn && checked) {
+      try {
+        // 使用 settingStore 的方法更新设置，自动保存到本地存储
+        if (type === 'soundOn') {
+          this.toggleSound(checked);
+        } else if (type === 'vibrationOn') {
+          this.toggleVibration(checked);
+        } else {
+          console.warn(`toggleSwitch: 未知的设置类型 ${type}`);
+          return;
+        }
+
+        // 只在开启震动开关时触发震动反馈
+        if (type === 'vibrationOn' && checked) {
           // 延迟很短的时间再触发震动，避免和按钮自身的动画冲突
           setTimeout(() => {
             this.triggerVibration();
           }, 10);
         }
-      });
+      } catch (error) {
+        console.error('toggleSwitch 失败:', error);
+        // 可以在这里添加用户提示
+        wx.showToast({
+          title: '设置更新失败',
+          icon: 'none',
+          duration: 1500
+        });
+      }
     },
 
 
@@ -218,34 +215,30 @@ Component({
         // 立即重置处理标志
         this.setData({ isProcessingContext: false });
       }
-    },
-
-    // 下拉开始 - 使用工具类
+    },    // 下拉开始 - 使用统一手势管理器
     handleTouchStart(e) {
-      if (this.panelDragManager) {
-        this.panelDragManager.handleTouchStart(e, this.data.show);
+      if (this.gestureManager) {
+        this.gestureManager.handleTouchStart(e, { canInteract: this.data.show });
       }
     },
 
-    // 下拉过程 - 使用工具类
+    // 下拉过程 - 使用统一手势管理器
     handleTouchMove(e) {
-      if (this.panelDragManager) {
-        this.panelDragManager.handleTouchMove(e, this.data.show);
+      if (this.gestureManager) {
+        this.gestureManager.handleTouchMove(e, { canInteract: this.data.show });
       }
-    },
-
-    // 下拉结束 - 使用工具类
-    handleTouchEnd() {
-      if (this.panelDragManager) {
-        this.panelDragManager.handleTouchEnd(this.data.show);
+    },    // 下拉结束 - 使用统一手势管理器
+    handleTouchEnd(e) {
+      if (this.gestureManager) {
+        this.gestureManager.handleTouchEnd(e, { canInteract: this.data.show });
       }
     },
 
     // 点击指示器关闭
     handleDragIndicator() {
       this.triggerVibration();
-      if (this.panelDragManager) {
-        this.panelDragManager.closePanel();
+      if (this.gestureManager) {
+        this.gestureManager.closePanel();
       }
     },
 
@@ -269,11 +262,17 @@ Component({
       this.triggerEvent('about');
     },
 
-    // 显示喝汤指南
+    /**
+     * 显示喝汤指南
+     * 触发 showguide 事件，由父页面处理引导层显示逻辑
+     * 确保跨页面兼容性（index、chat、mine 等页面）
+     */
     showGuide() {
+      // 触发震动反馈
       this.triggerVibration();
 
       // 触发显示引导事件，让页面处理
+      // 页面会调用 settingStore.toggleGuide(true) 显示引导层
       this.triggerEvent('showguide');
 
       // 关闭设置面板
@@ -288,10 +287,14 @@ Component({
     // 阻止事件冒泡 - 在微信小程序中，catchtap已经阻止了冒泡，这个函数只是一个空函数
     stopPropagation() {},
 
-    // 处理面板关闭
+    /**
+     * 处理面板关闭
+     * 由拖拽管理器调用，确保设置状态已通过 settingStore 自动保存
+     */
     handlePanelClose() {
       this.closePanel();
-      this.saveSettings();
+      // 注意：设置现在由 settingStore 自动保存到本地存储，无需手动调用 saveSettings
+      // 所有设置变更都通过 MobX 响应式更新，确保状态同步
     }
   }
 })
