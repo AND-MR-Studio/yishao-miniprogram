@@ -25,8 +25,7 @@ class UserStore {
   // 引用rootStore
   rootStore = null;
 
-  constructor() {
-    makeAutoObservable(this, {
+  constructor() {    makeAutoObservable(this, {
       // 标记异步方法为flow
       login: flow,
       logout: flow,
@@ -36,6 +35,7 @@ class UserStore {
       favoriteSoup: flow,
       likeSoup: flow,
       solveSoup: flow,
+      updateAnsweredSoup: flow,
       toggleFavorite: flow,
       toggleLike: flow,
 
@@ -404,7 +404,6 @@ class UserStore {
     const currentStatus = this.isLikedSoup(soupId);
     return yield this.likeSoup(soupId, !currentStatus);
   }
-
   /**
    * 标记汤面为已解决
    * 直接发起操作请求，后端统一处理状态更新
@@ -434,6 +433,38 @@ class UserStore {
     } catch (error) {
       console.error('标记解决失败:', error);
       return { success: false, error: '标记解决失败' };
+    }
+  }
+
+  /**
+   * 更新用户回答过的汤记录
+   * 直接发起操作请求，后端统一处理状态更新
+   * @param {string} soupId - 汤ID
+   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+   */
+  *updateAnsweredSoup(soupId) {
+    if (!this.isLoggedIn) {
+      return { success: false, error: '用户未登录' };
+    }
+
+    try {
+      // 直接发起操作请求
+      const result = yield userService.updateAnsweredSoup(soupId);
+
+      if (result.success) {
+        // 操作成功后同步用户信息，获取最新状态
+        yield this.syncUserInfo();
+        return {
+          success: true,
+          data: result.data,
+          message: '已更新回答记录'
+        };
+      } else {
+        return result;
+      }
+    } catch (error) {
+      console.error('更新回答记录失败:', error);
+      return { success: false, error: '更新回答记录失败' };
     }
   }
 

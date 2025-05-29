@@ -35,13 +35,13 @@ class RootStore {
     // 按照依赖关系顺序初始化子Store
     // 1. 首先创建基础Store（无依赖）
     this.userStore = new UserStoreClass(this);
-    this.settingStore = new SettingStoreClass();
+    this.settingStore = new SettingStoreClass(this);
 
     // 2. 创建依赖于userStore的Store
-    this.soupStore = new SoupStoreClass(this, this.userStore);
-    this.chatStore = new ChatStoreClass(this, this.userStore);
+    this.soupStore = new SoupStoreClass(this);
+    this.chatStore = new ChatStoreClass(this);
     this.tipStore = new TipStoreClass(this);
-    this.uploadStore = new UploadStoreClass(this, this.userStore);
+    this.uploadStore = new UploadStoreClass(this);
 
     // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
