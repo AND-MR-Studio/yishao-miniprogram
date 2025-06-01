@@ -47,9 +47,6 @@ function getCurrentEnvironment() {
  * 全局配置导出
  */
 module.exports = {
-  // 环境常量
-  ENV_DEV,
-  ENV_PROD,
   
   // 环境管理工具
   getCurrentEnvironment,

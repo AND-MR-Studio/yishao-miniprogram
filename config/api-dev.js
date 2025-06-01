@@ -5,14 +5,6 @@
 
 
 const devConfig = {
-  // todo base后续要删除
-  base: {
-    baseUrl: 'https://and-tech.cn',
-    ysUrl: 'https://and-tech.cn/yishao-api/',
-    memory: 'http://alex.and-tech.cn/memory',
-    assetsBaseUrl: 'http://oss.and-tech.cn'
-  },
-  
   // 汤面服务配置
   soup: {
     url: 'http://localhost:8080/soup'
@@ -37,13 +29,6 @@ const devConfig = {
   asset: {
     url: 'http://localhost:8084/asset'
   },
-  
-  // 环境特有配置
-  env: {
-    name: '开发环境',
-    debug: true,
-    logLevel: 'debug'
-  }
 };
 
 module.exports = devConfig;

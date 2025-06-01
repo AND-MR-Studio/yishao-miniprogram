@@ -4,14 +4,6 @@
  */
 
 const prodConfig = {
-  // todo base后续要删除
-  base: {
-    baseUrl: 'https://yavin.and-tech.cn',
-    ysUrl: 'https://yavin.and-tech.cn/yishao-api/',
-    memory: 'http://alex.and-tech.cn/memory',
-    assetsBaseUrl: 'http://cdn.and-tech.cn'
-  },
-  
   // 汤面服务配置
   soup: {
     url: 'http://and-tech.cn/soup'
@@ -36,13 +28,6 @@ const prodConfig = {
   asset: {
     url: 'http://and-tech.cn/asset'
   },
-  
-  // 环境特有配置
-  env: {
-    name: '正式环境',
-    debug: false,
-    logLevel: 'error'
-  }
 };
 
 module.exports = prodConfig;
