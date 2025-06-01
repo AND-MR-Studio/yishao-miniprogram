@@ -4,7 +4,8 @@
  * 实现接口层设计，与服务层解耦
  */
 const {get, post} = require('../utils/request');
-const urlConfig = require('../config/url-config');
+const { getFullUrl } = require('../utils/urlUtils');
+const USER = "user";
 
 /**
  * 用户API接口实现类
@@ -17,13 +18,13 @@ const userApiImpl = {
      */
     getUserInfo: async () => {
         try {
-            const response = await get('get_user_info', {
-                url: urlConfig.userUrl.info()
+            const response = await get({
+                url: getFullUrl(USER, '/info')
             });
 
             return response;
         } catch (error) {
-            console.error('获取用户信息失败:', error);
+            console.error(`[${USER}] 获取用户信息失败:`, error);
             return {success: false, error: '获取用户信息失败'};
         }
     },
@@ -43,8 +44,8 @@ const userApiImpl = {
             });
 
             // 发送code到后台换取token
-            const response = await post('user_login', {
-                url: urlConfig.userUrl.login(),
+            const response = await post({
+                url: getFullUrl(USER, '/login'),
                 data: {
                     code: loginResult.code,
                     userInfo: {
@@ -55,7 +56,7 @@ const userApiImpl = {
 
             return response;
         } catch (error) {
-            console.error('登录失败:', error);
+            console.error(`[${USER}] 登录失败:`, error);
             return {success: false, error: '登录失败'};
         }
     },
@@ -71,14 +72,14 @@ const userApiImpl = {
         }
 
         try {
-            const response = await post('update_user_info', {
-                url: urlConfig.userUrl.update(),
+            const response = await post({
+                url: getFullUrl(USER, '/update'),
                 data: profileData
             });
 
             return response;
         } catch (error) {
-            console.error('更新用户资料失败:', error);
+            console.error(`[${USER}] 更新用户资料失败:`, error);
             return {success: false, error: '更新用户资料失败'};
         }
     },
@@ -95,14 +96,14 @@ const userApiImpl = {
         }
 
         try {
-            const response = await post('update_favorite_soup', {
-                url: urlConfig.userUrl.favoriteSoup(),
+            const response = await post({
+                url: getFullUrl(USER, '/favorite-soup'),
                 data: {soupId, isFavorite}
             });
 
             return response;
         } catch (error) {
-            console.error('更新收藏记录失败:', error);
+            console.error(`[${USER}] 更新收藏记录失败:`, error);
             return {success: false, error: '更新收藏记录失败'};
         }
     },
@@ -119,14 +120,14 @@ const userApiImpl = {
         }
 
         try {
-            const response = await post('update_liked_soup', {
-                url: urlConfig.userUrl.likedSoup(),
+            const response = await post({
+                url: getFullUrl(USER, '/liked-soup'),
                 data: {soupId, isLike}
             });
 
             return response;
         } catch (error) {
-            console.error('更新点赞记录失败:', error);
+            console.error(`[${USER}] 更新点赞记录失败:`, error);
             return {success: false, error: '更新点赞记录失败'};
         }
     },
@@ -142,14 +143,14 @@ const userApiImpl = {
         }
 
         try {
-            const response = await post('update_solved_soup', {
-                url: urlConfig.userUrl.solvedSoup(),
+            const response = await post({
+                url: getFullUrl(USER, '/solved-soup'),
                 data: {soupId}
             });
 
             return response;
         } catch (error) {
-            console.error('更新解决记录失败:', error);
+            console.error(`[${USER}] 更新解决记录失败:`, error);
             return {success: false, error: '更新解决记录失败'};
         }
     },

@@ -61,6 +61,6 @@ const soupService = {
     async getRandomSoup() {
         // 调用API接口层获取随机汤面
         return await soupApiImpl.getRandomSoup();
-    };
-
-module.exports = soupService;
+    }
+}
+module.exports = soupService

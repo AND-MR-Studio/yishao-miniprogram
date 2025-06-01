@@ -4,7 +4,8 @@
  * 实现接口层设计，与服务层解耦
  */
 const { get, post } = require('../utils/request');
-const urlConfig = require('../config/url-config');
+const { getFullUrl } = require('../utils/urlUtils');
+const DIALOG = "dialog";
 
 // 用于防止并发请求的简单锁
 let _isProcessingRequest = false;
@@ -49,10 +50,10 @@ const dialogApiImpl = {
       const messageId = params.messageId || `msg_${Date.now()}`;
 
       // 构建请求URL
-      const url = `${urlConfig.dialogUrl.base()}${params.dialogId}/send`;
+      const url = getFullUrl(DIALOG, `/${params.dialogId}/send`);
 
       // 发送请求到后端
-      const response = await post('send_dialog_message', {
+      const response = await post({
         url: url,
         data: {
           userId: params.userId,
@@ -64,7 +65,7 @@ const dialogApiImpl = {
 
       return response;
     } catch (error) {
-      console.error('发送对话消息失败:', error);
+      console.error(`[${DIALOG}] 发送对话消息失败:`, error);
       throw error;
     } finally {
       _isProcessingRequest = false;
@@ -82,15 +83,15 @@ const dialogApiImpl = {
     }
 
     try {
-      const url = `${urlConfig.dialogUrl.base()}${dialogId}`;
+      const url = getFullUrl(DIALOG, `/${dialogId}`);
 
-      const response = await get('fetch_dialog_messages', {
+      const response = await get({
         url: url
       });
 
       return response;
     } catch (error) {
-      console.error('获取对话记录失败:', error);
+      console.error(`[${DIALOG}] 获取对话记录失败:`, error);
       // 如果服务器请求失败，返回空数组和原始dialogId
       return { messages: [], dialogId, soupId: "" };
     }
@@ -112,8 +113,8 @@ const dialogApiImpl = {
     }
 
     try {
-      const response = await get('get_user_dialog', {
-        url: urlConfig.dialogUrl.get(),
+      const response = await get({
+        url: getFullUrl(DIALOG, '/get'),
         data: {
           userId: userId,
           soupId: soupId
@@ -122,7 +123,7 @@ const dialogApiImpl = {
 
       return response;
     } catch (error) {
-      console.error('获取用户对话失败:', error);
+      console.error(`[${DIALOG}] 获取用户对话失败:`, error);
       throw error;
     }
   },
@@ -144,9 +145,9 @@ const dialogApiImpl = {
 
     try {
       // 构建请求URL
-      const url = `${urlConfig.dialogUrl.chatData()}`;
+      const url = getFullUrl(DIALOG, '/chat-data');
 
-      const response = await post('get_chat_data', {
+      const response = await post({
         url: url,
         data: {
           userId: userId,
@@ -156,7 +157,7 @@ const dialogApiImpl = {
 
       return response;
     } catch (error) {
-      console.error('获取聊天数据失败:', error);
+      console.error(`[${DIALOG}] 获取聊天数据失败:`, error);
       throw error;
     }
   },
@@ -183,9 +184,9 @@ const dialogApiImpl = {
 
     try {
       // 构建请求URL
-      const url = `${urlConfig.dialogUrl.base()}${dialogId}/save`;
+      const url = getFullUrl(DIALOG, `/${dialogId}/save`);
 
-      const response = await post('save_dialog_messages', {
+      const response = await post({
         url: url,
         data: {
           userId: userId,
@@ -195,7 +196,7 @@ const dialogApiImpl = {
 
       return response;
     } catch (error) {
-      console.error('保存对话记录失败:', error);
+      console.error(`[${DIALOG}] 保存对话记录失败:`, error);
       throw error;
     }
   },

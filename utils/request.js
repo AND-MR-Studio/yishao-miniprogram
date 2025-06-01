@@ -3,14 +3,15 @@
  */
 
 /**
- * 服务特定的GET请求方法
+ * GET请求方法
+ * @param {Object} param - 请求参数
+ * @param {string} param.url - 请求URL
+ * @param {Object} [param.data] - 请求数据
+ * @param {Object} [param.header] - 请求头
  * @returns {Promise} 返回Promise对象
- * @param mark
- * @param param
  */
-const get = (mark, param) => {
+const get = (param) => {
   return request({
-    service: mark,
     url: param.url,
     method: "GET",
     data: param.data,
@@ -19,14 +20,15 @@ const get = (mark, param) => {
 };
 
 /**
- * 服务特定的POST请求方法
- * @param {string} mark - 服务名称
- * @param param
+ * POST请求方法
+ * @param {Object} param - 请求参数
+ * @param {string} param.url - 请求URL
+ * @param {Object} [param.data] - 请求数据
+ * @param {Object} [param.header] - 请求头
  * @returns {Promise} 返回Promise对象
  */
-const post = (mark, param) => {
+const post = (param) => {
   return request({
-    service: mark,
     url: param.url,
     method: "POST",
     data: param.data,
@@ -35,13 +37,12 @@ const post = (mark, param) => {
 };
 
 /**
- * 统一请求方法·
+ * 统一请求方法
  * @param {Object} options - 请求配置
  * @param {string} options.url - 请求地址
  * @param {string} [options.method='GET'] - 请求方法
  * @param {Object} [options.data] - 请求数据
  * @param {Object} [options.header] - 请求头
- * @param {string} [options.service='user'] - 服务名称
  * @returns {Promise} 返回Promise对象
  */
 const request = (options) => {

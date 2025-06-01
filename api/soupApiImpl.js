@@ -4,7 +4,8 @@
  * 实现接口层设计，与服务层解耦
  */
 const { get, post } = require('../utils/request');
-const urlConfig = require('../config/url-config');
+const { getFullUrl } = require('../utils/urlUtils');
+const SOUP = "soup"
 
 /**
  * 汤面API接口实现类
@@ -18,11 +19,11 @@ const soupApiImpl = {
    */
   getSoup: async (id) => {
     try {
-      return await get('get_soup_by_id', {
-        url: urlConfig.soupUrl.get(id)
+      return await get({
+        url: getFullUrl(SOUP, `/get/${id}`)
       });
     } catch (error) {
-      console.error('获取汤面失败:', error);
+      console.error(`[${SOUP}] 获取汤面失败:`, error);
       return null;
     }
   },
@@ -33,11 +34,11 @@ const soupApiImpl = {
    */
   getRandomSoup: async () => {
     try {
-      return await get('get_random_soup', {
-        url: urlConfig.soupUrl.random()
+      return await get({
+        url: getFullUrl(SOUP, '/random')
       });
     } catch (error) {
-      console.error('获取随机汤面失败:', error);
+      console.error(`[${SOUP}] 获取随机汤面失败:`, error);
       return null;
     }
   },
@@ -49,12 +50,12 @@ const soupApiImpl = {
    */
   createSoup: async (soupData) => {
     try {
-      return await post('create_soup', {
-        url: urlConfig.soupUrl.create(),
+      return await post({
+        url: getFullUrl(SOUP, '/create'),
         data: soupData
       });
     } catch (error) {
-      console.error('创建汤面失败:', error);
+      console.error(`[${SOUP}] 创建汤面失败:`, error);
       return null;
     }
   },
@@ -66,11 +67,11 @@ const soupApiImpl = {
    */
   likeSoup: async (id) => {
     try {
-      return await post('like_soup', {
-        url: urlConfig.soupUrl.like(id)
+      return await post({
+        url: getFullUrl(SOUP, `/like/${id}`)
       });
     } catch (error) {
-      console.error('点赞汤面失败:', error);
+      console.error(`[${SOUP}] 点赞汤面失败:`, error);
       return { success: false, error: error.message };
     }
   },
@@ -82,11 +83,11 @@ const soupApiImpl = {
    */
   unlikeSoup: async (id) => {
     try {
-      return await post('unlike_soup', {
-        url: urlConfig.soupUrl.unlike(id)
+      return await post({
+        url: getFullUrl(SOUP, `/unlike/${id}`)
       });
     } catch (error) {
-      console.error('取消点赞汤面失败:', error);
+      console.error(`[${SOUP}] 取消点赞汤面失败:`, error);
       return { success: false, error: error.message };
     }
   },
@@ -98,11 +99,11 @@ const soupApiImpl = {
    */
   favoriteSoup: async (id) => {
     try {
-      return await post('favorite_soup', {
-        url: urlConfig.soupUrl.favorite(id)
+      return await post({
+        url: getFullUrl(SOUP, `/favor/${id}`)
       });
     } catch (error) {
-      console.error('收藏汤面失败:', error);
+      console.error(`[${SOUP}] 收藏汤面失败:`, error);
       return { success: false, error: error.message };
     }
   },
@@ -114,11 +115,11 @@ const soupApiImpl = {
    */
   unfavoriteSoup: async (id) => {
     try {
-      return await post('unfavorite_soup', {
-        url: urlConfig.soupUrl.unfavorite(id)
+      return await post({
+        url: getFullUrl(SOUP, `/unfavor/${id}`)
       });
     } catch (error) {
-      console.error('取消收藏汤面失败:', error);
+      console.error(`[${SOUP}] 取消收藏汤面失败:`, error);
       return { success: false, error: error.message };
     }
   },
@@ -130,11 +131,11 @@ const soupApiImpl = {
    */
   viewSoup: async (id) => {
     try {
-      return await post('view_soup', {
-        url: urlConfig.soupUrl.view(id)
+      return await post({
+        url: getFullUrl(SOUP, `/view/${id}`)
       });
     } catch (error) {
-      console.error('增加汤面浏览量失败:', error);
+      console.error(`[${SOUP}] 增加汤面浏览量失败:`, error);
       return { success: false, error: error.message };
     }
   }

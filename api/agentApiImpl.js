@@ -4,7 +4,8 @@
  * 实现接口层设计，与服务层解耦
  */
 const { post } = require('../utils/request');
-const urlConfig = require('../config/url-config');
+const { getFullUrl } = require('../utils/urlUtils');
+const AGENT = "agent";
 
 // 用于防止并发请求的简单锁
 let _isProcessingRequest = false;
@@ -59,14 +60,14 @@ const agentApiImpl = {
       };
 
       // 发送请求
-      const response = await post('agent_chat', {
-        url: urlConfig.agentUrl.chat(),
+      const response = await post({
+        url: getFullUrl(AGENT, '/chat'),
         data: requestData
       });
 
       return response;
     } catch (error) {
-      console.error('代理请求失败:', error);
+      console.error(`[${AGENT}] 代理请求失败:`, error);
       throw error;
     } finally {
       // 释放锁
