@@ -6,27 +6,27 @@
 const prodConfig = {
   // 汤面服务配置
   soup: {
-    url: 'http://and-tech.cn/soup'
+    url: 'https://and-tech.cn/soup'
   },
   
   // 用户代理服务配置
   agent: {
-    url: 'http://and-tech.cn/agent'
+    url: 'https://and-tech.cn/agent'
   },
 
   // 对话服务配置
   dialog: {
-    url: 'http://and-tech.cn/dialog'
+    url: 'https://and-tech.cn/dialog'
   },
 
   // 用户服务配置
   user: {
-    url: 'http://and-tech.cn/user'
+    url: 'https://and-tech.cn/user'
   },
   
   // 资源服务配置
   asset: {
-    url: 'http://and-tech.cn/asset'
+    url: 'https://and-tech.cn/asset'
   },
 };
 
