@@ -247,26 +247,7 @@ Page({
      */
     onRefreshHome() {
         console.log('刷新首页数据');
-        // 重新加载随机汤面
-        this.switchSoup();
-    },
-
-    /**
-     * 处理显示引导事件
-     * 通过nav-bar组件转发的setting组件事件
-     */
-    onShowGuide() {
-        // 调用settingStore的toggleGuide方法显示引导层
-        settingStore.toggleGuide(true);
-    },
-
-    /**
-     * 处理关闭引导事件
-     * 引导层组件的关闭事件
-     */
-    onCloseGuide() {
-        // 调用settingStore的toggleGuide方法隐藏引导层
-        this.toggleGuide(false);
+        // 重新加载随机汤面        this.switchSoup();
     },
 
     // ===== 汤面切换相关 =====
@@ -403,14 +384,6 @@ Page({
             icon: "none",
             duration: 2000,
         });    },    // ===== 指南相关事件处理 =====
-    /**
-     * 显示指南层
-     * 通过settingStore统一管理指南状态
-     */
-    onShowGuide() {
-        settingStore.toggleGuide(true);
-    },
-
     /**
      * 关闭指南层
      * 通过settingStore统一管理指南状态

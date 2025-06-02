@@ -1,4 +1,7 @@
 // components/nav-bar/index.js
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { settingStore } = require('../../stores/index');
+
 Component({
 
   /**
@@ -46,14 +49,12 @@ Component({
       value: false
     },
   },
-
   /**
    * 组件的初始数据
    */
   data: {
     statusBarHeight: 0,
-    navBarHeight: 44,
-    showSettingPanel: false
+    navBarHeight: 44
   },
 
   lifetimes: {
@@ -61,6 +62,20 @@ Component({
       // 获取状态栏高度
       const { statusBarHeight } = wx.getWindowInfo();
       this.setData({ statusBarHeight });
+
+      // 创建settingStore绑定
+      this.settingStoreBindings = createStoreBindings(this, {
+        store: settingStore,
+        fields: ['showSettingPanel'],
+        actions: ['toggleSettingPanel']
+      });
+    },
+
+    detached() {
+      // 清理MobX绑定
+      if (this.settingStoreBindings) {
+        this.settingStoreBindings.destroyStoreBindings();
+      }
     }
   },
 
@@ -81,53 +96,12 @@ Component({
           }
         });
       }
-    },
-
-    // 处理点击右侧图标
+    },    // 处理点击右侧图标
     onClickRight() {
-      this.showSetting();
-    },
-
-    // 显示设置面板
-    showSetting() {
-      this.setData({
-        showSettingPanel: true
-      });
-    },
-
-    // 关闭设置面板
+      this.toggleSettingPanel(true);
+    },    // 关闭设置面板
     onSettingClose() {
-      this.setData({
-        showSettingPanel: false
-      });
-    },
-
-    // 处理设置开关变化
-    onSwitchChange(e) {
-      const { type, value } = e.detail;
-      this.triggerEvent('settingchange', { type, value });
-    },
-
-    // 处理联系我们事件
-    onContact() {
-      this.triggerEvent('contact');
-    },
-
-    // 处理关于我们事件
-    onAbout() {
-      this.triggerEvent('about');
-    },
-
-    // 处理显示引导事件
-    onShowGuide() {
-      this.triggerEvent('showguide');
-    },
-
-    // 处理清理上下文事件
-    onClearContext(e) {
-      const { dialogId, userId } = e.detail;
-      if (!dialogId || !userId) return;
-      this.triggerEvent('clearcontext', { dialogId, userId });
+      this.toggleSettingPanel(false);
     }
   }
 })

@@ -18,39 +18,6 @@ class DialogService {
     const historyMessages = messages || [];
     return historyMessages;
   }
-
-  /**
-   * 处理用户输入的消息
-   * @param {string} content 用户输入的内容
-   * @returns {Object} 处理结果 {isSpecial: boolean, userMessage: Object, reply: Object|null}
-   */
-  handleUserInput(content) {
-    if (!content || !content.trim()) {
-      return {
-        isSpecial: false,
-        userMessage: null,
-        reply: null,
-      };
-    }
-
-    const trimmedContent = content.trim();
-
-    // 创建用户消息对象
-    const userMessage = {
-      id: `msg_${Date.now()}`,
-      role: "user",
-      content: trimmedContent,
-      timestamp: Date.now(),
-    };
-
-    // 返回处理结果
-    return {
-      isSpecial: false,
-      userMessage: userMessage,
-      reply: null,
-    };
-  }
-
   /**
    * 发送消息到后端服务器并获取回复
    * @param {Object} params 请求参数

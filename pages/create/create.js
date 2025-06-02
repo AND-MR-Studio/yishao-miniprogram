@@ -341,14 +341,6 @@ Page({
     });
   },
 
-  /**
-   * 处理显示引导事件
-   * 通过nav-bar组件转发的setting组件事件
-   */
-  onShowGuide() {
-    // 调用settingStore的toggleGuide方法显示引导层
-    settingStore.toggleGuide(true);
-  },
 
   /**
    * 处理关闭引导事件

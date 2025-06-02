@@ -1,7 +1,7 @@
 /**
  * tipStore.js
  * 提示信息状态管理
- * 使用MobX管理提示信息的状态，替代eventUtils事件机制
+ * Todo:showtip()空时显示默认
  *
  * 重构说明：
  * 1. 所有业务逻辑集中在Store中管理

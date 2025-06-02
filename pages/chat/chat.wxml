@@ -1,12 +1,7 @@
 <!--pages/chat/chat.wxml - 海龟汤聊天页面-->
-<view class="page" bindlongpress="onLongPressStart" bindtouchend="onLongPressEnd" bindtouchcancel="onLongPressEnd">
-  <!-- 导航栏 -->
-  <nav-bar
+<view class="page" bindlongpress="onLongPressStart" bindtouchend="onLongPressEnd" bindtouchcancel="onLongPressEnd">  <!-- 导航栏 -->  <nav-bar
     pageState="{{'drinking'}}"
-    bind:settingchange="handleSettingChange"
     bind:close="onDialogClose"
-    bind:clearcontext="clearContext"
-    bind:showguide="onShowGuide"
     showBackButton="{{true}}"
   />
 
@@ -31,7 +26,6 @@
       wx:if="{{chatState === 'truth'}}"
     ></soup-truth>
   </view>
-
   <!-- 对话组件 -->
   <dialog-component
     id="dialog"
@@ -41,9 +35,6 @@
     loading="{{chatState === 'loading'}}"
     enableTypeAnimation="{{true}}"
     bind:close="onDialogClose"
-    bind:messageTap="handleMessageTap"
-    bind:messageLongPress="handleMessageLongPress"
-    bind:animationComplete="handleAnimationComplete"
   ></dialog-component>
 
   <!-- 输入栏组件 -->

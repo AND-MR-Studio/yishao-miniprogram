@@ -86,19 +86,12 @@ class ChatStore {
   setInputValue(value) {
     this.inputValue = value;
   }
-
-
   // ===== 异步方法 =====
-  
-  /**
+    /**
    * 获取聊天数据 - 纯数据获取
+   * 参数验证交由service层统一处理，chatStore专注状态管理
    */
   *getChatData(userId, soupId) {
-    if (!userId || !soupId) {
-      console.error('获取聊天数据: 缺少必要参数');
-      return false;
-    }
-
     try {
       this.setChatState(CHAT_STATE.LOADING);
 
@@ -151,24 +144,31 @@ class ChatStore {
    * 发送消息 - 纯接口调用
    */
   *sendMessage(content) {
-    if (!content?.trim() || !this.dialogId) return false;
+    if (!content?.trim() || !this.dialogId) return { success: false };
 
     try {
       this.setChatState(CHAT_STATE.LOADING);
 
-      const result = yield dialogService.sendMessage(this.dialogId, content.trim());
-      if (!result?.success) return false;
+      // 调用服务层新接口签名
+      const reply = yield dialogService.sendMessage({
+        userId: this.userId,
+        dialogId: this.dialogId,
+        message: content.trim(),
+      });
+      if (!reply || !reply.id) return { success: false };
 
       // 刷新消息列表
       yield this.fetchMessages();
-      
+
       // 清空输入框
       this.setInputValue('');
 
-      return true;
+      // 计算回复消息在列表中的索引
+      const messageIndex = this.messages.findIndex(msg => msg.id === reply.id);
+      return { success: true, messageIndex };
     } catch (error) {
       console.error('发送消息失败:', error);
-      return false;
+      return { success: false };
     } finally {
       if (this.chatState === CHAT_STATE.LOADING) {
         this.setChatState(CHAT_STATE.DRINKING);

@@ -51,13 +51,11 @@ Component({
       this.chatStoreBindings = createStoreBindings(this, {
         store: chatStore,
         fields: ['dialogId', 'userId'],
-      });
-
-      // 创建settingStore绑定 - 管理用户设置
+      });      // 创建settingStore绑定 - 管理用户设置和导航功能
       this.settingStoreBindings = createStoreBindings(this, {
         store: settingStore,
         fields: ['soundOn', 'vibrationOn'],
-        actions: ['toggleSound', 'toggleVibration']
+        actions: ['toggleSound', 'toggleVibration', 'clearChatContext', 'handleContact', 'handleAbout', 'handleShowGuide']
       });
     },
 
@@ -157,10 +155,8 @@ Component({
       }
     },
 
-
-
     // 清理对话上下文
-    clearContext() {
+    async clearContext() {
       // 防止重复触发
       if (this.data.isProcessingContext) {
         return;
@@ -195,10 +191,10 @@ Component({
         wx.showModal({
           title: '提示',
           content: '确定要清理当前对话上下文吗？这将删除当前对话的所有记录。',
-          success: (res) => {
+          success: async (res) => {
             if (res.confirm) {
-              // 触发清理上下文事件，传递dialogId和userId
-              this.triggerEvent('clearcontext', { dialogId, userId });
+              // 调用settingStore的方法清理上下文
+              await this.clearChatContext(dialogId, userId);
             }
 
             // 重置处理标志
@@ -215,7 +211,7 @@ Component({
         // 立即重置处理标志
         this.setData({ isProcessingContext: false });
       }
-    },    // 下拉开始 - 使用统一手势管理器
+    },// 下拉开始 - 使用统一手势管理器
     handleTouchStart(e) {
       if (this.gestureManager) {
         this.gestureManager.handleTouchStart(e, { canInteract: this.data.show });
@@ -248,32 +244,34 @@ Component({
         show: false
       });
       this.triggerEvent('close');
-    },
-
-    // 联系我们
+    },    // 联系我们
     contactUs() {
       this.triggerVibration();
-      this.triggerEvent('contact');
+      // 直接调用settingStore的方法，不再通过事件传递
+      this.handleContact();
+      // 关闭设置面板
+      this.closePanel();
     },
 
     // 点击关于
     onAbout() {
       this.triggerVibration();
-      this.triggerEvent('about');
+      // 直接调用settingStore的方法，不再通过事件传递
+      this.handleAbout();
+      // 关闭设置面板
+      this.closePanel();
     },
 
     /**
      * 显示喝汤指南
-     * 触发 showguide 事件，由父页面处理引导层显示逻辑
-     * 确保跨页面兼容性（index、chat、mine 等页面）
+     * 直接调用settingStore的方法，不再需要事件传递
      */
     showGuide() {
       // 触发震动反馈
       this.triggerVibration();
 
-      // 触发显示引导事件，让页面处理
-      // 页面会调用 settingStore.toggleGuide(true) 显示引导层
-      this.triggerEvent('showguide');
+      // 直接调用settingStore的方法显示引导层
+      this.handleShowGuide();
 
       // 关闭设置面板
       this.closePanel();
