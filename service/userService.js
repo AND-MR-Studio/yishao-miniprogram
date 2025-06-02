@@ -1,5 +1,5 @@
 // service/userService.js - 纯服务层，只负责API调用
-const { userRequest, api } = require('../config/api');
+const userApiImpl = require('../api/userApiImpl');
 
 /**
  * 用户服务层 - 纯函数集合
@@ -16,12 +16,8 @@ const { userRequest, api } = require('../config/api');
  */
 async function getUserInfo() {
   try {
-    const config = {
-      url: api.user.info,
-      method: 'GET'
-    };
-
-    const res = await userRequest(config);
+    // 调用API实现层获取用户信息
+    const res = await userApiImpl.getUserInfo();
     if (res.success && res.data) {
       return { success: true, data: res.data };
     } else {
@@ -38,27 +34,8 @@ async function getUserInfo() {
  */
 async function login() {
   try {
-    // 执行微信登录
-    const loginResult = await new Promise((resolve, reject) => {
-      wx.login({
-        success: resolve,
-        fail: reject
-      });
-    });
-
-    // 发送code到后台换取token
-    const config = {
-      url: api.user.login,
-      method: 'POST',
-      data: {
-        code: loginResult.code,
-        userInfo: {
-          nickName: ''
-        }
-      }
-    };
-
-    const res = await userRequest(config);
+    // 调用API实现层登录
+    const res = await userApiImpl.login();
     if (res.success && res.data) {
       return { success: true, data: res.data };
     } else {
@@ -94,13 +71,8 @@ async function updateUserInfo(profileData) {
   }
 
   try {
-    const config = {
-      url: api.user.update,
-      method: 'POST',
-      data: profileData
-    };
-
-    const res = await userRequest(config);
+    // 调用API实现层更新用户资料
+    const res = await userApiImpl.updateUserInfo(profileData);
     return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新用户资料失败' };
   } catch (error) {
     return { success: false, error: '更新用户资料失败' };
@@ -119,13 +91,8 @@ async function updateFavoriteSoup(soupId, isFavorite) {
   }
 
   try {
-    const config = {
-      url: api.user.favoriteSoup,
-      method: 'POST',
-      data: { soupId, isFavorite }
-    };
-
-    const res = await userRequest(config);
+    // 调用API实现层更新收藏
+    const res = await userApiImpl.updateFavoriteSoup(soupId, isFavorite);
     return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新收藏记录失败' };
   } catch (error) {
     return { success: false, error: '更新收藏记录失败' };
@@ -135,22 +102,17 @@ async function updateFavoriteSoup(soupId, isFavorite) {
 /**
  * 更新用户点赞的汤
  * @param {string} soupId - 汤ID
- * @param {boolean} isLike - 是否点赞
+ * @param {boolean} isLiked - 是否点赞
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
-async function updateLikedSoup(soupId, isLike) {
+async function updateLikedSoup(soupId, isLiked) {
   if (!soupId) {
     return { success: false, error: '汤ID为空' };
   }
 
   try {
-    const config = {
-      url: api.user.likedSoup,
-      method: 'POST',
-      data: { soupId, isLike }
-    };
-
-    const res = await userRequest(config);
+    // 调用API实现层更新点赞
+    const res = await userApiImpl.updateLikedSoup(soupId, isLiked);
     return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新点赞记录失败' };
   } catch (error) {
     return { success: false, error: '更新点赞记录失败' };
@@ -160,21 +122,17 @@ async function updateLikedSoup(soupId, isLike) {
 /**
  * 更新用户已解决的汤
  * @param {string} soupId - 汤ID
+ * @param {boolean} isSolved - 是否已解决
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
-async function updateSolvedSoup(soupId) {
+async function updateSolvedSoup(soupId, isSolved) {
   if (!soupId) {
     return { success: false, error: '汤ID为空' };
   }
 
   try {
-    const config = {
-      url: api.user.solvedSoup,
-      method: 'POST',
-      data: { soupId }
-    };
-
-    const res = await userRequest(config);
+    // 调用API实现层更新解决状态
+    const res = await userApiImpl.updateSolvedSoup(soupId, isSolved);
     return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新解决记录失败' };
   } catch (error) {
     return { success: false, error: '更新解决记录失败' };
@@ -192,13 +150,7 @@ async function updateAnsweredSoup(soupId) {
   }
 
   try {
-    const config = {
-      url: api.user.answeredSoup,
-      method: 'POST',
-      data: { soupId }
-    };
-
-    const res = await userRequest(config);
+    const res = await userApiImpl.updateAnsweredSoup(soupId);
     return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新回答记录失败' };
   } catch (error) {
     return { success: false, error: '更新回答记录失败' };

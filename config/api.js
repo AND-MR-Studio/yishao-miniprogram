@@ -1,91 +1,19 @@
 /**
- * API接口定义
- * 根据最新的接口契约进行配置
- * 简化版本 - 只返回soupId
+ * !!!!!!!!!!!!!!该类后续废弃，请使用 api-dev/api-prod/url 代替!!!!!!!!!!!!!!
  */
-const App = getApp();
-const baseUrl = App.globalData.config.baseUrl;
-const ysUrl = App.globalData.config.ysUrl;
-const memoryUrl = App.globalData.config.memory;
-const assetsBaseUrl = App.globalData.config.assetsBaseUrl;
-
-const {
-  request,
-  requestOpen,
-  soupRequest,
-  dialogRequest,
-  userRequest,
-  assetRequest,
-  assetRequestOpen,
-  uploadFile,
-  agentRequest
-} = require('../utils/request');
-
-// 基础路径
-const paths = {
-  // API路径
-  api: {
-    user: 'user/',
-    soup: 'soup/',
-    dialog: 'dialog/',
-    asset: 'asset/'
-  },
-  // 资源文件路径
-  assets: {
-    images: 'images/',
-    fonts: 'fonts/',
-    icons: 'icons/',
-    avatars: 'avatars/',
-    ui: 'images/ui/',
-    covers:'images/covers/',
-    banners:'images/banners/'
-  }
-};
+const ysUrl = "https://and-tech.cn/yishao-api/";
+const assetsBaseUrl = "'http://oss.and-tech.cn'";
+const assetsPath = "asset";
 
 // API端点定义
 const api = {
-  // 用户服务
-  user: {
-    login: `${ysUrl}${paths.api.user}login`,
-    update: `${ysUrl}${paths.api.user}update`,
-    info: `${ysUrl}${paths.api.user}info`,
-    signin: `${ysUrl}${paths.api.user}signin`,
-    list: `${ysUrl}${paths.api.user}list`,
-    viewedSoup: `${ysUrl}${paths.api.user}viewed-soup`,
-    answeredSoup: `${ysUrl}${paths.api.user}answered-soup`,
-    createdSoup: `${ysUrl}${paths.api.user}created-soup`,
-    favoriteSoup: `${ysUrl}${paths.api.user}favorite-soup`,
-    likedSoup: `${ysUrl}${paths.api.user}liked-soup`,
-    solvedSoup: `${ysUrl}${paths.api.user}solved-soup`
-  },
-
   // 资源服务
   asset: {
-    base: `${ysUrl}${paths.api.asset}`,
-    byType: (type) => `${ysUrl}${paths.api.asset}type/${type}`,
-    avatar: (id) => `${ysUrl}${paths.api.asset}avatar/${id}`,
-    upload: `${ysUrl}${paths.api.asset}upload`
+    base: `${ysUrl}${assetsPath}/`,
+    byType: (type) => `${ysUrl}${assetsPath}/type/${type}`,
+    avatar: (id) => `${ysUrl}${assetsPath}/avatar/${id}`,
+    upload: `${ysUrl}${assetsPath}/upload`
   },  // 海龟汤服务
-  soup: {
-    base: `${memoryUrl}${paths.api.soup}`,
-    random: `${memoryUrl}/api/soups/random`,
-    get: (soupId) => `${memoryUrl}/api/soups/${soupId}`,
-    create: `${memoryUrl}/api/soups/create`,
-  },
-
-  // 对话服务
-  dialog: {
-    base: `${ysUrl}${paths.api.dialog}`,
-    get: `${ysUrl}${paths.api.dialog}get`,
-    list: `${ysUrl}${paths.api.dialog}list`,
-    byUser: (userId) => `${ysUrl}${paths.api.dialog}user/${userId}`,
-    bySoup: (soupId) => `${ysUrl}${paths.api.dialog}soup/${soupId}`
-  },
-
-  // Agent服务
-  agent: {
-    chat: 'https://m1.apifoxmock.com/m1/6036386-5726220-default/agent/yishao/chat'
-  }
 };
 
 // 资源管理
@@ -139,23 +67,8 @@ const assets = {
 };
 
 module.exports = {
-  // 导出请求方法
-  request,
-  requestOpen,
-  soupRequest,
-  dialogRequest,
-  userRequest,
-  assetRequest,
-  assetRequestOpen,
-  uploadFile,
-  agentRequest,
 
   // 导出基础URL
-  baseUrl,
-  ysUrl,
-  memoryUrl,
-  assetsBaseUrl,
-
   // 导出API端点
   api,
 

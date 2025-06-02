@@ -1,20 +1,24 @@
 /**
- * 海龟汤服务 - 前端调用封装
+ * 海龟汤服务 - 业务逻辑层
  * 提供符合RESTful规范的海龟汤数据操作
- * 遵循简洁设计原则，只提供必要的API接口
+ * 遵循简洁设计原则，只提供必要的业务逻辑
+ *
+ * 支持两种模式：
+ * 1. 默认模式：只返回soupId（适合列表展示）
+ * 2. 详情模式：返回完整汤面数据（适合快速滑动查看详情）
  *
  * 主要功能：
  * - 获取海龟汤（ID或完整数据）
+ * - 批量获取海龟汤详情
  * - 创建海龟汤
+ * - 批量删除海龟汤
+ * - 获取相邻海龟汤（上一个或下一个）
  * - 获取随机海龟汤
- * 
- * 架构说明：
- * - Service层专注API调用，不做状态管理
- * - 所有用户相关操作移至 userService
- * - 数据状态管理由对应的 Store 层处理
+ * - 管理收藏和点赞状态
+ * - 增加汤面阅读数
  */
-const {soupRequest, api} = require("../config/api");
-const {get, post} = require("../utils/request");
+const soupApiImpl = require("../api/soupApiImpl");
+
 
 const soupService = {
     /**
@@ -23,23 +27,13 @@ const soupService = {
      * @returns {Promise<Object>} 海龟汤ID或完整数据
      */
     async getSoup(soupId) {
-        try {
-            // todo: 这里有个问题，soupId会传入soupdata
-            // 原因是index onLoad处，随机获取的时候返回的是soupdata，而不是soupId
-            // 得全盘梳理下soupid和soupdata的传递关系
-            if (soupId && typeof soupId === "object") {
-                return soupId;
-            }
-
-            // 获取单个海龟汤
-            const response = await get("get_soup_by_id", {
-                url: api.soup.get(soupId),
-            });
-            return response ? response : null;
-        } catch (error) {
-            console.error("获取海龟汤失败:", error);
-            return null;
+        // 处理已经是对象的情况
+        if (soupId && typeof soupId === "object") {
+            return soupId;
         }
+
+        // 调用API接口层获取汤面
+        return await soupApiImpl.getSoup(soupId);
     },
 
     /**
@@ -56,35 +50,17 @@ const soupService = {
             return null;
         }
 
-        try {
-            // 使用新的创建接口
-            const response = await post("create_soup", {
-                url: api.soup.create,
-                data: soupData,
-            });
-
-            return response || null;
-        } catch (error) {
-            console.error("创建海龟汤失败:", error);
-            return null;        }
-    },    /**
-     * 获取随机海龟汤 - Service层专注API调用
-     * 只负责API调用，返回原始数据，不做状态管理
-     * @returns {Promise<Object>} 随机汤面数据
-     */
-    async getRandomSoup() {
-        try {
-            // 直接调用随机海龟汤API
-            const response = await get("soup", {
-                url: api.soup.random,
-            });
-            // 根据API约定，直接返回数据
-            return response ? response : null;
-        } catch (error) {
-            console.error("获取随机海龟汤失败:", error);
-            return null;
-        }
+        // 调用API接口层创建汤面
+        return await soupApiImpl.createSoup(soupData);
     },
-};
 
-module.exports = soupService;
+    /**
+     * 获取随机海龟汤ID
+     * @returns {Promise<Object>} 随机汤面数据
+     * */
+    async getRandomSoup() {
+        // 调用API接口层获取随机汤面
+        return await soupApiImpl.getRandomSoup();
+    }
+}
+module.exports = soupService
