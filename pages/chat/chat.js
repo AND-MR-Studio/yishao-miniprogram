@@ -4,13 +4,11 @@
  */
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { rootStore, chatStore, tipStore, settingStore, CHAT_STATE, TIP_STATE, tipConfig } = require('../../stores/index');
+const { rootStore, settingStore, CHAT_STATE } = require('../../stores/index');
 
 Page({
   // ===== 页面数据 =====
   data: {
-    // 页面状态 - 仅保留不由MobX管理的状态
-    isAnimating: false, // 是否正在动画中 - 用于控制动画过程中的UI状态
   },
 
   // ===== 生命周期方法 =====
@@ -18,7 +16,8 @@ Page({
    * 页面加载时执行
    * 获取汤面数据并初始化对话
    * @param {Object} options - 页面参数，包含soupId和可能的dialogId
-   */  async onLoad(options) {
+   */
+    async onLoad(options) {
     try {
       // 创建rootStore绑定 - 用于获取用户ID
       this.rootStoreBindings = createStoreBindings(this, {
@@ -38,37 +37,30 @@ Page({
         store: settingStore,
         fields: ['showGuide'],
         actions: ['toggleGuide']
-      });      // 创建chatStore绑定 - 管理聊天相关的所有状态
+      });      // 创建chatStore绑定 - 更新方法名
       this.chatStoreBindings = createStoreBindings(this, {
-        store: chatStore,
-        fields: [
-          'dialogId', 'chatState', 'isPeeking', 'canSendMessage', 'messages', 'inputValue'
-        ], actions: [
-          'setPeekingStatus', 'setInputValue', 'setChatState',
-          'getChatData', 'fetchMessages', 'sendMessage'
-        ]
+        store: rootStore.chatStore,
+        fields: ['messages', 'chatState', 'inputValue', 'canSendMessage', 'dialogId', 'isPeeking'],
+        actions: ['processConversation', 'setChatState', 'setInputValue', 'addUserMessage', 'addAgentMessage']
+      });// 创建tipStore绑定 - 管理提示信息状态
+      this.tipStoreBindings = createStoreBindings(this, {
+        store: rootStore.tipStore,
+        fields: ['visible', 'title', 'content', 'state'],
+        actions: ['showTip', 'hideTip', 'setDefaultTip', 'showSpecialTip']
       });
 
-      // 创建tipStore绑定 - 管理提示信息状态
-      this.tipStoreBindings = createStoreBindings(this, {
-        store: tipStore,
-        fields: ['visible', 'title', 'content', 'state'],
-        actions: ['showTip', 'hideTip', 'setDefaultTip', 'showSpecialTip']      });
-
       // 同步用户ID - 这是必要的UI初始化操作
-      await rootStore.userStore.syncUserInfo();
-
-      // 确保tipStore显示默认提示
-      tipStore.showTip();
+      await rootStore.userStore.syncUserInfo();      // 确保tipStore显示默认提示
+      rootStore.tipStore.setDefaultTip();
+      rootStore.tipStore.showTip();
 
       // 初始化聊天数据 - 通过chatStore统一处理
-      await chatStore.getChatData(rootStore.userId, soupId);
+      await rootStore.chatStore.getChatData(options.soupId, options.dialogId);
     } catch (error) {
       console.error('页面加载失败:', error);
       this.showErrorToast('加载失败，请重试');
     }
   },
-
 
   /**
    * 页面加载完成时执行
@@ -98,6 +90,7 @@ Page({
       this.tipStoreBindings.destroyStoreBindings();
     }
   },
+
   /**
    * 分享小程序给好友
    * 使用最新的微信小程序分享API
@@ -106,7 +99,7 @@ Page({
    */
   onShareAppMessage() {
     // 获取当前汤面数据 - 从rootStore获取
-    const shareSoup = rootStore.soupData;
+    const shareSoup = this.soupData;
 
     // 构建分享标题 - 使用汤面标题或默认标题
     const shareTitle = shareSoup?.title
@@ -114,12 +107,12 @@ Page({
       : "这个海龟汤太难了来帮帮我！";
 
     // 构建分享路径 - 确保带上soupId和dialogId参数
-    const soupId = rootStore.soupId || '';
-    const dialogId = chatStore.dialogId || '';
+    const soupId = this.soupId || '';
+    const dialogId = this.dialogId || '';
     const sharePath = `/pages/chat/chat?soupId=${soupId}&dialogId=${dialogId}`;
 
-    // 构建分享图片 - 优先使用汤面图片，其次使用配图
-    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.coverUrl;
+    // 构建分享图
+    const imageUrl = shareSoup?.image;
 
     return {
       title: shareTitle,
@@ -135,7 +128,7 @@ Page({
    */
   onShareTimeline() {
     // 获取当前汤面数据 - 从rootStore获取
-    const shareSoup = rootStore.soupData;
+    const shareSoup = this.soupData;
 
     // 构建分享标题 - 使用汤面标题或默认标题
     const shareTitle = shareSoup?.title
@@ -143,19 +136,18 @@ Page({
       : "这个海龟汤太难了来帮帮我！";
 
     // 构建查询参数 - 朋友圈分享使用query而不是path
-    const soupId = rootStore.soupId || '';
-    const dialogId = chatStore.dialogId || '';
+    const soupId = this.soupId || '';
+    const dialogId = this.dialogId || '';
     const query = `soupId=${soupId}&dialogId=${dialogId}`;
 
     // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
-    const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.mockImage;
+    const imageUrl = shareSoup?.image;
 
     return {
       title: shareTitle,
       query: query,
       imageUrl: imageUrl
-    };
-  },
+    };  },
 
   // ===== 事件处理 =====
   /**
@@ -163,8 +155,8 @@ Page({
    * 用于偷看功能 - 页面级别管理
    */
   onLongPressStart() {
-    // 使用MobX更新偷看状态
-    this.setPeekingStatus(true);
+    // 直接修改 MobX 绑定的状态
+    this.isPeeking = true;
 
     // 同时隐藏提示模块 - 使用action方法
     this.hideTip();
@@ -175,32 +167,33 @@ Page({
    * 用于偷看功能 - 页面级别管理
    */
   onLongPressEnd() {
-    // 使用MobX更新偷看状态
-    this.setPeekingStatus(false);
+    // 直接修改 MobX 绑定的状态
+    this.isPeeking = false;
 
     // 恢复提示模块可见性 - 使用延迟确保状态更新后再显示提示
     setTimeout(() => {
       // 使用action方法显示提示并重置内容
       this.setDefaultTip();
-      this.showTip(tipStore.defaultTitle, tipStore.defaultContent);
+      this.showTip();
     }, 100);
   },
 
-  /**
-   * 处理提示模块可见性变化事件
+/**
+   * 处理输入变化事件 - 统一的输入处理方法
    * @param {Object} e 事件对象
    */
-  onTipVisibleChange(e) {
-    console.log('提示模块可见性变化:', e.detail.visible);
-  },  /**
-   * 处理输入事件 - 统一处理所有输入操作
-   * @param {Object|string} e 事件对象或直接传入的字符串内容
-   */
-  handleInput(e) {
-    const value = typeof e === 'string' ? e : e.detail.value;
-    this.setInputValue(value.trim());
+  handleInputChange(e) {
+    const value = e.detail.value;
+    // 更新chatStore中的输入值
+    this.setInputValue(value);
   },
 
+  /**
+   * 处理清空输入事件 - input-bar组件的clear事件
+   */
+  handleInputClear() {
+    this.setInputValue('');
+  },
   /**
    * 处理显示汤底事件
    * @param {Object} e 事件对象
@@ -208,65 +201,58 @@ Page({
   async onShowTruth(e) {
     try {
       // 使用chatStore显示汤底 - 直接切换状态即可
-      chatStore.setChatState(CHAT_STATE.TRUTH);
+      this.setChatState(CHAT_STATE.TRUTH);
     } catch (error) {
       console.error('显示汤底失败:', error);
       this.showErrorToast('无法显示汤底，请重试');
     }
-  },
-
-  /**
-   * 处理发送消息事件 - 统一处理所有消息发送
+  },/**
+   * 处理发送消息事件
    * @param {Object} e 事件对象
    */
   async handleSend(e) {
     const { value } = e.detail;
-    if (!value || !value.trim()) return;
-
-    // 验证消息长度不超过50个字
-    if (value.length > 50) {
+    
+    if (!value || !value.trim()) {
       wx.showToast({
-        title: '消息不能超过50个字',
+        title: '请输入内容',
         icon: 'none'
       });
       return;
     }
 
-    // 使用chatStore的计算属性检查是否可以发送消息
-    if (!chatStore.canSendMessage) {
-      this.showTip('请稍等', ['正在回复中，请稍候...'], 2000);
+    if (!this.canSendMessage) {
+      wx.showToast({
+        title: '侦探大人，请别急...',
+        icon: 'none'
+      });
       return;
-    }    try {
-      // 处理用户输入的UI交互 - 更新输入框状态
-      this.handleInput(value.trim());
+    }
 
-      // 通过chatStore发送消息 - 数据流向：page → chatStore → dialogService → API
-      const result = await this.sendMessage(value.trim());
+    try {
+      // 使用新的方法名 - 语义更清晰
+      const result = await this.processConversation(value.trim());
 
       if (!result || !result.success) {
-        throw new Error('发送消息失败');
+        const errorMessage = result?.error || '发送消息失败';
+        this.showErrorToast(errorMessage);
+        return;
       }
 
-      // 更新用户回答过的汤记录 - 在消息发送成功后记录
+      // 更新用户回答记录
       try {
-        const soupId = rootStore.soupId || '';
+        const soupId = this.soupId || '';
         if (soupId) {
           await this.updateAnsweredSoup(soupId);
         }
       } catch (err) {
         console.error('更新用户回答汤记录失败:', err);
-        // 失败不影响用户体验，继续执行
       }
 
-      // 获取对话组件并执行动画 - 只对AI助手消息应用动画
-      const dialog = this.selectComponent('#dialog');
-      if (dialog) {
-        // 直接调用dialog组件的animateMessage方法
-        await dialog.animateMessage(result.messageIndex);
-      }
+      // 动画由组件自动处理，无需手动调用
 
     } catch (error) {
-      console.error('发送消息失败:', error);
+      console.error('处理对话失败:', error);
       this.showErrorToast(error.message || '发送失败，请重试');
     }
   },
@@ -284,14 +270,13 @@ Page({
     });
   },
 
-
   /**
    * 处理关闭引导事件
    * 引导层组件的关闭事件
    */
   onCloseGuide() {
     // 调用settingStore的toggleGuide方法隐藏引导层
-    settingStore.toggleGuide(false);
+    this.toggleGuide(false);
   }
 
 });

@@ -82,7 +82,7 @@ Page({
     });
 
     // 检查用户是否已登录
-    if (!rootStore.isLoggedIn) {
+    if (!rootStore.userStore.isLoggedIn) {
       // 显示登录提示弹窗
       const loginPopup = this.selectComponent("#loginPopup");
       if (loginPopup) {
@@ -232,7 +232,7 @@ Page({
     }
 
     // 检查用户是否已登录
-    if (!rootStore.isLoggedIn) {
+    if (!rootStore.userStore.isLoggedIn) {
       // 显示登录提示弹窗
       const loginPopup = this.selectComponent("#loginPopup");
       if (loginPopup) {
