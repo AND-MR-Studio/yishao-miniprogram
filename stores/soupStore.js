@@ -20,11 +20,14 @@ class SoupStore {
     // ===== UI状态 =====
     blurAmount = 0; // 模糊程度
 
-    rootStore = null;    constructor(rootStore) {
-        this.rootStore = rootStore;        makeAutoObservable(this, {
+    rootStore = null;
+
+    constructor(rootStore) {
+        this.rootStore = rootStore;
+        makeAutoObservable(this, {
             fetchSoup: flow,
             getRandomSoup: flow,
-            
+
             // 简化配置，专注数据管理
             toggleButtonLoading: false,
             rootStore: false,
@@ -40,7 +43,9 @@ class SoupStore {
 
     get viewCount() {
         return this.soupData?.views || 0;
-    }    /**
+    }
+
+    /**
      * 统一的汤面数据获取方法 - 异步流程
      * 通过ID获取汤面数据，防止重复请求，自动处理交互状态
      * @param {string} soupId 汤面ID
@@ -85,7 +90,9 @@ class SoupStore {
             // 重置模糊效果
             this.resetBlurAmount();
         }
-    }    /**
+    }
+
+    /**
      * 获取随机汤面数据 - Store层专注状态管理
      * 调用 Service 层获取随机汤面数据，然后更新本地状态
      * @returns {Promise<Object>} 随机汤面数据

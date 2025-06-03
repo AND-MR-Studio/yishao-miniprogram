@@ -7,6 +7,8 @@
  */
 const dialogApiImpl = require("../api/dialogApiImpl");
 const soupService = require("./soupService");
+const ApiResult = require('./entities');
+
 
 class DialogService {
   /**

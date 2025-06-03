@@ -69,11 +69,10 @@ const request = (options) => {
       header: header,
       timeout: 5000,
       success: (res) => {
-        const { data } = res;
         // 请求成功
         switch (res.statusCode) {
           case 200:
-            resolve(data);
+            resolve(res.data);
             break;
           case 401:
             // 清除本地存储的用户信息和token
@@ -85,7 +84,7 @@ const request = (options) => {
           default:
             reject(
               new Error(`请求失败：\n 
-              res ${JSON.stringify(data)} \n 
+              res ${JSON.stringify(res)} \n 
               req ${JSON.stringify(options)}`)
             );
         }
@@ -127,22 +126,20 @@ const requestOpen = (options) => {
       data: options.data,
       header: header,
       success: (res) => {
-        const { data } = res;
-
         // 请求成功
         if (res.statusCode === 200) {
-          resolve(data);
+          resolve(res.data);
         }
         // 处理400错误 - 通常是业务逻辑错误
         else if (res.statusCode === 400) {
           // 从响应中获取错误信息
-          const errorMsg = data.error || data.message || "请求参数错误";
+          const errorMsg = res.error || res.message || "请求参数错误";
           console.log("400错误，错误信息:", errorMsg);
           reject(new Error(errorMsg));
         }
         // 其他错误
         else {
-          reject(new Error(data.error || data.message || "请求失败"));
+          reject(new Error(res.error || res.message || "请求失败"));
         }
       },
       fail: (err) => {
