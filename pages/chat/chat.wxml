@@ -36,7 +36,6 @@
     enableTypeAnimation="{{true}}"
     bind:close="onDialogClose"
   ></dialog-component>
-
   <!-- 输入栏组件 -->
   <input-bar
     id="inputBar"
@@ -46,6 +45,7 @@
     showTestButton="{{true}}"
     bind:input="handleInputChange"
     bind:send="handleSend"
+    bind:clear="handleInputClear"
     bind:voiceStart="handleVoiceStart"
     bind:voiceEnd="handleVoiceEnd"
     bind:voiceCancel="handleVoiceCancel"
