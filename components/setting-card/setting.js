@@ -51,11 +51,11 @@ Component({
       this.chatStoreBindings = createStoreBindings(this, {
         store: chatStore,
         fields: ['dialogId', 'userId'],
-      });      // 创建settingStore绑定 - 管理用户设置和导航功能
+      });      // 创建settingStore绑定 - 管理用户设置
       this.settingStoreBindings = createStoreBindings(this, {
         store: settingStore,
-        fields: ['soundOn', 'vibrationOn'],
-        actions: ['toggleSound', 'toggleVibration', 'clearChatContext', 'handleContact', 'handleAbout', 'handleShowGuide']
+        fields: ['soundOn', 'vibrationOn', 'showGuide'],
+        actions: ['toggleSound', 'toggleVibration', 'toggleGuide']
       });
     },
 
@@ -153,9 +153,7 @@ Component({
           duration: 1500
         });
       }
-    },
-
-    // 清理对话上下文
+    },    // 清理对话上下文
     async clearContext() {
       // 防止重复触发
       if (this.data.isProcessingContext) {
@@ -182,35 +180,44 @@ Component({
         return;
       }
 
-      // 直接从chatStore获取dialogId和userId
-      const dialogId = this.dialogId;
-      const userId = this.userId;
-
-      if (dialogId && userId) {
-        // 显示确认弹窗
-        wx.showModal({
-          title: '提示',
-          content: '确定要清理当前对话上下文吗？这将删除当前对话的所有记录。',
-          success: async (res) => {
-            if (res.confirm) {
-              // 调用settingStore的方法清理上下文
-              await this.clearChatContext(dialogId, userId);
+      // 显示确认弹窗
+      wx.showModal({
+        title: '提示',
+        content: '确定要清理当前对话上下文吗？这将删除当前对话的所有记录。',
+        success: async (res) => {
+          if (res.confirm) {
+            try {
+              // 调用chatStore的方法清理上下文
+              const success = await chatStore.clearChatContext();
+              
+              // 显示结果提示
+              if (success) {
+                wx.showToast({
+                  title: '对话已清理',
+                  icon: 'success',
+                  duration: 1500
+                });
+              } else {
+                wx.showToast({
+                  title: '清理失败，请重试',
+                  icon: 'none',
+                  duration: 2000
+                });
+              }
+            } catch (error) {
+              console.error('清理上下文失败:', error);
+              wx.showToast({
+                title: '清理失败，请重试',
+                icon: 'none',
+                duration: 2000
+              });
             }
-
-            // 重置处理标志
-            this.setData({ isProcessingContext: false });
           }
-        });
-      } else {
-        wx.showToast({
-          title: '无对话可清理',
-          icon: 'none',
-          duration: 1500
-        });
 
-        // 立即重置处理标志
-        this.setData({ isProcessingContext: false });
-      }
+          // 重置处理标志
+          this.setData({ isProcessingContext: false });
+        }
+      });
     },// 下拉开始 - 使用统一手势管理器
     handleTouchStart(e) {
       if (this.gestureManager) {
@@ -247,31 +254,46 @@ Component({
     },    // 联系我们
     contactUs() {
       this.triggerVibration();
-      // 直接调用settingStore的方法，不再通过事件传递
-      this.handleContact();
+      
+      // 在组件层处理联系我们的业务逻辑
+      console.log('联系我们功能');
+      wx.showToast({
+        title: '功能开发中...',
+        icon: 'none',
+        duration: 1500
+      });
+      
       // 关闭设置面板
       this.closePanel();
-    },
-
-    // 点击关于
+    },    // 点击关于
     onAbout() {
       this.triggerVibration();
-      // 直接调用settingStore的方法，不再通过事件传递
-      this.handleAbout();
+      
+      // 在组件层处理关于页面的跳转逻辑
+      wx.navigateTo({
+        url: '/pages/about/about',
+        fail: (err) => {
+          console.error('导航到关于页面失败:', err);
+          wx.showToast({
+            title: '跳转失败，请稍后重试',
+            icon: 'none',
+            duration: 2000
+          });
+        }
+      });
+      
       // 关闭设置面板
       this.closePanel();
-    },
-
-    /**
+    },    /**
      * 显示喝汤指南
-     * 直接调用settingStore的方法，不再需要事件传递
+     * 在组件层处理引导层显示逻辑
      */
     showGuide() {
       // 触发震动反馈
       this.triggerVibration();
 
-      // 直接调用settingStore的方法显示引导层
-      this.handleShowGuide();
+      // 调用settingStore的方法显示引导层
+      this.toggleGuide(true);
 
       // 关闭设置面板
       this.closePanel();

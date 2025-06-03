@@ -28,11 +28,12 @@ class ChatStore {
 
   constructor(rootStore) {
     this.rootStore = rootStore;
-    makeAutoObservable(this, {
+  makeAutoObservable(this, {
       // 标记异步方法为flow - 更新方法名
-      getChatData: flow,
-      fetchMessages: flow,
+      initChatData: flow,
+      fetchHistory: flow,
       processConversation: flow, // 原来的 handleUserDialog
+      clearChatContext: flow,
 
       rootStore: false,
     });
@@ -142,12 +143,7 @@ class ChatStore {
    * @deprecated 建议使用 addUserMessage 或 addAgentMessage
    */
   addMessage(role, content) {
-    if (role === 'user') {
-      return this.addUserMessage(content);
-    } else if (role === 'assistant') {
-      return this.addAgentMessage(content);
-    }
-
+    if(!content?.trim() || !role) return false;
     // 兼容其他角色（如partner）
     this.messages.push({
       role: role,
@@ -195,9 +191,7 @@ class ChatStore {
       }
 
       // 4. 清空输入框
-      this.setInputValue('');
-
-      // 保持 LOADING 状态，让动画自动触发和完成
+      this.setInputValue('');      // 保持 LOADING 状态，让动画自动触发和完成
       return { success: true };
 
     } catch (error) {
@@ -205,6 +199,42 @@ class ChatStore {
       this.removeLastMessage();
       this.setChatState(CHAT_STATE.DRINKING);
       return { success: false, error: error.message };
+    }
+  }
+  /**
+   * 清理对话上下文
+   * 删除当前对话的所有消息记录并刷新聊天数据
+   * @returns {Promise<boolean>} 清理结果
+   */
+  *clearChatContext() {
+    if (!this.dialogId || !this.userId) {
+      console.warn('无法清理对话：缺少对话ID或用户ID');
+      return false;
+    }
+    
+    try {
+      this.setChatState(CHAT_STATE.LOADING);
+      
+      // 调用dialogService清理对话数据
+      const success = yield dialogService.clearChatContext(this.dialogId, this.userId);
+      
+      if (success) {
+        // 清理本地消息数组
+        this.messages = [];
+        
+        // 重置状态为正常对话状态
+        this.setChatState(CHAT_STATE.DRINKING);
+        
+        console.log('对话上下文清理成功');
+        return true;
+      } else {
+        this.setChatState(CHAT_STATE.DRINKING);
+        return false;
+      }
+    } catch (error) {
+      console.error('清理对话上下文失败:', error);
+      this.setChatState(CHAT_STATE.DRINKING);
+      return false;
     }
   }
 }

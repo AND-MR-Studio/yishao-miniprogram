@@ -41,7 +41,6 @@ class SettingStore {
       // 标记异步方法为flow
       loadSettings: flow,
       saveSettings: flow,
-      clearChatContext: flow,
 
       // 标记为非观察属性
       // 无需标记，所有属性都是可观察的
@@ -120,7 +119,8 @@ class SettingStore {
   /**
    * 加载用户设置
    * 从本地存储读取用户设置并更新状态
-   */  *loadSettings() {
+   */
+    *loadSettings() {
     try {
       this.setLoading('settings', true);
       
@@ -144,7 +144,8 @@ class SettingStore {
   /**
    * 保存用户设置
    * 将当前设置状态保存到本地存储
-   */  *saveSettings() {
+   */
+    *saveSettings() {
     try {
       this.setLoading('settings', true);
       
@@ -203,101 +204,13 @@ class SettingStore {
     if (this.loading.hasOwnProperty(type)) {
       this.loading[type] = status;
     }
-  }
-  /**
+  }  /**
    * 重置所有设置为默认值
    */
   resetToDefault() {
     this.soundOn = DEFAULT_SETTINGS.soundOn;
     this.vibrationOn = DEFAULT_SETTINGS.vibrationOn;
     this.saveSettings();
-  }
-
-  // ===== 导航功能管理方法 =====
-
-  /**
-   * 处理联系我们功能
-   * 统一管理联系我们的逻辑
-   */
-  handleContact() {
-    // 可以在这里添加联系方式选择弹窗或直接跳转客服
-    console.log('联系我们功能');
-    wx.showToast({
-      title: '功能开发中...',
-      icon: 'none',
-      duration: 1500
-    });
-  }
-
-  /**
-   * 处理关于我们功能
-   * 统一管理关于页面的跳转逻辑
-   */
-  handleAbout() {
-    wx.navigateTo({
-      url: '/pages/about/about',
-      fail: (err) => {
-        console.error('导航到关于页面失败:', err);
-        wx.showToast({
-          title: '跳转失败，请稍后重试',
-          icon: 'none',
-          duration: 2000
-        });
-      }
-    });
-  }
-
-  /**
-   * 处理显示引导功能
-   * 统一管理引导层的显示逻辑
-   */
-  handleShowGuide() {
-    this.toggleGuide(true);
-  }
-
-  // ===== 聊天功能管理方法 =====
-
-  /**
-   * 清理对话上下文
-   * 从chat页面迁移而来，现在统一在settingStore中管理
-   * @param {string} dialogId - 对话ID
-   * @param {string} userId - 用户ID
-   */
-  *clearChatContext(dialogId, userId) {
-    try {
-      if (!dialogId || !userId) {
-        throw new Error('缺少必要参数：dialogId 或 userId');
-      }      // 导入dialogService来处理清理逻辑
-      const dialogService = require('../service/dialogService');
-      
-      // 使用dialogService清空对话消息
-      yield dialogService.saveDialogMessages(dialogId, userId, []);
-
-      // 导入chatStore来刷新消息
-      const { chatStore } = require('./index');
-      yield chatStore.getChatData(userId, chatStore.soupId);
-
-      // 显示成功提示
-      wx.showToast({
-        title: '对话已清理',
-        icon: 'success',
-        duration: 1500
-      });
-
-      console.log('对话上下文清理成功');
-      return true;
-    } catch (error) {
-      console.error('清理上下文失败:', error);
-      
-      // 显示错误提示
-      wx.showToast({
-        title: '清理失败，请重试',
-        icon: 'none',
-        duration: 2000
-      });
-      
-      return false;
-    }
   }
 
   // ===== 计算属性 =====

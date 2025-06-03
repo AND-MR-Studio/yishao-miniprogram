@@ -318,6 +318,38 @@ class DialogService {
       throw error;
     }
   }
+
+  /**
+   * 清理对话上下文
+   * 删除指定对话的所有消息记录
+   * @param {string} dialogId - 对话ID
+   * @param {string} userId - 用户ID
+   * @returns {Promise<boolean>} 清理是否成功
+   */
+  async clearChatContext(dialogId, userId) {
+    if (!dialogId) {
+      throw new Error("清理对话失败: 缺少对话ID");
+    }
+
+    if (!userId) {
+      throw new Error("清理对话失败: 缺少用户ID");
+    }
+
+    try {
+      // 调用API实现层清理对话记录
+      const response = await dialogApiImpl.clearDialog(dialogId, userId);
+
+      if (!response.success) {
+        throw new Error(response.error || "清理对话失败");
+      }
+
+      console.log('对话上下文清理成功:', { dialogId, userId });
+      return true;
+    } catch (error) {
+      console.error('dialogService 清理对话失败:', error);
+      throw error;
+    }
+  }
 }
 
 // 导出单例实例
