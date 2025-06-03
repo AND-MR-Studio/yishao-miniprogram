@@ -37,12 +37,16 @@ Page({
         store: settingStore,
         fields: ['showGuide'],
         actions: ['toggleGuide']
-      });      // 创建chatStore绑定 - 更新方法名
+      });
+      
+      // 创建chatStore绑定 - 更新方法名
       this.chatStoreBindings = createStoreBindings(this, {
         store: rootStore.chatStore,
         fields: ['messages', 'chatState', 'inputValue', 'canSendMessage', 'dialogId', 'isPeeking'],
         actions: ['processConversation', 'setChatState', 'setInputValue', 'addUserMessage', 'addAgentMessage']
-      });// 创建tipStore绑定 - 管理提示信息状态
+      });
+      
+      // 创建tipStore绑定 - 管理提示信息状态
       this.tipStoreBindings = createStoreBindings(this, {
         store: rootStore.tipStore,
         fields: ['visible', 'title', 'content', 'state'],
