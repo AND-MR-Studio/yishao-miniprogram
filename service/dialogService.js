@@ -9,13 +9,6 @@ const dialogApiImpl = require("../api/dialogApiImpl");
 const soupService = require("./soupService");
 
 class DialogService {
-  /**
-   * 处理历史消息
-   * @param {Array} messages 历史消息数组
-   * @returns {Array} 处理后的消息数组
-   */
-  processMessages() {
-  }
 
   /**
    * 处理用户输入 - service层业务逻辑处理
@@ -29,30 +22,12 @@ class DialogService {
   async ConvertUserInput(params) {
     const { input, userId, dialogId } = params;
 
-    // service层参数验证 - 确保必要的业务参数存在
-    if (!input) {
-      throw new Error("用户输入不能为空");
-    }
-
-    if (!userId) {
-      throw new Error("用户ID不能为空");
-    }
-
-    if (!dialogId) {
-      throw new Error("对话ID不能为空");
-    }
-
     // 业务数据预处理 - 统一输入格式
-    const trimmedInput = input.trim();
+    const trimmedInput = input?.trim() || "";
 
-    // 业务规则验证
-    if (!trimmedInput) {
-      throw new Error("输入内容不能为空");
-    }
-
-    // 业务规则：消息长度限制
-    if (trimmedInput.length > 50) {
-      throw new Error("消息不能超过50个字");
+    // service层基础安全验证 - 防止恶意调用
+    if (!trimmedInput || !userId || !dialogId) {
+      throw new Error("必要参数不能为空");
     }
 
     // 这里可以添加更多业务规则验证：
@@ -88,7 +63,8 @@ class DialogService {
    * @param {string} params.dialogId 对话ID
    * @param {string} params.messageId 消息ID（可选）
    * @returns {Promise<Object>} 回复消息的Promise（小程序格式）
-   */  async sendMessage(params) {
+   */
+  async sendMessage(params) {
     try {
       // 调用API实现层发送消息（API格式转换在这里处理）
       const response = await dialogApiImpl.sendMessage(params);
