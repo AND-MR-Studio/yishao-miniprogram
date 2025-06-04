@@ -72,18 +72,22 @@ const userApiImpl = {
 
     /**
      * 更新用户收藏的汤
+     * @param {string} userId - 用户ID
      * @param {string} soupId - 汤ID
      * @param {boolean} isFavorite - 是否收藏
      * @returns {Promise<ApiResult>} 更新结果
      */
-    updateFavoriteSoup: async (soupId, isFavorite) => {
+    updateFavoriteSoup: async (userId, soupId, isFavorite) => {
+        if (!userId) {
+            return ApiResult.onError("用户ID为空");
+        }
         if (!soupId) {
             return ApiResult.onError("汤ID为空");
         }
 
         try {
             return await post({
-                url: getFullUrl(USER, "/favorite-soup"),
+                url: getFullUrl(USER, `${soupId}/favor`),
                 data: {soupId, isFavorite},
             });
         } catch (error) {
