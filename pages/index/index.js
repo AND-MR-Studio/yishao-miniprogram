@@ -10,7 +10,6 @@ const {
 } = require("../../utils/gestureManager");
 const { createStoreBindings } = require("mobx-miniprogram-bindings");
 const { soupStore, userStore, settingStore } = require("../../stores/index");
-const api = require("../../config/api");
 
 Page({
     // ===== 页面数据 =====
@@ -97,7 +96,7 @@ Page({
         }
         if (this.soupStoreBindings) {
             this.soupStoreBindings.destroyStoreBindings();
-        }        // 清理手势管理器
+        }
         if (this.gestureManager) {
             this.gestureManager.destroy();
             this.gestureManager = null;
@@ -160,7 +159,7 @@ Page({
         const query = `soupId=${shareSoup?.id || ''}`;
 
         // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
-        const imageUrl = shareSoup?.image || api.assets.remote.images.share;
+        const imageUrl = shareSoup?.image;
 
         return {
             title: shareTitle,
@@ -249,7 +248,8 @@ Page({
         wx.nextTick(() => {
             this.switchSoup(direction);
         });
-    },    /**
+    },
+    /**
      * 处理双击点赞事件
      * 全自动响应，登录检查由userStore自动处理
      */
@@ -272,7 +272,8 @@ Page({
         } catch (error) {
             console.error('双击点赞失败:', error);
         }
-    },    /**
+    },
+    /**
      * 处理长按收藏事件
      * 全自动响应，登录检查由userStore自动处理
      */
@@ -345,7 +346,8 @@ Page({
             // 长按收藏回调函数
             onLongPressStart: this.handleLongPressFavorite.bind(this),
         });
-    },    /**
+    },
+    /**
      * 触摸开始事件处理
      * @param {Object} e 触摸事件对象
      */
