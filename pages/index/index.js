@@ -8,8 +8,8 @@ const {
     SWIPE_DIRECTION,
     createGestureManager,
 } = require("../../utils/gestureManager");
-const {createStoreBindings} = require("mobx-miniprogram-bindings");
-const {soupStore, userStore, settingStore} = require("../../stores/index");
+const { createStoreBindings } = require("mobx-miniprogram-bindings");
+const { soupStore, userStore, settingStore } = require("../../stores/index");
 const api = require("../../config/api");
 
 Page({
@@ -33,36 +33,38 @@ Page({
             fields: ["showGuide"], // 引导层显示状态
             actions: ["toggleGuide"] // 引导层控制方法
         });
-
-        // 创建userStore绑定 - 用于获取用户登录状态
+        // 创建userStore绑定 - 只用于同步用户信息
         this.userStoreBindings = createStoreBindings(this, {
             store: userStore,
-            fields: ["isLoggedIn", "shouldShowLoginPopup"], // 只绑定登录状态，用于权限检查
             actions: ["syncUserInfo"]
-        });        // 创建soupStore绑定 - 汤面相关字段和方法        
+        });
+        // 创建soupStore绑定 - 汤面相关字段和方法
         this.soupStoreBindings = createStoreBindings(this, {
             store: soupStore,
             fields: [
-                "soupLoading", 
-                "chatLoading", 
-                "soupData", 
-                "blurAmount", 
-                "chatPageUrl", 
-                "canStartChat", 
+                "soupLoading",
+                "chatLoading",
+                "soupData",
+                "blurAmount",
+                "chatPageUrl",
+                "canStartChat",
                 "error",
                 // 添加computed属性用于UI响应式控制
                 "hasError",
                 "isLoading"
             ],
             actions: ["toggleChatLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
-        });// 显示引导层 - 直接使用store方法，因为app.js不是页面
-         
-         settingStore.toggleGuide(true);         // 初始化手势管理器
-         this.initInteractionManager();
+        });
+        // 显示引导层
+        settingStore.toggleGuide(true);
+        // 登录弹窗
+        userStore.requireLogin();
+        // 初始化手势管理器
+        this.initInteractionManager();
 
-         // 获取汤面数据 - 移除手动错误检查，让UI自动响应
-         await soupStore.fetchSoup(options.soupId);
-            
+        // 获取汤面数据
+        await soupStore.fetchSoup(options.soupId);
+
     },
 
     /**
@@ -172,7 +174,7 @@ Page({
      * 使用后端返回的 chatPageUrl 进行跳转
      */
     async onStartChat() {
-            this.toggleChatLoading(true);
+        this.toggleChatLoading(true);
 
         // 直接使用 store 中的 chatPageUrl 跳转
         wx.navigateTo({
@@ -241,7 +243,7 @@ Page({
      * @param {Object} e 事件对象
      */
     handleSoupSwipe(e) {
-        const {direction} = e.detail;
+        const { direction } = e.detail;
 
         // 等待一帧，确保滑动反馈动画先应用
         wx.nextTick(() => {
@@ -249,80 +251,51 @@ Page({
         });
     },    /**
      * 处理双击点赞事件
-     * 检查登录状态，未登录时显示登录弹窗
+     * 全自动响应，登录检查由userStore自动处理
      */
     async handleDoubleTapLike() {
-        if (soupStore.soupData?.id) {
-            // 检查用户是否已登录 - 使用userStore的isLoggedIn属性
-            if (!this.data.isLoggedIn) {
-                // 显示登录提示弹窗
-                const loginPopup = this.selectComponent("#loginPopup");
-                if (loginPopup) {
-                    loginPopup.show();
-                }
-                return;
-            }
+        try {
+            const result = await userStore.toggleLike(soupStore.soupData.id);
 
-            // 用户已登录，调用 userStore 的点赞方法
-            try {
-                const result = await userStore.toggleLike(soupStore.soupData.id);
-                
-                // 显示操作反馈
-                if (result && result.success) {
-                    wx.showToast({
-                        title: result.message,
-                        icon: 'none',
-                        duration: 1500
-                    });
+            // 显示操作反馈
+            if (result && result.success) {
+                wx.showToast({
+                    title: result.message,
+                    icon: 'none',
+                    duration: 1500
+                });
 
-                    // 触发震动反馈
-                    if (wx.vibrateShort) {
-                        wx.vibrateShort();
-                    }
-                }
-            } catch (error) {
-                console.error('双击点赞失败:', error);
+                // 触发震动反馈
+                wx.vibrateShort();
+
             }
+        } catch (error) {
+            console.error('双击点赞失败:', error);
         }
-    },
-
-    /**
+    },    /**
      * 处理长按收藏事件
-     * 检查登录状态，未登录时显示登录弹窗
+     * 全自动响应，登录检查由userStore自动处理
      */
     async handleLongPressFavorite() {
-        if (soupStore.soupData?.id) {
-            // 检查用户是否已登录 - 使用userStore的isLoggedIn属性
-            if (!this.data.isLoggedIn) {
-                // 显示登录提示弹窗
-                const loginPopup = this.selectComponent("#loginPopup");
-                if (loginPopup) {
-                    loginPopup.show();
-                }
-                return;
-            }
+        try {
+            const result = await userStore.toggleFavorite(soupStore.soupData.id);
 
-            // 用户已登录，调用 userStore 的收藏方法
-            try {
-                const result = await userStore.toggleFavorite(soupStore.soupData.id);
-                
-                // 显示操作反馈
-                if (result && result.success) {
-                    wx.showToast({
-                        title: result.message,
-                        icon: 'none',
-                        duration: 1500
-                    });
+            // 显示操作反馈
+            if (result && result.success) {
+                wx.showToast({
+                    title: result.message,
+                    icon: 'none',
+                    duration: 1500
+                });
 
-                    // 触发震动反馈
-                    if (wx.vibrateShort) {
-                        wx.vibrateShort();
-                    }
-                }
-            } catch (error) {
-                console.error('长按收藏失败:', error);
+                // 触发震动反馈
+                wx.vibrateShort();
+
             }
-        }    },
+        } catch (error) {
+            console.error('长按收藏失败:', error);
+        }
+    },
 
     // ===== 指南相关事件处理 =====
     /**
@@ -353,24 +326,25 @@ Page({
             enableSwipe: true,
             enableBlurEffect: true,
             enableBackgroundEffect: true,
-            
+
             // 启用双击和长按功能
             enableDoubleTap: true,
             enableLongPress: true,
-            
+
             // 设置数据更新方法
             setData: this.setData.bind(this),
             setBlurAmount: this.setBlurAmount.bind(this),
-            
+
             // 滑动回调函数
             onSwipeLeft: () => this.switchSoup("next"),
             onSwipeRight: () => this.switchSoup("previous"),
-            
+
             // 双击点赞回调函数
             onDoubleTap: this.handleDoubleTapLike.bind(this),
-            
+
             // 长按收藏回调函数
-            onLongPressStart: this.handleLongPressFavorite.bind(this),        });
+            onLongPressStart: this.handleLongPressFavorite.bind(this),
+        });
     },    /**
      * 触摸开始事件处理
      * @param {Object} e 触摸事件对象
