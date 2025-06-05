@@ -14,11 +14,11 @@ const api = require("../../config/api");
 
 Page({
     // ===== 页面数据 =====
-    data: {        // 交互相关 - 由统一手势管理器管理
+    data: {
+        // 交互相关 - 由统一手势管理器管理
         swiping: false, // 是否正在滑动中
         swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
         swipeStarted: false, // 是否开始滑动
-        // blurAmount已移至soupStore中统一管理
     },
 
     // ===== 生命周期方法 =====
