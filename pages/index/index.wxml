@@ -27,10 +27,10 @@
       <!-- 开始喝汤按钮 - 根据 isLoggedIn 和数据状态自动控制 -->
       <button 
         class="start-button"
-        disabled="{{!isLoggedIn || !chatPageUrl || buttonLoading}}"
+        disabled="{{!isLoggedIn || !chatPageUrl || chatLoading}}"
         bind:tap="onStartChat"
       >
-        {{buttonLoading ? '加载中...' : '开始喝汤'}}
+        {{chatLoading ? '加载中...' : '开始喝汤'}}
       </button>
     </view>
 

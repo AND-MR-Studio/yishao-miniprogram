@@ -13,21 +13,25 @@ class SoupStore {
 
     // ===== 加载状态 =====
     soupLoading = false; // 汤面数据加载状态
-    buttonLoading = false; // UI按钮加载状态
+    chatLoading = false; // UI按钮加载状态
 
     // ===== UI状态 =====
     blurAmount = 0; // 模糊程度
 
-    rootStore = null;    constructor(rootStore) {
-        this.rootStore = rootStore;        makeAutoObservable(this, {
+    rootStore = null;
+    constructor(rootStore) {
+        this.rootStore = rootStore;
+        makeAutoObservable(this, {
             fetchSoup: flow,
             getRandomSoup: flow,
-            
+
             // 简化配置，专注数据管理
-            toggleButtonLoading: false,
+            toggleChatLoading: false,
             rootStore: false,
         });
-    }// 获取汤面统计数据 - 直接从soupData获取
+    }
+    
+    // 获取汤面统计数据 - 直接从soupData获取
     get likeCount() {
         return this.soupData?.likes || 0;
     }
@@ -38,7 +42,9 @@ class SoupStore {
 
     get viewCount() {
         return this.soupData?.views || 0;
-    }    /**
+    }
+    
+    /**
      * 统一的汤面数据获取方法 - 异步流程
      * 如果提供soupId则获取指定汤面，否则获取随机汤面
      * @param {string} soupId 汤面ID字符串，为空时获取随机汤面
@@ -90,7 +96,9 @@ class SoupStore {
             // 重置模糊效果
             this.resetBlurAmount();
         }
-    }/**
+    }
+    
+    /**
      * 获取随机汤面数据 - Store层专注状态管理
      * 调用 Service 层获取随机汤面数据，然后更新本地状态
      * @returns {Promise<Object>} 随机汤面数据
@@ -119,25 +127,25 @@ class SoupStore {
      * 使用MobX的action装饰器确保状态更新的响应式
      * @param {boolean} isLoading 是否设置为加载状态
      */
-    toggleButtonLoading(isLoading) {
-        this.buttonLoading = isLoading;
+    toggleChatLoading(isLoading) {
+        this.chatLoading = isLoading;
 
         // 如果设置为加载状态，设置自动超时保护
         if (isLoading) {
             // 清理之前的超时计时器
-            if (this._buttonLoadingTimeout) {
-                clearTimeout(this._buttonLoadingTimeout);
+            if (this._chatLoadingTimeout) {
+                clearTimeout(this._chatLoadingTimeout);
             }
 
             // 设置一个超时，如果5秒后仍在加载，则自动重置
-            this._buttonLoadingTimeout = setTimeout(() => {
-                this.toggleButtonLoading(false);
+            this._chatLoadingTimeout = setTimeout(() => {
+                this.toggleChatLoading(false);
             }, 5000);
         } else {
             // 清理超时计时器
-            if (this._buttonLoadingTimeout) {
-                clearTimeout(this._buttonLoadingTimeout);
-                this._buttonLoadingTimeout = null;
+            if (this._chatLoadingTimeout) {
+                clearTimeout(this._chatLoadingTimeout);
+                this._chatLoadingTimeout = null;
             }
         }
     }
@@ -162,10 +170,19 @@ class SoupStore {
     get chatPageUrl() {
         return this.soupData?.chatPageUrl || '';
     }
-
     // computed 属性 - 检查是否可以开始喝汤
     get canStartChat() {
         return this.soupData?.id && this.chatPageUrl && !this.soupLoading;
+    }
+
+    // computed 属性 - 是否有错误
+    get hasError() {
+        return !!this.error;
+    }
+
+    // computed 属性 - 是否正在加载（包括汤面和按钮加载）
+    get isLoading() {
+        return this.soupLoading || this.chatLoading;
     }
 }
 

@@ -39,24 +39,29 @@ Page({
             store: userStore,
             fields: ["isLoggedIn", "shouldShowLoginPopup"], // 只绑定登录状态，用于权限检查
             actions: ["syncUserInfo"]
-        });
-
-        // 创建soupStore绑定 - 汤面相关字段和方法
+        });        // 创建soupStore绑定 - 汤面相关字段和方法        
         this.soupStoreBindings = createStoreBindings(this, {
             store: soupStore,
-            fields: ["soupLoading", "buttonLoading", "soupData", "blurAmount", "chatPageUrl", "canStartChat", "error"],
-            actions: ["toggleButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
+            fields: [
+                "soupLoading", 
+                "chatLoading", 
+                "soupData", 
+                "blurAmount", 
+                "chatPageUrl", 
+                "canStartChat", 
+                "error",
+                // 添加computed属性用于UI响应式控制
+                "hasError",
+                "isLoading"
+            ],
+            actions: ["toggleChatLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
         });// 显示引导层 - 直接使用store方法，因为app.js不是页面
          
-         settingStore.toggleGuide(true);
-
-         // 初始化手势管理器
+         settingStore.toggleGuide(true);         // 初始化手势管理器
          this.initInteractionManager();
 
+         // 获取汤面数据 - 移除手动错误检查，让UI自动响应
          await soupStore.fetchSoup(options.soupId);
-         if (soupStore.error) {
-             this.showErrorToast('加载失败，请重试');
-         }
             
     },
 
@@ -126,13 +131,6 @@ Page({
             success: function (res) {
                 // 分享成功的回调
                 console.log('分享成功', res);
-
-                // 可以在这里添加分享成功的统计或其他操作
-                if (shareSoup?.id) {
-                    // 记录分享事件 - 使用自定义方法记录分享
-                    console.log('分享汤面:', shareSoup.id, shareSoup.title || '');
-                    // 注意：wx.reportAnalytics已弃用，应使用其他统计方法
-                }
             },
             fail: function (res) {
                 // 分享失败的回调
@@ -174,19 +172,22 @@ Page({
      * 使用后端返回的 chatPageUrl 进行跳转
      */
     async onStartChat() {
-            this.toggleButtonLoading(true);
+            this.toggleChatLoading(true);
 
         // 直接使用 store 中的 chatPageUrl 跳转
         wx.navigateTo({
             url: this.data.chatPageUrl,
             success: () => {
                 setTimeout(() => {
-                    this.toggleButtonLoading(false);
+                    this.toggleChatLoading(false);
                 }, 500);
             },
             fail: () => {
-                this.toggleButtonLoading(false);
-                this.showErrorToast("跳转失败，请重试");
+                this.toggleChatLoading(false);
+                wx.showToast({
+                    title: "跳转失败，请重试",
+                    icon: "none"
+                });
             }
         });
     },
@@ -218,26 +219,20 @@ Page({
         this.switchSoup();
     },
 
-    // ===== 汤面切换相关 =====
+    // ===== 汤面切换相关 =====    
+    // 
     /**
      * 切换汤面
-     * 极简版本，只负责UI效果和调用store方法
-     * 确保在切换过程中保持之前的内容并显示模糊效果
+     * 完全响应式版本，依赖MobX computed属性自动判断状态
+     * UI自动根据store状态更新，无需手动检查
      */
     async switchSoup() {
-        // 如果正在加载，不执行切换
-        if (this.data.soupLoading) return;
-
         // 先应用模糊效果，确保在加载新数据前保持之前的内容
         this.setBlurAmount(3);
 
         // 使用MobX store中的getRandomSoup方法获取随机汤面
+        // 所有错误处理和状态管理都在store中自动完成
         await soupStore.getRandomSoup();
-        
-        // 检查是否有错误
-        if (this.data.error) {
-            this.showErrorToast("切换失败，请重试");
-        }
     },
 
     // ===== 交互相关 =====
@@ -327,21 +322,9 @@ Page({
             } catch (error) {
                 console.error('长按收藏失败:', error);
             }
-        }
-    },
+        }    },
 
-
-    // ===== 辅助方法 =====
-    /**
-     * 显示错误提示
-     * @param {string} message 错误信息
-     */
-    showErrorToast(message) {
-        wx.showToast({
-            title: message,
-            icon: "none",
-            duration: 2000,
-        });    },    // ===== 指南相关事件处理 =====
+    // ===== 指南相关事件处理 =====
     /**
      * 显示指南层
      * 通过settingStore统一管理指南状态
@@ -388,13 +371,12 @@ Page({
             
             // 长按收藏回调函数
             onLongPressStart: this.handleLongPressFavorite.bind(this),        });
-    },
-    /**
+    },    /**
      * 触摸开始事件处理
      * @param {Object} e 触摸事件对象
      */
     handleTouchStart(e) {
-        this.gestureManager?.handleTouchStart(e, { canInteract: !this.data.soupLoading });
+        this.gestureManager?.handleTouchStart(e, { canInteract: !this.data.isLoading });
     },
 
     /**
@@ -402,7 +384,7 @@ Page({
      * @param {Object} e 触摸事件对象
      */
     handleTouchMove(e) {
-        this.gestureManager?.handleTouchMove(e, { canInteract: !this.data.soupLoading });
+        this.gestureManager?.handleTouchMove(e, { canInteract: !this.data.isLoading });
     },
 
     /**
@@ -410,14 +392,6 @@ Page({
      * @param {Object} e 触摸事件对象
      */
     handleTouchEnd(e) {
-        this.gestureManager?.handleTouchEnd(e, { canInteract: !this.data.soupLoading });
-    },
-
-    /**
-     * 检查是否可以进行交互
-     * @returns {boolean} 是否可以交互
-     */
-    canInteract() {
-        return !this.data.soupLoading;
+        this.gestureManager?.handleTouchEnd(e, { canInteract: !this.data.isLoading });
     },
 });
