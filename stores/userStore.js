@@ -61,6 +61,13 @@ class UserStore {
   }
 
   /**
+ * 是否应该显示登录弹窗
+ */
+get shouldShowLoginPopup() {
+    return !this.isLoggedIn;
+}
+
+  /**
    * 侦探信息 - 为 detective-card 组件提供完整的侦探信息
    */
   get detectiveInfo() {

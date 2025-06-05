@@ -37,50 +37,29 @@ Page({
         // 创建userStore绑定 - 用于获取用户登录状态
         this.userStoreBindings = createStoreBindings(this, {
             store: userStore,
-            fields: ["isLoggedIn"], // 只绑定登录状态，用于权限检查
+            fields: ["isLoggedIn", "shouldShowLoginPopup"], // 只绑定登录状态，用于权限检查
             actions: ["syncUserInfo"]
         });
 
         // 创建soupStore绑定 - 汤面相关字段和方法
         this.soupStoreBindings = createStoreBindings(this, {
             store: soupStore,
-            fields: ["soupLoading", "buttonLoading", "soupData", "blurAmount"],
+            fields: ["soupLoading", "buttonLoading", "soupData", "blurAmount", "chatPageUrl", "canStartChat", "error"],
             actions: ["toggleButtonLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
-        });
+        });// 显示引导层 - 直接使用store方法，因为app.js不是页面
+         
+         settingStore.toggleGuide(true);
 
-        // 检查首次访问状态，必须在页面加载时执行
-        settingStore.checkFirstVisit();
+         // 初始化手势管理器
+         this.initInteractionManager();
 
-        // 同步用户信息 - 确保获取最新的用户状态
-        await this.syncUserInfo();
-
-        try {
-            // 统一数据获取路径：无论是否有soupId，都通过统一的fetchSoup方法获取数据
-            if (options.soupId) {
-                // 如果有指定的soupId，直接通过store获取
-                await soupStore.fetchSoup(options.soupId);
-            } else {
-                // 获取随机汤面
-                await soupStore.getRandomSoup();            }
-
-            // 检查数据有效性
-            if (!soupStore.soupData) {
-                console.error("加载汤面失败");
-                this.showErrorToast("加载失败，请重试");
-                return;
-            }
-        } catch (error) {
-            console.error("加载汤面过程中发生错误:", error);
-            this.showErrorToast("加载失败，请检查网络或稍后重试");
-        } finally {            // 初始化手势管理器
-            this.initInteractionManager();
-        }
+         await soupStore.fetchSoup(options.soupId);
+         if (soupStore.error) {
+             this.showErrorToast('加载失败，请重试');
+         }
+            
     },
 
-    /**
-     * 页面显示时执行
-     * 设置底部TabBar选中状态并同步用户ID
-     */
     /**
      * 页面显示时执行
      * 设置底部TabBar选中状态并同步用户ID
@@ -192,32 +171,20 @@ Page({
 
     /**
      * 开始喝汤按钮点击事件
-     * 极简逻辑，只负责跳转到chat页面
+     * 使用后端返回的 chatPageUrl 进行跳转
      */
-    async onStartSoup() {
-        // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
-        if (!this.data.isLoggedIn) {
-            // 显示登录提示弹窗
-            const loginPopup = this.selectComponent("#loginPopup");
-            if (loginPopup) {
-                loginPopup.show();
-            }
-            // 重置按钮加载状态
-            this.toggleButtonLoading(false);
-            return;
-        }
+    async onStartChat() {
+            this.toggleButtonLoading(true);
 
-        // 直接跳转到chat页面
+        // 直接使用 store 中的 chatPageUrl 跳转
         wx.navigateTo({
-            url: `/pages/chat/chat?soupId=${soupStore.soupData?.id || ''}`,
+            url: this.data.chatPageUrl,
             success: () => {
-                // 跳转成功后重置按钮状态
                 setTimeout(() => {
                     this.toggleButtonLoading(false);
                 }, 500);
             },
             fail: () => {
-                // 跳转失败立即重置按钮状态
                 this.toggleButtonLoading(false);
                 this.showErrorToast("跳转失败，请重试");
             }
@@ -242,12 +209,13 @@ Page({
         console.log('用户取消登录');
     },
 
-    /**
+    /**    /**
      * 处理导航栏首页按钮点击事件，刷新首页数据
      */
     onRefreshHome() {
         console.log('刷新首页数据');
-        // 重新加载随机汤面        this.switchSoup();
+        // 重新加载随机汤面
+        this.switchSoup();
     },
 
     // ===== 汤面切换相关 =====
@@ -255,31 +223,21 @@ Page({
      * 切换汤面
      * 极简版本，只负责UI效果和调用store方法
      * 确保在切换过程中保持之前的内容并显示模糊效果
-     * @returns {Promise<void>}
      */
     async switchSoup() {
         // 如果正在加载，不执行切换
         if (this.data.soupLoading) return;
 
-        try {
-            // 先应用模糊效果，确保在加载新数据前保持之前的内容
-            // 直接使用store中的方法设置模糊效果
-            this.setBlurAmount(3);
+        // 先应用模糊效果，确保在加载新数据前保持之前的内容
+        this.setBlurAmount(3);
 
-            // 使用MobX store中的getRandomSoup方法获取随机汤面
-            // 该方法内部会调用fetchSoup加载完整数据，并自动处理模糊效果
-            const soupData = await soupStore.getRandomSoup();
-
-            if (!soupData) {
-                this.showErrorToast("切换失败，请重试");
-            }
-        } catch (error) {
-            console.error("切换汤面失败:", error);
+        // 使用MobX store中的getRandomSoup方法获取随机汤面
+        await soupStore.getRandomSoup();
+        
+        // 检查是否有错误
+        if (this.data.error) {
             this.showErrorToast("切换失败，请重试");
-            // 出错时也需要重置模糊效果
-            this.resetBlurAmount();
         }
-        // 注意：不需要finally块，因为fetchSoup方法内部已经处理了模糊效果的重置
     },
 
     // ===== 交互相关 =====
@@ -384,6 +342,14 @@ Page({
             icon: "none",
             duration: 2000,
         });    },    // ===== 指南相关事件处理 =====
+    /**
+     * 显示指南层
+     * 通过settingStore统一管理指南状态
+     */
+    onShowGuide() {
+        settingStore.toggleGuide(true);
+    },
+
     /**
      * 关闭指南层
      * 通过settingStore统一管理指南状态

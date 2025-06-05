@@ -288,7 +288,7 @@ Component({
      * 显示喝汤指南
      * 在组件层处理引导层显示逻辑
      */
-    showGuide() {
+    handleShowGuide() {
       // 触发震动反馈
       this.triggerVibration();
 

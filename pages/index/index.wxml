@@ -24,10 +24,14 @@
 
     <!-- 按钮区域 -->
     <view class="button-container show-buttons">
-      <start-soup-button
-        id="startSoupButton"
-        bind:tap="onStartSoup">
-      </start-soup-button>
+      <!-- 开始喝汤按钮 - 根据 isLoggedIn 和数据状态自动控制 -->
+      <button 
+        class="start-button"
+        disabled="{{!isLoggedIn || !chatPageUrl || buttonLoading}}"
+        bind:tap="onStartChat"
+      >
+        {{buttonLoading ? '加载中...' : '开始喝汤'}}
+      </button>
     </view>
 
     <!-- 恐怖元素 - 随机闪烁的微光点 -->
@@ -45,17 +49,12 @@
     bind:close="onCloseGuide">
   </guide-overlay>
 
-  <!-- 登录提示弹窗 -->
-  <popup
-    id="loginPopup"
-    title="侦探大人，想喝海龟汤吗？"
-    content="先去「个人中心」登录一下吧～"
-    confirmText="去登录→"
-    cancelText="再想想"
-    showClose="{{false}}"
-    showLoginIcon="{{true}}"
-    bind:confirm="onLoginConfirm"
-    bind:cancel="onLoginCancel"
-  ></popup>
+  <!-- 登录弹窗 - 自动根据 shouldShowLoginPopup 显示/隐藏 -->
+  <login-popup 
+      id="loginPopup" 
+      wx:if="{{shouldShowLoginPopup}}"
+      bind:confirm="onLoginConfirm"
+      bind:cancel="onLoginCancel"
+  />
 
 </view>
