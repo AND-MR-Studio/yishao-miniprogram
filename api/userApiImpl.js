@@ -71,50 +71,83 @@ const userApiImpl = {
     },
 
     /**
-     * 更新用户收藏的汤
-     * @param {string} userId - 用户ID
+     * 收藏汤面
      * @param {string} soupId - 汤ID
-     * @param {boolean} isFavorite - 是否收藏
-     * @returns {Promise<ApiResult>} 更新结果
+     * @returns {Promise<ApiResult>} 收藏结果
      */
-    updateFavoriteSoup: async (userId, soupId, isFavorite) => {
-        if (!userId) {
-            return ApiResult.onError("用户ID为空");
-        }
+    favoriteSoup: async (soupId) => {
         if (!soupId) {
             return ApiResult.onError("汤ID为空");
         }
 
         try {
             return await post({
-                url: getFullUrl(USER, `${soupId}/favor`),
-                data: {soupId, isFavorite},
+                url: getFullUrl(USER, `/favor/${soupId}`),
             });
         } catch (error) {
-            console.error(`[${USER}] 更新收藏记录失败:`, error);
-            return ApiResult.onError("更新收藏记录失败");
+            console.error(`[${USER}] 收藏汤面失败:`, error);
+            return ApiResult.onError("收藏汤面失败");
         }
     },
 
     /**
-     * 更新用户点赞的汤
+     * 取消收藏汤面
      * @param {string} soupId - 汤ID
-     * @param {boolean} isLike - 是否点赞
-     * @returns {Promise<ApiResult>} 更新结果
+     * @returns {Promise<ApiResult>} 取消收藏结果
      */
-    updateLikedSoup: async (soupId, isLike) => {
+    unfavoriteSoup: async (soupId) => {
         if (!soupId) {
             return ApiResult.onError("汤ID为空");
         }
 
         try {
             return await post({
-                url: getFullUrl(USER, "/liked-soup"),
-                data: {soupId, isLike},
+                url: getFullUrl(USER, `/unfavor/${soupId}`),
             });
         } catch (error) {
-            console.error(`[${USER}] 更新点赞记录失败:`, error);
-            return ApiResult.onError("更新点赞记录失败");
+            console.error(`[${USER}] 取消收藏汤面失败:`, error);
+            return ApiResult.onError("取消收藏汤面失败");
+        }
+    },
+    
+
+    /**
+     * 点赞汤面
+     * @param {string} soupId - 汤ID
+     * @returns {Promise<ApiResult>} 点赞结果
+     */
+    likeSoup: async (soupId) => {
+        if (!soupId) {
+            return ApiResult.onError("汤ID为空");
+        }
+
+        try {
+            return await post({
+                url: getFullUrl(USER, `/like/${soupId}`),
+            });
+        } catch (error) {
+            console.error(`[${USER}] 点赞汤面失败:`, error);
+            return ApiResult.onError("点赞汤面失败");
+        }
+    },
+
+    /**
+     * 取消点赞汤面
+     * @param {string} soupId - 汤ID
+     * @returns {Promise<ApiResult>} 取消点赞结果
+     */
+    unlikeSoup: async (soupId) => {
+        if (!soupId) {
+            return ApiResult.onError("汤ID为空");
+        }
+
+        try {
+            return await post({
+                url: getFullUrl(USER, `/unlike/${soupId}`),
+            });
+        } catch (error) {
+            console.error(`[${USER}] 取消点赞汤面失败:`, error);
+            return ApiResult.onError("取消点赞汤面失败");
         }
     },
 

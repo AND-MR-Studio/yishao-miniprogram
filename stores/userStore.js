@@ -34,7 +34,9 @@ class UserStore {
             updateUserProfile: flow,
             syncUserInfo: flow,
             favoriteSoup: flow,
+            unfavoriteSoup: flow,
             likeSoup: flow,
+            unlikeSoup: flow,
             solveSoup: flow,
             updateAnsweredSoup: flow,
             toggleFavorite: flow,
@@ -319,20 +321,19 @@ class UserStore {
     // ===== 用户交互相关方法 - 重构为直接操作模式 =====
 
     /**
-     * 收藏/取消收藏汤面
+     * 收藏汤面
      * 直接发起操作请求，后端统一处理状态更新
      * @param {string} soupId - 汤ID
-     * @param {boolean} isFavorite - 是否收藏
      * @returns {Promise<{success: boolean, data?: any, error?: string}>}
      */
-    * favoriteSoup(soupId, isFavorite) {
+    * favoriteSoup(soupId) {
         if (!this.isLoggedIn) {
             return {success: false, error: '用户未登录'};
         }
 
         try {
             // 直接发起操作请求
-            const result = yield userService.updateFavoriteSoup(soupId, isFavorite);
+            const result = yield userService.favoriteSoup(soupId);
 
             if (result.success) {
                 // 操作成功后同步用户信息，获取最新状态
@@ -340,7 +341,7 @@ class UserStore {
                 return {
                     success: true,
                     data: result.data,
-                    message: isFavorite ? '收藏成功' : '已取消收藏'
+                    message: '收藏成功'
                 };
             } else {
                 return result;
@@ -352,31 +353,19 @@ class UserStore {
     }
 
     /**
-     * 切换收藏状态 - 便捷方法
-     * 自动判断当前状态并切换
-     * @param {string} soupId - 汤ID
-     * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-     */
-    * toggleFavorite(soupId) {
-        const currentStatus = this.isFavoriteSoup(soupId);
-        return yield this.favoriteSoup(soupId, !currentStatus);
-    }
-
-    /**
-     * 点赞/取消点赞汤面
+     * 取消收藏汤面
      * 直接发起操作请求，后端统一处理状态更新
      * @param {string} soupId - 汤ID
-     * @param {boolean} isLike - 是否点赞
      * @returns {Promise<{success: boolean, data?: any, error?: string}>}
      */
-    * likeSoup(soupId, isLike) {
+    * unfavoriteSoup(soupId) {
         if (!this.isLoggedIn) {
             return {success: false, error: '用户未登录'};
         }
 
         try {
             // 直接发起操作请求
-            const result = yield userService.updateLikedSoup(soupId, isLike);
+            const result = yield userService.unfavoriteSoup(soupId);
 
             if (result.success) {
                 // 操作成功后同步用户信息，获取最新状态
@@ -384,7 +373,50 @@ class UserStore {
                 return {
                     success: true,
                     data: result.data,
-                    message: isLike ? '点赞成功' : '已取消点赞'
+                    message: '已取消收藏'
+                };
+            } else {
+                return result;
+            }
+        } catch (error) {
+            console.error('取消收藏操作失败:', error);
+            return {success: false, error: '取消收藏操作失败'};
+        }
+    }
+
+    /**
+     * 切换收藏状态 - 便捷方法
+     * 自动判断当前状态并切换
+     * @param {string} soupId - 汤ID
+     * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+     */
+    * toggleFavorite(soupId) {
+        const currentStatus = this.isFavoriteSoup(soupId);
+        return currentStatus ? yield this.unfavoriteSoup(soupId) : yield this.favoriteSoup(soupId);
+    }
+
+    /**
+     * 点赞汤面
+     * 直接发起操作请求，后端统一处理状态更新
+     * @param {string} soupId - 汤ID
+     * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+     */
+    * likeSoup(soupId) {
+        if (!this.isLoggedIn) {
+            return {success: false, error: '用户未登录'};
+        }
+
+        try {
+            // 直接发起操作请求
+            const result = yield userService.likeSoup(soupId);
+
+            if (result.success) {
+                // 操作成功后同步用户信息，获取最新状态
+                yield this.syncUserInfo();
+                return {
+                    success: true,
+                    data: result.data,
+                    message: '点赞成功'
                 };
             } else {
                 return result;
@@ -396,6 +428,38 @@ class UserStore {
     }
 
     /**
+     * 取消点赞汤面
+     * 直接发起操作请求，后端统一处理状态更新
+     * @param {string} soupId - 汤ID
+     * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+     */
+    * unlikeSoup(soupId) {
+        if (!this.isLoggedIn) {
+            return {success: false, error: '用户未登录'};
+        }
+
+        try {
+            // 直接发起操作请求
+            const result = yield userService.unlikeSoup(soupId);
+
+            if (result.success) {
+                // 操作成功后同步用户信息，获取最新状态
+                yield this.syncUserInfo();
+                return {
+                    success: true,
+                    data: result.data,
+                    message: '已取消点赞'
+                };
+            } else {
+                return result;
+            }
+        } catch (error) {
+            console.error('取消点赞操作失败:', error);
+            return {success: false, error: '取消点赞操作失败'};
+        }
+    }
+
+    /**
      * 切换点赞状态 - 便捷方法
      * 自动判断当前状态并切换
      * @param {string} soupId - 汤ID
@@ -403,7 +467,7 @@ class UserStore {
      */
     * toggleLike(soupId) {
         const currentStatus = this.isLikedSoup(soupId);
-        return yield this.likeSoup(soupId, !currentStatus);
+        return currentStatus ? yield this.unlikeSoup(soupId) : yield this.likeSoup(soupId);
     }
 
     /**
