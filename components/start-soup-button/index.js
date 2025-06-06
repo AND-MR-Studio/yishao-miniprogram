@@ -38,12 +38,12 @@ Component({
     // 按钮点击事件
     handleTap() {
       // 如果正在加载，不处理点击
-      if (this.soupLoading || this.buttonLoading) {
+      if (this.soupLoading || this.chatLoading) {
         return;
       }
 
       // 立即设置按钮为加载状态 - 使用store方法
-      this.toggleButtonLoading(true);
+      this.toggleChatLoading(true);
 
       // 触发tap事件，由父组件处理业务逻辑
       this.triggerEvent('tap');
@@ -58,8 +58,8 @@ Component({
       // 创建MobX Store绑定
       this.storeBindings = createStoreBindings(this, {
         store: soupStore,
-        fields: ['soupLoading', 'buttonLoading'],
-        actions: ['toggleButtonLoading'],
+        fields: ['soupLoading', 'chatLoading'],
+        actions: ['toggleChatLoading'],
       });
     },
 

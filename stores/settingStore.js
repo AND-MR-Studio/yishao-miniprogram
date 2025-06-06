@@ -21,7 +21,6 @@ const DEFAULT_SETTINGS = {
  */
 class SettingStore {
   // ===== 引导层相关状态 =====
-  isFirstVisit = false; // 是否首次访问
   showGuide = false; // 是否显示引导层
 
   // ===== 用户设置状态 =====
@@ -36,7 +35,6 @@ class SettingStore {
     settings: false, // 设置加载状态
     guide: false // 引导状态加载
   };
-
   constructor() {
     makeAutoObservable(this, {
       // 标记异步方法为flow
@@ -57,62 +55,18 @@ class SettingStore {
    * 初始化设置store
    */
   initialize() {
-    // 检查首次访问状态
-    this.checkFirstVisit();
     // 加载用户设置
     this.loadSettings();
   }
-
   // ===== 引导层管理方法 =====
 
   /**
-   * 检查用户是否首次访问
-   * 使用wx.getStorageSync检查本地存储中是否有首次访问标记
-   */  checkFirstVisit() {
-    try {
-      // 直接使用存储键名，简化代码
-      const hasVisited = wx.getStorageSync('hasVisitedSoupPage');
-
-      // 如果没有访问记录，则设置为首次访问
-      if (!hasVisited) {
-        this.isFirstVisit = true;
-        this.showGuide = true;
-        console.log('首次访问，显示引导层');
-      } else {
-        this.isFirstVisit = false;
-        this.showGuide = false;
-        console.log('非首次访问，不显示引导层');
-      }
-    } catch (error) {
-      console.error('检查首次访问状态失败:', error);
-      // 出错时默认不显示引导
-      this.isFirstVisit = false;
-      this.showGuide = false;
-    }
-  }
-
-  /**
-   * 统一的引导层控制方法
-   * 合并原有的closeGuide、showGuideManually方法
+   * 切换引导层显示状态
    * @param {boolean} show - true表示显示引导，false表示隐藏引导
    */
   toggleGuide(show) {
-    if (show) {
-      // 显示引导层
-      this.showGuide = true;
-      console.log('显示引导层');    } else {
-      // 隐藏引导层并保存访问记录
-      try {
-        wx.setStorageSync('hasVisitedSoupPage', true);
-        console.log('已保存访问记录');
-      } catch (error) {
-        console.error('保存访问记录失败:', error);
-      }
-
-      this.showGuide = false;
-      this.isFirstVisit = false;
-      console.log('隐藏引导层');
-    }
+    this.showGuide = show;
+    console.log(show ? '显示引导层' : '隐藏引导层');
   }
 
   // ===== 用户设置管理方法 =====
@@ -120,7 +74,8 @@ class SettingStore {
   /**
    * 加载用户设置
    * 从本地存储读取用户设置并更新状态
-   */  *loadSettings() {
+   */
+    *loadSettings() {
     try {
       this.setLoading('settings', true);
       
@@ -144,7 +99,8 @@ class SettingStore {
   /**
    * 保存用户设置
    * 将当前设置状态保存到本地存储
-   */  *saveSettings() {
+   */
+    *saveSettings() {
     try {
       this.setLoading('settings', true);
       
@@ -203,9 +159,7 @@ class SettingStore {
     if (this.loading.hasOwnProperty(type)) {
       this.loading[type] = status;
     }
-  }
-
-  /**
+  }  /**
    * 重置所有设置为默认值
    */
   resetToDefault() {

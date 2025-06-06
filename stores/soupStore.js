@@ -9,19 +9,16 @@ const soupService = require("../service/soupService");
 class SoupStore {
     // ===== 核心数据 =====
     soupData = null; // 当前汤面数据
-
-    // ===== 显示状态（从汤面数据中提取） =====
-    // 移除冗余的交互状态，直接从soupData和userStore获取
+    error = null; // 错误信息
 
     // ===== 加载状态 =====
     soupLoading = false; // 汤面数据加载状态
-    buttonLoading = false; // UI按钮加载状态
+    chatLoading = false; // UI按钮加载状态
 
     // ===== UI状态 =====
     blurAmount = 0; // 模糊程度
 
     rootStore = null;
-
     constructor(rootStore) {
         this.rootStore = rootStore;
         makeAutoObservable(this, {
@@ -29,10 +26,12 @@ class SoupStore {
             getRandomSoup: flow,
 
             // 简化配置，专注数据管理
-            toggleButtonLoading: false,
+            toggleChatLoading: false,
             rootStore: false,
         });
-    }// 获取汤面统计数据 - 直接从soupData获取
+    }
+    
+    // 获取汤面统计数据 - 直接从soupData获取
     get likeCount() {
         return this.soupData?.likes || 0;
     }
@@ -44,45 +43,52 @@ class SoupStore {
     get viewCount() {
         return this.soupData?.views || 0;
     }
-
+    
     /**
      * 统一的汤面数据获取方法 - 异步流程
-     * 通过ID获取汤面数据，防止重复请求，自动处理交互状态
-     * @param {string} soupId 汤面ID
+     * 如果提供soupId则获取指定汤面，否则获取随机汤面
+     * @param {string} soupId 汤面ID字符串，为空时获取随机汤面
      * @returns {Promise<Object>} 汤面数据
      */
     * fetchSoup(soupId) {
-        // 参数校验
-        if (!soupId) return null;
-
         // 防止重复请求同一个soupId
-        if (this._fetchingId === soupId) return this.soupData;
-
-        // 设置当前正在获取的ID
-        this._fetchingId = soupId;
+        if (soupId && this._fetchingId === soupId) return this.soupData;
 
         try {
+            // 清除之前的错误状态
+            this.error = null;
             // 设置加载状态
             this.soupLoading = true;
 
-            // 获取汤面数据
-            let soupData = yield soupService.getSoup(soupId);
+            let soupData = null;
 
-            // 如果获取失败，尝试获取随机汤面
-            if (!soupData) {
-                soupData = yield soupService.getRandomSoup();
+            if (soupId) {
+                // 设置当前正在获取的ID
+                this._fetchingId = soupId;
+                
+                // 获取指定ID的汤面数据
+                soupData = yield soupService.getSoup(soupId);
+                
+                // 如果获取失败，抛出错误
                 if (!soupData) {
-                    throw new Error("获取汤面数据失败");
+                    throw new Error(`获取汤面数据失败: ${soupId}`);
                 }
-                // 更新soupId为随机汤面的ID
-                soupId = soupData.id;
-            }            // 更新汤面数据
+            } else {
+                // 没有指定ID，获取随机汤面
+                soupData = yield soupService.getRandomSoup();
+                
+                if (!soupData) {
+                    throw new Error("获取随机汤面数据失败");
+                }
+            }
+
+            // 更新汤面数据
             this.soupData = soupData;
 
             return soupData;
         } catch (error) {
             console.error("获取汤面数据失败:", error);
-            return null;
+            this.error = error.message; // UI 只关心 error 是否为空
         } finally {
             // 重置加载状态和请求标志
             this.soupLoading = false;
@@ -91,7 +97,7 @@ class SoupStore {
             this.resetBlurAmount();
         }
     }
-
+    
     /**
      * 获取随机汤面数据 - Store层专注状态管理
      * 调用 Service 层获取随机汤面数据，然后更新本地状态
@@ -99,6 +105,9 @@ class SoupStore {
      */
     * getRandomSoup() {
         try {
+            // 清除之前的错误状态
+            this.error = null;
+            
             // 调用 Service 层获取随机汤面
             const randomSoup = yield soupService.getRandomSoup();
             if (randomSoup && randomSoup.id) {
@@ -108,7 +117,7 @@ class SoupStore {
             return null;
         } catch (error) {
             console.error("获取随机汤面失败:", error);
-            return null;
+            this.error = error.message; // UI 只关心 error 是否为空
         }
     }
 
@@ -118,25 +127,25 @@ class SoupStore {
      * 使用MobX的action装饰器确保状态更新的响应式
      * @param {boolean} isLoading 是否设置为加载状态
      */
-    toggleButtonLoading(isLoading) {
-        this.buttonLoading = isLoading;
+    toggleChatLoading(isLoading) {
+        this.chatLoading = isLoading;
 
         // 如果设置为加载状态，设置自动超时保护
         if (isLoading) {
             // 清理之前的超时计时器
-            if (this._buttonLoadingTimeout) {
-                clearTimeout(this._buttonLoadingTimeout);
+            if (this._chatLoadingTimeout) {
+                clearTimeout(this._chatLoadingTimeout);
             }
 
             // 设置一个超时，如果5秒后仍在加载，则自动重置
-            this._buttonLoadingTimeout = setTimeout(() => {
-                this.toggleButtonLoading(false);
+            this._chatLoadingTimeout = setTimeout(() => {
+                this.toggleChatLoading(false);
             }, 5000);
         } else {
             // 清理超时计时器
-            if (this._buttonLoadingTimeout) {
-                clearTimeout(this._buttonLoadingTimeout);
-                this._buttonLoadingTimeout = null;
+            if (this._chatLoadingTimeout) {
+                clearTimeout(this._chatLoadingTimeout);
+                this._chatLoadingTimeout = null;
             }
         }
     }
@@ -155,6 +164,25 @@ class SoupStore {
      */
     resetBlurAmount() {
         this.blurAmount = 0;
+    }
+
+    // computed 属性 - 获取聊天页面 URL
+    get chatPageUrl() {
+        return this.soupData?.chatPageUrl || '';
+    }
+    // computed 属性 - 检查是否可以开始喝汤
+    get canStartChat() {
+        return this.soupData?.id && this.chatPageUrl && !this.soupLoading;
+    }
+
+    // computed 属性 - 是否有错误
+    get hasError() {
+        return !!this.error;
+    }
+
+    // computed 属性 - 是否正在加载（包括汤面和按钮加载）
+    get isLoading() {
+        return this.soupLoading || this.chatLoading;
     }
 }
 

@@ -2,10 +2,7 @@
 <view class="dialog-container {{peekMode ? 'peek-mode' : ''}} {{mode}}">
   <!-- 导航栏 -->
   <view class="nav-bar-container" catchtap="handleClose">
-    <nav-bar
-      showBackButton="{{true}}"
-      bind:back="handleClose"
-    />
+    <nav-bar showBackButton="{{true}}" bind:back="handleClose" />
   </view>
 
   <!-- 毛玻璃效果背景 -->
@@ -27,7 +24,6 @@
   >
     <!-- 消息列表 -->
     <block wx:for="{{messages}}" wx:key="id">
-      <!-- 消息容器 -->
       <view
         class="message-wrapper {{getMessageClass(item)}}"
         id="msg-{{index}}"
@@ -48,14 +44,12 @@
             <view class="username">{{item.nickName || '用户'}}</view>
           </block>
 
-          <!-- 消息内容 - 正常显示 -->
-          <view class="message-text" wx:if="{{index !== animatingMessageIndex}}">
-            <block wx:if="{{(item.role === 'system' || item.role === 'assistant') && mode === 'single'}}">></block> {{item.content}}
-          </view>
-
-          <!-- 消息内容 - 打字机动画 -->
-          <view class="message-text typing" wx:if="{{index === animatingMessageIndex}}">
-            <block wx:if="{{(item.role === 'system' || item.role === 'assistant') && mode === 'single'}}">></block> {{typingText}}
+          <!-- 统一的消息内容显示 -->
+          <view class="message-text {{chatState === 'loading' && index === messages.length - 1 ? 'typing' : ''}}">
+            <block wx:if="{{(item.role === 'system' || item.role === 'assistant') && mode === 'single'}}">></block>
+            <!-- 根据状态显示内容 -->
+            <text wx:if="{{chatState === 'loading' && index === messages.length - 1}}">{{typingText}}</text>
+            <text wx:else>{{item.content}}</text>
           </view>
 
           <!-- 消息时间 -->
