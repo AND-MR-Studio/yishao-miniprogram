@@ -65,10 +65,28 @@ class ChatStore {
   get latestagentMessage() {
     return this.agentMessages.at(-1) || null;
   }
-
   // 检查是否到达真相状态
   get isTruth() {
     return this.agentMessages.some(msg => msg.content.includes('TRUTH'));
+  }
+
+
+  // 是否正在显示打字机动画的计算属性
+  get isTypingAnimation() {
+  return this.chatState === CHAT_STATE.LOADING && this.agentMessages.length > 0;
+  }
+
+  // 是否有消息的计算属性
+  get hasMessages() {
+    return this.userMessages.length > 0;
+  }  // 是否需要显示打字机动画的计算属性
+  get shouldShowTyping() {
+    return this.chatState === CHAT_STATE.LOADING && this.agentMessages.length > 0;
+  }
+
+  // 判断是否需要滚动到底部
+  get shouldScrollToBottom() {
+    return this.hasMessages;
   }
   // ===== Action方法 =====
   /**
@@ -235,6 +253,21 @@ class ChatStore {
       console.error('清理对话上下文失败:', error);
       this.setChatState(CHAT_STATE.DRINKING);
       return false;
+    }
+  }
+  /**
+   * 完成动画 - 将状态从 LOADING 切换回 DRINKING
+   * 这个方法会在打字机动画完成后被调用
+   */
+  completeAnimation() {
+    if (this.chatState === CHAT_STATE.LOADING) {
+      // 检查是否到达真相状态
+      this.checkTruthState();
+      
+      // 如果不是真相状态，切换回正常对话状态
+      if (this.chatState !== CHAT_STATE.TRUTH) {
+        this.setChatState(CHAT_STATE.DRINKING);
+      }
     }
   }
 }
