@@ -28,15 +28,13 @@
           <view class="message-text">{{message.content}}</view>
         </view>
       </view>
-    </block>
-
-    <!-- AI消息列表 -->
+    </block>    <!-- AI消息列表 -->
     <block wx:for="{{agentMessages}}" wx:key="index" wx:for-item="message" wx:for-index="idx">
       <view class="message-wrapper agent-message" id="agent-msg-{{idx}}">
         <view class="message-content">
-          <view class="message-text {{chatState === 'loading' && idx === agentMessages.length - 1 ? 'typing' : ''}}">
+          <view class="message-text {{typingMsg && idx === agentMessages.length - 1 ? 'typing' : ''}}">
             <!-- 根据状态显示内容 -->
-            <text wx:if="{{chatState === 'loading' && idx === agentMessages.length - 1}}">{{typingText}}</text>
+            <text wx:if="{{typingMsg && idx === agentMessages.length - 1}}">{{typingText}}</text>
             <text wx:else>{{message.content}}</text>
           </view>
         </view>

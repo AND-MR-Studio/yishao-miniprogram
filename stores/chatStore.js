@@ -74,14 +74,18 @@ class ChatStore {
   // 是否正在显示打字机动画的计算属性
   get isTypingAnimation() {
   return this.chatState === CHAT_STATE.LOADING && this.agentMessages.length > 0;
-  }
-
-  // 是否有消息的计算属性
+  }  // 是否有消息的计算属性
   get hasMessages() {
     return this.userMessages.length > 0;
-  }  // 是否需要显示打字机动画的计算属性
-  get shouldShowTyping() {
-    return this.chatState === CHAT_STATE.LOADING && this.agentMessages.length > 0;
+  }
+
+  // 打字机动画内容 - 只在loading状态且有最新AI消息时返回内容
+  get typingMsg() {
+    if (this.chatState !== CHAT_STATE.LOADING) {
+      return null;
+    }
+    const lastMessage = this.agentMessages[this.agentMessages.length - 1];
+    return lastMessage?.content || null;
   }
 
   // 判断是否需要滚动到底部

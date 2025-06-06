@@ -17,16 +17,14 @@ Component({  properties: {
   },
 
   lifetimes: {
-    attached() {
-      // 绑定 MobX 状态
+    attached() {      // 绑定 MobX 状态 - 只监听必要的字段
       this.storeBindings = createStoreBindings(this, {
         store: rootStore.chatStore,
         fields: [
           'userMessages', 
           'agentMessages', 
-          'chatState', 
           'isPeeking',
-          'shouldShowTyping'
+          'typingMsg'  // 监听打字机动画内容
         ],
         actions: ['completeAnimation']
       });
@@ -53,26 +51,20 @@ Component({  properties: {
       if (this.storeBindings) {
         this.storeBindings.destroyStoreBindings();      }
     }
-  },
-
-  observers: {
-    // 监听打字机动画触发
-    'shouldShowTyping, agentMessages': function(shouldShowTyping, agentMessages) {
-      if (shouldShowTyping && agentMessages && agentMessages.length > 0) {
-        const lastMessage = agentMessages[agentMessages.length - 1];
-        if (lastMessage && lastMessage.content) {
-          wx.nextTick(() => {
-            this.startTypingAnimation(lastMessage.content);
-          });
-        }
-      }
+  },  observers: {
+    // 响应式触发打字机动画 - 完全信任Store的判断逻辑
+    'typingMsg': function(content) {
+      wx.nextTick(() => {
+        this.startTypingAnimation(content);
+      });
     },
 
     // 监听消息变化，自动滚动到底部
     'userMessages, agentMessages': function() {
       wx.nextTick(() => {
         this.scrollToBottom();
-      });    }
+      });
+    }
   },
 
   methods: {
@@ -81,10 +73,9 @@ Component({  properties: {
       this.setData({
         scrollToView: 'scrollBottom'
       });
-    },
-
-    // 开始打字机动画
+    },    // 开始打字机动画
     async startTypingAnimation(content) {
+      // 信任Store逻辑：只有有效内容才会触发此方法
       if (!content) return;
       
       this.setData({ typingText: '' });
