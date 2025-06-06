@@ -52,10 +52,10 @@ Page({
         fields: ['visible', 'title', 'content', 'state'],
         actions: ['showTip', 'hideTip', 'setDefaultTip', 'showSpecialTip']
       });
-
       // 同步用户ID - 这是必要的UI初始化操作
-      await rootStore.userStore.syncUserInfo();      // 确保tipStore显示默认提示
-      rootStore.tipStore.setDefaultTip();
+      await rootStore.userStore.syncUserInfo();      
+      
+      // 显示默认提示
       rootStore.tipStore.showTip();
 
       // 初始化聊天数据 - 通过chatStore统一处理
@@ -176,8 +176,7 @@ Page({
 
     // 恢复提示模块可见性 - 使用延迟确保状态更新后再显示提示
     setTimeout(() => {
-      // 使用action方法显示提示并重置内容
-      this.setDefaultTip();
+      // 显示默认提示
       this.showTip();
     }, 100);
   },

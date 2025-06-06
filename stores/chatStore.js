@@ -13,10 +13,10 @@ class ChatStore {
   // ===== 可观察状态 =====
   // 当前聊天状态（包含加载状态）
   chatState = CHAT_STATE.DRINKING;
-
   // 对话数据
   dialogId = '';     // 当前对话ID
-  messages = [];       // 对话消息列表
+  userMessages = [];   // 用户消息列表
+  agentMessages = [];     // AI消息列表
 
   // UI状态
   isPeeking = false;   // 查看底部汤面
@@ -28,7 +28,7 @@ class ChatStore {
 
   constructor(rootStore) {
     this.rootStore = rootStore;
-  makeAutoObservable(this, {
+    makeAutoObservable(this, {
       // 标记异步方法为flow - 更新方法名
       initChatData: flow,
       fetchHistory: flow,
@@ -57,16 +57,20 @@ class ChatStore {
   get canSendMessage() {
     return this.chatState !== CHAT_STATE.LOADING;
   }
-  // 获取最新消息
-  get latestMessage() {
-    return this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
+  // 获取最新用户消息
+  get latestUserMessage() {
+    return this.userMessages.at(-1) || null;
   }
+  // 获取最新AI消息
+  get latestagentMessage() {
+    return this.agentMessages.at(-1) || null;
+  }
+
   // 检查是否到达真相状态
   get isTruth() {
-    return this.messages.some(msg =>
-      msg.role === 'assistant' && msg.content.includes('TRUTH')
-    );
-  }  // ===== Action方法 =====
+    return this.agentMessages.some(msg => msg.content.includes('TRUTH'));
+  }
+  // ===== Action方法 =====
   /**
    * 设置输入框的值
    * @param {string} value 输入值
@@ -84,7 +88,6 @@ class ChatStore {
       this.chatState = state;
     }
   }
-
   /**
    * 添加用户消息 - 不需要动画
    * @param {string} content 用户消息内容
@@ -92,20 +95,27 @@ class ChatStore {
   addUserMessage(content) {
     if (!content?.trim()) return false;
 
-    this.messages.push({
-      role: 'user',
+    this.userMessages.push({
       content: content.trim()
     });
 
     return true;
   }
+  /**
+ * 移除最后一条用户消息 - 用于错误回滚
+ */
+  removeLastUserMessage() {
+    if (this.userMessages.length > 0) {
+      this.userMessages.pop();
+    }
+  }
 
   /**
- * 移除最后一条消息 - 用于错误回滚
- */
-  removeLastMessage() {
-    if (this.messages.length > 0) {
-      this.messages.pop();
+   * 移除最后一条AI消息 - 用于错误回滚
+   */
+  removeLastAgentMessage() {
+    if (this.agentMessages.length > 0) {
+      this.agentMessages.pop();
     }
   }
 
@@ -117,7 +127,6 @@ class ChatStore {
       this.setChatState(CHAT_STATE.TRUTH);
     }
   }
-
   /**
    * 添加AI助手消息 - 需要触发动画
    * @param {string} content AI回复内容
@@ -125,8 +134,7 @@ class ChatStore {
   addAgentMessage(content) {
     if (!content?.trim()) return false;
 
-    this.messages.push({
-      role: 'assistant',
+    this.agentMessages.push({
       content: content.trim()
     });
 
@@ -137,19 +145,12 @@ class ChatStore {
   }
 
   /**
-   * 通用添加消息方法 - 保留用于兼容性（如果需要）
+   * 通用添加消息方法
    * @param {string} role 消息角色
    * @param {string} content 消息内容
    * @deprecated 建议使用 addUserMessage 或 addAgentMessage
    */
   addMessage(role, content) {
-    if(!content?.trim() || !role) return false;
-    // 兼容其他角色（如partner）
-    this.messages.push({
-      role: role,
-      content: content
-    });
-
     return true;
   }
 
@@ -176,16 +177,15 @@ class ChatStore {
         this.userId,
         this.dialogId
       );
-
       if (!result?.success || !result.data) {
-        this.removeLastMessage(); // 回滚用户消息
+        this.removeLastUserMessage(); // 回滚用户消息
         this.setChatState(CHAT_STATE.DRINKING);
         return { success: false, error: '获取AI回复失败' };
       }
 
       // 3. 添加AI回复（会自动触发动画和状态检查）
       if (!this.addAgentMessage(result.data.content)) {
-        this.removeLastMessage(); // 回滚用户消息
+        this.removeLastUserMessage(); // 回滚用户消息
         this.setChatState(CHAT_STATE.DRINKING);
         return { success: false, error: 'AI消息添加失败' };
       }
@@ -196,7 +196,7 @@ class ChatStore {
 
     } catch (error) {
       console.error('对话处理失败:', error);
-      this.removeLastMessage();
+      this.removeLastUserMessage();
       this.setChatState(CHAT_STATE.DRINKING);
       return { success: false, error: error.message };
     }
@@ -211,20 +211,20 @@ class ChatStore {
       console.warn('无法清理对话：缺少对话ID或用户ID');
       return false;
     }
-    
+
     try {
       this.setChatState(CHAT_STATE.LOADING);
-      
+
       // 调用dialogService清理对话数据
       const success = yield dialogService.clearChatContext(this.dialogId, this.userId);
-      
       if (success) {
         // 清理本地消息数组
-        this.messages = [];
-        
+        this.userMessages = [];
+        this.agentMessages = [];
+
         // 重置状态为正常对话状态
         this.setChatState(CHAT_STATE.DRINKING);
-        
+
         console.log('对话上下文清理成功');
         return true;
       } else {

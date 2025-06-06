@@ -25,7 +25,8 @@ Page({
      * 页面加载时执行
      * 获取用户ID并加载汤面
      * @param {Object} options - 页面参数，可能包含soupId
-     */    async onLoad(options) {
+     */
+        async onLoad(options) {
         // 创建settingStore绑定 - 用于引导层状态管理
         this.settingStoreBindings = createStoreBindings(this, {
             store: settingStore,
@@ -123,7 +124,7 @@ Page({
 
         // 构建分享图片 - 优先使用汤面图片，其次使用默认图片
         // 注意：图片必须是网络图片，且必须是https协议
-        const imageUrl = shareSoup?.image || this.selectComponent('#soupDisplay')?.data.coverUrl;
+        const imageUrl = shareSoup?.image;
 
         return {
             title: shareTitle,
