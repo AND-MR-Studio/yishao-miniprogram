@@ -370,9 +370,11 @@ Page({
     this.checkDraft();
   },
 
+
+  // ===== 指南相关事件处理 =====
   /**
-   * 处理显示引导事件
-   * 通过nav-bar组件转发的setting组件事件
+   * 显示指南层
+   * 通过settingStore统一管理指南状态
    */
   onShowGuide() {
     // 调用settingStore的toggleGuide方法显示引导层
@@ -380,8 +382,8 @@ Page({
   },
 
   /**
-   * 处理关闭引导事件
-   * 引导层组件的关闭事件
+   * 关闭指南层
+   * 通过settingStore统一管理指南状态
    */
   onCloseGuide() {
     // 调用settingStore的toggleGuide方法隐藏引导层

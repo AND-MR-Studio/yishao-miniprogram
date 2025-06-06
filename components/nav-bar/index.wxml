@@ -17,12 +17,6 @@
 </view>
 
 <setting-card
-  show="{{showSettingPanel}}"
-  pageState="{{pageState}}"
+  show="{{showSettingPanel}}"  pageState="{{pageState}}"
   bind:close="onSettingClose"
-  bind:switchchange="onSwitchChange"
-  bind:contact="onContact"
-  bind:about="onAbout"
-  bind:clearcontext="onClearContext"
-  bind:showguide="onShowGuide"
 />

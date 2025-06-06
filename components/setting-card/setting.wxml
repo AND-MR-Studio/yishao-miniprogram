@@ -56,7 +56,7 @@
         <custom-button
           type="confirm"
           text="查看"
-          bindtap="showGuide" />
+          bindtap="handleShowGuide" />
       </view>
 
       <!-- 已移除跳过动画开关 -->

@@ -1,5 +1,6 @@
 // components/dialog/index.js
-// 只保留打字机动画工具
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { rootStore } = require('../../stores/index');
 const simpleTypeAnimation = require('../../utils/typeAnimation');
 
 Component({
@@ -43,46 +44,51 @@ Component({
 
   data: {
     keyboardHeight: 0,
-    isAnimating: false, // 用于打字机动画
-    typingText: '', // 简化版打字机文本
-    animatingMessageIndex: -1, // 当前正在执行动画的消息索引
-    peekMode: false, // 是否处于偷看模式
-    scrollToView: 'scrollBottom' // 滚动到底部的视图ID
+    scrollToView: 'scrollBottom',
+    typingText: '' // 只保留动画文本状态
   },
 
   lifetimes: {
     attached() {
+      // 绑定 MobX 状态
+      this.storeBindings = createStoreBindings(this, {
+        store: rootStore.chatStore,
+        fields: ['messages', 'chatState'],
+        actions: ['completeAnimation']
+      });
+
       wx.onKeyboardHeightChange(res => {
         this.setData({ keyboardHeight: res.height });
       });
 
-      // 初始化简化版打字机动画实例
+      // 初始化打字机动画
       this.typeAnimator = simpleTypeAnimation.createInstance(this, {
         typeSpeed: this.properties.typeSpeed,
-        batchSize: 1, // 每个字符触发一次setData，平衡性能和动画效果
+        batchSize: 1,
         onComplete: () => {
-          this.setData({ isAnimating: false });
-          // 动画完成后确保滚动到底部
+          this.completeAnimation();
           this.scrollToBottom(true);
         },
-        onUpdate: () => {
-          // 每次打字机更新时强制滚动到底部，忽略节流
+        onUpdate: (text) => {
+          this.setData({ typingText: text });
           this.scrollToBottom(true);
         }
       });
     },
 
     detached() {
-      // 组件销毁时清理打字机动画资源
       if (this.typeAnimator) {
         this.typeAnimator.destroy();
+      }
+      if (this.storeBindings) {
+        this.storeBindings.destroyStoreBindings();
       }
     }
   },
 
   observers: {
+    // 消息变化：滚动到底部
     'messages': function(messages) {
-      // 当messages变化且不为空时，滚动到底部
       if (messages && messages.length > 0) {
         this.setData({
           scrollToView: 'scrollBottom'
@@ -91,9 +97,19 @@ Component({
         });
       }
     },
-    'isPeeking': function(isPeeking) {
-      // 当isPeeking属性变化时，更新组件的peekMode状态
-      this.setData({ peekMode: isPeeking });
+
+    // 当有新的AI消息且处于LOADING状态时，自动开始动画
+    'messages, chatState': function(messages, chatState) {
+      if (messages && messages.length > 0 && chatState === 'loading') {
+        const lastMessage = messages[messages.length - 1];
+        
+        // 只对AI助手消息执行动画
+        if (lastMessage.role === 'assistant' && lastMessage.content) {
+          wx.nextTick(() => {
+            this.startTypingAnimation(lastMessage.content);
+          });
+        }
+      }
     }
   },
 
@@ -118,50 +134,16 @@ Component({
     },
 
     /**
-     * 为指定消息添加打字机动画效果
-     * 简化版：只对AI助手消息应用动画，自行管理动画状态
-     *
-     * @param {number} messageIndex - 要添加动画效果的消息索引
-     * @returns {Promise<void>} 动画完成的Promise
+     * 开始打字机动画 - 只对AI消息执行
      */
-    async animateMessage(messageIndex) {
-      // 检查索引是否有效
-      if (messageIndex < 0 || messageIndex >= this.properties.messages.length) {
-        console.error('无效的消息索引:', messageIndex);
-        return;
-      }
-
-      // 获取要动画的消息
-      const message = this.properties.messages[messageIndex];
-      if (!message || !message.content) {
-        console.error('消息内容为空:', message);
-        return;
-      }
-
-      // 只对AI助手消息应用动画
-      if (message.role !== 'assistant') {
-        console.log('跳过非agent消息的打字机动画:', message.role);
-        return;
-      }
-
-      // 设置动画状态
-      this.setData({
-        isAnimating: true,
-        animatingMessageIndex: messageIndex,
-        typingText: ''
-      });
-
+    async startTypingAnimation(content) {
+      this.setData({ typingText: '' });
+      
       try {
-        // 执行打字机动画
-        await this.typeAnimator.start(message.content);
+        await this.typeAnimator.start(content);
       } catch (error) {
-        console.error('打字机动画失败:', error);
-      } finally {
-        // 动画完成后重置状态
-        this.setData({
-          isAnimating: false,
-          animatingMessageIndex: -1
-        });
+        console.error('AI消息动画执行失败:', error);
+        this.completeAnimation();
       }
     },
 

@@ -4,9 +4,7 @@ const userService = require('../service/userService');
 const { api, assets, uploadFile } = require('../config/api');
 
 // 定义常量
-const DEFAULT_AVATAR_URL = assets.local.avatar;
 const TOKEN_KEY = 'token';
-const LOGIN_TIMESTAMP_KEY = 'loginTimestamp';
 
 class UserStore {
   // ===== 可观察状态 =====
@@ -25,7 +23,8 @@ class UserStore {
   // 引用rootStore
   rootStore = null;
 
-  constructor() {    makeAutoObservable(this, {
+  constructor() {
+    makeAutoObservable(this, {
       // 标记异步方法为flow
       login: flow,
       logout: flow,
@@ -61,6 +60,13 @@ class UserStore {
   }
 
   /**
+ * 是否应该显示登录弹窗
+ */
+  get shouldShowLoginPopup() {
+    return !this.isLoggedIn;
+  }
+
+  /**
    * 侦探信息 - 为 detective-card 组件提供完整的侦探信息
    */
   get detectiveInfo() {
@@ -79,7 +85,7 @@ class UserStore {
       solvedCount: info.solvedSoups?.length || 0,
       creationCount: info.createSoups?.length || 0,
       favoriteCount: info.favoriteSoups?.length || 0,
-      avatarUrl: info.avatarUrl || DEFAULT_AVATAR_URL
+      avatarUrl: info.avatarUrl || assets.local.avatar
     };
   }
 
@@ -89,8 +95,29 @@ class UserStore {
   get hasSignedIn() {
     return this.userInfo?.hasSignedIn || false;
   }
-
   // ===== Actions =====
+  /**
+   * 统一的登录检查和弹窗显示方法
+   * 如果未登录，自动显示登录弹窗并返回false
+   * 如果已登录，返回true
+   * @returns {boolean} 是否已登录
+   */
+  requireLogin() {
+    if (!this.isLoggedIn) {
+      // 未登录时显示登录弹窗
+      try {
+        const currentPage = wx.getCurrentPages().pop();
+        const loginPopup = currentPage?.selectComponent("#loginPopup");
+        if (loginPopup) {
+          loginPopup.show();
+        }
+      } catch (error) {
+        console.warn('显示登录弹窗失败:', error);
+      }
+      return false; // 未登录
+    }
+    return true; // 已登录
+  }
 
   /**
    * 统一的加载状态管理方法
@@ -224,10 +251,7 @@ class UserStore {
    */
   clearLocalStorage() {
     try {
-      wx.removeStorageSync(TOKEN_KEY);
-      wx.removeStorageSync(LOGIN_TIMESTAMP_KEY);
-      wx.removeStorageSync('userStats');
-      wx.removeStorageSync('userLevel');
+      wx.removeStorageSync(userInfo);
 
       // 清除全局数据
       const app = getApp();
@@ -248,13 +272,6 @@ class UserStore {
    * 上传头像
    */
   *updateAvatar(avatarPath) {
-    if (!avatarPath) {
-      return { success: false, error: '头像路径为空' };
-    }
-
-    if (!this.isLoggedIn) {
-      return { success: false, error: '用户未登录' };
-    }
 
     try {
       this.setLoading('avatar', true);
@@ -287,14 +304,14 @@ class UserStore {
 
   /**
    * 更新用户资料
-   */
-  *updateUserProfile(profileData) {
+   */  *updateUserProfile(profileData) {
     if (!profileData || Object.keys(profileData).length === 0) {
       return { success: false, error: '无更新内容' };
     }
 
-    if (!this.isLoggedIn) {
-      return { success: false, error: '用户未登录' };
+    // 统一登录检查，未登录时自动弹窗
+    if (!this.requireLogin()) {
+      return;
     }
 
     try {
@@ -304,9 +321,7 @@ class UserStore {
       if (result.success) {
         // 更新成功后同步用户信息
         yield this.syncUserInfo();
-      }
-
-      return result;
+      } return result;
     } catch (error) {
       console.error('更新用户资料失败:', error);
       return { success: false, error: '更新用户资料失败' };
@@ -314,9 +329,7 @@ class UserStore {
       this.setLoading('profile', false);
     }
   }
-
   // ===== 用户交互相关方法 - 重构为直接操作模式 =====
-
   /**
    * 收藏/取消收藏汤面
    * 直接发起操作请求，后端统一处理状态更新
@@ -325,10 +338,10 @@ class UserStore {
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   *favoriteSoup(soupId, isFavorite) {
-    if (!this.isLoggedIn) {
-      return { success: false, error: '用户未登录' };
+    // 统一登录检查，未登录时自动弹窗
+    if (!this.requireLogin()) {
+      return;
     }
-
     try {
       // 直接发起操作请求
       const result = yield userService.updateFavoriteSoup(soupId, isFavorite);
@@ -348,19 +361,17 @@ class UserStore {
       console.error('收藏操作失败:', error);
       return { success: false, error: '收藏操作失败' };
     }
-  }
-
-  /**
-   * 切换收藏状态 - 便捷方法
-   * 自动判断当前状态并切换
+  }/**
+   * 切换收藏状态 - 便捷方法，全自动响应
+   * 自动判断当前状态并切换，未登录时自动显示登录弹窗
    * @param {string} soupId - 汤ID
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   *toggleFavorite(soupId) {
+    // 获取当前收藏状态并切换
     const currentStatus = this.isFavoriteSoup(soupId);
     return yield this.favoriteSoup(soupId, !currentStatus);
   }
-
   /**
    * 点赞/取消点赞汤面
    * 直接发起操作请求，后端统一处理状态更新
@@ -369,8 +380,9 @@ class UserStore {
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   *likeSoup(soupId, isLike) {
-    if (!this.isLoggedIn) {
-      return { success: false, error: '用户未登录' };
+    // 统一登录检查，未登录时自动弹窗并返回错误
+    if (!this.requireLogin()) {
+      return;
     }
 
     try {
@@ -393,14 +405,14 @@ class UserStore {
       return { success: false, error: '点赞操作失败' };
     }
   }
-
   /**
-   * 切换点赞状态 - 便捷方法
-   * 自动判断当前状态并切换
+   * 切换点赞状态 - 便捷方法，全自动响应
+   * 自动判断当前状态并切换，未登录时自动显示登录弹窗
    * @param {string} soupId - 汤ID
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   *toggleLike(soupId) {
+    // 获取当前点赞状态并切换
     const currentStatus = this.isLikedSoup(soupId);
     return yield this.likeSoup(soupId, !currentStatus);
   }
@@ -411,8 +423,9 @@ class UserStore {
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   *solveSoup(soupId) {
-    if (!this.isLoggedIn) {
-      return { success: false, error: '用户未登录' };
+    // 统一登录检查，未登录时自动弹窗并返回错误
+    if (!this.requireLogin()) {
+      return;
     }
 
     try {
@@ -441,10 +454,10 @@ class UserStore {
    * 直接发起操作请求，后端统一处理状态更新
    * @param {string} soupId - 汤ID
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */
-  *updateAnsweredSoup(soupId) {
-    if (!this.isLoggedIn) {
-      return { success: false, error: '用户未登录' };
+   */  *updateAnsweredSoup(soupId) {
+    // 统一登录检查，未登录时自动弹窗并返回错误
+    if (!this.requireLogin()) {
+      return;
     }
 
     try {

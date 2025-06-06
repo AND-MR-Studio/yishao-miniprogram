@@ -9,86 +9,83 @@ const dialogApiImpl = require("../api/dialogApiImpl");
 const soupService = require("./soupService");
 
 class DialogService {
-  /**
-   * 处理历史消息
-   * @param {Array} messages 历史消息数组
-   * @returns {Array} 处理后的消息数组
-   */
-  processMessages(messages) {
-    const historyMessages = messages || [];
-    return historyMessages;
-  }
 
   /**
-   * 处理用户输入的消息
-   * @param {string} content 用户输入的内容
-   * @returns {Object} 处理结果 {isSpecial: boolean, userMessage: Object, reply: Object|null}
+   * 处理用户输入 - service层业务逻辑处理
+   * 负责数据预处理、业务规则验证和格式转换
+   * @param {Object} params 输入参数
+   * @param {string} params.input 用户输入内容
+   * @param {string} params.userId 用户ID
+   * @param {string} params.dialogId 对话ID
+   * @returns {Promise<Object>} 处理结果
    */
-  handleUserInput(content) {
-    if (!content || !content.trim()) {
-      return {
-        isSpecial: false,
-        userMessage: null,
-        reply: null,
-      };
+  async ConvertUserInput(params) {
+    const { input, userId, dialogId } = params;
+
+    // 业务数据预处理 - 统一输入格式
+    const trimmedInput = input?.trim() || "";
+
+    // service层基础安全验证 - 防止恶意调用
+    if (!trimmedInput || !userId || !dialogId) {
+      throw new Error("必要参数不能为空");
     }
 
-    const trimmedContent = content.trim();
+    // 这里可以添加更多业务规则验证：
+    // - 敏感词过滤
+    // - 特殊字符检查  
+    // - 业务逻辑验证等
 
-    // 创建用户消息对象
-    const userMessage = {
-      id: `msg_${Date.now()}`,
-      role: "user",
-      content: trimmedContent,
-      timestamp: Date.now(),
-    };
+    try {
+      // 将小程序格式转换为API格式并发送
+      const result = await this.sendMessage({
+        message: trimmedInput,
+        userId: userId,
+        dialogId: dialogId,
+      });
 
-    // 返回处理结果
-    return {
-      isSpecial: false,
-      userMessage: userMessage,
-      reply: null,
-    };
+      // 返回标准化的业务结果
+      return {
+        success: true,
+        data: result,
+        processedInput: trimmedInput,
+      };
+    } catch (error) {
+      console.error("处理用户输入失败:", error);
+      throw new Error(`处理用户输入失败: ${error.message}`);
+    }
   }
-
   /**
    * 发送消息到后端服务器并获取回复
-   * @param {Object} params 请求参数
+   * service层负责：小程序格式 → API格式的数据转换
+   * @param {Object} params 请求参数（小程序格式）
    * @param {string} params.message 用户消息内容
    * @param {string} params.userId 用户ID
    * @param {string} params.dialogId 对话ID
    * @param {string} params.messageId 消息ID（可选）
-   * @returns {Promise<Object>} 回复消息的Promise
+   * @returns {Promise<Object>} 回复消息的Promise（小程序格式）
    */
   async sendMessage(params) {
     try {
-      // 调用API实现层发送消息
+      // 调用API实现层发送消息（API格式转换在这里处理）
       const response = await dialogApiImpl.sendMessage(params);
 
       // 处理响应数据
       let replyContent = "";
-      let replyId = `msg_${Date.now()}`;
 
       if (response.success && response.data) {
         // 标准响应格式
         replyContent = response.data.reply || "";
 
         if (response.data.message) {
-          replyId =
-            response.data.message.messageId ||
-            response.data.message.id ||
-            replyId;
           replyContent = response.data.message.content || replyContent;
         }
       }
 
-      // 返回回复消息
+      // 返回回复消息 - 简化结构，移除id
       return {
-        id: replyId,
         role: "assistant",
         content: replyContent,
-        timestamp: Date.now(),
-        dialogId: response.data?.dialogId || params.dialogId, // 返回对话ID，便于调用方更新
+        dialogId: response.data?.dialogId || params.dialogId,
       };
     } catch (error) {
       // 确保在错误情况下重置API层的请求锁
@@ -294,6 +291,38 @@ class DialogService {
 
       return response.data;
     } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * 清理对话上下文
+   * 删除指定对话的所有消息记录
+   * @param {string} dialogId - 对话ID
+   * @param {string} userId - 用户ID
+   * @returns {Promise<boolean>} 清理是否成功
+   */
+  async clearChatContext(dialogId, userId) {
+    if (!dialogId) {
+      throw new Error("清理对话失败: 缺少对话ID");
+    }
+
+    if (!userId) {
+      throw new Error("清理对话失败: 缺少用户ID");
+    }
+
+    try {
+      // 调用API实现层清理对话记录
+      const response = await dialogApiImpl.clearDialog(dialogId, userId);
+
+      if (!response.success) {
+        throw new Error(response.error || "清理对话失败");
+      }
+
+      console.log('对话上下文清理成功:', { dialogId, userId });
+      return true;
+    } catch (error) {
+      console.error('dialogService 清理对话失败:', error);
       throw error;
     }
   }

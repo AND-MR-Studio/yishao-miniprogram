@@ -1,18 +1,20 @@
 // components/input-bar/index.js
 Component({
-
   /**
-   * 组件的属性列表
+   * 组件的属性列表 - 纯UI组件，数据来源于外部props
    */
   properties: {
+    // 输入框的值 - 来源于chatStore
     inputValue: {
       type: String,
       value: ''
     },
+    // 是否禁用 - 基于chatStore的状态计算
     disabled: {
       type: Boolean,
       value: false
     },
+    // 是否正在发送 - 来源于chatStore的loading状态
     sending: {
       type: Boolean,
       value: false
@@ -20,7 +22,7 @@ Component({
   },
 
   /**
-   * 组件的初始数据
+   * 组件的初始数据 - 只包含纯UI状态
    */
   data: {
     hasContent: false,
@@ -28,6 +30,7 @@ Component({
   },
 
   observers: {
+    // 监听外部传入的inputValue变化，更新UI状态
     'inputValue': function(value) {
       this.setData({
         hasContent: value && value.trim().length > 0
@@ -83,85 +86,28 @@ Component({
         console.error('获取系统信息失败', e);
         return 0;
       }
-    },
-
-    // 处理输入事件
+    },    // 处理输入事件 - 纯UI交互，通知外部数据变化
     handleInput(e) {
-      // 如果组件被禁用，仍然允许输入，但不更新状态
-      if (this.properties.disabled) {
-        return;
-      }
-
       const value = e.detail.value || '';
 
-      // 限制最大长度为50个字符
-      const limitedValue = value.slice(0, 50);
-
-      this.setData({
-        inputValue: limitedValue,
-        hasContent: limitedValue.trim().length > 0
-      });
-
-      this.triggerEvent('input', { value: limitedValue });
-
-      // 如果超出字数限制，显示提示
-      if (value.length > 50) {
-        wx.showToast({
-          title: '最多输入50个字',
-          icon: 'none',
-          duration: 1000
-        });
-      }
+      // 不直接修改内部状态，只通知外部
+      // 外部(page层)会更新chatStore，然后通过props传回来更新UI
+      this.triggerEvent('input', { value: value });
     },
 
-    // 处理发送事件
+    // 处理发送事件 - 纯UI交互，通知外部发送请求
     handleSend() {
-      // 如果组件被禁用，显示简短提示并返回
-      if (this.properties.disabled) {
-        // 只有当有内容时才显示提示，避免空点击也显示提示
-        if (this.data.hasContent) {
-          wx.showToast({
-            title: '侦探大人，请别急',
-            icon: 'none',
-            duration: 800
-          });
-        }
-        return;
-      }
-
-      const value = this.data.inputValue;
-      if (!value || !value.trim()) {
-        wx.showToast({
-          title: '请输入内容',
-          icon: 'none'
-        });
-        return;
-      }
-
-      // 检查字数是否超过限制
-      if (value.length > 50) {
-        wx.showToast({
-          title: '消息不能超过50个字',
-          icon: 'none'
-        });
-        return;
-      }
-
-      this.triggerEvent('send', { value: value.trim() });
-      // 发送后自动清空输入框
-      this.clearInput();
+      // 不使用内部的inputValue，使用外部传入的props
+      const value = this.properties.inputValue;
+      
+      // 只通知外部发送事件，不处理任何业务逻辑
+      this.triggerEvent('send', { value: value });
     },
 
-
-
-    // 清空输入框
+    // 清空输入框 - 通知外部清空数据
     clearInput() {
-      this.setData({
-        inputValue: '',
-        hasContent: false
-      });
-      // 通知页面输入值已更新
-      this.triggerEvent('input', { value: '' });
+      // 不直接修改内部状态，通知外部清空inputValue
+      this.triggerEvent('clear');
     },
 
 

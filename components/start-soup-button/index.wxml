@@ -1,8 +1,8 @@
 <!--components/start-soup-button/index.wxml-->
 <view class="start-soup-button-container">
   <view class="btn-container" bindtap="handleTap">
-    <view class="btn-light {{buttonLoading || soupLoading ? 'pressed' : ''}}">
-      <block wx:if="{{!buttonLoading && !soupLoading}}">
+    <view class="btn-light {{chatLoading || soupLoading ? 'pressed' : ''}}">
+      <block wx:if="{{!chatLoading && !soupLoading}}">
         <text class="btn-text-light">{{text}}</text>
       </block>
       <block wx:else>

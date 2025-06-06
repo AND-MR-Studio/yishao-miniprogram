@@ -13,30 +13,28 @@ class ChatStore {
   // ===== 可观察状态 =====
   // 当前聊天状态（包含加载状态）
   chatState = CHAT_STATE.DRINKING;
-
   // 对话数据
   dialogId = '';     // 当前对话ID
-  messages = [];       // 对话消息列表
+  userMessages = [];   // 用户消息列表
+  agentMessages = [];     // AI消息列表
 
   // UI状态
   isPeeking = false;   // 查看底部汤面
   inputValue = '';     // 输入框的值
 
+
   // 引用rootStore和userStore
   rootStore = null;
 
   constructor(rootStore) {
-    // 保存rootStore和userStore引用
     this.rootStore = rootStore;
-
-    // 使用makeAutoObservable实现全自动响应式
     makeAutoObservable(this, {
-      // 标记异步方法为flow
-      getChatData: flow,
-      fetchMessages: flow,
-      sendMessage: flow,
+      // 标记异步方法为flow - 更新方法名
+      initChatData: flow,
+      fetchHistory: flow,
+      processConversation: flow, // 原来的 handleUserDialog
+      clearChatContext: flow,
 
-      // 标记为非观察属性
       rootStore: false,
     });
   }
@@ -55,124 +53,188 @@ class ChatStore {
     return this.rootStore?.soupId || '';
   }
   // ===== 计算属性 =====
-  // 判断是否可以发送消息
+  // 判断是否可以发送消息 - 基于业务状态
   get canSendMessage() {
-    return this.chatState !== CHAT_STATE.LOADING && this.inputValue.trim().length > 0;
+    return this.chatState !== CHAT_STATE.LOADING;
+  }
+  // 获取最新用户消息
+  get latestUserMessage() {
+    return this.userMessages.at(-1) || null;
+  }
+  // 获取最新AI消息
+  get latestagentMessage() {
+    return this.agentMessages.at(-1) || null;
   }
 
-  // 获取最新消息
-  get latestMessage() {
-    return this.messages.length > 0 ? this.messages[this.messages.length - 1] : null;
+  // 检查是否到达真相状态
+  get isTruth() {
+    return this.agentMessages.some(msg => msg.content.includes('TRUTH'));
   }
-
   // ===== Action方法 =====
-  // 设置聊天状态
-  setChatState(state) {
-    const oldState = this.chatState;
-    this.chatState = state;
-    
-    // 通知tipStore页面状态变化
-    if (this.rootStore?.tipStore && state === CHAT_STATE.TRUTH) {
-      this.rootStore.tipStore.handlePageStateChange(CHAT_STATE.TRUTH, oldState);
-    }
-  }
-
-  // 设置偷看状态
-  setPeekingStatus(isPeeking) {
-    this.isPeeking = isPeeking;
-  }
-
-  // 设置输入框的值
+  /**
+   * 设置输入框的值
+   * @param {string} value 输入值
+   */
   setInputValue(value) {
-    this.inputValue = value;
+    this.inputValue = value || '';
   }
 
-
-  // ===== 异步方法 =====
-  
   /**
-   * 获取聊天数据 - 纯数据获取
+   * 设置聊天状态
+   * @param {string} state 聊天状态
    */
-  *getChatData(userId, soupId) {
-    if (!userId || !soupId) {
-      console.error('获取聊天数据: 缺少必要参数');
-      return false;
+  setChatState(state) {
+    if (Object.values(CHAT_STATE).includes(state)) {
+      this.chatState = state;
     }
+  }
+  /**
+   * 添加用户消息 - 不需要动画
+   * @param {string} content 用户消息内容
+   */
+  addUserMessage(content) {
+    if (!content?.trim()) return false;
+
+    this.userMessages.push({
+      content: content.trim()
+    });
+
+    return true;
+  }
+  /**
+ * 移除最后一条用户消息 - 用于错误回滚
+ */
+  removeLastUserMessage() {
+    if (this.userMessages.length > 0) {
+      this.userMessages.pop();
+    }
+  }
+
+  /**
+   * 移除最后一条AI消息 - 用于错误回滚
+   */
+  removeLastAgentMessage() {
+    if (this.agentMessages.length > 0) {
+      this.agentMessages.pop();
+    }
+  }
+
+  /**
+   * 检查是否到达真相状态
+   */
+  checkTruthState() {
+    if (this.isTruth) {
+      this.setChatState(CHAT_STATE.TRUTH);
+    }
+  }
+  /**
+   * 添加AI助手消息 - 需要触发动画
+   * @param {string} content AI回复内容
+   */
+  addAgentMessage(content) {
+    if (!content?.trim()) return false;
+
+    this.agentMessages.push({
+      content: content.trim()
+    });
+
+    // AI消息添加后，检查是否需要状态切换
+    this.checkTruthState();
+
+    return true;
+  }
+
+  /**
+   * 通用添加消息方法
+   * @param {string} role 消息角色
+   * @param {string} content 消息内容
+   * @deprecated 建议使用 addUserMessage 或 addAgentMessage
+   */
+  addMessage(role, content) {
+    return true;
+  }
+
+  /**
+   * 处理完整的对话流程
+   * @param {string} content 用户输入内容
+   * @returns {Object} 处理结果
+   */
+  *processConversation(content) {
+    if (!content?.trim() || !this.dialogId) return { success: false };
 
     try {
       this.setChatState(CHAT_STATE.LOADING);
 
-      const chatData = yield dialogService.getChatData(userId, soupId);
-      if (!chatData?.dialogId) {
-        throw new Error('获取聊天数据失败');
-      }
-
-      this.dialogId = chatData.dialogId;
-      yield this.fetchMessages();
-
-      return true;
-    } catch (error) {
-      console.error('获取聊天数据失败:', error);
-      return false;
-    } finally {
-      this.setChatState(CHAT_STATE.DRINKING);
-    }
-  }
-
-  /**
-   * 获取对话消息 - 纯数据获取
-   */
-  *fetchMessages() {
-    if (!this.dialogId) return false;
-
-    try {
-      const result = yield dialogService.getDialogMessages(this.dialogId);
-      if (!result?.messages) return false;
-
-      this.messages = result.messages;
-      
-      // 检查是否需要切换到真相状态
-      const hasEndMarker = this.messages.some(msg => 
-        msg.type === 'system' && msg.content.includes('TRUTH')
-      );
-      
-      if (hasEndMarker) {
-        this.setChatState(CHAT_STATE.TRUTH);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('获取消息失败:', error);
-      return false;
-    }
-  }
-
-  /**
-   * 发送消息 - 纯接口调用
-   */
-  *sendMessage(content) {
-    if (!content?.trim() || !this.dialogId) return false;
-
-    try {
-      this.setChatState(CHAT_STATE.LOADING);
-
-      const result = yield dialogService.sendMessage(this.dialogId, content.trim());
-      if (!result?.success) return false;
-
-      // 刷新消息列表
-      yield this.fetchMessages();
-      
-      // 清空输入框
-      this.setInputValue('');
-
-      return true;
-    } catch (error) {
-      console.error('发送消息失败:', error);
-      return false;
-    } finally {
-      if (this.chatState === CHAT_STATE.LOADING) {
+      // 1. 添加用户消息（不触发动画）
+      if (!this.addUserMessage(content.trim())) {
         this.setChatState(CHAT_STATE.DRINKING);
+        return { success: false, error: '用户消息添加失败' };
       }
+
+      // 2. 调用 API 发送消息并获取AI回复
+      const result = yield dialogService.ConvertUserInput(
+        content.trim(),
+        this.userId,
+        this.dialogId
+      );
+      if (!result?.success || !result.data) {
+        this.removeLastUserMessage(); // 回滚用户消息
+        this.setChatState(CHAT_STATE.DRINKING);
+        return { success: false, error: '获取AI回复失败' };
+      }
+
+      // 3. 添加AI回复（会自动触发动画和状态检查）
+      if (!this.addAgentMessage(result.data.content)) {
+        this.removeLastUserMessage(); // 回滚用户消息
+        this.setChatState(CHAT_STATE.DRINKING);
+        return { success: false, error: 'AI消息添加失败' };
+      }
+
+      // 4. 清空输入框
+      this.setInputValue('');      // 保持 LOADING 状态，让动画自动触发和完成
+      return { success: true };
+
+    } catch (error) {
+      console.error('对话处理失败:', error);
+      this.removeLastUserMessage();
+      this.setChatState(CHAT_STATE.DRINKING);
+      return { success: false, error: error.message };
+    }
+  }
+  /**
+   * 清理对话上下文
+   * 删除当前对话的所有消息记录并刷新聊天数据
+   * @returns {Promise<boolean>} 清理结果
+   */
+  *clearChatContext() {
+    if (!this.dialogId || !this.userId) {
+      console.warn('无法清理对话：缺少对话ID或用户ID');
+      return false;
+    }
+
+    try {
+      this.setChatState(CHAT_STATE.LOADING);
+
+      // 调用dialogService清理对话数据
+      const success = yield dialogService.clearChatContext(this.dialogId, this.userId);
+      if (success) {
+        // 清理本地消息数组
+        this.userMessages = [];
+        this.agentMessages = [];
+
+        // 重置状态为正常对话状态
+        this.setChatState(CHAT_STATE.DRINKING);
+
+        console.log('对话上下文清理成功');
+        return true;
+      } else {
+        this.setChatState(CHAT_STATE.DRINKING);
+        return false;
+      }
+    } catch (error) {
+      console.error('清理对话上下文失败:', error);
+      this.setChatState(CHAT_STATE.DRINKING);
+      return false;
     }
   }
 }

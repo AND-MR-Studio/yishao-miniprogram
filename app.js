@@ -37,6 +37,5 @@ App({
   
   // API配置
   api: {
-    userInfo: null
   }
 })
