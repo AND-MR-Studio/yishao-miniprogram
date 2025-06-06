@@ -27,7 +27,7 @@ Component({
           'agentMessages',
           'chatState',
           'isPeeking',
-          'shouldShowTyping'
+          'typingMsg'  // 监听打字机动画内容
         ],
         actions: ['completeAnimation']
       });
@@ -82,10 +82,9 @@ Component({
       this.setData({
         scrollToView: 'scrollBottom'
       });
-    },
-
-    // 开始打字机动画
+    },    // 开始打字机动画
     async startTypingAnimation(content) {
+      // 信任Store逻辑：只有有效内容才会触发此方法
       if (!content) return;
 
       this.setData({ typingText: '' });
