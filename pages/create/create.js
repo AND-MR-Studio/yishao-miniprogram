@@ -3,7 +3,7 @@
  * 负责创建新的海龟汤内容
  */
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { uploadStore, rootStore, settingStore } = require('../../stores/index');
+const { rootStore } = require('../../stores/index');
 
 Page({
   /**
@@ -40,7 +40,7 @@ Page({
   onLoad(options) {
     // 创建MobX Store绑定 - 优化版本，只绑定页面实际使用的具体字段
     this.storeBindings = createStoreBindings(this, {
-      store: uploadStore,
+      store: rootStore.uploadStore,
       fields: [
         // 表单数据 - 独立字段绑定，减少响应式更新范围
         'title',
@@ -76,7 +76,7 @@ Page({
 
     // 创建settingStore绑定 - 用于引导层管理
     this.settingStoreBindings = createStoreBindings(this, {
-      store: settingStore,
+      store: rootStore.settingStore,
       fields: ['showGuide'], // 引导层显示状态
       actions: []
     });
@@ -349,7 +349,7 @@ Page({
    */
   onShowGuide() {
     // 调用settingStore的toggleGuide方法显示引导层
-    settingStore.toggleGuide(true);
+    rootStore.settingStore.toggleGuide(true);
   },
 
   /**
@@ -358,7 +358,7 @@ Page({
    */
   onCloseGuide() {
     // 调用settingStore的toggleGuide方法隐藏引导层
-    settingStore.toggleGuide(false);
+    rootStore.settingStore.toggleGuide(false);
   }
 
 })

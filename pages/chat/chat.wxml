@@ -40,7 +40,7 @@
   <input-bar
     id="inputBar"
     inputValue="{{inputValue}}"
-    disabled="{{isAnimating || chatState === 'loading'}}"
+    disabled="{{chatState === 'loading'}}"
     sending="{{chatState === 'loading'}}"
     showTestButton="{{true}}"
     bind:input="handleInputChange"
