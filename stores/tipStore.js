@@ -60,7 +60,6 @@ const TIP_STATE = {
 
 // 创建提示信息Store类
 class TipStore {  // ===== 可观察状态 =====
-  isVisible = false;          // 提示是否可见
   isIdleState = false;        // 是否处于闲置状态
 
   // 引用rootStore
@@ -89,15 +88,14 @@ class TipStore {  // ===== 可观察状态 =====
   get userMessageCount() {
     return this.chatStore?.userMessages?.length || 0;
   }
-
   // 从chatStore获取游戏状态
   get isChatCompleted() {
     return this.chatStore?.chatState === 'truth';
   }
   // 计算当前应该显示的状态
   get tipState() {
-    // 如果提示框不可见，返回隐藏状态
-    if (!this.isVisible) {
+    // 如果在偷看状态，返回隐藏状态
+    if (this.chatStore?.isPeeking) {
       return TIP_STATE.HIDDEN;
     }
 
@@ -153,17 +151,8 @@ class TipStore {  // ===== 可观察状态 =====
     }
   }  // 提示可见性
   get visible() {
-    return this.isVisible;
+    return this.tipState !== TIP_STATE.HIDDEN;
   }
-
-  set visible(value) {
-    this.isVisible = !!value;
-    // 隐藏时重置闲置状态
-    if (!value) {
-      this.isIdleState = false;
-    }
-  }
-
   // ===== 动作方法 =====
 
   // 设置闲置状态
