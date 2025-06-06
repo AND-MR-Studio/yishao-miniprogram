@@ -48,9 +48,7 @@ Page({
                 "blurAmount",
                 "chatPageUrl",
                 "canStartChat",
-                "error",
                 // 添加computed属性用于UI响应式控制
-                "hasError",
                 "isLoading"
             ],
             actions: ["toggleChatLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
@@ -62,8 +60,16 @@ Page({
         // 初始化手势管理器
         this.initInteractionManager();
 
-        // 获取汤面数据
-        await soupStore.fetchSoup(options.soupId);
+        // 获取汤面数据，添加错误处理
+        try {
+            await soupStore.fetchSoup(options.soupId);
+        } catch (error) {
+            console.error('加载汤面数据失败:', error);
+            wx.showToast({
+                title: '加载失败，请重试',
+                icon: 'none'
+            });
+        }
 
     },
 
@@ -212,7 +218,7 @@ Page({
         console.log('用户取消登录');
     },
 
-    /**    /**
+    /**
      * 处理导航栏首页按钮点击事件，刷新首页数据
      */
     onRefreshHome() {
@@ -233,8 +239,16 @@ Page({
         this.setBlurAmount(3);
 
         // 使用MobX store中的getRandomSoup方法获取随机汤面
-        // 所有错误处理和状态管理都在store中自动完成
-        await soupStore.getRandomSoup();
+        try {
+            await soupStore.getRandomSoup();
+        } catch (error) {
+            console.error('切换汤面失败:', error);
+            wx.showToast({
+                title: '加载失败，请重试',
+                icon: 'none'
+            });
+            // 注意：不需要在这里重置模糊效果，因为 soupStore.fetchSoup 的 finally 块会自动处理
+        }
     },
 
     // ===== 交互相关 =====
