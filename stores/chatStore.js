@@ -12,11 +12,9 @@ const CHAT_STATE = {
 class ChatStore {
   // ===== 可观察状态 =====
   // 当前聊天状态（包含加载状态）
-  chatState = CHAT_STATE.DRINKING;
-  // 对话数据
+  chatState = CHAT_STATE.DRINKING;  // 对话数据
   dialogId = '';     // 当前对话ID
-  userMessages = [];   // 用户消息列表
-  agentMessages = [];     // AI消息列表
+  messages = [];     // 统一消息列表，包含role字段区分消息类型
 
   // UI状态
   isPeeking = false;   // 查看底部汤面
@@ -51,19 +49,31 @@ class ChatStore {
   // 获取汤面ID的便捷方法（从rootStore统一接口获取）
   get soupId() {
     return this.rootStore?.soupId || '';
-  }
-  // ===== 计算属性 =====
+  }  // ===== 计算属性 =====
   // 判断是否可以发送消息 - 基于业务状态
   get canSendMessage() {
     return this.chatState !== CHAT_STATE.LOADING;
   }
+  
+  // 获取用户消息数组
+  get userMessages() {
+    return this.messages.filter(msg => msg.role === 'user');
+  }
+  
+  // 获取助手消息数组
+  get agentMessages() {
+    return this.messages.filter(msg => msg.role === 'assistant');
+  }
+  
   // 获取最新用户消息
   get latestUserMessage() {
-    return this.userMessages.at(-1) || null;
+    const userMsgs = this.userMessages;
+    return userMsgs.length > 0 ? userMsgs.at(-1) : null;
   }
   // 获取最新AI消息
   get latestagentMessage() {
-    return this.agentMessages.at(-1) || null;
+    const agentMsgs = this.agentMessages;
+    return agentMsgs.length > 0 ? agentMsgs.at(-1) : null;
   }
   // 检查是否到达真相状态
   get isTruth() {
@@ -75,11 +85,10 @@ class ChatStore {
   get isTypingAnimation() {
   return this.chatState === CHAT_STATE.LOADING && this.agentMessages.length > 0;
   }
-
   // 是否有消息的计算属性
   get hasMessages() {
-    return this.userMessages.length > 0;
-  }  // 是否需要显示打字机动画的计算属性
+    return this.messages.length > 0;
+  }// 是否需要显示打字机动画的计算属性
   get shouldShowTyping() {
     return this.chatState === CHAT_STATE.LOADING && this.agentMessages.length > 0;
   }
@@ -105,26 +114,26 @@ class ChatStore {
     if (Object.values(CHAT_STATE).includes(state)) {
       this.chatState = state;
     }
-  }
-  /**
+  }  /**
    * 添加用户消息 - 不需要动画
    * @param {string} content 用户消息内容
    */
   addUserMessage(content) {
     if (!content?.trim()) return false;
 
-    this.userMessages.push({
+    this.messages.push({
+      role: 'user',
       content: content.trim()
     });
 
     return true;
-  }
-  /**
+  }  /**
  * 移除最后一条用户消息 - 用于错误回滚
  */
   removeLastUserMessage() {
-    if (this.userMessages.length > 0) {
-      this.userMessages.pop();
+    const lastIndex = this.messages.map(msg => msg.role).lastIndexOf('user');
+    if (lastIndex !== -1) {
+      this.messages.splice(lastIndex, 1);
     }
   }
 
@@ -132,8 +141,9 @@ class ChatStore {
    * 移除最后一条AI消息 - 用于错误回滚
    */
   removeLastAgentMessage() {
-    if (this.agentMessages.length > 0) {
-      this.agentMessages.pop();
+    const lastIndex = this.messages.map(msg => msg.role).lastIndexOf('assistant');
+    if (lastIndex !== -1) {
+      this.messages.splice(lastIndex, 1);
     }
   }
 
@@ -144,15 +154,15 @@ class ChatStore {
     if (this.isTruth) {
       this.setChatState(CHAT_STATE.TRUTH);
     }
-  }
-  /**
+  }  /**
    * 添加AI助手消息 - 需要触发动画
    * @param {string} content AI回复内容
    */
   addAgentMessage(content) {
     if (!content?.trim()) return false;
 
-    this.agentMessages.push({
+    this.messages.push({
+      role: 'assistant',
       content: content.trim()
     });
 
@@ -234,11 +244,9 @@ class ChatStore {
       this.setChatState(CHAT_STATE.LOADING);
 
       // 调用dialogService清理对话数据
-      const success = yield dialogService.clearChatContext(this.dialogId, this.userId);
-      if (success) {
+      const success = yield dialogService.clearChatContext(this.dialogId, this.userId);      if (success) {
         // 清理本地消息数组
-        this.userMessages = [];
-        this.agentMessages = [];
+        this.messages = [];
 
         // 重置状态为正常对话状态
         this.setChatState(CHAT_STATE.DRINKING);

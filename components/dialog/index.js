@@ -3,7 +3,8 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { rootStore } = require('../../stores/index');
 const simpleTypeAnimation = require('../../utils/typeAnimation');
 
-Component({  properties: {
+Component({
+  properties: {
     // 打字机速度
     typeSpeed: {
       type: Number,
@@ -17,14 +18,14 @@ Component({  properties: {
   },
 
   lifetimes: {
-    attached() {
-      // 绑定 MobX 状态
+    attached() {      // 绑定 MobX 状态
       this.storeBindings = createStoreBindings(this, {
         store: rootStore.chatStore,
         fields: [
-          'userMessages', 
-          'agentMessages', 
-          'chatState', 
+          'messages',
+          'userMessages',
+          'agentMessages',
+          'chatState',
           'isPeeking',
           'shouldShowTyping'
         ],
@@ -51,13 +52,14 @@ Component({  properties: {
         this.typeAnimator.destroy();
       }
       if (this.storeBindings) {
-        this.storeBindings.destroyStoreBindings();      }
+        this.storeBindings.destroyStoreBindings();
+      }
     }
   },
 
   observers: {
     // 监听打字机动画触发
-    'shouldShowTyping, agentMessages': function(shouldShowTyping, agentMessages) {
+    'shouldShowTyping, agentMessages': function (shouldShowTyping, agentMessages) {
       if (shouldShowTyping && agentMessages && agentMessages.length > 0) {
         const lastMessage = agentMessages[agentMessages.length - 1];
         if (lastMessage && lastMessage.content) {
@@ -66,13 +68,12 @@ Component({  properties: {
           });
         }
       }
-    },
-
-    // 监听消息变化，自动滚动到底部
-    'userMessages, agentMessages': function() {
+    },    // 监听消息变化，自动滚动到底部
+    'messages': function () {
       wx.nextTick(() => {
         this.scrollToBottom();
-      });    }
+      });
+    }
   },
 
   methods: {
@@ -86,9 +87,9 @@ Component({  properties: {
     // 开始打字机动画
     async startTypingAnimation(content) {
       if (!content) return;
-      
+
       this.setData({ typingText: '' });
-      
+
       try {
         await this.typeAnimator.start(content);
       } catch (error) {

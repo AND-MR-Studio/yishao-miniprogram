@@ -20,23 +20,21 @@
     enable-passive="true"
     id="dialogScroll"
     scroll-into-view="{{scrollToView}}"
-  >
-    <!-- 用户消息列表 -->
-    <block wx:for="{{userMessages}}" wx:key="index" wx:for-item="message" wx:for-index="idx">
-      <view class="message-wrapper user-message" id="user-msg-{{idx}}">
+  >    <!-- 统一消息列表 -->
+    <block wx:for="{{messages}}" wx:key="index" wx:for-item="message" wx:for-index="idx">
+      <!-- 用户消息 -->
+      <view wx:if="{{message.role === 'user'}}" class="message-wrapper user-message" id="msg-{{idx}}">
         <view class="message-content">
           <view class="message-text">{{message.content}}</view>
         </view>
       </view>
-    </block>
-
-    <!-- AI消息列表 -->
-    <block wx:for="{{agentMessages}}" wx:key="index" wx:for-item="message" wx:for-index="idx">
-      <view class="message-wrapper agent-message" id="agent-msg-{{idx}}">
+      
+      <!-- AI助手消息 -->
+      <view wx:elif="{{message.role === 'assistant'}}" class="message-wrapper agent-message" id="msg-{{idx}}">
         <view class="message-content">
-          <view class="message-text {{chatState === 'loading' && idx === agentMessages.length - 1 ? 'typing' : ''}}">
+          <view class="message-text {{chatState === 'loading' && idx === messages.length - 1 ? 'typing' : ''}}">
             <!-- 根据状态显示内容 -->
-            <text wx:if="{{chatState === 'loading' && idx === agentMessages.length - 1}}">{{typingText}}</text>
+            <text wx:if="{{chatState === 'loading' && idx === messages.length - 1}}">{{typingText}}</text>
             <text wx:else>{{message.content}}</text>
           </view>
         </view>
