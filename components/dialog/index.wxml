@@ -1,5 +1,5 @@
 <!--components/dialog/index.wxml-->
-<view class="dialog-container {{peekMode ? 'peek-mode' : ''}} {{mode}}">
+<view class="dialog-container {{isPeeking ? 'peek-mode' : ''}}">
   <!-- 导航栏 -->
   <view class="nav-bar-container" catchtap="handleClose">
     <nav-bar showBackButton="{{true}}" bind:back="handleClose" />
@@ -20,52 +20,26 @@
     enable-passive="true"
     id="dialogScroll"
     scroll-into-view="{{scrollToView}}"
-    aria-busy="{{loading}}"
-  >
-    <!-- 消息列表 -->
-    <block wx:for="{{messages}}" wx:key="id">
-      <view
-        class="message-wrapper {{getMessageClass(item)}}"
-        id="msg-{{index}}"
-        data-index="{{index}}"
-        bindtap="handleMessageTap"
-        bindlongpress="handleMessageLongPress"
-      >
-        <!-- 双人模式下显示头像 -->
-        <block wx:if="{{mode === 'double'}}">
-          <view class="avatar-container">
-            <image class="avatar" src="{{item.avatarUrl || '/static/images/default-avatar.png'}}" mode="aspectFill"></image>
-          </view>
-        </block>
-
+  >    <!-- 统一消息列表 -->
+    <block wx:for="{{messages}}" wx:key="index" wx:for-item="message" wx:for-index="idx">
+      <!-- 用户消息 -->
+      <view wx:if="{{message.role === 'user'}}" class="message-wrapper user-message" id="msg-{{idx}}">
         <view class="message-content">
-          <!-- 双人模式下显示用户名 -->
-          <block wx:if="{{mode === 'double'}}">
-            <view class="username">{{item.nickName || '用户'}}</view>
-          </block>
-
-          <!-- 统一的消息内容显示 -->
-          <view class="message-text {{chatState === 'loading' && index === messages.length - 1 ? 'typing' : ''}}">
-            <block wx:if="{{(item.role === 'system' || item.role === 'assistant') && mode === 'single'}}">></block>
+          <view class="message-text">{{message.content}}</view>
+        </view>
+      </view>
+      
+      <!-- AI助手消息 -->
+      <view wx:elif="{{message.role === 'assistant'}}" class="message-wrapper agent-message" id="msg-{{idx}}">
+        <view class="message-content">
+          <view class="message-text {{chatState === 'loading' && idx === messages.length - 1 ? 'typing' : ''}}">
             <!-- 根据状态显示内容 -->
-            <text wx:if="{{chatState === 'loading' && index === messages.length - 1}}">{{typingText}}</text>
-            <text wx:else>{{item.content}}</text>
+            <text wx:if="{{chatState === 'loading' && idx === messages.length - 1}}">{{typingText}}</text>
+            <text wx:else>{{message.content}}</text>
           </view>
-
-          <!-- 消息时间 -->
-          <view class="message-time">{{formatTime(item.timestamp)}}</view>
         </view>
       </view>
     </block>
-
-    <!-- 加载指示器 -->
-    <view class="loading-indicator" wx:if="{{loading}}">
-      <view class="loading-dots">
-        <view class="dot"></view>
-        <view class="dot"></view>
-        <view class="dot"></view>
-      </view>
-    </view>
 
     <!-- 滚动锚点 -->
     <view id="scrollBottom" style="height: 10rpx;"></view>

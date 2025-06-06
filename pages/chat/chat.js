@@ -4,7 +4,7 @@
  */
 // ===== 导入依赖 =====
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { rootStore, settingStore, CHAT_STATE } = require('../../stores/index');
+const { rootStore, CHAT_STATE } = require('../../stores/index');
 
 Page({
   // ===== 页面数据 =====
@@ -19,22 +19,23 @@ Page({
    */
     async onLoad(options) {
     try {
-      // 创建rootStore绑定 - 用于获取用户ID
-      this.rootStoreBindings = createStoreBindings(this, {
-        store: rootStore,
-        fields: ['userId', 'soupId', 'soupData'],
+      // 创建soupStore绑定 - 用于获取用户ID
+      this.soupStoreBindings = createStoreBindings(this, {
+        store: rootStore.soupStore,
+        fields: ['soupId', 'soupData'],
         actions: []
       });
 
       // 创建userStore绑定 - 用于用户相关操作
       this.userStoreBindings = createStoreBindings(this, {
         store: rootStore.userStore,
-        actions: ['updateAnsweredSoup']
+        fields: ['userId'],
+        actions: ['syncUserInfo', 'updateAnsweredSoup']
       });
 
       // 创建settingStore绑定 - 用于引导层状态管理
       this.settingStoreBindings = createStoreBindings(this, {
-        store: settingStore,
+        store: rootStore.settingStore,
         fields: ['showGuide'],
         actions: ['toggleGuide']
       });
@@ -53,7 +54,7 @@ Page({
         actions: ['showTip', 'hideTip', 'setDefaultTip', 'showSpecialTip']
       });
       // 同步用户ID - 这是必要的UI初始化操作
-      await rootStore.userStore.syncUserInfo();      
+      await rootStore.userStore.syncUserInfo(); 
       
       // 显示默认提示
       rootStore.tipStore.showTip();
@@ -160,7 +161,7 @@ Page({
    */
   onLongPressStart() {
     // 直接修改 MobX 绑定的状态
-    this.isPeeking = true;
+    rootStore.chatStore.isPeeking = true;
 
     // 同时隐藏提示模块 - 使用action方法
     this.hideTip();
@@ -172,7 +173,7 @@ Page({
    */
   onLongPressEnd() {
     // 直接修改 MobX 绑定的状态
-    this.isPeeking = false;
+    rootStore.chatStore.isPeeking = false;
 
     // 恢复提示模块可见性 - 使用延迟确保状态更新后再显示提示
     setTimeout(() => {
@@ -224,7 +225,8 @@ Page({
       return;
     }
 
-    if (!this.canSendMessage) {
+    // 使用绑定的字段检查发送状态
+    if (!this.data.canSendMessage) {
       wx.showToast({
         title: '侦探大人，请别急...',
         icon: 'none'
@@ -244,7 +246,8 @@ Page({
 
       // 更新用户回答记录
       try {
-        const soupId = this.soupId || '';
+        // 使用绑定的字段获取soupId
+        const soupId = this.data.soupId || '';
         if (soupId) {
           await this.updateAnsweredSoup(soupId);
         }
@@ -260,20 +263,7 @@ Page({
     }
   },
 
-  // ===== 辅助方法 =====
-  /**
-   * 显示错误提示
-   * @param {string} message 错误信息
-   */
-  showErrorToast(message) {
-    wx.showToast({
-      title: message,
-      icon: 'none',
-      duration: 2000
-    });
-  },
-
-// ===== 指南相关事件处理 =====
+  // ===== 指南相关事件处理 =====
   /**
    * 显示指南层
    * 通过settingStore统一管理指南状态

@@ -9,7 +9,6 @@ const soupService = require("../service/soupService");
 class SoupStore {
     // ===== 核心数据 =====
     soupData = null; // 当前汤面数据
-    error = null; // 错误信息
 
     // ===== 加载状态 =====
     soupLoading = false; // 汤面数据加载状态
@@ -49,14 +48,13 @@ class SoupStore {
      * 如果提供soupId则获取指定汤面，否则获取随机汤面
      * @param {string} soupId 汤面ID字符串，为空时获取随机汤面
      * @returns {Promise<Object>} 汤面数据
+     * @throws {Error} 当获取数据失败时抛出错误
      */
     * fetchSoup(soupId) {
         // 防止重复请求同一个soupId
         if (soupId && this._fetchingId === soupId) return this.soupData;
 
         try {
-            // 清除之前的错误状态
-            this.error = null;
             // 设置加载状态
             this.soupLoading = true;
 
@@ -88,7 +86,7 @@ class SoupStore {
             return soupData;
         } catch (error) {
             console.error("获取汤面数据失败:", error);
-            this.error = error.message; // UI 只关心 error 是否为空
+            throw error;
         } finally {
             // 重置加载状态和请求标志
             this.soupLoading = false;
@@ -97,28 +95,20 @@ class SoupStore {
             this.resetBlurAmount();
         }
     }
-    
-    /**
+      /**
      * 获取随机汤面数据 - Store层专注状态管理
      * 调用 Service 层获取随机汤面数据，然后更新本地状态
      * @returns {Promise<Object>} 随机汤面数据
+     * @throws {Error} 当获取数据失败时抛出错误
      */
     * getRandomSoup() {
-        try {
-            // 清除之前的错误状态
-            this.error = null;
-            
-            // 调用 Service 层获取随机汤面
-            const randomSoup = yield soupService.getRandomSoup();
-            if (randomSoup && randomSoup.id) {
-                // 使用 fetchSoup 统一处理数据获取和状态更新
-                return yield this.fetchSoup(randomSoup.id);
-            }
-            return null;
-        } catch (error) {
-            console.error("获取随机汤面失败:", error);
-            this.error = error.message; // UI 只关心 error 是否为空
+        // 调用 Service 层获取随机汤面
+        const randomSoup = yield soupService.getRandomSoup();
+        if (randomSoup && randomSoup.id) {
+            // 使用 fetchSoup 统一处理数据获取和状态更新
+            return yield this.fetchSoup(randomSoup.id);
         }
+        throw new Error("获取随机汤面失败");
     }
 
 
@@ -173,11 +163,6 @@ class SoupStore {
     // computed 属性 - 检查是否可以开始喝汤
     get canStartChat() {
         return this.soupData?.id && this.chatPageUrl && !this.soupLoading;
-    }
-
-    // computed 属性 - 是否有错误
-    get hasError() {
-        return !!this.error;
     }
 
     // computed 属性 - 是否正在加载（包括汤面和按钮加载）

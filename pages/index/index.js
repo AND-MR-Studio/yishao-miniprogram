@@ -9,7 +9,7 @@ const {
     createGestureManager,
 } = require("../../utils/gestureManager");
 const { createStoreBindings } = require("mobx-miniprogram-bindings");
-const { soupStore, userStore, settingStore } = require("../../stores/index");
+const { rootStore } = require("../../stores/index");
 
 Page({
     // ===== 页面数据 =====
@@ -29,18 +29,18 @@ Page({
         async onLoad(options) {
         // 创建settingStore绑定 - 用于引导层状态管理
         this.settingStoreBindings = createStoreBindings(this, {
-            store: settingStore,
+            store: rootStore.settingStore,
             fields: ["showGuide"], // 引导层显示状态
             actions: ["toggleGuide"] // 引导层控制方法
         });
         // 创建userStore绑定 - 只用于同步用户信息
         this.userStoreBindings = createStoreBindings(this, {
-            store: userStore,
+            store: rootStore.userStore,
             actions: ["syncUserInfo"]
         });
         // 创建soupStore绑定 - 汤面相关字段和方法
         this.soupStoreBindings = createStoreBindings(this, {
-            store: soupStore,
+            store: rootStore.soupStore,
             fields: [
                 "soupLoading",
                 "chatLoading",
@@ -48,22 +48,28 @@ Page({
                 "blurAmount",
                 "chatPageUrl",
                 "canStartChat",
-                "error",
                 // 添加computed属性用于UI响应式控制
-                "hasError",
                 "isLoading"
             ],
             actions: ["toggleChatLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
         });
         // 显示引导层
-        settingStore.toggleGuide(true);
+        rootStore.settingStore.toggleGuide(true);
         // 登录弹窗
-        userStore.requireLogin();
+        rootStore.userStore.requireLogin();
         // 初始化手势管理器
         this.initInteractionManager();
 
-        // 获取汤面数据
-        await soupStore.fetchSoup(options.soupId);
+        // 获取汤面数据，添加错误处理
+        try {
+            await rootStore.soupStore.fetchSoup(options.soupId);
+        } catch (error) {
+            console.error('加载汤面数据失败:', error);
+            wx.showToast({
+                title: '加载失败，请重试',
+                icon: 'none'
+            });
+        }
 
     },
 
@@ -111,8 +117,8 @@ Page({
      * @returns {Object} 分享配置对象
      */
     onShareAppMessage() {
-        // 获取当前汤面数据
-        const shareSoup = soupStore.soupData;
+        // 获取当前汤面数据 - 使用绑定的字段
+        const shareSoup = this.data.soupData;
 
         // 构建分享标题 - 使用汤面标题或默认标题
         const shareTitle = shareSoup?.title
@@ -148,8 +154,8 @@ Page({
      * @returns {Object} 分享配置对象
      */
     onShareTimeline() {
-        // 获取当前汤面数据
-        const shareSoup = soupStore.soupData;
+        // 获取当前汤面数据 - 使用绑定的字段
+        const shareSoup = this.data.soupData;
 
         // 构建分享标题 - 使用汤面标题或默认标题
         const shareTitle = shareSoup?.title
@@ -212,7 +218,7 @@ Page({
         console.log('用户取消登录');
     },
 
-    /**    /**
+    /**
      * 处理导航栏首页按钮点击事件，刷新首页数据
      */
     onRefreshHome() {
@@ -233,8 +239,16 @@ Page({
         this.setBlurAmount(3);
 
         // 使用MobX store中的getRandomSoup方法获取随机汤面
-        // 所有错误处理和状态管理都在store中自动完成
-        await soupStore.getRandomSoup();
+        try {
+            await rootStore.soupStore.getRandomSoup();
+        } catch (error) {
+            console.error('切换汤面失败:', error);
+            wx.showToast({
+                title: '加载失败，请重试',
+                icon: 'none'
+            });
+            // 注意：不需要在这里重置模糊效果，因为 soupStore.fetchSoup 的 finally 块会自动处理
+        }
     },
 
     // ===== 交互相关 =====
@@ -256,7 +270,8 @@ Page({
      */
     async handleDoubleTapLike() {
         try {
-            const result = await userStore.toggleLike(soupStore.soupData.id);
+            // 使用绑定字段获取soupData.id
+            const result = await rootStore.userStore.toggleLike(this.data.soupData.id);
 
             // 显示操作反馈
             if (result && result.success) {
@@ -280,7 +295,8 @@ Page({
      */
     async handleLongPressFavorite() {
         try {
-            const result = await userStore.toggleFavorite(soupStore.soupData.id);
+            // 使用绑定字段获取soupData.id
+            const result = await rootStore.userStore.toggleFavorite(this.data.soupData.id);
 
             // 显示操作反馈
             if (result && result.success) {
@@ -305,7 +321,8 @@ Page({
      * 通过settingStore统一管理指南状态
      */
     onShowGuide() {
-        settingStore.toggleGuide(true);
+        // 使用绑定的action方法
+        this.toggleGuide(true);
     },
 
     /**
@@ -313,7 +330,8 @@ Page({
      * 通过settingStore统一管理指南状态
      */
     onCloseGuide() {
-        settingStore.toggleGuide(false);
+        // 使用绑定的action方法
+        this.toggleGuide(false);
     },
 
     // ===== 手势管理器相关 =====
