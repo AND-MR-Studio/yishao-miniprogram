@@ -1,5 +1,9 @@
 // app.js
-const { 
+
+// 加载业务拦截器
+require('./utils/IntercepterUtils');
+
+const {
   isDevelopment, 
   isProduction, 
   getCurrentEnvironment
@@ -19,7 +23,7 @@ App({
     const envVersion = wx.getAccountInfoSync().miniProgram.envVersion;
     
     console.log('==================== 环境配置信息 ====================');
-    console.log('🏷️  小程序版本:', envVersion);
+    console.log('🏷️ 小程序版本:', envVersion);
     console.log('🔧 环境标识:', currentEnv);
     console.log('================================================');
     

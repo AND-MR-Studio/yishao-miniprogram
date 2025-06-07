@@ -80,42 +80,78 @@ async function updateUserInfo(profileData) {
 }
 
 /**
- * 更新用户收藏的汤
+ * 收藏汤面
  * @param {string} soupId - 汤ID
- * @param {boolean} isFavorite - 是否收藏
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
-async function updateFavoriteSoup(soupId, isFavorite) {
+async function favoriteSoup(soupId) {
   if (!soupId) {
     return { success: false, error: '汤ID为空' };
   }
 
   try {
-    // 调用API实现层更新收藏
-    const res = await userApiImpl.updateFavoriteSoup(soupId, isFavorite);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新收藏记录失败' };
+    // 调用API实现层收藏汤面
+    const res = await userApiImpl.favoriteSoup(soupId);
+    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '收藏汤面失败' };
   } catch (error) {
-    return { success: false, error: '更新收藏记录失败' };
+    return { success: false, error: '收藏汤面失败' };
   }
 }
 
 /**
- * 更新用户点赞的汤
+ * 取消收藏汤面
  * @param {string} soupId - 汤ID
- * @param {boolean} isLiked - 是否点赞
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
-async function updateLikedSoup(soupId, isLiked) {
+async function unfavoriteSoup(soupId) {
   if (!soupId) {
     return { success: false, error: '汤ID为空' };
   }
 
   try {
-    // 调用API实现层更新点赞
-    const res = await userApiImpl.updateLikedSoup(soupId, isLiked);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新点赞记录失败' };
+    // 调用API实现层取消收藏汤面
+    const res = await userApiImpl.unfavoriteSoup(soupId);
+    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '取消收藏汤面失败' };
   } catch (error) {
-    return { success: false, error: '更新点赞记录失败' };
+    return { success: false, error: '取消收藏汤面失败' };
+  }
+}
+
+/**
+ * 点赞汤面
+ * @param {string} soupId - 汤ID
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+async function likeSoup(soupId) {
+  if (!soupId) {
+    return { success: false, error: '汤ID为空' };
+  }
+
+  try {
+    // 调用API实现层点赞汤面
+    const res = await userApiImpl.likeSoup(soupId);
+    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '点赞汤面失败' };
+  } catch (error) {
+    return { success: false, error: '点赞汤面失败' };
+  }
+}
+
+/**
+ * 取消点赞汤面
+ * @param {string} soupId - 汤ID
+ * @returns {Promise<{success: boolean, data?: any, error?: string}>}
+ */
+async function unlikeSoup(soupId) {
+  if (!soupId) {
+    return { success: false, error: '汤ID为空' };
+  }
+
+  try {
+    // 调用API实现层取消点赞汤面
+    const res = await userApiImpl.unlikeSoup(soupId);
+    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '取消点赞汤面失败' };
+  } catch (error) {
+    return { success: false, error: '取消点赞汤面失败' };
   }
 }
 
@@ -162,8 +198,10 @@ module.exports = {
   login,
   logout,
   updateUserInfo,
-  updateFavoriteSoup,
-  updateLikedSoup,
+  favoriteSoup,
+  unfavoriteSoup,
+  likeSoup,
+  unlikeSoup,
   updateSolvedSoup,
   updateAnsweredSoup
 };
