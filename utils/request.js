@@ -492,8 +492,6 @@ const uploadFileOpen = (options) => {
 
 module.exports = {
   // 核心方法
-  request,
-  requestOpen,
   assetRequestOpen,
   uploadFile,
   uploadFileOpen,
@@ -507,7 +505,4 @@ module.exports = {
   // 拦截器
   addRequestInterceptor,
   addResponseInterceptor,
-  
-  // 配置
-  DEFAULT_CONFIG
 };

@@ -1,5 +1,9 @@
 // app.js
-const { 
+
+// 加载业务拦截器
+require('./utils/IntercepterUtils');
+
+const {
   isDevelopment, 
   isProduction, 
   getCurrentEnvironment
