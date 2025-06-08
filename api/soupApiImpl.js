@@ -5,6 +5,7 @@
  */
 const { get, post } = require('../utils/request');
 const { getFullUrl } = require('../utils/urlUtils');
+const ApiResult = require('./entities');
 const SOUP = "soup"
 
 /**
@@ -15,7 +16,7 @@ const soupApiImpl = {
   /**
    * 获取指定ID的汤面
    * @param {string} id - 汤面ID
-   * @returns {Promise<Object>} 汤面数据
+   * @returns {Promise<ApiResult>} 汤面数据
    */
   getSoup: async (id) => {
     try {
@@ -30,7 +31,7 @@ const soupApiImpl = {
 
   /**
    * 获取随机汤面
-   * @returns {Promise<Object>} 随机汤面数据
+   * @returns {Promise<ApiResult>} 随机汤面数据
    */
   getRandomSoup: async () => {
     try {
@@ -46,7 +47,7 @@ const soupApiImpl = {
   /**
    * 创建新汤面
    * @param {Object} soupData - 汤面数据
-   * @returns {Promise<Object>} 创建结果
+   * @returns {Promise<ApiResult>} 创建结果
    */
   createSoup: async (soupData) => {
     try {
@@ -63,7 +64,7 @@ const soupApiImpl = {
   /**
    * 点赞汤面
    * @param {string} id - 汤面ID
-   * @returns {Promise<Object>} 操作结果
+   * @returns {Promise<ApiResult>} 操作结果
    */
   likeSoup: async (id) => {
     try {
@@ -79,7 +80,7 @@ const soupApiImpl = {
   /**
    * 取消点赞汤面
    * @param {string} id - 汤面ID
-   * @returns {Promise<Object>} 操作结果
+   * @returns {Promise<ApiResult>} 操作结果
    */
   unlikeSoup: async (id) => {
     try {
@@ -95,7 +96,7 @@ const soupApiImpl = {
   /**
    * 收藏汤面
    * @param {string} id - 汤面ID
-   * @returns {Promise<Object>} 操作结果
+   * @returns {Promise<ApiResult>} 操作结果
    */
   favoriteSoup: async (id) => {
     try {
@@ -111,7 +112,7 @@ const soupApiImpl = {
   /**
    * 取消收藏汤面
    * @param {string} id - 汤面ID
-   * @returns {Promise<Object>} 操作结果
+   * @returns {Promise<ApiResult>} 操作结果
    */
   unfavoriteSoup: async (id) => {
     try {
@@ -127,7 +128,7 @@ const soupApiImpl = {
   /**
    * 增加汤面浏览量
    * @param {string} id - 汤面ID
-   * @returns {Promise<Object>} 操作结果
+   * @returns {Promise<ApiResult>} 操作结果
    */
   viewSoup: async (id) => {
     try {

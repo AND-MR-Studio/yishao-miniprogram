@@ -1,8 +1,7 @@
 // pages/mine/mine.js - 纯UI页面层
 
 // 引入API模块
-const api = require('../../config/api');
-// 引入 stores 和 mobx-miniprogram-bindings
+const { assets } = require('../../config/assets');
 const { userStore, settingStore } = require('../../stores/index');
 const { createStoreBindings, destroyStoreBindings } = require('mobx-miniprogram-bindings');
 
@@ -13,7 +12,7 @@ Page({
   data: {
     // 用户相关数据将由 userStore 绑定提供：
     // userInfo, detectiveInfo, hasSignedIn, isLoggedIn, loading
-    defaultAvatarUrl: api.assets.local.avatar,
+    defaultAvatarUrl: assets.local.avatar,
     buttonConfig: {
       type: 'light',
       text: '登录'

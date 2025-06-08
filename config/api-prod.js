@@ -4,30 +4,25 @@
  */
 
 const prodConfig = {
-  // 汤面服务配置
-  soup: {
-    url: 'https://and-tech.cn/soup'
-  },
-  
-  // 用户代理服务配置
-  agent: {
-    url: 'https://and-tech.cn/agent'
-  },
+    // 汤面服务配置
+    soup: {
+        url: 'https://and-tech.cn/soup'
+    },
 
-  // 对话服务配置
-  dialog: {
-    url: 'https://and-tech.cn/dialog'
-  },
+    // 用户代理服务配置
+    agent: {
+        url: 'https://and-tech.cn/agent'
+    },
 
-  // 用户服务配置
-  user: {
-    url: 'https://and-tech.cn/user'
-  },
-  
-  // 资源服务配置
-  asset: {
-    url: 'https://and-tech.cn/asset'
-  },
+    // 对话服务配置
+    dialog: {
+        url: 'https://and-tech.cn/dialog'
+    },
+
+    // 用户服务配置
+    user: {
+        url: 'https://and-tech.cn/user'
+    },
 };
 
 module.exports = prodConfig;

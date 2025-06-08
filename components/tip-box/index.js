@@ -1,7 +1,7 @@
 // components/tip-box/index.js
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { rootStore } = require('../../stores/index');
-const { assets } = require('../../config/api');
+const { assets } = require('../../config/assets');
 
 Component({
   /**

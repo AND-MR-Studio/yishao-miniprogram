@@ -1,5 +1,5 @@
 // components/popup/index.js
-const { assets } = require('../../config/api');
+const { assets } = require('../../config/assets');
 
 Component({
   /**
