@@ -43,16 +43,6 @@ class RootStore {
     this.tipStore = new TipStoreClass(this);
     this.uploadStore = new UploadStoreClass(this);
 
-    // 使用makeAutoObservable实现全自动响应式
-    makeAutoObservable(this, {
-      // 子Store不需要标记为非观察属性
-      chatStore: false,
-      soupStore: false,
-      tipStore: false,
-      uploadStore: false,
-      userStore: false,
-      settingStore: false
-    });
   }
 }
 

@@ -93,6 +93,8 @@ Component({
         await this.typeAnimator.start(content);
       } catch (error) {
         console.error('打字机动画执行失败:', error);
+        // 发生错误时立即显示完整内容
+        this.typeAnimator.showComplete(content);
         this.completeAnimation();
       }
     },
