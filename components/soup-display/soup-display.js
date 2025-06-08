@@ -7,7 +7,7 @@
 // 引入MobX store和绑定工具
 const { soupStore } = require('../../stores/index');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { assets } = require('../../config/api');
+const { assets } = require('../../config/assets');
 
 Component({
   properties: {

@@ -4,7 +4,7 @@
  */
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { uploadStore, userStore, settingStore } = require('../../stores/index');
-const { assets } = require('../../config/api');
+const { assets } = require('../../config/assets');
 
 Page({
   /**

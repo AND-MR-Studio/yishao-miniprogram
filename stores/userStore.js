@@ -1,7 +1,7 @@
 // stores/userStore.js - 标准MobX用户状态管理
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 const userService = require('../service/userService');
-const { api, assets, uploadFile } = require('../config/api');
+const { api, assets, uploadFile } = require('../config/assets');
 
 // 定义常量
 const TOKEN_KEY = 'token';

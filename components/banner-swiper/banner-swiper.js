@@ -1,5 +1,5 @@
 // components/banner-swiper/banner-swiper.js
-const { requestOpen, api, assets } = require('../../config/api');
+const { requestOpen, api, assets } = require('../../config/assets');
 
 Component({  /**
    * 组件的属性列表
