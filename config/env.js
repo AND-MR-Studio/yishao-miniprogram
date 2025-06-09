@@ -52,6 +52,6 @@ module.exports = {
     getCurrentEnvironment,
 
     // 环境切换工具函数
-    isDevelopment: () => getCurrentEnvironment === ENV_DEV,
-    isProduction: () => getCurrentEnvironment === ENV_PROD
+    isDevelopment: () => getCurrentEnvironment() === ENV_DEV,
+    isProduction: () => getCurrentEnvironment() === ENV_PROD
 };

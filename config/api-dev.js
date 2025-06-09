@@ -7,7 +7,7 @@
 const devConfig = {
     // 汤面服务配置
     soup: {
-        url: 'http://localhost:8080/soup'
+        url: 'http://localhost:8080/api/soups'
     },
 
     // 用户代理服务配置
@@ -17,12 +17,12 @@ const devConfig = {
 
     // 对话服务配置
     dialog: {
-        url: 'http://localhost:8080/dialog'
+        url: 'http://localhost:8080/api/v1/dialog'
     },
 
     // 用户服务配置
     user: {
-        url: 'http://localhost:8080/user'
+        url: 'http://localhost:8080/api/users'
     },
 };
 
