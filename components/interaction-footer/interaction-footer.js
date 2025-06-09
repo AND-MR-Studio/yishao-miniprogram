@@ -64,15 +64,8 @@ Component({
 
       // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
       if (!this.data.isLoggedIn) {
-        // 获取页面实例 - 微信小程序中getCurrentPages是全局函数
-        const pages = wx.getCurrentPages ? wx.getCurrentPages() : getCurrentPages();
-        const currentPage = pages[pages.length - 1];
-
-        // 显示登录提示弹窗
-        const loginPopup = currentPage.selectComponent("#loginPopup");
-        if (loginPopup) {
-          loginPopup.show();
-        }
+        // 触发父页面的登录弹窗
+        this.triggerEvent('showLogin');
         return;
       }
 
@@ -94,14 +87,6 @@ Component({
     },
 
     /**
-     * 外部调用的收藏方法
-     * 用于双击收藏等场景
-     */
-    toggleFavorite() {
-      this.handleFavoriteClick();
-    },
-
-    /**
      * 处理点赞点击事件
      * 检查登录状态，未登录时显示登录弹窗
      * 触发store中的action并处理结果提示
@@ -112,15 +97,8 @@ Component({
 
       // 检查用户是否已登录 - 使用rootStore的isLoggedIn属性
       if (!this.data.isLoggedIn) {
-        // 获取页面实例 - 微信小程序中getCurrentPages是全局函数
-        const pages = wx.getCurrentPages ? wx.getCurrentPages() : getCurrentPages();
-        const currentPage = pages[pages.length - 1];
-
-        // 显示登录提示弹窗
-        const loginPopup = currentPage.selectComponent("#loginPopup");
-        if (loginPopup) {
-          loginPopup.show();
-        }
+        // 触发父页面的登录弹窗
+        this.triggerEvent('showLogin');
         return;
       }
 
@@ -139,14 +117,6 @@ Component({
       } catch (error) {
         console.error('点赞操作失败:', error);
       }
-    },
-
-    /**
-     * 外部调用的点赞方法
-     * 用于其他场景触发点赞
-     */
-    toggleLike() {
-      this.handleLikeClick();
     }
   }
 });
