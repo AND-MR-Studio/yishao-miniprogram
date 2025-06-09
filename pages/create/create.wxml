@@ -110,8 +110,8 @@
     content="先去「个人中心」登录一下吧～"
     confirmText="去登录→"
     cancelText="再想想"
-    showClose="{{false}}"    showLoginIcon="{{true}}"
-    bind:confirm="onLoginConfirm"
+    showClose="{{false}}"
+    showLoginIcon="{{true}}"
   ></popup>
 
   <!-- 新用户引导层组件 -->

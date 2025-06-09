@@ -26,11 +26,5 @@
     <!-- 无图片时的排版方式 -->
     <block wx:else>
       <text class="soup-text">{{soupData.soup_surface || ''}}</text>
-    </block>
-  </view>
-
-  <!-- 使用独立的交互底部组件 - 使用MobX管理状态 -->
-  <interaction-footer
-    id="interactionFooter"
-  ></interaction-footer>
+    </block>  </view>
 </view>

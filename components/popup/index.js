@@ -98,6 +98,13 @@ Component({
      * 点击确认按钮
      */
     onConfirm() {
+      // 如果是登录弹窗，直接跳转到个人中心页面
+      if (this.properties.showLoginIcon) {
+        wx.switchTab({
+          url: "/pages/mine/mine",
+        });
+      }
+      
       this.triggerEvent('confirm');
       // 默认点击确认后关闭弹窗
       this.onClose();
@@ -107,6 +114,11 @@ Component({
      * 点击取消按钮
      */
     onCancel() {
+      // 如果是登录弹窗，记录用户取消登录
+      if (this.properties.showLoginIcon) {
+        console.log('用户取消登录');
+      }
+      
       this.triggerEvent('cancel');
       // 默认点击取消后关闭弹窗
       this.onClose();

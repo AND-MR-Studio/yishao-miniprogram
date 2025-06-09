@@ -106,7 +106,7 @@
     confirmText="去登录→"
     cancelText="再想想"
     showClose="{{false}}"
-    showLoginIcon="{{true}}"    bind:confirm="onLoginConfirm"
+    showLoginIcon="{{true}}"
   ></popup>
 
   <!-- 新用户引导层组件 -->

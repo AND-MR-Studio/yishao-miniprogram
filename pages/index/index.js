@@ -55,8 +55,7 @@ Page({
         });
         // 显示引导层
         rootStore.settingStore.toggleGuide(true);
-        // 登录弹窗
-        rootStore.userStore.requireLogin();
+        
         // 初始化手势管理器
         this.initInteractionManager();
 
@@ -198,27 +197,7 @@ Page({
                 });
             }
         });
-    },
-
-    /**
-     * 处理登录弹窗确认按钮点击事件
-     */
-    onLoginConfirm() {
-        // 跳转到个人中心页面
-        wx.switchTab({
-            url: "/pages/mine/mine",
-        });
-    },
-
-    /**
-     * 处理登录弹窗取消按钮点击事件
-     */
-    onLoginCancel() {
-        // 取消登录，不执行任何操作，弹窗会自动关闭
-        console.log('用户取消登录');
-    },
-
-    /**
+    },    /**
      * 处理导航栏首页按钮点击事件，刷新首页数据
      */
     onRefreshHome() {
@@ -388,5 +367,17 @@ Page({
      */
     handleTouchEnd(e) {
         this.gestureManager?.handleTouchEnd(e, { canInteract: !this.data.isLoading });
+    },
+
+    // ===== 登录相关事件处理 =====
+    /**
+     * 处理显示登录弹窗事件
+     * 由 interaction-footer 组件触发
+     */
+    onShowLogin() {
+        const loginPopup = this.selectComponent("#loginPopup");
+        if (loginPopup) {
+            loginPopup.show();
+        }
     },
 });

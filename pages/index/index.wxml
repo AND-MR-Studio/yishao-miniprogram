@@ -20,6 +20,12 @@
         class="soup-display-component"
         bind:swipe="handleSoupSwipe"
       ></soup-display>
+      
+      <!-- 交互底部组件 -->
+      <interaction-footer
+        id="interactionFooter"
+        bind:showLogin="onShowLogin"
+      ></interaction-footer>
     </view>
 
     <!-- 按钮区域 -->
@@ -48,13 +54,9 @@
     show="{{showGuide}}"
     bind:close="onCloseGuide">
   </guide-overlay>
-
-  <!-- 登录弹窗 - 自动根据 shouldShowLoginPopup 显示/隐藏 -->
+  <!-- 登录弹窗 - 通过事件触发显示 -->
   <login-popup 
-      id="loginPopup" 
-      wx:if="{{shouldShowLoginPopup}}"
-      bind:confirm="onLoginConfirm"
-      bind:cancel="onLoginCancel"
+      id="loginPopup"
   />
 
 </view>

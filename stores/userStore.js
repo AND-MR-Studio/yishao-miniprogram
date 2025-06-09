@@ -58,14 +58,6 @@ class UserStore {
   get isLoggedIn() {
     return !!this.userId;
   }
-
-  /**
- * 是否应该显示登录弹窗
- */
-  get shouldShowLoginPopup() {
-    return !this.isLoggedIn;
-  }
-
   /**
    * 侦探信息 - 为 detective-card 组件提供完整的侦探信息
    */
@@ -94,30 +86,7 @@ class UserStore {
    */
   get hasSignedIn() {
     return this.userInfo?.hasSignedIn || false;
-  }
-  // ===== Actions =====
-  /**
-   * 统一的登录检查和弹窗显示方法
-   * 如果未登录，自动显示登录弹窗并返回false
-   * 如果已登录，返回true
-   * @returns {boolean} 是否已登录
-   */
-  requireLogin() {
-    if (!this.isLoggedIn) {
-      // 未登录时显示登录弹窗
-      try {
-        const currentPage = wx.getCurrentPages().pop();
-        const loginPopup = currentPage?.selectComponent("#loginPopup");
-        if (loginPopup) {
-          loginPopup.show();
-        }
-      } catch (error) {
-        console.warn('显示登录弹窗失败:', error);
-      }
-      return false; // 未登录
-    }
-    return true; // 已登录
-  }
+  }  // ===== Actions =====
 
   /**
    * 统一的加载状态管理方法
@@ -147,22 +116,6 @@ class UserStore {
       this.setLoading('sync', true);
       const result = yield userService.getUserInfo();
 
-      if (result.success) {
-        // 检查数据是否有变化，避免不必要的更新
-        const hasChanged = JSON.stringify(this.userInfo) !== JSON.stringify(result.data);
-        if (hasChanged) {
-          this.userInfo = result.data;
-          console.log('用户信息已更新');
-        } else {
-          console.log('用户信息无变化，跳过更新');
-        }
-      } else {
-        // 获取失败，清空用户信息
-        this.userInfo = null;
-        console.log('用户信息获取失败，已清空本地数据');
-      }
-
-      return result;
     } catch (error) {
       console.error('同步用户信息失败:', error);
       this.userInfo = null;
@@ -309,10 +262,6 @@ class UserStore {
       return { success: false, error: '无更新内容' };
     }
 
-    // 统一登录检查，未登录时自动弹窗
-    if (!this.requireLogin()) {
-      return;
-    }
 
     try {
       this.setLoading('profile', true);
@@ -338,10 +287,6 @@ class UserStore {
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   *favoriteSoup(soupId, isFavorite) {
-    // 统一登录检查，未登录时自动弹窗
-    if (!this.requireLogin()) {
-      return;
-    }
     try {
       // 直接发起操作请求
       const result = yield userService.updateFavoriteSoup(soupId, isFavorite);
@@ -380,10 +325,6 @@ class UserStore {
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   *likeSoup(soupId, isLike) {
-    // 统一登录检查，未登录时自动弹窗并返回错误
-    if (!this.requireLogin()) {
-      return;
-    }
 
     try {
       // 直接发起操作请求
@@ -423,10 +364,6 @@ class UserStore {
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */
   *solveSoup(soupId) {
-    // 统一登录检查，未登录时自动弹窗并返回错误
-    if (!this.requireLogin()) {
-      return;
-    }
 
     try {
       // 直接发起操作请求
@@ -455,10 +392,6 @@ class UserStore {
    * @param {string} soupId - 汤ID
    * @returns {Promise<{success: boolean, data?: any, error?: string}>}
    */  *updateAnsweredSoup(soupId) {
-    // 统一登录检查，未登录时自动弹窗并返回错误
-    if (!this.requireLogin()) {
-      return;
-    }
 
     try {
       // 直接发起操作请求
