@@ -2,6 +2,7 @@
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
     "soup-display": "/components/soup-display/soup-display",
+    "interaction-footer": "/components/interaction-footer/interaction-footer",
     "custom-button": "/components/custom-button/index",
     "start-soup-button": "/components/start-soup-button/index",
     "login-popup": "/components/popup/index",

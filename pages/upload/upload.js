@@ -238,19 +238,6 @@ Page({
       url: '/pages/create/create'
     });
   },
-
-  /**
-   * 处理登录弹窗确认按钮点击事件
-   */
-  onLoginConfirm() {
-    // 跳转到个人中心页面
-    wx.switchTab({
-      url: "/pages/mine/mine",
-    });
-  },
-
-
-
   /**
    * 查看已发布的汤
    */
