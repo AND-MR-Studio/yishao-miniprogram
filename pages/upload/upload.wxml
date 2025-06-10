@@ -99,7 +99,7 @@
   </view>
 
   <!-- 登录提示弹窗 -->
-  <popup
+  <login-popup
     id="loginPopup"
     title="侦探大人，想创作海龟汤吗？"
     content="先去「个人中心」登录一下吧～"
@@ -107,7 +107,7 @@
     cancelText="再想想"
     showClose="{{false}}"
     showLoginIcon="{{true}}"
-  ></popup>
+  ></login-popup>
 
   <!-- 新用户引导层组件 -->
   <guide-overlay

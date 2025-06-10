@@ -2,7 +2,7 @@
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
     "custom-button": "/components/custom-button/index",
-    "popup": "/components/popup/index",
+    "login-popup": "/components/popup/index",
     "guide-overlay": "/components/guide-overlay/guide-overlay"
   },
   "navigationStyle": "custom",

@@ -54,6 +54,12 @@
   <!-- 登录弹窗 - 通过事件触发显示 -->
   <login-popup 
       id="loginPopup"
+      title="侦探大人，想喝汤吗？"
+      content="先去「个人中心」登录一下吧～"
+      confirmText="去登录→"
+      cancelText="再想想"
+      showClose="{{false}}"
+      showLoginIcon="{{true}}"
   />
 
 </view>

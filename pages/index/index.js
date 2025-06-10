@@ -36,6 +36,7 @@ Page({
         // 创建userStore绑定 - 只用于同步用户信息
         this.userStoreBindings = createStoreBindings(this, {
             store: rootStore.userStore,
+            fields: ["isLoggedIn"], // 添加登录状态字段
             actions: ["syncUserInfo"]
         });
         // 创建soupStore绑定 - 汤面相关字段和方法
@@ -179,6 +180,16 @@ Page({
      * 使用后端返回的 chatPageUrl 进行跳转
      */
     async onStartChat() {
+        // 检查用户是否已登录
+        if (!this.data.isLoggedIn) {
+            // 显示登录提示弹窗
+            const loginPopup = this.selectComponent("#loginPopup");
+            if (loginPopup) {
+                loginPopup.show();
+            }
+            return;
+        }
+
         this.toggleChatLoading(true);
 
         // 直接使用 store 中的 chatPageUrl 跳转
@@ -197,7 +208,8 @@ Page({
                 });
             }
         });
-    },    /**
+    },
+    /**
      * 处理导航栏首页按钮点击事件，刷新首页数据
      */
     onRefreshHome() {
@@ -366,18 +378,5 @@ Page({
      * @param {Object} e 触摸事件对象
      */
     handleTouchEnd(e) {
-        this.gestureManager?.handleTouchEnd(e, { canInteract: !this.data.isLoading });
-    },
-
-    // ===== 登录相关事件处理 =====
-    /**
-     * 处理显示登录弹窗事件
-     * 由 interaction-footer 组件触发
-     */
-    onShowLogin() {
-        const loginPopup = this.selectComponent("#loginPopup");
-        if (loginPopup) {
-            loginPopup.show();
-        }
-    },
+        this.gestureManager?.handleTouchEnd(e, { canInteract: !this.data.isLoading });    },
 });
