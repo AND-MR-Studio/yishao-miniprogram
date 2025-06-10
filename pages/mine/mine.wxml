@@ -6,12 +6,9 @@
     bind:refreshPage="onRefreshPage"
   />
 
-  <view class="container">
-    <!-- 用户名片 -->
+  <view class="container">    <!-- 用户名片 -->
     <detective-card
       id="detective-card"
-      bind:signinresult="handleSignInResult"
-      bind:signin="handleDetectiveCardSignIn"
       bind:navigate="handleSoupList"
       bind:editprofile="openUserInfoModal">
     </detective-card>

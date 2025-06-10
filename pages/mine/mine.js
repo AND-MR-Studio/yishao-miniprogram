@@ -46,7 +46,8 @@ Page({
         "syncUserInfo",       // 同步用户信息
         "login",              // 登录操作
         "logout",             // 退出登录操作
-        "updateUserProfile"   // 更新用户资料
+        "updateUserProfile",   // 更新用户资料
+        "signIn"              // 签到操作
       ]
     });
 
@@ -316,40 +317,8 @@ Page({
    * 处理 Banner 点击事件
    */
   handleBannerTap(event) {
-    console.log('Banner 点击事件:', event.detail);
-  },
-
+    console.log('Banner 点击事件:', event.detail);  },
   // ===== Detective Card 相关事件处理 =====
-  /**
-   * 处理detective-card签到事件
-   */
-  async handleDetectiveCardSignIn() {
-    console.log('处理签到事件');
-  },
-
-  /**
-   * 处理签到结果回调
-   */
-  handleSignInResult(e) {
-    const { success, error } = e.detail;
-    if (success) {
-      wx.showToast({
-        title: '签到成功！已获得提问机会',
-        icon: 'success',
-        duration: 2000
-      });
-      // 签到成功后刷新用户信息
-      this.syncUserInfo();
-    } else {
-      wx.showToast({
-        title: error || '签到失败',
-        icon: 'none',
-        duration: 2000
-      });
-    }
-  },
-
-
   /**
    * 处理detective-card导航事件
    */
