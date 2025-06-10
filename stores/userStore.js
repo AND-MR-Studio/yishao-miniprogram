@@ -67,7 +67,7 @@ class UserStore {
       detectiveId: info.detectiveId || '',
       levelTitle: info.levelTitle || '新手侦探',
       remainingAnswers: info.remainingAnswers || 0,
-      unsolvedCount: info.unsolvedCount || 0,
+      unsolvedCount: info.unsolvedCount?.length || 0,
       solvedCount: info.solvedSoups?.length || 0,
       creationCount: info.createSoups?.length || 0,
       favoriteCount: info.favoriteSoups?.length || 0,

@@ -365,7 +365,7 @@ Page({
    */
   onShowGuide() {
     // 调用settingStore的toggleGuide方法显示引导层
-    settingStore.toggleGuide(true);
+    rootStore.settingStore.toggleGuide(true);
   },
 
   /**
@@ -374,6 +374,6 @@ Page({
    */
   onCloseGuide() {
     // 调用settingStore的toggleGuide方法隐藏引导层
-    settingStore.toggleGuide(false);
+    rootStore.settingStore.toggleGuide(false);
   }
 })
