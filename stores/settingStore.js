@@ -77,7 +77,7 @@ class SettingStore {
    */
     *loadSettings() {
     try {
-      this.setLoading('settings', true);
+      this.loading.settings = true;
       
       const settings = wx.getStorageSync('soupSettings') || {};
       
@@ -92,7 +92,7 @@ class SettingStore {
       this.soundOn = DEFAULT_SETTINGS.soundOn;
       this.vibrationOn = DEFAULT_SETTINGS.vibrationOn;
     } finally {
-      this.setLoading('settings', false);
+      this.loading.settings = false;
     }
   }
 
@@ -102,7 +102,7 @@ class SettingStore {
    */
     *saveSettings() {
     try {
-      this.setLoading('settings', true);
+      this.loading.settings = true;
       
       const settings = {
         soundOn: this.soundOn,
@@ -114,7 +114,7 @@ class SettingStore {
     } catch (error) {
       console.error('保存用户设置失败:', error);
     } finally {
-      this.setLoading('settings', false);
+      this.loading.settings = false;
     }
   }
 
@@ -148,18 +148,7 @@ class SettingStore {
     this.showSettingPanel = show;
   }
 
-  // ===== 工具方法 =====
-
   /**
-   * 设置加载状态
-   * @param {string} type - 加载类型
-   * @param {boolean} status - 加载状态
-   */
-  setLoading(type, status) {
-    if (this.loading.hasOwnProperty(type)) {
-      this.loading[type] = status;
-    }
-  }  /**
    * 重置所有设置为默认值
    */
   resetToDefault() {

@@ -1,10 +1,7 @@
 // stores/userStore.js - 标准MobX用户状态管理
 const { makeAutoObservable, flow } = require('mobx-miniprogram');
 const userService = require('../service/userService');
-const { api, assets, uploadFile } = require('../config/assets');
-
-// 定义常量
-const TOKEN_KEY = 'token';
+const { assets } = require('../config/assets');
 
 class UserStore {
   // ===== 可观察状态 =====
@@ -15,20 +12,14 @@ class UserStore {
   loading = {
     login: false,      // 登录操作加载状态
     logout: false,     // 退出登录操作加载状态
-    avatar: false,     // 头像上传加载状态
-    profile: false,    // 资料更新加载状态
-    sync: false        // 用户信息同步加载状态（对应原来的 isLoading）
+    profile: false,    // 用户资料更新加载状态（包括头像上传）
+    sync: false        // 用户信息同步加载状态
   };
-
-  // 引用rootStore
-  rootStore = null;
-
   constructor() {
     makeAutoObservable(this, {
       // 标记异步方法为flow
       login: flow,
       logout: flow,
-      updateAvatar: flow,
       updateUserProfile: flow,
       syncUserInfo: flow,
       favoriteSoup: flow,
@@ -37,9 +28,6 @@ class UserStore {
       updateAnsweredSoup: flow,
       toggleFavorite: flow,
       toggleLike: flow,
-
-      // 标记为非观察属性
-      rootStore: false,
     });
   }
 
@@ -81,30 +69,12 @@ class UserStore {
     };
   }
 
-  /**
-   * 是否已签到 - 直接使用后端返回的签到状态
-   */
   get hasSignedIn() {
     return this.userInfo?.hasSignedIn || false;
-  }  // ===== Actions =====
-
-  /**
-   * 统一的加载状态管理方法
-   * @param {string} type - 加载类型：'login', 'logout', 'avatar', 'profile', 'sync'
-   * @param {boolean} status - 加载状态：true 表示开始加载，false 表示结束加载
-   */
-  setLoading(type, status) {
-    if (this.loading.hasOwnProperty(type)) {
-      this.loading[type] = status;
-    } else {
-      console.warn(`未知的加载类型: ${type}`);
-    }
   }
 
-  /**
-   * 同步用户信息 - 优化版本，避免循环调用
-   * userStore 作为用户信息的单一数据源
-   */
+  // ===== Actions =====
+
   *syncUserInfo() {
     // 防止重复调用
     if (this.loading.sync) {
@@ -113,15 +83,21 @@ class UserStore {
     }
 
     try {
-      this.setLoading('sync', true);
+      this.loading.sync = true;
       const result = yield userService.getUserInfo();
-
+      
+      if (result.success) {
+        this.userInfo = result.data;
+        return { success: true, data: result.data };
+      } else {
+        return { success: false, error: result.error || '获取用户信息失败' };
+      }
     } catch (error) {
       console.error('同步用户信息失败:', error);
       this.userInfo = null;
       return { success: false, error: '同步用户信息失败' };
     } finally {
-      this.setLoading('sync', false);
+      this.loading.sync = false;
     }
   }
 
@@ -134,30 +110,10 @@ class UserStore {
     }
 
     try {
-      this.setLoading('login', true);
-
-      // 检查是否已经登录
-      const token = wx.getStorageSync(TOKEN_KEY);
-      if (token) {
-        // 已登录，获取用户信息
-        const userInfoResult = yield userService.getUserInfo();
-        if (userInfoResult.success) {
-          this.userInfo = userInfoResult.data;
-          return { success: true, data: userInfoResult.data };
-        } else {
-          // token可能已过期，继续执行登录流程
-          this.clearLocalStorage();
-        }
-      }
-
+      this.loading.login = true;
       const result = yield userService.login();
 
       if (result.success) {
-        // 保存token和用户信息到本地存储
-        if (result.data.token) {
-          wx.setStorageSync(TOKEN_KEY, result.data.token);
-          wx.setStorageSync(LOGIN_TIMESTAMP_KEY, Date.now());
-        }
         this.userInfo = result.data;
         console.log('登录成功，用户信息已更新');
       }
@@ -167,7 +123,7 @@ class UserStore {
       console.error('登录失败:', error);
       return { success: false, error: '登录失败' };
     } finally {
-      this.setLoading('login', false);
+      this.loading.login = false;
     }
   }
 
@@ -180,12 +136,10 @@ class UserStore {
     }
 
     try {
-      this.setLoading('logout', true);
+      this.loading.logout = true;
       const result = yield userService.logout();
 
       if (result.success) {
-        // 清理本地存储和状态
-        this.clearLocalStorage();
         this.userInfo = null;
         console.log('退出登录成功，用户信息已清空');
       }
@@ -195,101 +149,40 @@ class UserStore {
       console.error('退出登录失败:', error);
       return { success: false, error: '退出登录失败' };
     } finally {
-      this.setLoading('logout', false);
+      this.loading.logout = false;
     }
-  }
-
-  /**
-   * 清理本地存储
-   */
-  clearLocalStorage() {
-    try {
-      wx.removeStorageSync(userInfo);
-
-      // 清除全局数据
-      const app = getApp();
-      if (app && app.globalData) {
-        if (app.globalData.userInfo) {
-          app.globalData.userInfo = null;
-        }
-        if (app.globalData.detectiveInfo) {
-          app.globalData.detectiveInfo = null;
-        }
-      }
-    } catch (error) {
-      console.error('清理本地存储失败:', error);
-    }
-  }
-
-  /**
-   * 上传头像
-   */
-  *updateAvatar(avatarPath) {
-
-    try {
-      this.setLoading('avatar', true);
-
-      const result = yield uploadFile({
-        url: api.asset.upload,
-        filePath: avatarPath,
-        name: 'file',
-        formData: {
-          type: 'avatar',
-          userId: this.userId,
-          timestamp: new Date().getTime()
-        }
-      });
-
-      if (result.success && result.data && result.data.url) {
-        // 上传成功后同步用户信息
-        yield this.syncUserInfo();
-        return { success: true, data: result.data.url };
-      } else {
-        return { success: false, error: result.error || '上传头像失败' };
-      }
-    } catch (error) {
-      console.error('上传头像失败:', error);
-      return { success: false, error: '上传头像失败' };
-    } finally {
-      this.setLoading('avatar', false);
-    }
-  }
-
-  /**
-   * 更新用户资料
-   */  *updateUserProfile(profileData) {
+  }  
+  
+  *updateUserProfile(profileData) {
     if (!profileData || Object.keys(profileData).length === 0) {
       return { success: false, error: '无更新内容' };
     }
 
 
     try {
-      this.setLoading('profile', true);
+      this.loading.profile = true;
       const result = yield userService.updateUserInfo(profileData);
 
       if (result.success) {
         // 更新成功后同步用户信息
         yield this.syncUserInfo();
-      } return result;
+        return { success: true, data: result.data };
+      } else {
+        return { success: false, error: result.error || '更新用户资料失败' };
+      }
     } catch (error) {
       console.error('更新用户资料失败:', error);
       return { success: false, error: '更新用户资料失败' };
     } finally {
-      this.setLoading('profile', false);
+      this.loading.profile = false;
     }
   }
-  // ===== 用户交互相关方法 - 重构为直接操作模式 =====
-  /**
-   * 收藏/取消收藏汤面
-   * 直接发起操作请求，后端统一处理状态更新
-   * @param {string} soupId - 汤ID
-   * @param {boolean} isFavorite - 是否收藏
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */
+
   *favoriteSoup(soupId, isFavorite) {
     try {
-      // 直接发起操作请求
-      const result = yield userService.updateFavoriteSoup(soupId, isFavorite);
+      const result = isFavorite 
+        ? yield userService.favoriteSoup(soupId)
+        : yield userService.unfavoriteSoup(soupId);
 
       if (result.success) {
         // 操作成功后同步用户信息，获取最新状态
@@ -306,32 +199,20 @@ class UserStore {
       console.error('收藏操作失败:', error);
       return { success: false, error: '收藏操作失败' };
     }
-  }/**
-   * 切换收藏状态 - 便捷方法，全自动响应
-   * 自动判断当前状态并切换，未登录时自动显示登录弹窗
-   * @param {string} soupId - 汤ID
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */
+  }
+
   *toggleFavorite(soupId) {
-    // 获取当前收藏状态并切换
     const currentStatus = this.isFavoriteSoup(soupId);
     return yield this.favoriteSoup(soupId, !currentStatus);
   }
-  /**
-   * 点赞/取消点赞汤面
-   * 直接发起操作请求，后端统一处理状态更新
-   * @param {string} soupId - 汤ID
-   * @param {boolean} isLike - 是否点赞
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */
-  *likeSoup(soupId, isLike) {
 
+  *likeSoup(soupId, isLike) {
     try {
-      // 直接发起操作请求
-      const result = yield userService.updateLikedSoup(soupId, isLike);
+      const result = isLike 
+        ? yield userService.likeSoup(soupId)
+        : yield userService.unlikeSoup(soupId);
 
       if (result.success) {
-        // 操作成功后同步用户信息，获取最新状态
         yield this.syncUserInfo();
         return {
           success: true,
@@ -346,25 +227,13 @@ class UserStore {
       return { success: false, error: '点赞操作失败' };
     }
   }
-  /**
-   * 切换点赞状态 - 便捷方法，全自动响应
-   * 自动判断当前状态并切换，未登录时自动显示登录弹窗
-   * @param {string} soupId - 汤ID
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */
+
   *toggleLike(soupId) {
-    // 获取当前点赞状态并切换
     const currentStatus = this.isLikedSoup(soupId);
     return yield this.likeSoup(soupId, !currentStatus);
   }
-  /**
-   * 标记汤面为已解决
-   * 直接发起操作请求，后端统一处理状态更新
-   * @param {string} soupId - 汤ID
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */
-  *solveSoup(soupId) {
 
+  *solveSoup(soupId) {
     try {
       // 直接发起操作请求
       const result = yield userService.updateSolvedSoup(soupId);
@@ -386,24 +255,16 @@ class UserStore {
     }
   }
 
-  /**
-   * 更新用户回答过的汤记录
-   * 直接发起操作请求，后端统一处理状态更新
-   * @param {string} soupId - 汤ID
-   * @returns {Promise<{success: boolean, data?: any, error?: string}>}
-   */  *updateAnsweredSoup(soupId) {
-
+  *updateAnsweredSoup(soupId) {
     try {
       // 直接发起操作请求
       const result = yield userService.updateAnsweredSoup(soupId);
 
       if (result.success) {
-        // 操作成功后同步用户信息，获取最新状态
-        yield this.syncUserInfo();
         return {
           success: true,
           data: result.data,
-          message: '已更新回答记录'
+          message: result.message || '已更新回答记录'
         };
       } else {
         return result;
@@ -414,13 +275,8 @@ class UserStore {
     }
   }
 
-  // ===== 状态查询方法 - 从本地 userInfo 直接读取 =====
+  // ===== 状态查询方法 =====
 
-  /**
-   * 检查用户是否收藏了某个汤
-   * @param {string} soupId - 汤ID
-   * @returns {boolean} 是否收藏
-   */
   isFavoriteSoup(soupId) {
     if (!this.isLoggedIn || !this.userInfo) {
       return false;
@@ -428,11 +284,6 @@ class UserStore {
     return Array.isArray(this.userInfo.favoriteSoups) && this.userInfo.favoriteSoups.includes(soupId);
   }
 
-  /**
-   * 检查用户是否点赞了某个汤
-   * @param {string} soupId - 汤ID
-   * @returns {boolean} 是否点赞
-   */
   isLikedSoup(soupId) {
     if (!this.isLoggedIn || !this.userInfo) {
       return false;
@@ -440,11 +291,6 @@ class UserStore {
     return Array.isArray(this.userInfo.likedSoups) && this.userInfo.likedSoups.includes(soupId);
   }
 
-  /**
-   * 检查用户是否已解决某个汤
-   * @param {string} soupId - 汤ID
-   * @returns {boolean} 是否已解决
-   */
   isSolvedSoup(soupId) {
     if (!this.isLoggedIn || !this.userInfo) {
       return false;

@@ -1,5 +1,5 @@
 const {addRequestInterceptor, addResponseInterceptor} = require('request');
-const {userStore} = require('../stores/userStore');
+const {userStore} = require('../stores/index'); // 从 stores/index.js 引入实例
 /**
  * 业务拦截器工具
  */
