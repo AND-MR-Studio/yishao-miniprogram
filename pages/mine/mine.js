@@ -2,7 +2,7 @@
 
 // 引入API模块
 const { assets } = require('../../config/assets');
-const { userStore, settingStore } = require('../../stores/index');
+const { rootStore } = require('../../stores/index');
 const { createStoreBindings, destroyStoreBindings } = require('mobx-miniprogram-bindings');
 
 Page({
@@ -13,27 +13,20 @@ Page({
     // 用户相关数据将由 userStore 绑定提供：
     // userInfo, detectiveInfo, hasSignedIn, isLoggedIn, loading
     defaultAvatarUrl: assets.local.avatar,
-    buttonConfig: {
-      type: 'light',
-      text: '登录'
-    },
-    isLoggingOut: false,
     // 用户信息设置弹窗
     showUserInfoModal: false,
+    // 临时输入的昵称（用于保存时获取用户输入）
+    tempNickname: '',
     // 汤面列表弹窗
     showSoupListModal: false,
     // 汤面列表类型: 'unsolved', 'solved', 'creations', 'favorites'
-    soupListType: 'unsolved',
-    // 编辑中的昵称和头像，用于用户信息设置弹窗
-    editingNickName: '',
-    editingAvatarUrl: ''
-  },
-  /**
+    soupListType: 'unsolved'
+  },/**
    * 生命周期函数--监听页面加载
    */  async onLoad() {
-    // 创建userStore绑定 - 直接绑定userStore，符合新的架构模式
+    // 创建userStore绑定
     this.userStoreBindings = createStoreBindings(this, {
-      store: userStore,
+      store: rootStore.userStore,
       fields: [
         // 核心用户数据
         "userInfo",           // 原始用户信息对象
@@ -50,14 +43,13 @@ Page({
         "syncUserInfo",       // 同步用户信息
         "login",              // 登录操作
         "logout",             // 退出登录操作
-        "updateAvatar",       // 更新头像
         "updateUserProfile"   // 更新用户资料
       ]
     });
 
     // 创建settingStore绑定 - 用于引导层管理
     this.settingStoreBindings = createStoreBindings(this, {
-      store: settingStore,
+      store: rootStore.settingStore,
       fields: ['showGuide'], // 引导层显示状态
       actions: []
     });
@@ -75,41 +67,15 @@ Page({
 
     // 调用绑定的syncUserInfo action刷新数据
     await this.syncUserInfo();
-    // 根据登录状态更新按钮
-    this.updateButtonConfig();
   },
 
-  /**
-   * 更新登录/退出登录按钮的配置
-   */
-  updateButtonConfig() {
-    // 直接访问绑定的 isLoggedIn 字段
-    if (this.data.isLoggedIn) {
-      this.setData({
-        buttonConfig: {
-          type: 'unlight',
-          text: '退出登录'
-        }
-      });
-    } else {
-      this.setData({
-        buttonConfig: {
-          type: 'light',
-          text: '登录'
-        }
-      });
-    }
-  },
-
-  // updateStatistics 方法已移至 userStore，通过 storeBindings 自动更新
-  // 此处已移除 updateUserInfo 方法，使用 refreshPageData 方法替代
 
   /**
    * 处理头像选择
    */
   async onChooseAvatar(e) {
     // 防止重复调用
-    if (this.data.loading.avatar) {
+    if (this.data.loading.profile) {
       return;
     }
 
@@ -119,9 +85,10 @@ Page({
     }
 
     try {
-      // 调用绑定的updateAvatar action
-      const result = await this.updateAvatar(avatarUrl);
+      // 调用updateUserProfile action更新头像
+      const result = await this.updateUserProfile({ avatarUrl });
 
+      // 统一处理结果，只显示一个提示
       if (result.success) {
         wx.showToast({
           title: '头像上传成功',
@@ -138,7 +105,7 @@ Page({
     } catch (error) {
       console.error('头像上传失败:', error);
       wx.showToast({
-        title: '头像上传失败',
+        title: '网络异常，请稍后重试',
         icon: 'none',
         duration: 2000
       });
@@ -147,50 +114,35 @@ Page({
 
   /**
    * 处理昵称输入
-   * 使用防抖技术优化输入处理
    */
-  onInputNickname: function (e) {
-    // 清除之前的定时器
-    if (this.nicknameDebounceTimer) {
-      clearTimeout(this.nicknameDebounceTimer);
-    }
-
-    // 获取输入值
-    let value = e.detail.value || '';
-
-    // 使用防抖，延迟处理输入
-    this.nicknameDebounceTimer = setTimeout(() => {
-      // 检查昵称长度是否超过10个字符
-      if (value.length > 10) {
-        // 截取前10个字符
-        value = value.substring(0, 10);
-
-        // 显示提示
-        wx.showToast({
-          title: '昵称最多10个字',
-          icon: 'none',
-          duration: 2000
-        });
-      }
-
-      // 更新本地编辑中的昵称
-      this.setData({
-        editingNickName: value
+  onInputNickname(e) {
+    const value = e.detail.value || '';
+    
+    // 实时长度检查，超过限制时提示并截断
+    if (value.length > 10) {
+      wx.showToast({
+        title: '昵称最多10个字',
+        icon: 'none',
+        duration: 1500
       });
-    }, 500);
+      
+      // 截断到最大长度
+      const trimmedValue = value.substring(0, 10);
+      // 临时保存截断后的值
+      this.setData({ tempNickname: trimmedValue });
+      return trimmedValue;
+    }
+    
+    // 临时保存输入值，供保存时使用
+    this.setData({ tempNickname: value });
+    return value;
   },
-
   /**
    * 打开用户信息设置弹窗
    * 使用async/await优化异步流程
    * @param {boolean} showToast - 是否显示操作成功提示
    */
   async openUserInfoModal(showToast = false) {
-    // 防止重复调用
-    if (this._isOpeningUserInfoModal) {
-      return;
-    }
-    this._isOpeningUserInfoModal = true;
 
     try {
       // 检查登录状态，直接访问绑定的 isLoggedIn 字段
@@ -203,15 +155,13 @@ Page({
         return;
       }
 
-      // 从 store 获取用户信息，直接访问绑定的 userInfo 字段
-      // 如果用户信息不完整，尝试刷新
-      if (!this.data.userInfo || !this.data.userInfo.nickname || !this.data.userInfo.avatarUrl) {
+      if (!this.data.detectiveInfo) {
         // 调用绑定的 syncUserInfo action 刷新用户信息
         await this.syncUserInfo();
       }
 
-      // 如果刷新后仍然没有用户信息，给出提示并返回，直接访问绑定的 userInfo 字段
-      if (!this.data.userInfo || !this.data.userInfo.nickname || !this.data.userInfo.avatarUrl) {
+      // 如果刷新后仍然没有detectiveInfo，给出提示并返回
+      if (!this.data.detectiveInfo) {
         wx.showToast({
           title: '获取用户信息失败，请稍后重试',
           icon: 'none',
@@ -222,9 +172,7 @@ Page({
 
       // 设置弹窗数据，直接使用绑定的 userInfo 字段
       this.setData({
-        showUserInfoModal: true,
-        editingNickName: this.data.userInfo.nickname,
-        editingAvatarUrl: this.data.userInfo.avatarUrl
+        showUserInfoModal: true
       });
 
       if (showToast) {
@@ -251,7 +199,8 @@ Page({
    */
   closeUserInfoModal() {
     this.setData({
-      showUserInfoModal: false
+      showUserInfoModal: false,
+      tempNickname: '' // 清除临时输入值
     });
     // 关闭弹窗后，调用绑定的 syncUserInfo action 刷新用户信息，确保页面显示最新数据
     this.syncUserInfo();
@@ -266,10 +215,12 @@ Page({
       return;
     }
 
-    const { editingNickName, editingAvatarUrl } = this.data;
-
+    // 获取临时输入的昵称，如果没有则使用当前 detectiveInfo 中的昵称
+    const inputNickname = this.data.tempNickname || this.data.detectiveInfo?.nickName || '';
+    const trimmedNickname = inputNickname.trim();
+    
     // 检查昵称是否为空
-    if (!editingNickName || editingNickName.trim() === '') {
+    if (!trimmedNickname) {
       wx.showToast({
         title: '昵称不能为空',
         icon: 'none',
@@ -279,7 +230,8 @@ Page({
     }
 
     // 检查头像是否为默认头像
-    if (editingAvatarUrl === this.data.defaultAvatarUrl) {
+    const detectiveInfo = this.data.detectiveInfo;
+    if (!detectiveInfo?.avatarUrl || detectiveInfo.avatarUrl === this.data.defaultAvatarUrl) {
       wx.showToast({
         title: '请选择您的头像',
         icon: 'none',
@@ -289,9 +241,9 @@ Page({
     }
 
     try {
-      // 调用绑定的updateUserProfile action
+      // 调用 store 的 updateUserProfile action
       const result = await this.updateUserProfile({
-        nickname: editingNickName
+        nickname: trimmedNickname
       });
 
       if (result.success) {
@@ -300,6 +252,9 @@ Page({
           icon: 'success',
           duration: 2000
         });
+        
+        // 清除临时输入值
+        this.setData({ tempNickname: '' });
         this.closeUserInfoModal();
       } else {
         wx.showToast({
@@ -309,22 +264,22 @@ Page({
         });
       }
     } catch (error) {
-      console.error('保存用户信息失败:', error);
+      console.error('保存用户信息异常:', error);
       wx.showToast({
-        title: '保存失败，请稍后重试',
+        title: '网络异常，请稍后重试',
         icon: 'none',
         duration: 2000
       });
     }
   },
 
-
   /**
    * 跳过用户信息设置
    */
   skipUserInfo() {
     this.setData({
-      showUserInfoModal: false
+      showUserInfoModal: false,
+      tempNickname: '' // 清除临时输入值
     });
     // 跳过设置后，调用绑定的 syncUserInfo action 刷新用户信息，确保页面显示最新数据
     this.syncUserInfo();
@@ -350,7 +305,6 @@ Page({
             icon: 'success',
             duration: 2000
           });
-          this.updateButtonConfig();
         } else {
           wx.showToast({
             title: result.error || '退出登录失败',
@@ -368,10 +322,9 @@ Page({
             icon: 'success',
             duration: 2000
           });
-          this.updateButtonConfig();
 
           // 检查是否需要完善信息
-          if (!this.data.userInfo || !this.data.userInfo.nickname || !this.data.userInfo.avatarUrl) {
+          if (!this.data.detectiveInfo || !this.data.detectiveInfo.nickName || !this.data.detectiveInfo.avatarUrl) {
             this.openUserInfoModal(true);
           }
         } else {
@@ -402,13 +355,77 @@ Page({
   },
 
   /**
-   * 处理点击汤面列表入口
-   * @param {object} event - 事件对象，包含 data-type 指定的列表类型
+   * 处理分享到朋友圈
    */
-  handleSoupListClick(event) {
-    const type = event.currentTarget.dataset.type;
+  onShareTimeline: function () {
+    return {
+      title: '来一起玩烧脑的海龟汤推理游戏！',
+      query: '',
+      imageUrl: api.assets.local.shareImage
+    };
+  },
+
+  /**
+   * 处理分享给朋友
+   */
+  onShareAppMessage: function () {
+    return {
+      title: '来一起玩烧脑的海龟汤推理游戏！',
+      path: '/pages/index/index',
+      imageUrl: api.assets.local.shareImage
+    };
+  },
+  /**
+   * 处理 Banner 点击事件
+   */
+  handleBannerTap(event) {
+    console.log('Banner 点击事件:', event.detail);
+  },
+
+  // ===== Detective Card 相关事件处理 =====
+  
+  /**
+   * 处理签到结果回调
+   */
+  handleSignInResult(e) {
+    const { success, error } = e.detail;
+    if (success) {
+      wx.showToast({
+        title: '签到成功！已获得提问机会',
+        icon: 'success',
+        duration: 2000
+      });
+      // 签到成功后刷新用户信息
+      this.syncUserInfo();
+    } else {
+      wx.showToast({
+        title: error || '签到失败',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  },
+
+
+  /**
+   * 处理detective-card导航事件
+   */
+  handleNavigate(e) {
+    const { page } = e.detail;
+    
+    // 检查登录状态
+    if (!this.data.isLoggedIn) {
+      wx.showToast({
+        title: '请先登录',
+        icon: 'none',
+        duration: 2000
+      });
+      return;
+    }
+
+    // 设置汤面列表类型并显示弹窗
     this.setData({
-      soupListType: type,
+      soupListType: page,
       showSoupListModal: true
     });
   },
@@ -420,84 +437,6 @@ Page({
     this.setData({
       showSoupListModal: false
     });
-  },
-
-  /**
-   * 处理分享到朋友圈
-   */
-  onShareTimeline: function () {
-    return {
-      title: '来一起玩烧脑的文字推理游戏！',
-      query: '',
-      imageUrl: api.assets.local.shareImage
-    };
-  },
-
-  /**
-   * 处理分享给朋友
-   */
-  onShareAppMessage: function () {
-    return {
-      title: '来一起玩烧脑的文字推理游戏！',
-      path: '/pages/index/index',
-      imageUrl: api.assets.local.shareImage
-    };
-  },
-
-  /**
-   * 处理导航跳转
-   * @param {object} event - 事件对象，包含 data-url 指定的跳转路径
-   */
-  handleNavigate(event) {
-    const url = event.currentTarget.dataset.url;
-    if (url) {
-      wx.navigateTo({
-        url: url,
-        fail: (err) => {
-          console.error('导航失败:', err);
-          wx.showToast({
-            title: '跳转失败，请稍后重试',
-            icon: 'none',
-            duration: 2000
-          });
-        }
-      });
-    }
-  },
-
-  /**
-   * 处理头像加载错误
-   */
-  handleAvatarError() {
-    console.error('头像加载失败，使用默认头像');
-  },
-
-  /**
-   * 处理签到结果 - detective-card 组件事件
-   */
-  handleSignInResult(event) {
-    const { success, message } = event.detail;
-    wx.showToast({
-      title: message || (success ? '签到成功' : '签到失败'),
-      icon: success ? 'success' : 'none',
-      duration: 2000
-    });
-  },
-
-
-  /**
-   * 处理侦探卡片签到 - detective-card 组件事件
-   */
-  handleDetectiveCardSignIn() {
-    // 这里可以添加签到逻辑，或者委托给 userStore
-    console.log('处理侦探卡片签到');
-  },
-
-  /**
-   * 处理 Banner 点击事件
-   */
-  handleBannerTap(event) {
-    console.log('Banner 点击事件:', event.detail);
   },
   /**
    * 导航到关于页面
@@ -523,17 +462,17 @@ Page({
    * 通过settingStore统一管理指南状态
    */
   onShowGuide() {
-    // 调用settingStore的toggleGuide方法显示引导层
-    settingStore.toggleGuide(true);
+    // 调用rootStore.settingStore的toggleGuide方法显示引导层
+    rootStore.settingStore.toggleGuide(true);
   },
 
   /**
    * 关闭指南层
-   * 通过settingStore统一管理指南状态
+   * 通过rootStore.settingStore统一管理指南状态
    */
   onCloseGuide() {
-    // 调用settingStore的toggleGuide方法隐藏引导层
-    settingStore.toggleGuide(false);
+    // 调用rootStore.settingStore的toggleGuide方法隐藏引导层
+    rootStore.settingStore.toggleGuide(false);
   },
 
   /**

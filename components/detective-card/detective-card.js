@@ -45,13 +45,6 @@ Component({
   },
 
   /**
-   * 数据监听器
-   */
-  observers: {
-    // 移除userInfo的观察者，避免实时更新
-  },
-
-  /**
    * 组件生命周期
    */
   lifetimes: {
@@ -128,13 +121,16 @@ Component({
       try {
         // 检查登录状态
         if (!this.data.isLoggedIn) {
-          // 通知父页面检查登录状态
-          this.triggerEvent('checklogin');
+          wx.showToast({
+            title: '请先登录',
+            icon: 'none',
+            duration: 2000
+          });
           return;
         }
 
         // 检查是否已签到
-        if (this.data.hasSignedIn) {
+        if (this.properties.hasSignedIn) {
           wx.showToast({
             title: '今天已经签到过啦~',
             icon: 'none',
@@ -187,19 +183,11 @@ Component({
      */
     handleImageError() {
       console.error('头像图片加载失败，使用默认头像');
-
-      // 如果detectiveInfo存在，更新其avatarUrl为默认头像
-      if (this.properties.detectiveInfo) {
-        // 创建一个新对象，避免直接修改原对象
-        const updatedInfo = { ...this.properties.detectiveInfo };
-
-        // 使用默认头像，不添加时间戳参数（微信会自动处理缓存）
-        const defaultUrl = this.properties.defaultAvatarUrl;
-        updatedInfo.avatarUrl = defaultUrl;
-
-        // 更新组件属性
+      
+      // 使用默认头像
+      if (this.properties.defaultAvatarUrl) {
         this.setData({
-          'detectiveInfo.avatarUrl': defaultUrl
+          'detectiveInfo.avatarUrl': this.properties.defaultAvatarUrl
         });
       }
     }

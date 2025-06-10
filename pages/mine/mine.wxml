@@ -66,16 +66,16 @@
       <view class="user-info-body">
         <!-- 头像选择 - 居中显示 -->
         <view class="avatar-container-centered">
-          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" hover-class="none" disabled="{{loading.avatar}}">
+          <button class="avatar-btn-centered" open-type="chooseAvatar" bindchooseavatar="onChooseAvatar" hover-class="none" disabled="{{loading.profile}}">
             <view class="avatar-btn-centered-before"></view>
             <image
               class="avatar-preview-centered"
-              src="{{userInfo.avatarUrl || defaultAvatarUrl}}"
+              src="{{detectiveInfo.avatarUrl || defaultAvatarUrl}}"
               mode="aspectFill"
               binderror="handleAvatarError"
             ></image>
             <!-- 点击更换提示 -->
-            <view class="avatar-change-tip">{{loading.avatar ? '上传中...' : '点击更换'}}</view>
+            <view class="avatar-change-tip">{{loading.profile ? '上传中...' : '点击更换'}}</view>
           </button>
         </view>
 
@@ -86,7 +86,7 @@
             class="nickname-input-centered nickname-input-text"
             placeholder="请输入昵称"
             placeholder-style="text-align: center;"
-            value="{{editingNickName || userInfo.nickname}}"
+            value="{{detectiveInfo.nickName}}"
             bindinput="onInputNickname"
             adjust-position="false"
             maxlength="10"
@@ -110,7 +110,6 @@
   <soup-list-modal
     visible="{{showSoupListModal}}"
     type="{{soupListType}}"
-    userInfo="{{userInfo}}"
     bind:close="closeSoupListModal"
   ></soup-list-modal>
 
