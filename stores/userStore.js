@@ -15,19 +15,26 @@ class UserStore {
     profile: false,    // 用户资料更新加载状态（包括头像上传）
     sync: false        // 用户信息同步加载状态
   };
-  constructor() {
+  
+  // 引用 rootStore
+  rootStore = null;
+
+  constructor(rootStore) {
+    this.rootStore = rootStore;
+    
     makeAutoObservable(this, {
       // 标记异步方法为flow
       login: flow,
       logout: flow,
       updateUserProfile: flow,
       syncUserInfo: flow,
-      favoriteSoup: flow,
-      likeSoup: flow,
       solveSoup: flow,
       updateAnsweredSoup: flow,
       toggleFavorite: flow,
       toggleLike: flow,
+      
+      // 标记为非观察属性
+      rootStore: false,
     });
   }
 
@@ -71,6 +78,29 @@ class UserStore {
 
   get hasSignedIn() {
     return this.userInfo?.hasSignedIn || false;
+  } 
+  /**
+   * 当前汤面是否已收藏 - computed 属性
+   * 自动响应汤面切换和用户状态变化
+   */
+  get isFavorite() {
+    return this.isFavoriteSoup(this.rootStore?.soupStore?.soupData?.id);
+  }
+
+  /**
+   * 当前汤面是否已点赞 - computed 属性
+   * 自动响应汤面切换和用户状态变化
+   */
+  get isLiked() {
+    return this.isLikedSoup(this.rootStore?.soupStore?.soupData?.id);
+  }
+
+  /**
+   * 当前汤面是否已解决 - computed 属性
+   * 自动响应汤面切换和用户状态变化
+   */
+  get isSolved() {
+    return this.isSolvedSoup(this.rootStore?.soupStore?.soupData?.id);
   }
 
   // ===== Actions =====
@@ -82,7 +112,11 @@ class UserStore {
       return { success: false, error: '正在同步中' };
     }
 
-    try {
+    // 检查用户是否已登录，未登录时不执行同步
+    if (!this.isLoggedIn || !this.userId) {
+      console.log('用户未登录，跳过同步用户信息');
+      return { success: false, error: '用户未登录' };
+    }    try {
       this.loading.sync = true;
       const result = yield userService.getUserInfo();
       
@@ -177,60 +211,77 @@ class UserStore {
       this.loading.profile = false;
     }
   }
-
-  *favoriteSoup(soupId, isFavorite) {
+  // ===== 用户交互相关方法 =====
+    /**
+   * 切换收藏状态 - 统一交互方法
+   * 自动判断当前状态并调用对应的服务方法
+   */  *toggleFavorite(soupId) {
     try {
-      const result = isFavorite 
-        ? yield userService.favoriteSoup(soupId)
-        : yield userService.unfavoriteSoup(soupId);
-
-      if (result.success) {
-        // 操作成功后同步用户信息，获取最新状态
-        yield this.syncUserInfo();
-        return {
-          success: true,
-          data: result.data,
-          message: isFavorite ? '收藏成功' : '已取消收藏'
-        };
+      let result;
+      if (this.isFavorite) {
+        // 当前已收藏，执行取消收藏
+        result = yield userService.unfavoriteSoup(soupId);
+        if (result.success) {
+          yield this.syncUserInfo();
+          return {
+            success: true,
+            data: result.data,
+            message: '已取消收藏'
+          };
+        }
       } else {
-        return result;
+        // 当前未收藏，执行收藏
+        result = yield userService.favoriteSoup(soupId);
+        if (result.success) {
+          yield this.syncUserInfo();
+          return {
+            success: true,
+            data: result.data,
+            message: '收藏成功'
+          };
+        }
       }
+      return result;
     } catch (error) {
       console.error('收藏操作失败:', error);
       return { success: false, error: '收藏操作失败' };
     }
   }
-
-  *toggleFavorite(soupId) {
-    const currentStatus = this.isFavoriteSoup(soupId);
-    return yield this.favoriteSoup(soupId, !currentStatus);
-  }
-
-  *likeSoup(soupId, isLike) {
+  /**
+   * 切换点赞状态 - 统一交互方法
+   * 自动判断当前状态并调用对应的服务方法
+   */
+  *toggleLike(soupId) {
     try {
-      const result = isLike 
-        ? yield userService.likeSoup(soupId)
-        : yield userService.unlikeSoup(soupId);
-
-      if (result.success) {
-        yield this.syncUserInfo();
-        return {
-          success: true,
-          data: result.data,
-          message: isLike ? '点赞成功' : '已取消点赞'
-        };
+      let result;
+      if (this.isLiked) {
+        // 当前已点赞，执行取消点赞
+        result = yield userService.unlikeSoup(soupId);
+        if (result.success) {
+          yield this.syncUserInfo();
+          return {
+            success: true,
+            data: result.data,
+            message: '已取消点赞'
+          };
+        }
       } else {
-        return result;
+        // 当前未点赞，执行点赞
+        result = yield userService.likeSoup(soupId);
+        if (result.success) {
+          yield this.syncUserInfo();
+          return {
+            success: true,
+            data: result.data,
+            message: '点赞成功'
+          };
+        }
       }
+      return result;
     } catch (error) {
       console.error('点赞操作失败:', error);
       return { success: false, error: '点赞操作失败' };
     }
-  }
-
-  *toggleLike(soupId) {
-    const currentStatus = this.isLikedSoup(soupId);
-    return yield this.likeSoup(soupId, !currentStatus);
   }
 
   *solveSoup(soupId) {

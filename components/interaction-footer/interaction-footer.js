@@ -3,7 +3,7 @@
  * 包含点赞、收藏和感谢作者功能
  * 使用MobX管理状态，组件负责渲染状态和处理用户交互
  */
-const { rootStore, soupStore, userStore } = require('../../stores/index');
+const { rootStore } = require('../../stores/index');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 
 Component({
@@ -27,10 +27,15 @@ Component({
   lifetimes: {
     // 组件初始化
     attached() {
-      // 创建MobX Store绑定 - 使用soupStore
-      this.storeBindings = createStoreBindings(this, {
-        store: soupStore,
-        fields: ['isLiked', 'isFavorite', 'likeCount', 'favoriteCount', 'soupData']
+      // 绑定 soupStore - 汤面数据和统计
+      this.soupStoreBindings = createStoreBindings(this, {
+        store: rootStore.soupStore,
+        fields: ['soupData', 'likeCount', 'favoriteCount']
+      });
+      // 绑定 userStore - 使用 computed 属性获取交互状态
+      this.userStoreBindings = createStoreBindings(this, {
+        store: rootStore.userStore,
+        fields: ['isFavorite', 'isLiked']
       });
 
       // 创建rootStore绑定 - 获取登录状态
@@ -43,8 +48,11 @@ Component({
     // 组件卸载
     detached() {
       // 清理MobX绑定
-      if (this.storeBindings) {
-        this.storeBindings.destroyStoreBindings();
+      if (this.soupStoreBindings) {
+        this.soupStoreBindings.destroyStoreBindings();
+      }
+      if (this.userStoreBindings) {
+        this.userStoreBindings.destroyStoreBindings();
       }
       if (this.rootStoreBindings) {
         this.rootStoreBindings.destroyStoreBindings();
@@ -71,7 +79,7 @@ Component({
 
       try {
         // 直接调用 userStore 的便捷方法
-        const result = await userStore.toggleFavorite(soupId);
+        const result = await rootStore.userStore.toggleFavorite(soupId);
 
         // 只显示成功操作的提示
         if (result && result.success) {
@@ -104,7 +112,7 @@ Component({
 
       try {
         // 直接调用 userStore 的便捷方法
-        const result = await userStore.toggleLike(soupId);
+        const result = await rootStore.userStore.toggleLike(soupId);
 
         // 只显示成功操作的提示
         if (result && result.success) {
