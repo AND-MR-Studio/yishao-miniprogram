@@ -4,6 +4,7 @@
 const assetsBaseUrl = "http://oss.and-tech.cn";
 const imagesUi = "images/ui";
 const imagesCovers = "images/covers";
+const imagesAvatars = "images/avatars";
 // 资源管理
 const assets = {
     // 本地静态资源
@@ -26,7 +27,9 @@ const assets = {
         // 海龟汤配图资源
         cover: {
             get: (soupId) => `${assetsBaseUrl}/${imagesCovers}${soupId}.jpeg`
-        }
+        },
+        // 默认头像
+        defaultAvatar: `${assetsBaseUrl}/${imagesAvatars}/defaultAvatarUrl.webp`
     }
 };
 

@@ -20,7 +20,7 @@ Page({
   data: {
     // 用户相关数据将由 userStore 绑定提供：
     // userInfo, detectiveInfo, hasSignedIn, isLoggedIn, loading
-    defaultAvatarUrl: assets.local.avatar,
+    defaultAvatarUrl: assets.remote.defaultAvatar, // 默认头像URL
     // 用户信息设置弹窗
     showUserInfoModal: false,
     // 临时输入的昵称（用于保存时获取用户输入）
@@ -29,9 +29,11 @@ Page({
     showSoupListModal: false,
     // 汤面列表类型: 使用枚举提升类型安全性
     soupListType: SOUP_LIST_TYPES.UNSOLVED
-  },/**
+  },
+  /**
    * 生命周期函数--监听页面加载
-   */  async onLoad() {
+   */
+  async onLoad() {
     // 创建userStore绑定
     this.userStoreBindings = createStoreBindings(this, {
       store: rootStore.userStore,
