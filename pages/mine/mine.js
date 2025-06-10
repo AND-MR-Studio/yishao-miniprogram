@@ -138,60 +138,13 @@ Page({
     return value;
   },
   /**
-   * 打开用户信息设置弹窗
-   * 使用async/await优化异步流程
-   * @param {boolean} showToast - 是否显示操作成功提示
+  
    */
-  async openUserInfoModal(showToast = false) {
-
-    try {
-      // 检查登录状态，直接访问绑定的 isLoggedIn 字段
-      if (!this.data.isLoggedIn) {
-        wx.showToast({
-          title: '请先登录',
-          icon: 'none',
-          duration: 2000
-        });
-        return;
-      }
-
-      if (!this.data.detectiveInfo) {
-        // 调用绑定的 syncUserInfo action 刷新用户信息
-        await this.syncUserInfo();
-      }
-
-      // 如果刷新后仍然没有detectiveInfo，给出提示并返回
-      if (!this.data.detectiveInfo) {
-        wx.showToast({
-          title: '获取用户信息失败，请稍后重试',
-          icon: 'none',
-          duration: 2000
-        });
-        return;
-      }
-
-      // 设置弹窗数据，直接使用绑定的 userInfo 字段
-      this.setData({
-        showUserInfoModal: true
-      });
-
-      if (showToast) {
-        wx.showToast({
-          title: '请完善您的信息',
-          icon: 'none',
-          duration: 2000
-        });
-      }
-    } catch (error) {
-      console.error('打开用户信息设置弹窗失败:', error);
-      wx.showToast({
-        title: '打开设置失败，请稍后重试',
-        icon: 'none',
-        duration: 2000
-      });
-    } finally {
-      this._isOpeningUserInfoModal = false;
-    }
+  openUserInfoModal() {
+    // 直接显示弹窗，数据绑定会自动处理内容
+    this.setData({
+      showUserInfoModal: true
+    });
   },
 
   /**
@@ -210,10 +163,6 @@ Page({
    * 保存用户信息
    */
   async saveUserInfo() {
-    // 防止重复提交
-    if (this.data.loading.profile) {
-      return;
-    }
 
     // 获取临时输入的昵称，如果没有则使用当前 detectiveInfo 中的昵称
     const inputNickname = this.data.tempNickname || this.data.detectiveInfo?.nickName || '';
@@ -223,17 +172,6 @@ Page({
     if (!trimmedNickname) {
       wx.showToast({
         title: '昵称不能为空',
-        icon: 'none',
-        duration: 2000
-      });
-      return;
-    }
-
-    // 检查头像是否为默认头像
-    const detectiveInfo = this.data.detectiveInfo;
-    if (!detectiveInfo?.avatarUrl || detectiveInfo.avatarUrl === this.data.defaultAvatarUrl) {
-      wx.showToast({
-        title: '请选择您的头像',
         icon: 'none',
         duration: 2000
       });
@@ -323,10 +261,6 @@ Page({
             duration: 2000
           });
 
-          // 检查是否需要完善信息
-          if (!this.data.detectiveInfo || !this.data.detectiveInfo.nickName || !this.data.detectiveInfo.avatarUrl) {
-            this.openUserInfoModal(true);
-          }
         } else {
           wx.showToast({
             title: result.error || '登录失败',
@@ -410,7 +344,7 @@ Page({
   /**
    * 处理detective-card导航事件
    */
-  handleNavigate(e) {
+  handleSoupList(e) {
     const { page } = e.detail;
     
     // 检查登录状态

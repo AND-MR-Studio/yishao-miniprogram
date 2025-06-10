@@ -15,7 +15,7 @@
       hasSignedIn="{{hasSignedIn}}"
       bind:signinresult="handleSignInResult"
       bind:signin="handleDetectiveCardSignIn"
-      bind:navigate="handleNavigate"
+      bind:navigate="handleSoupList"
       bind:editprofile="openUserInfoModal">
     </detective-card>
 
