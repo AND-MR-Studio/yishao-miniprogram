@@ -15,17 +15,17 @@ const userApiImpl = require('../api/userApiImpl');
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function getUserInfo() {
-  try {
-    // 调用API实现层获取用户信息
-    const res = await userApiImpl.getUserInfo();
-    if (res.success && res.data) {
-      return { success: true, data: res.data };
-    } else {
-      return { success: false, error: res.error || '获取用户信息失败' };
+    try {
+        // 调用API实现层获取用户信息
+        const res = await userApiImpl.getUserInfo();
+        if (res.success && res.data) {
+            return {success: true, data: res.data};
+        } else {
+            return {success: false, error: res.error || '获取用户信息失败'};
+        }
+    } catch (error) {
+        return {success: false, error: '获取用户信息失败'};
     }
-  } catch (error) {
-    return { success: false, error: '获取用户信息失败' };
-  }
 }
 
 /**
@@ -33,17 +33,13 @@ async function getUserInfo() {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function login() {
-  try {
     // 调用API实现层登录
     const res = await userApiImpl.login();
     if (res.success && res.data) {
-      return { success: true, data: res.data };
+        return {success: true, data: res.data};
     } else {
-      return { success: false, error: res.error || '登录失败' };
+        throw Error("登录失败: " + res);
     }
-  } catch (error) {
-    return { success: false, error: '登录失败' };
-  }
 }
 
 /**
@@ -51,12 +47,12 @@ async function login() {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function logout() {
-  try {
-    // 只负责API调用，本地存储清理由Store层处理
-    return { success: true, data: null };
-  } catch (error) {
-    return { success: false, error: '退出登录失败' };
-  }
+    try {
+        // 只负责API调用，本地存储清理由Store层处理
+        return {success: true, data: null};
+    } catch (error) {
+        return {success: false, error: '退出登录失败'};
+    }
 }
 
 
@@ -66,17 +62,17 @@ async function logout() {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function updateUserInfo(profileData) {
-  if (!profileData || Object.keys(profileData).length === 0) {
-    return { success: false, error: '无更新内容' };
-  }
+    if (!profileData || Object.keys(profileData).length === 0) {
+        return {success: false, error: '无更新内容'};
+    }
 
-  try {
-    // 调用API实现层更新用户资料
-    const res = await userApiImpl.updateUserInfo(profileData);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新用户资料失败' };
-  } catch (error) {
-    return { success: false, error: '更新用户资料失败' };
-  }
+    try {
+        // 调用API实现层更新用户资料
+        const res = await userApiImpl.updateUserInfo(profileData);
+        return res.success ? {success: true, data: res.data} : {success: false, error: res.error || '更新用户资料失败'};
+    } catch (error) {
+        return {success: false, error: '更新用户资料失败'};
+    }
 }
 
 /**
@@ -85,17 +81,17 @@ async function updateUserInfo(profileData) {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function favoriteSoup(soupId) {
-  if (!soupId) {
-    return { success: false, error: '汤ID为空' };
-  }
+    if (!soupId) {
+        return {success: false, error: '汤ID为空'};
+    }
 
-  try {
-    // 调用API实现层收藏汤面
-    const res = await userApiImpl.favoriteSoup(soupId);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '收藏汤面失败' };
-  } catch (error) {
-    return { success: false, error: '收藏汤面失败' };
-  }
+    try {
+        // 调用API实现层收藏汤面
+        const res = await userApiImpl.favoriteSoup(soupId);
+        return res.success ? {success: true, data: res.data} : {success: false, error: res.error || '收藏汤面失败'};
+    } catch (error) {
+        return {success: false, error: '收藏汤面失败'};
+    }
 }
 
 /**
@@ -104,17 +100,17 @@ async function favoriteSoup(soupId) {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function unfavoriteSoup(soupId) {
-  if (!soupId) {
-    return { success: false, error: '汤ID为空' };
-  }
+    if (!soupId) {
+        return {success: false, error: '汤ID为空'};
+    }
 
-  try {
-    // 调用API实现层取消收藏汤面
-    const res = await userApiImpl.unfavoriteSoup(soupId);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '取消收藏汤面失败' };
-  } catch (error) {
-    return { success: false, error: '取消收藏汤面失败' };
-  }
+    try {
+        // 调用API实现层取消收藏汤面
+        const res = await userApiImpl.unfavoriteSoup(soupId);
+        return res.success ? {success: true, data: res.data} : {success: false, error: res.error || '取消收藏汤面失败'};
+    } catch (error) {
+        return {success: false, error: '取消收藏汤面失败'};
+    }
 }
 
 /**
@@ -123,17 +119,17 @@ async function unfavoriteSoup(soupId) {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function likeSoup(soupId) {
-  if (!soupId) {
-    return { success: false, error: '汤ID为空' };
-  }
+    if (!soupId) {
+        return {success: false, error: '汤ID为空'};
+    }
 
-  try {
-    // 调用API实现层点赞汤面
-    const res = await userApiImpl.likeSoup(soupId);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '点赞汤面失败' };
-  } catch (error) {
-    return { success: false, error: '点赞汤面失败' };
-  }
+    try {
+        // 调用API实现层点赞汤面
+        const res = await userApiImpl.likeSoup(soupId);
+        return res.success ? {success: true, data: res.data} : {success: false, error: res.error || '点赞汤面失败'};
+    } catch (error) {
+        return {success: false, error: '点赞汤面失败'};
+    }
 }
 
 /**
@@ -142,17 +138,17 @@ async function likeSoup(soupId) {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function unlikeSoup(soupId) {
-  if (!soupId) {
-    return { success: false, error: '汤ID为空' };
-  }
+    if (!soupId) {
+        return {success: false, error: '汤ID为空'};
+    }
 
-  try {
-    // 调用API实现层取消点赞汤面
-    const res = await userApiImpl.unlikeSoup(soupId);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '取消点赞汤面失败' };
-  } catch (error) {
-    return { success: false, error: '取消点赞汤面失败' };
-  }
+    try {
+        // 调用API实现层取消点赞汤面
+        const res = await userApiImpl.unlikeSoup(soupId);
+        return res.success ? {success: true, data: res.data} : {success: false, error: res.error || '取消点赞汤面失败'};
+    } catch (error) {
+        return {success: false, error: '取消点赞汤面失败'};
+    }
 }
 
 /**
@@ -162,17 +158,17 @@ async function unlikeSoup(soupId) {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function updateSolvedSoup(soupId, isSolved) {
-  if (!soupId) {
-    return { success: false, error: '汤ID为空' };
-  }
+    if (!soupId) {
+        return {success: false, error: '汤ID为空'};
+    }
 
-  try {
-    // 调用API实现层更新解决状态
-    const res = await userApiImpl.updateSolvedSoup(soupId, isSolved);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新解决记录失败' };
-  } catch (error) {
-    return { success: false, error: '更新解决记录失败' };
-  }
+    try {
+        // 调用API实现层更新解决状态
+        const res = await userApiImpl.updateSolvedSoup(soupId, isSolved);
+        return res.success ? {success: true, data: res.data} : {success: false, error: res.error || '更新解决记录失败'};
+    } catch (error) {
+        return {success: false, error: '更新解决记录失败'};
+    }
 }
 
 /**
@@ -181,27 +177,27 @@ async function updateSolvedSoup(soupId, isSolved) {
  * @returns {Promise<{success: boolean, data?: any, error?: string}>}
  */
 async function updateAnsweredSoup(soupId) {
-  if (!soupId) {
-    return { success: false, error: '汤ID为空' };
-  }
+    if (!soupId) {
+        return {success: false, error: '汤ID为空'};
+    }
 
-  try {
-    const res = await userApiImpl.updateAnsweredSoup(soupId);
-    return res.success ? { success: true, data: res.data } : { success: false, error: res.error || '更新回答记录失败' };
-  } catch (error) {
-    return { success: false, error: '更新回答记录失败' };
-  }
+    try {
+        const res = await userApiImpl.updateAnsweredSoup(soupId);
+        return res.success ? {success: true, data: res.data} : {success: false, error: res.error || '更新回答记录失败'};
+    } catch (error) {
+        return {success: false, error: '更新回答记录失败'};
+    }
 }
 
 module.exports = {
-  getUserInfo,
-  login,
-  logout,
-  updateUserInfo,
-  favoriteSoup,
-  unfavoriteSoup,
-  likeSoup,
-  unlikeSoup,
-  updateSolvedSoup,
-  updateAnsweredSoup
+    getUserInfo,
+    login,
+    logout,
+    updateUserInfo,
+    favoriteSoup,
+    unfavoriteSoup,
+    likeSoup,
+    unlikeSoup,
+    updateSolvedSoup,
+    updateAnsweredSoup
 };
