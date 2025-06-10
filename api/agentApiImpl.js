@@ -5,7 +5,7 @@
  */
 const {post} = require('../utils/request');
 const {getFullUrl} = require('../utils/urlUtils');
-const ApiResult = require('./entities');
+import {ApiResult} from './entities';
 const AGENT = "agent";
 
 // 用于防止并发请求的简单锁
