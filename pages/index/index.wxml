@@ -30,14 +30,11 @@
 
     <!-- 按钮区域 -->
     <view class="button-container show-buttons">
-      <!-- 开始喝汤按钮 - 根据 isLoggedIn 和数据状态自动控制 -->
-      <button 
-        class="start-button"
-        disabled="{{!isLoggedIn || !chatPageUrl || chatLoading}}"
+      <!-- 开始喝汤按钮 - 使用自定义组件 -->
+      <start-soup-button
+        text="开始喝汤"
         bind:tap="onStartChat"
-      >
-        {{chatLoading ? '加载中...' : '开始喝汤'}}
-      </button>
+      ></start-soup-button>
     </view>
 
     <!-- 恐怖元素 - 随机闪烁的微光点 -->
