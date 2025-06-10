@@ -16,11 +16,6 @@ Component({
     defaultAvatarUrl: {
       type: String,
       value: null
-    },
-    // 是否已经签到
-    hasSignedIn: {
-      type: Boolean,
-      value: false
     }
   },
 
@@ -130,7 +125,7 @@ Component({
         }
 
         // 检查是否已签到
-        if (this.properties.hasSignedIn) {
+        if (this.properties.detectiveInfo?.isSignIn) {
           wx.showToast({
             title: '今天已经签到过啦~',
             icon: 'none',

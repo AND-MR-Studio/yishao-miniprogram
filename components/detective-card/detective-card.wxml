@@ -38,8 +38,8 @@
       <text class="answer-label">剩余提问次数: </text>
       <text class="answer-value">{{remainingAnswers || 0}}</text>
     </view>
-    <view class="sign-in-btn {{hasSignedIn ? 'disabled' : ''}}" bindtap="handleSignIn">
-      <text>{{hasSignedIn ? '已签到' : '签到+10'}}</text>
+    <view class="sign-in-btn {{detectiveInfo.isSignIn ? 'disabled' : ''}}" bindtap="handleSignIn">
+      <text>{{detectiveInfo.isSignIn ? '已签到' : '签到+10'}}</text>
     </view>
   </view>
 

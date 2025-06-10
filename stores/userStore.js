@@ -72,13 +72,10 @@ class UserStore {
       solvedCount: info.solvedSoups?.length || 0,
       creationCount: info.createSoups?.length || 0,
       favoriteCount: info.favoriteSoups?.length || 0,
-      avatarUrl: info.avatarUrl || assets.local.avatar
+      avatarUrl: info.avatarUrl || assets.local.avatar,
+      isSignIn: info.isSignIn || false  // 合并到 detectiveInfo 中
     };
   }
-
-  get hasSignedIn() {
-    return this.userInfo?.hasSignedIn || false;
-  } 
   /**
    * 当前汤面是否已收藏 - computed 属性
    * 自动响应汤面切换和用户状态变化

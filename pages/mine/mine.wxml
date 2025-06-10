@@ -12,7 +12,6 @@
       id="detective-card"
       detectiveInfo="{{detectiveInfo}}"
       defaultAvatarUrl="{{defaultAvatarUrl}}"
-      hasSignedIn="{{hasSignedIn}}"
       bind:signinresult="handleSignInResult"
       bind:signin="handleDetectiveCardSignIn"
       bind:navigate="handleSoupList"

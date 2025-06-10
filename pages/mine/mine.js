@@ -5,6 +5,14 @@ const { assets } = require('../../config/assets');
 const { rootStore } = require('../../stores/index');
 const { createStoreBindings, destroyStoreBindings } = require('mobx-miniprogram-bindings');
 
+// 汤面列表类型枚举
+const SOUP_LIST_TYPES = {
+  UNSOLVED: 'unsolved',
+  SOLVED: 'solved', 
+  CREATIONS: 'creations',
+  FAVORITES: 'favorites'
+};
+
 Page({
   /**
    * 页面的初始数据
@@ -19,8 +27,8 @@ Page({
     tempNickname: '',
     // 汤面列表弹窗
     showSoupListModal: false,
-    // 汤面列表类型: 'unsolved', 'solved', 'creations', 'favorites'
-    soupListType: 'unsolved'
+    // 汤面列表类型: 使用枚举提升类型安全性
+    soupListType: SOUP_LIST_TYPES.UNSOLVED
   },/**
    * 生命周期函数--监听页面加载
    */  async onLoad() {
@@ -34,7 +42,6 @@ Page({
 
         // 侦探相关信息
         "detectiveInfo",      // 完整侦探信息 - detective-card组件需要
-        "hasSignedIn",        // 签到状态 - detective-card组件需要
 
         // 加载状态 - 直接访问loading对象
         "loading"             // 统一加载状态对象
