@@ -48,7 +48,6 @@ Page({
                 "soupData",
                 "blurAmount",
                 "chatPageUrl",
-                "canStartChat",
                 // 添加computed属性用于UI响应式控制
                 "isLoading"
             ],

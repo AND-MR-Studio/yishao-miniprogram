@@ -1,28 +1,47 @@
 <!--components/detective-card/detective-card.wxml-->
-<view class="user-card">
-  <!-- 顶部卡片区域：头像、昵称和ID -->
-  <view class="card-content">
+<view class="user-card">  
+  <!-- 未登录状态 -->
+  <view wx:if="{{!isLoggedIn}}" class="card-content">
     <view class="avatar-section">
       <view class="avatar-section-glow"></view>
       <image
         class="avatar-large"
-        src="{{detectiveInfo.avatarUrl || defaultAvatarUrl}}"
+        src="{{defaultAvatarUrl}}"
         mode="aspectFill"
-        binderror="handleImageError"
       ></image>
     </view>
 
     <view class="info-section">
       <view class="name-badge-row">
-        <!-- 显示昵称 -->
-        <text class="name-value">{{nickName}}</text>
-        <view class="level-badge">[{{levelTitle}}]</view>
+        <text class="name-value">未登录的侦探</text>
+        <view class="level-badge">[未知侦探]</view>
       </view>
       <view class="detective-id">
-        <text>探员代号: {{detectiveId}}</text>
+        <text>探员代号: 未知</text>
+      </view>
+    </view>
+  </view>
+  <!-- 已登录状态 -->
+  <view wx:elif="{{isLoggedIn && detectiveInfo}}" class="card-content">
+    <view class="avatar-section">
+      <view class="avatar-section-glow"></view>
+      <image
+        class="avatar-large"
+        src="{{detectiveInfo.avatarUrl}}"
+        mode="aspectFill"
+      ></image>
+    </view>
+
+    <view class="info-section">
+      <view class="name-badge-row">
+        <text class="name-value">{{detectiveInfo.nickName}}</text>
+        <view class="level-badge">[{{detectiveInfo.levelTitle}}]</view>
+      </view>
+      <view class="detective-id">
+        <text>探员代号: {{detectiveInfo.detectiveId}}</text>
       </view>
       <!-- 编辑资料按钮 -->
-      <view wx:if="{{isLoggedIn}}" class="edit-profile" bindtap="handleEditProfile">
+      <view class="edit-profile" bindtap="handleEditProfile">
         <text class="edit-text">编辑资料</text>
       </view>
     </view>
@@ -30,38 +49,37 @@
 
   <!-- 分隔线 -->
   <view class="card-divider"></view>
-
   <!-- 底部区域：剩余提问次数和签到 -->
   <view class="bottom-section">
     <view class="icon-tiwen iconfont"></view>
     <view class="answer-count">
       <text class="answer-label">剩余提问次数: </text>
-      <text class="answer-value">{{remainingAnswers || 0}}</text>
+      <text class="answer-value">{{isLoggedIn && detectiveInfo ? detectiveInfo.remainingAnswers : 0}}</text>
     </view>
-    <view class="sign-in-btn {{detectiveInfo.isSignIn ? 'disabled' : ''}}" bindtap="handleSignIn">
-      <text>{{detectiveInfo.isSignIn ? '已签到' : '签到+10'}}</text>
+    <view class="sign-in-btn {{(isLoggedIn && detectiveInfo && detectiveInfo.isSignIn) ? 'disabled' : ''}}" bindtap="handleSignIn">
+      <text>{{(isLoggedIn && detectiveInfo && detectiveInfo.isSignIn) ? '已签到' : '签到+10'}}</text>
     </view>
   </view>
 
   <!-- 四栏数据 -->
   <view class="stats-section">
     <view class="stat-item" bindtap="navigateToUnsolved">
-      <text class="stat-value">{{unsolvedCount || 0}}</text>
+      <text class="stat-value">{{isLoggedIn && detectiveInfo ? detectiveInfo.unsolvedCount : 0}}</text>
       <text class="stat-label">未解决</text>
       <view class="stat-item-divider"></view>
     </view>
     <view class="stat-item" bindtap="navigateToSolved">
-      <text class="stat-value">{{solvedCount || 0}}</text>
+      <text class="stat-value">{{isLoggedIn && detectiveInfo ? detectiveInfo.solvedCount : 0}}</text>
       <text class="stat-label">已解决</text>
       <view class="stat-item-divider"></view>
     </view>
     <view class="stat-item" bindtap="navigateToCreations">
-      <text class="stat-value">{{creationCount || 0}}</text>
+      <text class="stat-value">{{isLoggedIn && detectiveInfo ? detectiveInfo.creationCount : 0}}</text>
       <text class="stat-label">创作</text>
       <view class="stat-item-divider"></view>
     </view>
     <view class="stat-item" bindtap="navigateToFavorites">
-      <text class="stat-value">{{favoriteCount || 0}}</text>
+      <text class="stat-value">{{isLoggedIn && detectiveInfo ? detectiveInfo.favoriteCount : 0}}</text>
       <text class="stat-label">收藏</text>
     </view>
   </view>

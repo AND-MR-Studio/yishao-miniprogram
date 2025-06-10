@@ -51,7 +51,7 @@ class UserStore {
    * 登录状态
    */
   get isLoggedIn() {
-    return !!this.userId;
+    return !!(this.userInfo?.id);
   }
   /**
    * 侦探信息 - 为 detective-card 组件提供完整的侦探信息
@@ -63,7 +63,6 @@ class UserStore {
 
     const info = this.userInfo;
     return {
-      isLoggedIn: true,
       nickName: info.nickname || '',
       detectiveId: info.detectiveId || '',
       levelTitle: info.levelTitle || '新手侦探',
@@ -72,7 +71,7 @@ class UserStore {
       solvedCount: info.solvedSoups?.length || 0,
       creationCount: info.createSoups?.length || 0,
       favoriteCount: info.favoriteSoups?.length || 0,
-      avatarUrl: info.avatarUrl || assets.local.avatar,
+      avatarUrl: info.avatarUrl || assets.remote.defaultAvatar,
       isSignIn: info.isSignIn || false  // 合并到 detectiveInfo 中
     };
   }

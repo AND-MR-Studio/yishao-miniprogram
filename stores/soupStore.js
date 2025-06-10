@@ -160,10 +160,6 @@ class SoupStore {
     get chatPageUrl() {
         return this.soupData?.chatPageUrl || '';
     }
-    // computed 属性 - 检查是否可以开始喝汤
-    get canStartChat() {
-        return this.soupData?.id && this.chatPageUrl && !this.soupLoading;
-    }
 
     // computed 属性 - 是否正在加载（包括汤面和按钮加载）
     get isLoading() {

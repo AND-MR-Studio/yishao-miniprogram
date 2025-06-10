@@ -10,8 +10,6 @@
     <!-- 用户名片 -->
     <detective-card
       id="detective-card"
-      detectiveInfo="{{detectiveInfo}}"
-      defaultAvatarUrl="{{defaultAvatarUrl}}"
       bind:signinresult="handleSignInResult"
       bind:signin="handleDetectiveCardSignIn"
       bind:navigate="handleSoupList"

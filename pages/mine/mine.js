@@ -38,15 +38,9 @@ Page({
     this.userStoreBindings = createStoreBindings(this, {
       store: rootStore.userStore,
       fields: [
-        // 核心用户数据
-        "userInfo",           // 原始用户信息对象
-        "isLoggedIn",         // 登录状态 - 按钮显示需要
-
-        // 侦探相关信息
-        "detectiveInfo",      // 完整侦探信息 - detective-card组件需要
-
-        // 加载状态 - 直接访问loading对象
-        "loading"             // 统一加载状态对象
+        "detectiveInfo",      // 用户信息
+        "loading",            // 统一加载状态对象
+        "isLoggedIn"          // 从userStore获取登录状态
       ],
       actions: [
         "syncUserInfo",       // 同步用户信息
@@ -326,7 +320,13 @@ Page({
   },
 
   // ===== Detective Card 相关事件处理 =====
-  
+  /**
+   * 处理detective-card签到事件
+   */
+  async handleDetectiveCardSignIn() {
+    console.log('处理签到事件');
+  },
+
   /**
    * 处理签到结果回调
    */
