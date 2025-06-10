@@ -20,7 +20,7 @@ const userApiImpl = {
     getUserInfo: async (userId) => {
         try {
             return await get({
-                url: getFullUrl(USER, `/api/users/${userId}`),
+                url: getFullUrl(USER, `/${userId}`),
             });
         } catch (error) {
             console.error(`[${USER}] 获取用户信息失败:`, error);
@@ -109,7 +109,7 @@ const userApiImpl = {
             return ApiResult.onError("取消收藏汤面失败");
         }
     },
-    
+
 
     /**
      * 点赞汤面

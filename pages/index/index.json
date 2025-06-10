@@ -5,7 +5,7 @@
     "interaction-footer": "/components/interaction-footer/interaction-footer",
     "custom-button": "/components/custom-button/index",
     "start-soup-button": "/components/start-soup-button/index",
-    "popup": "/components/popup/index",
+    "login-popup": "/components/popup/index",
     "guide-overlay": "/components/guide-overlay/guide-overlay"
   }
 }
