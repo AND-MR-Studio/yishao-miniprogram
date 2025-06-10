@@ -48,10 +48,8 @@ Component({
     handleEditProfile() {
       this.triggerEvent('editprofile');
     },
-
     /**
      * 处理签到
-     * 将签到逻辑委托给父页面，通过事件通知父页面处理
      */
     async handleSignIn() {
       // 防止重复调用
@@ -61,29 +59,31 @@ Component({
       this._isSigningIn = true;
 
       try {
-        // 检查登录状态
-        if (!this.data.isLoggedIn) {
+        // 直接调用 userStore 的签到方法
+        const result = await rootStore.userStore.signIn();
+        
+        if (result.success) {
           wx.showToast({
-            title: '请先登录',
-            icon: 'none',
+            title: result.message || '签到成功！',
+            icon: 'success',
             duration: 2000
           });
-          return;
-        }
-
-        // 检查是否已签到
-        if (this.data.detectiveInfo?.isSignIn) {
-          wx.showToast({
-            title: '今天已经签到过啦~',
-            icon: 'none',
-            duration: 2000
-          });
+          // 触发震动反馈
           wx.vibrateShort({ type: 'light' });
-          return;
+        } else {
+          wx.showToast({
+            title: result.error || '签到失败',
+            icon: 'none',
+            duration: 2000
+          });
         }
-
-        // 通知父页面执行签到操作
-        this.triggerEvent('signin');
+      } catch (error) {
+        console.error('签到操作失败:', error);
+        wx.showToast({
+          title: '签到失败，请稍后重试',
+          icon: 'none',
+          duration: 2000
+        });
       } finally {
         // 重置签到状态标志
         setTimeout(() => {
