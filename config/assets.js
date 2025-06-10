@@ -26,7 +26,7 @@ const assets = {
 
         // 海龟汤配图资源
         cover: {
-            get: (soupId) => `${assetsBaseUrl}/${imagesCovers}${soupId}.jpeg`
+            get: (soupId) => `${assetsBaseUrl}/${imagesCovers}/${soupId}.jpeg`
         },
         // 默认头像
         defaultAvatar: `${assetsBaseUrl}/${imagesAvatars}/defaultAvatarUrl.webp`

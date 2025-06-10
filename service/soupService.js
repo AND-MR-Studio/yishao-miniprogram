@@ -33,7 +33,8 @@ const soupService = {
         }
 
         // 调用API接口层获取汤面
-        return await soupApiImpl.getSoup(soupId);
+        const response = await soupApiImpl.getSoup(soupId);
+        return response.data;
     },
 
     /**
@@ -60,7 +61,8 @@ const soupService = {
      * */
     async getRandomSoup() {
         // 调用API接口层获取随机汤面
-        return await soupApiImpl.getRandomSoup();
+        const response = await soupApiImpl.getRandomSoup();
+        return response.data;
     }
 }
 module.exports = soupService

@@ -18,7 +18,7 @@ async function getUserInfo() {
   try {
     // 调用API实现层获取用户信息
     const res = await userApiImpl.getUserInfo();
-    if (res.success && res.data) {
+    if (res.success() && res.data) {
       return { success: true, data: res.data };
     } else {
       return { success: false, error: res.error || '获取用户信息失败' };

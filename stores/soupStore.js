@@ -66,11 +66,6 @@ class SoupStore {
                 
                 // 获取指定ID的汤面数据
                 soupData = yield soupService.getSoup(soupId);
-                
-                // 如果获取失败，抛出错误
-                if (!soupData) {
-                    throw new Error(`获取汤面数据失败: ${soupId}`);
-                }
             } else {
                 // 没有指定ID，获取随机汤面
                 soupData = yield soupService.getRandomSoup();
@@ -102,13 +97,29 @@ class SoupStore {
      * @throws {Error} 当获取数据失败时抛出错误
      */
     * getRandomSoup() {
-        // 调用 Service 层获取随机汤面
-        const randomSoup = yield soupService.getRandomSoup();
-        if (randomSoup && randomSoup.id) {
-            // 使用 fetchSoup 统一处理数据获取和状态更新
-            return yield this.fetchSoup(randomSoup.id);
+        try {
+            // 设置加载状态
+            this.soupLoading = true;
+
+            // 调用 Service 层获取随机汤面 - service层已处理数据结构，返回完整汤面数据
+            const soupData = yield soupService.getRandomSoup();
+            
+            if (!soupData || !soupData.id) {
+                throw new Error("获取随机汤面失败");
+            }
+
+            // 直接使用从 service 返回的完整汤面数据
+            this.soupData = soupData;
+            return soupData;
+        } catch (error) {
+            console.error("获取随机汤面数据失败:", error);
+            throw error;
+        } finally {
+            // 重置加载状态
+            this.soupLoading = false;
+            // 重置模糊效果
+            this.resetBlurAmount();
         }
-        throw new Error("获取随机汤面失败");
     }
 
 
