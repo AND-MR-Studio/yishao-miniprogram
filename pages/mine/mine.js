@@ -23,8 +23,6 @@ Page({
     defaultAvatarUrl: assets.remote.defaultAvatar, // 默认头像URL
     // 用户信息设置弹窗
     showUserInfoModal: false,
-    // 临时输入的昵称（用于保存时获取用户输入）
-    tempNickname: '',
     // 汤面列表弹窗
     showSoupListModal: false,
     // 汤面列表类型: 使用枚举提升类型安全性
@@ -120,26 +118,7 @@ Page({
    * 处理昵称输入
    */
   onInputNickname(e) {
-    const value = e.detail.value || '';
-    
-    // 实时长度检查，超过限制时提示并截断
-    if (value.length > 10) {
-      wx.showToast({
-        title: '昵称最多10个字',
-        icon: 'none',
-        duration: 1500
-      });
-      
-      // 截断到最大长度
-      const trimmedValue = value.substring(0, 10);
-      // 临时保存截断后的值
-      this.setData({ tempNickname: trimmedValue });
-      return trimmedValue;
-    }
-    
-    // 临时保存输入值，供保存时使用
-    this.setData({ tempNickname: value });
-    return value;
+    return e.detail.value || '';
   },
   /**
   
@@ -156,20 +135,17 @@ Page({
    */
   closeUserInfoModal() {
     this.setData({
-      showUserInfoModal: false,
-      tempNickname: '' // 清除临时输入值
+      showUserInfoModal: false
     });
     // 关闭弹窗后，调用绑定的 syncUserInfo action 刷新用户信息，确保页面显示最新数据
     this.syncUserInfo();
   },
-
   /**
    * 保存用户信息
    */
   async saveUserInfo() {
-
-    // 获取临时输入的昵称，如果没有则使用当前 detectiveInfo 中的昵称
-    const inputNickname = this.data.tempNickname || this.data.detectiveInfo?.nickName || '';
+    // 直接从当前 detectiveInfo 中获取昵称（输入框已双向绑定）
+    const inputNickname = this.data.detectiveInfo?.nickName || '';
     const trimmedNickname = inputNickname.trim();
     
     // 检查昵称是否为空
@@ -195,8 +171,6 @@ Page({
           duration: 2000
         });
         
-        // 清除临时输入值
-        this.setData({ tempNickname: '' });
         this.closeUserInfoModal();
       } else {
         wx.showToast({
@@ -214,14 +188,12 @@ Page({
       });
     }
   },
-
   /**
    * 跳过用户信息设置
    */
   skipUserInfo() {
     this.setData({
-      showUserInfoModal: false,
-      tempNickname: '' // 清除临时输入值
+      showUserInfoModal: false
     });
     // 跳过设置后，调用绑定的 syncUserInfo action 刷新用户信息，确保页面显示最新数据
     this.syncUserInfo();

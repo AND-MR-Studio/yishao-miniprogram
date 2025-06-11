@@ -63,9 +63,13 @@ class SoupStore {
             if (soupId) {
                 // 设置当前正在获取的ID
                 this._fetchingId = soupId;
-                
+
                 // 获取指定ID的汤面数据
                 soupData = yield soupService.getSoup(soupId);
+                // 如果获取失败，抛出错误
+                if (!soupData) {
+                    throw new Error(`获取汤面数据失败: ${soupId}`);
+                }
             } else {
                 // 没有指定ID，获取随机汤面
                 soupData = yield soupService.getRandomSoup();
