@@ -16,6 +16,6 @@
     </view>    <!-- 汤面内容显示 -->
     <view class="soup-text-with-image">
       <text class="soup-surface">{{soupData.soup_surface || ''}}</text>
-      <image class="soup-image" src="{{coverUrl}}" mode="aspectFill" lazy-load="true" wx:if="{{coverUrl}}"></image>
+      <image class="soup-image" src="{{soupData.cover}}" mode="aspectFill" lazy-load="true" wx:if="{{soupData.cover}}"></image>
     </view></view>
 </view>

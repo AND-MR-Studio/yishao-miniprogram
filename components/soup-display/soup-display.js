@@ -10,8 +10,14 @@ const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { assets } = require('../../config/assets');
 
 Component({
-  // 移除所有 properties，改为直接从 Store 获取数据
-  properties: {},
+  // 组件属性
+  properties: {
+    // 模糊程度 - 从页面传入
+    blurAmount: {
+      type: Number,
+      value: 0
+    }
+  },
 
   options: {
     styleIsolation: 'isolated',
@@ -19,7 +25,6 @@ Component({
   },
   data: {
     // 配图TODO: 直接从store.soupdata获取，不再使用properties
-    coverUrl: '' // 汤面配图URL
   },
 
   lifetimes: {
@@ -32,8 +37,7 @@ Component({
         store: rootStore.soupStore,
         fields: [
           'soupData',      // 汤面数据
-          'soupLoading',   // 汤面加载状态
-          'blurAmount'     // 模糊程度
+          'soupLoading'    // 汤面加载状态
         ]
       });
 
@@ -68,20 +72,6 @@ Component({
       if (this._isAttached) {
         // 通知页面组件加载状态变化
         this.triggerEvent('loading', { loading: soupLoading });
-      }
-    },
-
-    // 监听soupData变化，更新配图URL
-    'soupData': function(soupData) {
-      if (this._isAttached && soupData && soupData.id) {
-        // 直接设置配图URL，不检查图片是否存在
-        this.setData({
-          coverUrl: assets.remote.cover.get(soupData.id)
-        });
-      } else {
-        this.setData({ 
-          coverUrl: ''
-        });
       }
     }
   },

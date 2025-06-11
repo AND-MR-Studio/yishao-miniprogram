@@ -83,6 +83,9 @@ Component({
             icon: 'none',
             duration: 1500
           });
+
+          // 触发震动反馈
+          wx.vibrateShort();
         }
       } catch (error) {
         console.error('收藏操作失败:', error);
@@ -116,6 +119,7 @@ Component({
             icon: 'none',
             duration: 1500
           });
+          wx.vibrateShort();
         }
       } catch (error) {
         console.error('点赞操作失败:', error);

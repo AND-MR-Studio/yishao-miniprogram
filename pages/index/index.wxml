@@ -17,6 +17,7 @@
       <soup-display
         id="soupDisplay"
         swipeDirection="{{swipeDirection}}"
+        blurAmount="{{blurAmount}}"
         class="soup-display-component"
         bind:swipe="handleSoupSwipe"
       ></soup-display>

@@ -14,8 +14,6 @@ class SoupStore {
     soupLoading = false; // 汤面数据加载状态
     chatLoading = false; // UI按钮加载状态
 
-    // ===== UI状态 =====
-    blurAmount = 0; // 模糊程度
 
     rootStore = null;
     constructor(rootStore) {
@@ -90,8 +88,6 @@ class SoupStore {
             // 重置加载状态和请求标志
             this.soupLoading = false;
             this._fetchingId = null;
-            // 重置模糊效果
-            this.resetBlurAmount();
         }
     }
       /**
@@ -121,8 +117,6 @@ class SoupStore {
         } finally {
             // 重置加载状态
             this.soupLoading = false;
-            // 重置模糊效果
-            this.resetBlurAmount();
         }
     }
 
@@ -153,22 +147,6 @@ class SoupStore {
                 this._chatLoadingTimeout = null;
             }
         }
-    }
-
-    /**
-     * 设置模糊效果
-     * @param {number} amount 模糊程度（0-10px）
-     */
-    setBlurAmount(amount) {
-        // 确保值在有效范围内
-        this.blurAmount = Math.max(0, Math.min(10, amount));
-    }
-
-    /**
-     * 重置模糊效果
-     */
-    resetBlurAmount() {
-        this.blurAmount = 0;
     }
 
     // computed 属性 - 获取聊天页面 URL
