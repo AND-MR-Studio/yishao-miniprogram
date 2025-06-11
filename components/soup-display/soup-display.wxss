@@ -198,25 +198,6 @@
 
 /* 标题文本基础样式 */
 
-/* 汤面文本样式 - 无图片时居中排版 */
-.soup-text {
-  font-family: var(--font-family-mincho);
-  font-size: var(--font-size-lg); /* 28rpx - 符合小程序设计规范的正文内容 */
-  line-height: 3; /* 使用主题变量，更宽松的行高 */
-  padding: var(--spacing-xl); /* 使用主题变量 */
-  text-align: center;
-  white-space: pre-wrap;
-  word-break: break-all;
-  width: 100%;
-    color: var(--color-text-primary);
-  text-shadow:var(--text-glow-secondary);
-  letter-spacing: var(--letter-spacing-wide); /* 使用主题变量 */
-  box-sizing: border-box;
-  flex: 1;
-  color: var(--color-text-primary);
-  overflow: hidden; /* 禁止滚动 */
-}
-
 /* 有图片时的容器样式 */
 .soup-text-with-image {
   width: 100%;
@@ -227,21 +208,20 @@
   z-index: 1; /* 确保容器在适当的层级 */
 }
 
-/* 有图片时的文本样式 - 左对齐 */
-.soup-text-left {
+/* 有图片时的文本样式 */
+.soup-surface {
   font-family: var(--font-family-mincho);
-  font-size: var(--font-size-md); /* 28rpx - 符合小程序设计规范的正文内容 */
+  font-size: var(--font-size-lg); /* 28rpx - 符合小程序设计规范的正文内容 */
   line-height: var(--line-height-lg); /* 使用主题变量 */
   padding: 10rpx 50rpx 0; /* 移除底部内边距，为图片留出更多空间 */
-  text-align: left;
+  text-align: center;
   white-space: normal; /* 允许换行 */
   width: 100%;
   letter-spacing: var(--letter-spacing-wide); /* 使用主题变量 */
   box-sizing: border-box;
   color: var(--color-text-primary);
   text-shadow:var(--text-glow-secondary);
-  overflow: visible; /* 修改为visible，确保不会影响图片显示 */
-  text-indent: 2em; /* 首行缩进2个字符 */
+  overflow: scroll; /* 修改为scroll，确保不会影响图片显示 */
   max-height: 400rpx; /* 限制文本高度 */
   position: absolute; /* 绝对定位 */
   top: 0; /* 顶部对齐 */
