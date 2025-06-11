@@ -181,12 +181,7 @@ Page({
     async onStartChat() {
         // 检查用户是否已登录
         if (!this.data.isLoggedIn) {
-            // 显示登录提示弹窗
-            const loginPopup = this.selectComponent("#loginPopup");
-            if (loginPopup) {
-                loginPopup.show();
-            }
-            return;
+            this.onShowLogin();
         }
 
         this.toggleChatLoading(true);
@@ -201,10 +196,6 @@ Page({
             },
             fail: () => {
                 this.toggleChatLoading(false);
-                wx.showToast({
-                    title: "跳转失败，请重试",
-                    icon: "none"
-                });
             }
         });
     },
@@ -306,6 +297,17 @@ Page({
     },
 
     // ===== 指南相关事件处理 =====
+    /**
+     * 显示登录弹窗
+     * 处理来自interaction-footer组件的showLogin事件
+     */
+    onShowLogin() {
+        const loginPopup = this.selectComponent("#loginPopup");
+        if (loginPopup) {
+            loginPopup.show();
+        }
+    },
+
     /**
      * 显示指南层
      * 通过settingStore统一管理指南状态
