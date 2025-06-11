@@ -12,7 +12,6 @@ const TYPE_CONFIG = {
       if (!detectiveInfo) return [];
       const answeredSoups = detectiveInfo.answeredSoups || [];
       const solvedSoups = detectiveInfo.solvedSoups || [];
-      return answeredSoups.filter(id => !solvedSoups.includes(id));
     }
   },
   solved: {

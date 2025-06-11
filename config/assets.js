@@ -5,6 +5,7 @@ const assetsBaseUrl = "http://oss.and-tech.cn";
 const imagesUi = "images/ui";
 const imagesCovers = "images/covers";
 const imagesAvatars = "images/avatars";
+const imagesBanners = "images/banners";
 // 资源管理
 const assets = {
     // 本地静态资源
@@ -15,6 +16,10 @@ const assets = {
 
     // 远程资源
     remote: {
+        //banner资源
+        banner: {
+            get: (filename) => `${assetsBaseUrl}/${imagesBanners}/${filename}`,
+        },
 
         // UI资源
         ui: {
