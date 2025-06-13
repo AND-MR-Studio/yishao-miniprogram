@@ -1,4 +1,6 @@
 {
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark",
   "usingComponents": {
     "nav-bar": "/components/nav-bar/index",
     "soup-display": "/components/soup-display/soup-display",

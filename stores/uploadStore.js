@@ -73,11 +73,6 @@ class UploadStore {
     return this.rootStore?.userId || '';
   }
 
-  // 获取登录状态的计算属性 - 通过rootStore统一访问
-  get isLoggedIn() {
-    return this.rootStore?.isLoggedIn || false;
-  }
-
   // ===== Computed属性 - 优化后使用独立字段 =====
 
   // 标题字数计算属性
@@ -331,9 +326,7 @@ class UploadStore {
   *submitForm() {
     if (!this.validateForm()) {
       return { success: false, message: '请完善表单信息' };
-    }
-
-    if (!this.isLoggedIn) {
+    }    if (!this.rootStore.userStore.isLoggedIn) {
       return { success: false, message: '请先登录' };
     }
 
@@ -372,9 +365,8 @@ class UploadStore {
    * 加载已发布的汤 - 优化版本，直接从 userInfo 获取
    */
   *loadPublishedSoups() {
-    try {
-      // 检查登录状态
-      if (!this.isLoggedIn) {
+    try {      // 检查登录状态
+      if (!this.rootStore.userStore.isLoggedIn) {
         this.publishedSoups = [];
         return [];
       }

@@ -10,9 +10,6 @@
     <view class="soup-display-wrapper">
       <soup-display
         id="soupDisplay"
-        soupData="{{soupData}}"
-        isDrinking="{{true}}"
-        isPeeking="{{isPeeking}}"
         class="soup-display-component {{isPeeking ? 'peeking' : ''}}"
         bind:longPressStart="onLongPressStart"
         bind:longPressEnd="onLongPressEnd"

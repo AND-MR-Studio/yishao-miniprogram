@@ -1,111 +1,46 @@
 // components/detective-card/detective-card.js
+const { createStoreBindings } = require('mobx-miniprogram-bindings');
+const { rootStore } = require('../../stores/index');
+const { assets } = require('../../config/assets');
 
 Component({
   /**
    * 组件的属性列表
    */
   properties: {
-    // 用户信息对象，包含所有需要显示的数据
-    detectiveInfo: {
-      type: Object,
-      value: null,
-      observer: function(newVal) {
-        this.updateCardDisplay(newVal);
-      }
-    },
+    // 保留默认头像配置，用于未登录状态显示
     defaultAvatarUrl: {
       type: String,
-      value: null
-    },
-    // 是否已经签到
-    hasSignedIn: {
-      type: Boolean,
-      value: false
+      value: assets.remote.defaultAvatar
     }
   },
 
   /**
-   * 组件的初始数据 - 定义未登录状态的默认值
+   * 组件的初始数据
    */
-  data: {
-    // 解析后的侦探名称和ID
-    nickName: '未登录的侦探',
-    detectiveId: '未知',
-    // 是否已登录
-    isLoggedIn: false,
-    // 等级称号
-    levelTitle: '未知侦探',
-    // 剩余提问次数
-    remainingAnswers: 0,
-    // 四栏数据
-    unsolvedCount: 0,
-    solvedCount: 0,
-    creationCount: 0,
-    favoriteCount: 0
-  },
-
-  /**
-   * 数据监听器
-   */
-  observers: {
-    // 移除userInfo的观察者，避免实时更新
-  },
+  data: {},
 
   /**
    * 组件生命周期
    */
   lifetimes: {
     attached() {
-      // 组件挂载时，如果有传入detectiveInfo则更新显示
-      if (this.properties.detectiveInfo) {
-        this.updateCardDisplay(this.properties.detectiveInfo);
+      // 创建 MobX 绑定
+      this.userStoreBindings = createStoreBindings(this, {
+        store: rootStore.userStore,
+        fields: ['detectiveInfo', 'isLoggedIn']
+      });
+    },    detached() {
+      // 清理 MobX 绑定
+      if (this.userStoreBindings) {
+        this.userStoreBindings.destroyStoreBindings();
       }
     }
   },
-
   /**
    * 组件的方法列表
    */
   methods: {
-    /**
-     * 更新卡片显示
-     * @param {Object} detectiveInfo - 侦探信息
-     */
-    updateCardDisplay(detectiveInfo) {
-      // 检查是否有有效的侦探信息
-      const isLoggedIn = detectiveInfo && detectiveInfo.isLoggedIn;
-
-      // 如果未登录或没有侦探信息，重置为初始未登录状态
-      if (!isLoggedIn || !detectiveInfo) {
-        // 重置为组件初始化时定义的默认值
-        this.setData({
-          isLoggedIn: false,
-          nickName: '未登录的侦探',
-          detectiveId: '未知',
-          levelTitle: '未知侦探',
-          remainingAnswers: 0,
-          unsolvedCount: 0,
-          solvedCount: 0,
-          creationCount: 0,
-          favoriteCount: 0
-        });
-        return;
-      }
-
-      // 已登录，更新组件数据
-      this.setData({
-        nickName: detectiveInfo.nickName || '',
-        detectiveId: detectiveInfo.detectiveId || '',
-        isLoggedIn: true,
-        levelTitle: detectiveInfo.levelTitle || '',
-        remainingAnswers: detectiveInfo.remainingAnswers || 0,
-        unsolvedCount: detectiveInfo.unsolvedCount || 0,
-        solvedCount: detectiveInfo.solvedCount || 0,
-        creationCount: detectiveInfo.creationCount || 0,
-        favoriteCount: detectiveInfo.favoriteCount || 0
-      });
-    },
-
     /**
      * 处理编辑资料
      * 触发编辑事件，由父页面处理弹窗显示和资料编辑逻辑
@@ -113,10 +48,8 @@ Component({
     handleEditProfile() {
       this.triggerEvent('editprofile');
     },
-
     /**
      * 处理签到
-     * 将签到逻辑委托给父页面，通过事件通知父页面处理
      */
     async handleSignIn() {
       // 防止重复调用
@@ -126,26 +59,31 @@ Component({
       this._isSigningIn = true;
 
       try {
-        // 检查登录状态
-        if (!this.data.isLoggedIn) {
-          // 通知父页面检查登录状态
-          this.triggerEvent('checklogin');
-          return;
-        }
-
-        // 检查是否已签到
-        if (this.data.hasSignedIn) {
+        // 直接调用 userStore 的签到方法
+        const result = await rootStore.userStore.signIn();
+        
+        if (result.success) {
           wx.showToast({
-            title: '今天已经签到过啦~',
+            title: result.message || '签到成功！',
+            icon: 'success',
+            duration: 2000
+          });
+          // 触发震动反馈
+          wx.vibrateShort({ type: 'light' });
+        } else {
+          wx.showToast({
+            title: result.error || '签到失败',
             icon: 'none',
             duration: 2000
           });
-          wx.vibrateShort({ type: 'light' });
-          return;
         }
-
-        // 通知父页面执行签到操作
-        this.triggerEvent('signin');
+      } catch (error) {
+        console.error('签到操作失败:', error);
+        wx.showToast({
+          title: '签到失败，请稍后重试',
+          icon: 'none',
+          duration: 2000
+        });
       } finally {
         // 重置签到状态标志
         setTimeout(() => {
@@ -180,28 +118,6 @@ Component({
      */
     navigateToFavorites() {
       this.triggerEvent('navigate', { page: 'favorites' });
-    },
-
-    /**
-     * 处理头像图片加载错误
-     */
-    handleImageError() {
-      console.error('头像图片加载失败，使用默认头像');
-
-      // 如果detectiveInfo存在，更新其avatarUrl为默认头像
-      if (this.properties.detectiveInfo) {
-        // 创建一个新对象，避免直接修改原对象
-        const updatedInfo = { ...this.properties.detectiveInfo };
-
-        // 使用默认头像，不添加时间戳参数（微信会自动处理缓存）
-        const defaultUrl = this.properties.defaultAvatarUrl;
-        updatedInfo.avatarUrl = defaultUrl;
-
-        // 更新组件属性
-        this.setData({
-          'detectiveInfo.avatarUrl': defaultUrl
-        });
-      }
     }
   }
 })

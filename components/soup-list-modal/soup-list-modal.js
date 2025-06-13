@@ -1,6 +1,6 @@
 // components/soup-list-modal/soup-list-modal.js
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
-const { rootStore, soupStore } = require('../../stores/index');
+const { rootStore } = require('../../stores/index');
 const soupService = require('../../service/soupService');
 
 // 定义列表类型配置
@@ -8,26 +8,26 @@ const TYPE_CONFIG = {
   unsolved: {
     title: '未解决的海龟汤',
     emptyText: '暂无未解决的海龟汤',
-    getIds: (userInfo) => {
-      const answeredSoups = userInfo.answeredSoups || [];
-      const solvedSoups = userInfo.solvedSoups || [];
-      return answeredSoups.filter(id => !solvedSoups.includes(id));
+    getIds: (detectiveInfo) => {
+      if (!detectiveInfo) return [];
+      const answeredSoups = detectiveInfo.answeredSoups || [];
+      const solvedSoups = detectiveInfo.solvedSoups || [];
     }
   },
   solved: {
     title: '已解决的海龟汤',
     emptyText: '暂无已解决的海龟汤',
-    getIds: (userInfo) => userInfo.solvedSoups || []
+    getIds: (detectiveInfo) => detectiveInfo?.solvedSoups || []
   },
   creations: {
     title: '我的创作',
     emptyText: '暂无创作的海龟汤',
-    getIds: (userInfo) => userInfo.createSoups || []
+    getIds: (detectiveInfo) => detectiveInfo?.createSoups || []
   },
   favorites: {
     title: '我的收藏',
     emptyText: '暂无收藏的海龟汤',
-    getIds: (userInfo) => userInfo.favoriteSoups || []
+    getIds: (detectiveInfo) => detectiveInfo?.favoriteSoups || []
   }
 };
 
@@ -45,11 +45,6 @@ Component({
     type: {
       type: String,
       value: 'unsolved'
-    },
-    // 用户信息
-    userInfo: {
-      type: Object,
-      value: null
     }
   },
 
@@ -94,17 +89,21 @@ Component({
       }
     }
   },
-
   lifetimes: {
     attached() {
-      // 创建MobX Store绑定
-      this.storeBindings = createStoreBindings(this, {
-        store: rootStore,
-        fields: ['userId', 'isLoggedIn'],
+      // 创建userStore绑定 - 通过rootStore访问userStore
+      this.userStoreBindings = createStoreBindings(this, {
+        store: rootStore.userStore,
+        fields: [
+          'detectiveInfo',  // 侦探信息，包含各种列表ID
+          'isLoggedIn'      // 登录状态
+        ],
+        actions: []
       });
 
+      // 创建soupStore绑定 - 通过rootStore访问soupStore
       this.soupStoreBindings = createStoreBindings(this, {
-        store: soupStore,
+        store: rootStore.soupStore,
         fields: ['soupLoading'],
         actions: ['fetchSoup']
       });
@@ -112,8 +111,8 @@ Component({
 
     detached() {
       // 清理MobX绑定
-      if (this.storeBindings) {
-        this.storeBindings.destroyStoreBindings();
+      if (this.userStoreBindings) {
+        this.userStoreBindings.destroyStoreBindings();
       }
       if (this.soupStoreBindings) {
         this.soupStoreBindings.destroyStoreBindings();
@@ -135,11 +134,20 @@ Component({
       this.setData({ loading: true });
 
       try {
-        // 获取用户信息 - 使用传入的userInfo
-        const userInfo = this.properties.userInfo;
+        // 检查登录状态
+        if (!this.data.isLoggedIn) {
+          this.setData({
+            soupList: [],
+            isEmpty: true,
+            loading: false
+          });
+          return;
+        }
 
-        if (!userInfo) {
-          // 如果没有用户信息，显示空状态
+        // 使用响应式的detectiveInfo数据
+        const detectiveInfo = this.data.detectiveInfo;
+
+        if (!detectiveInfo) {
           this.setData({
             soupList: [],
             isEmpty: true,
@@ -152,7 +160,7 @@ Component({
         const config = TYPE_CONFIG[this.data.type] || TYPE_CONFIG.unsolved;
 
         // 获取海龟汤ID数组
-        const soupIds = config.getIds(userInfo);
+        const soupIds = config.getIds(detectiveInfo);
 
         // 如果没有数据，显示空状态
         if (!soupIds || soupIds.length === 0) {
@@ -164,13 +172,11 @@ Component({
           return;
         }
 
-        // 直接使用soupService获取海龟汤详细信息
-        // 注意：这是临时解决方案，等待后续重构
+        // 调用soupService获取海龟汤详细信息
         let soupList = await soupService.getSoup(soupIds);
 
         // 确保 soupList 是数组
         if (!Array.isArray(soupList)) {
-          // 如果返回的是单个对象，将其转换为数组
           if (soupList && typeof soupList === 'object') {
             soupList = [soupList];
           } else {
@@ -234,9 +240,9 @@ Component({
       wx.switchTab({
         url: '/pages/index/index',
         success: () => {
-          // 使用soupStore加载汤面，不再使用eventUtils
+          // 使用soupStore加载汤面
           setTimeout(() => {
-            soupStore.fetchSoup(soupid);
+            this.fetchSoup(soupid);
           }, 500); // 增加延迟时间，确保页面已经完成跳转和初始化
         },
         fail: () => {

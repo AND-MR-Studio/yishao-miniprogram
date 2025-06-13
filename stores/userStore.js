@@ -13,7 +13,8 @@ class UserStore {
     login: false,      // 登录操作加载状态
     logout: false,     // 退出登录操作加载状态
     profile: false,    // 用户资料更新加载状态（包括头像上传）
-    sync: false        // 用户信息同步加载状态
+    sync: false,       // 用户信息同步加载状态
+    signin: false      // 签到操作加载状态
   };
   
   // 引用 rootStore
@@ -32,6 +33,7 @@ class UserStore {
       updateAnsweredSoup: flow,
       toggleFavorite: flow,
       toggleLike: flow,
+      signIn: flow,  // 添加签到方法
       
       // 标记为非观察属性
       rootStore: false,
@@ -51,7 +53,7 @@ class UserStore {
    * 登录状态
    */
   get isLoggedIn() {
-    return !!this.userId;
+    return !!(this.userInfo?.id);
   }
   /**
    * 侦探信息 - 为 detective-card 组件提供完整的侦探信息
@@ -63,22 +65,18 @@ class UserStore {
 
     const info = this.userInfo;
     return {
-      isLoggedIn: true,
       nickName: info.nickname || '',
       detectiveId: info.detectiveId || '',
       levelTitle: info.levelTitle || '新手侦探',
       remainingAnswers: info.remainingAnswers || 0,
-      unsolvedCount: info.unsolvedCount || 0,
+      unsolvedCount: info.unsolvedCount?.length || 0,
       solvedCount: info.solvedSoups?.length || 0,
       creationCount: info.createSoups?.length || 0,
       favoriteCount: info.favoriteSoups?.length || 0,
-      avatarUrl: info.avatarUrl || assets.local.avatar
+      avatarUrl: info.avatarUrl || assets.remote.defaultAvatar,
+      isSignIn: info.isSignIn || false  // 合并到 detectiveInfo 中
     };
   }
-
-  get hasSignedIn() {
-    return this.userInfo?.hasSignedIn || false;
-  } 
   /**
    * 当前汤面是否已收藏 - computed 属性
    * 自动响应汤面切换和用户状态变化
@@ -323,6 +321,46 @@ class UserStore {
     } catch (error) {
       console.error('更新回答记录失败:', error);
       return { success: false, error: '更新回答记录失败' };
+    }
+  }
+  /**
+   * 签到 - 等待 API 实现
+   */
+  *signIn() {
+    if (this.loading.signin) {
+      return { success: false, error: '正在签到中' };
+    }
+
+    if (!this.isLoggedIn) {
+      return { success: false, error: '请先登录' };
+    }
+
+    // 检查是否已签到
+    if (this.detectiveInfo?.isSignIn) {
+      return { success: false, error: '今天已经签到过啦~' };
+    }
+
+    try {
+      this.loading.signin = true;
+      
+      // TODO: 等待 userService.signIn API 实现
+      // const result = yield userService.signIn();
+      // if (result.success) {
+      //   yield this.syncUserInfo(); // 同步最新用户信息
+      //   return {
+      //     success: true,
+      //     data: result.data,
+      //     message: result.message || '签到成功！'
+      //   };
+      // }
+      // return result;
+      
+      return { success: false, error: '签到功能暂未开放' };
+    } catch (error) {
+      console.error('签到失败:', error);
+      return { success: false, error: '签到失败' };
+    } finally {
+      this.loading.signin = false;
     }
   }
 

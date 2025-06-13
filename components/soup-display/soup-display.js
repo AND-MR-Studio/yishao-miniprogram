@@ -5,34 +5,17 @@
  */
 
 // 引入MobX store和绑定工具
-const { soupStore } = require('../../stores/index');
+const { rootStore } = require('../../stores/index');
 const { createStoreBindings } = require('mobx-miniprogram-bindings');
 const { assets } = require('../../config/assets');
 
 Component({
+  // 组件属性
   properties: {
-    // 汤面数据对象
-    soupData: {
-      type: Object,
-      value: {} // 使用空对象作为默认值，而不是null
-    },
-
-    // 是否处于偷看模式
-    isPeeking: {
-      type: Boolean,
-      value: false
-    },
-
-    // 模糊程度（0-10px）
+    // 模糊程度 - 从页面传入
     blurAmount: {
       type: Number,
       value: 0
-    },
-
-    // 是否处于喝汤状态
-    isDrinking: {
-      type: Boolean,
-      value: false
     }
   },
 
@@ -40,10 +23,8 @@ Component({
     styleIsolation: 'isolated',
     addGlobalClass: true
   },
-
   data: {
-    isLoading: false, // 加载状态，同时控制呼吸模糊效果
-    coverUrl: '' // 汤面配图URL
+    // 配图TODO: 直接从store.soupdata获取，不再使用properties
   },
 
   lifetimes: {
@@ -53,8 +34,17 @@ Component({
 
       // 创建MobX Store绑定
       this.storeBindings = createStoreBindings(this, {
-        store: soupStore,
-        fields: ['soupData', 'soupLoading', 'blurAmount']
+        store: rootStore.soupStore,
+        fields: [
+          'soupData',      // 汤面数据
+          'soupLoading'    // 汤面加载状态
+        ]
+      });
+
+      // 绑定聊天状态 - 用于判断是否处于偷看模式
+      this.chatStoreBindings = createStoreBindings(this, {
+        store: rootStore.chatStore,
+        fields: ['isPeeking', 'chatState']
       });
 
       // 加载汇文明朝体字体
@@ -69,6 +59,9 @@ Component({
       if (this.storeBindings) {
         this.storeBindings.destroyStoreBindings();
       }
+      if (this.chatStoreBindings) {
+        this.chatStoreBindings.destroyStoreBindings();
+      }
     }
   },
 
@@ -79,61 +72,10 @@ Component({
       if (this._isAttached) {
         // 通知页面组件加载状态变化
         this.triggerEvent('loading', { loading: soupLoading });
-
-        // 更新加载状态，呼吸模糊效果将通过WXML中的类绑定自动应用
-        // 确保在切换汤谜时保持之前的内容并显示模糊效果
-        this.setData({ isLoading: soupLoading });
-
-        // 注意：不再在这里设置blurAmount，由soupStore统一管理
-      }
-    },
-
-    // 监听soupData变化，更新配图URL
-    'soupData': function(soupData) {
-      if (this._isAttached && soupData && soupData.id) {
-        // 检查图片是否存在
-        wx.request({
-          url: assets.remote.cover.get(soupData.id),
-          method: 'HEAD',
-          success: (res) => {
-            // 如果图片存在（状态码200），设置coverUrl
-            if (res.statusCode === 200) {
-              this.setData({ 
-                coverUrl: assets.remote.cover.get(soupData.id),
-                hasImage: true
-              });
-            } else {
-              // 图片不存在，清空coverUrl
-              this.setData({ 
-                coverUrl: '',
-                hasImage: false
-              });
-            }
-          },
-          fail: () => {
-            // 请求失败，清空coverUrl
-            this.setData({ 
-              coverUrl: '',
-              hasImage: false
-            });
-          }
-        });
-      } else {
-        this.setData({ 
-          coverUrl: '',
-          hasImage: false
-        });
       }
     }
   },
-
   methods: {
-    // 获取当前应显示的汤面数据
-    // 优先使用属性传入的数据，其次使用store中的数据
-    getDisplaySoupData() {
-      return this.properties.soupData || this.data.soupData;
-    },
-
     // 加载汇文明朝体字体
     loadMinchoFont() {
       // 字体缓存的key
