@@ -11,6 +11,8 @@ const ENV_PROD = "prod";
 // 设置为 'dev' 或 'prod' 时强制使用指定环境
 const MANUAL_ENV = ENV_PROD; // 可选值: null, ENV_DEV, ENV_PROD
 
+const isDevelopment = true;
+
 // ==================== 环境判断逻辑 ====================
 /**
  * 获取当前运行环境
@@ -52,6 +54,5 @@ module.exports = {
     getCurrentEnvironment,
 
     // 环境切换工具函数
-    isDevelopment: () => getCurrentEnvironment() === ENV_DEV,
-    isProduction: () => getCurrentEnvironment() === ENV_PROD
+    isDevelopment: getCurrentEnvironment() === ENV_DEV,
 };

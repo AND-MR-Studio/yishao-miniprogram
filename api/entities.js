@@ -1,4 +1,7 @@
-class ApiResult {
+/**
+ * API响应结果类
+ */
+export class ApiResult {
     constructor(code, data, msg) {
         this.code = code;
         this.data = data;
@@ -23,6 +26,6 @@ class ApiResult {
      * @returns {boolean} true表示成功，false表示失败
      */
     success() {
-        return this.code === 0;
+        return this.code === 200 || this.code === 0;
     }
 }

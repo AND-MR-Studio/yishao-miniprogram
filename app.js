@@ -28,7 +28,7 @@ App({
     console.log('================================================');
     
     // 开发环境提示
-    if (isDevelopment()) {
+    if (isDevelopment) {
       console.log('🚀 开发模式已启用，如需切换到正式环境，请修改 config/config.js 中的 MANUAL_ENV 配置');
     }
   },

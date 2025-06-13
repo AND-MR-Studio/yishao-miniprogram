@@ -19,8 +19,8 @@ const prodConfig = require('./api-prod');
  * @returns {Object} 当前环境的URL配置
  */
 const getUrlConfig = () => {
-  console.log('getUrlConfig isDev:', isDevelopment());
-  return isDevelopment() ? devConfig : prodConfig;
+  console.log('getUrlConfig isDev:', isDevelopment);
+  return isDevelopment ? devConfig : prodConfig;
 };
 
 /**
