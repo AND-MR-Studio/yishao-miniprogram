@@ -14,8 +14,6 @@ class SoupStore {
     soupLoading = false; // 汤面数据加载状态
     chatLoading = false; // UI按钮加载状态
 
-    // ===== UI状态 =====
-    blurAmount = 0; // 模糊程度
 
     rootStore = null;
     constructor(rootStore) {
@@ -63,10 +61,9 @@ class SoupStore {
             if (soupId) {
                 // 设置当前正在获取的ID
                 this._fetchingId = soupId;
-                
+
                 // 获取指定ID的汤面数据
                 soupData = yield soupService.getSoup(soupId);
-                
                 // 如果获取失败，抛出错误
                 if (!soupData) {
                     throw new Error(`获取汤面数据失败: ${soupId}`);
@@ -91,8 +88,6 @@ class SoupStore {
             // 重置加载状态和请求标志
             this.soupLoading = false;
             this._fetchingId = null;
-            // 重置模糊效果
-            this.resetBlurAmount();
         }
     }
       /**
@@ -102,13 +97,27 @@ class SoupStore {
      * @throws {Error} 当获取数据失败时抛出错误
      */
     * getRandomSoup() {
-        // 调用 Service 层获取随机汤面
-        const randomSoup = yield soupService.getRandomSoup();
-        if (randomSoup && randomSoup.id) {
-            // 使用 fetchSoup 统一处理数据获取和状态更新
-            return yield this.fetchSoup(randomSoup.id);
+        try {
+            // 设置加载状态
+            this.soupLoading = true;
+
+            // 调用 Service 层获取随机汤面 - service层已处理数据结构，返回完整汤面数据
+            const soupData = yield soupService.getRandomSoup();
+            
+            if (!soupData || !soupData.id) {
+                throw new Error("获取随机汤面失败");
+            }
+
+            // 直接使用从 service 返回的完整汤面数据
+            this.soupData = soupData;
+            return soupData;
+        } catch (error) {
+            console.error("获取随机汤面数据失败:", error);
+            throw error;
+        } finally {
+            // 重置加载状态
+            this.soupLoading = false;
         }
-        throw new Error("获取随机汤面失败");
     }
 
 
@@ -140,29 +149,9 @@ class SoupStore {
         }
     }
 
-    /**
-     * 设置模糊效果
-     * @param {number} amount 模糊程度（0-10px）
-     */
-    setBlurAmount(amount) {
-        // 确保值在有效范围内
-        this.blurAmount = Math.max(0, Math.min(10, amount));
-    }
-
-    /**
-     * 重置模糊效果
-     */
-    resetBlurAmount() {
-        this.blurAmount = 0;
-    }
-
     // computed 属性 - 获取聊天页面 URL
     get chatPageUrl() {
         return this.soupData?.chatPageUrl || '';
-    }
-    // computed 属性 - 检查是否可以开始喝汤
-    get canStartChat() {
-        return this.soupData?.id && this.chatPageUrl && !this.soupLoading;
     }
 
     // computed 属性 - 是否正在加载（包括汤面和按钮加载）

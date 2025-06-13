@@ -43,6 +43,15 @@ class RootStore {
     this.tipStore = new TipStoreClass(this);
     this.uploadStore = new UploadStoreClass(this);
 
+    makeAutoObservable(this, {
+      // 标记子Store为非观察属性
+      chatStore: false,
+      soupStore: false,
+      tipStore: false,
+      uploadStore: false,
+      userStore: false,
+      settingStore: false,
+    });
   }
 }
 

@@ -21,7 +21,7 @@ const soupApiImpl = {
   getSoup: async (id) => {
     try {
       return await get({
-        url: getFullUrl(SOUP, `/get/${id}`)
+        url: getFullUrl(SOUP, `/${id}`)
       });
     } catch (error) {
       console.error(`[${SOUP}] 获取汤面失败:`, error);

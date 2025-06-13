@@ -18,6 +18,9 @@ Page({
         swiping: false, // 是否正在滑动中
         swipeDirection: SWIPE_DIRECTION.NONE, // 滑动方向
         swipeStarted: false, // 是否开始滑动
+        
+        // UI状态
+        blurAmount: 0, // 模糊程度 - 页面层管理
     },
 
     // ===== 生命周期方法 =====
@@ -46,13 +49,11 @@ Page({
                 "soupLoading",
                 "chatLoading",
                 "soupData",
-                "blurAmount",
                 "chatPageUrl",
-                "canStartChat",
                 // 添加computed属性用于UI响应式控制
                 "isLoading"
             ],
-            actions: ["toggleChatLoading", "fetchSoup", "setBlurAmount", "resetBlurAmount"]
+            actions: ["toggleChatLoading", "fetchSoup"]
         });
         // 显示引导层
         rootStore.settingStore.toggleGuide(true);
@@ -63,8 +64,11 @@ Page({
         // 获取汤面数据，添加错误处理
         try {
             await rootStore.soupStore.fetchSoup(options.soupId);
+            // 数据加载完成后重置模糊效果
+            this.resetBlurAmount();
         } catch (error) {
             console.error('加载汤面数据失败:', error);
+            this.resetBlurAmount(); // 即使失败也要重置模糊效果
             wx.showToast({
                 title: '加载失败，请重试',
                 icon: 'none'
@@ -182,12 +186,7 @@ Page({
     async onStartChat() {
         // 检查用户是否已登录
         if (!this.data.isLoggedIn) {
-            // 显示登录提示弹窗
-            const loginPopup = this.selectComponent("#loginPopup");
-            if (loginPopup) {
-                loginPopup.show();
-            }
-            return;
+            this.onShowLogin();
         }
 
         this.toggleChatLoading(true);
@@ -202,24 +201,64 @@ Page({
             },
             fail: () => {
                 this.toggleChatLoading(false);
-                wx.showToast({
-                    title: "跳转失败，请重试",
-                    icon: "none"
-                });
             }
         });
     },
     /**
      * 处理导航栏首页按钮点击事件，刷新首页数据
      */
-    onRefreshHome() {
+    async onRefreshHome() {
         console.log('刷新首页数据');
-        // 重新加载随机汤面
-        this.switchSoup();
-    },
-
-    // ===== 汤面切换相关 =====    
-    // 
+        // 先应用模糊效果
+        this.setBlurAmount(3);
+        
+        try {
+            if (this.data.soupData?.id) {
+                // 如果当前有汤面ID，重新获取该汤面的最新数据
+                await rootStore.soupStore.fetchSoup(this.data.soupData.id);
+            } else {
+                // 否则获取随机汤面
+                await rootStore.soupStore.getRandomSoup();
+            }
+        } catch (error) {
+            console.error('刷新首页数据失败:', error);
+            wx.showToast({
+                title: '刷新失败，请重试',
+                icon: 'none'
+            });
+        } finally {
+            // 无论成功失败都重置模糊效果
+            this.resetBlurAmount();
+        }
+    },    /**
+     * 下拉刷新事件处理
+     * 刷新当前显示的汤面数据
+     */
+    async onPullDownRefresh() {
+        console.log('下拉刷新汤面数据');
+        try {
+            // 先应用模糊效果
+            this.setBlurAmount(3);
+            
+            if (this.data.soupData?.id) {
+                // 如果当前有汤面ID，重新获取该汤面的最新数据
+                await rootStore.soupStore.fetchSoup(this.data.soupData.id);
+            } else {
+                // 否则获取随机汤面
+                await rootStore.soupStore.getRandomSoup();
+            }
+        } catch (error) {
+            console.error('下拉刷新失败:', error);
+            wx.showToast({
+                title: '刷新失败，请重试',
+                icon: 'none'
+            });
+        } finally {
+            // 停止下拉刷新并重置模糊效果
+            wx.stopPullDownRefresh();
+            this.resetBlurAmount();
+        }
+    },    // ===== 汤面切换相关 =====    
     /**
      * 切换汤面
      * 完全响应式版本，依赖MobX computed属性自动判断状态
@@ -238,7 +277,9 @@ Page({
                 title: '加载失败，请重试',
                 icon: 'none'
             });
-            // 注意：不需要在这里重置模糊效果，因为 soupStore.fetchSoup 的 finally 块会自动处理
+        } finally {
+            // 无论成功失败都重置模糊效果
+            this.resetBlurAmount();
         }
     },
 
@@ -261,20 +302,11 @@ Page({
      */
     async handleDoubleTapLike() {
         try {
-            // 使用绑定字段获取soupData.id
-            const result = await rootStore.userStore.toggleLike(this.data.soupData.id);
-
-            // 显示操作反馈
-            if (result && result.success) {
-                wx.showToast({
-                    title: result.message,
-                    icon: 'none',
-                    duration: 1500
-                });
-
-                // 触发震动反馈
-                wx.vibrateShort();
-
+            // 获取 interaction-footer 组件实例
+            const interactionFooter = this.selectComponent("#interactionFooter");
+            if (interactionFooter) {
+                // 直接调用组件的点赞方法，组件内部已包含震动反馈
+                await interactionFooter.handleLikeClick();
             }
         } catch (error) {
             console.error('双击点赞失败:', error);
@@ -286,20 +318,11 @@ Page({
      */
     async handleLongPressFavorite() {
         try {
-            // 使用绑定字段获取soupData.id
-            const result = await rootStore.userStore.toggleFavorite(this.data.soupData.id);
-
-            // 显示操作反馈
-            if (result && result.success) {
-                wx.showToast({
-                    title: result.message,
-                    icon: 'none',
-                    duration: 1500
-                });
-
-                // 触发震动反馈
-                wx.vibrateShort();
-
+            // 获取 interaction-footer 组件实例
+            const interactionFooter = this.selectComponent("#interactionFooter");
+            if (interactionFooter) {
+                // 直接调用组件的收藏方法，组件内部已包含震动反馈
+                await interactionFooter.handleFavoriteClick();
             }
         } catch (error) {
             console.error('长按收藏失败:', error);
@@ -307,6 +330,17 @@ Page({
     },
 
     // ===== 指南相关事件处理 =====
+    /**
+     * 显示登录弹窗
+     * 处理来自interaction-footer组件的showLogin事件
+     */
+    onShowLogin() {
+        const loginPopup = this.selectComponent("#loginPopup");
+        if (loginPopup) {
+            loginPopup.show();
+        }
+    },
+
     /**
      * 显示指南层
      * 通过settingStore统一管理指南状态
@@ -333,12 +367,7 @@ Page({
     initInteractionManager() {
         // 创建统一手势管理器实例
         this.gestureManager = createGestureManager({
-            // 启用滑动功能
-            enableSwipe: true,
-            enableBlurEffect: true,
-            enableBackgroundEffect: true,
 
-            // 启用双击和长按功能
             enableDoubleTap: true,
             enableLongPress: true,
 
@@ -378,5 +407,24 @@ Page({
      * @param {Object} e 触摸事件对象
      */
     handleTouchEnd(e) {
-        this.gestureManager?.handleTouchEnd(e, { canInteract: !this.data.isLoading });    },
+        this.gestureManager?.handleTouchEnd(e, { canInteract: !this.data.isLoading });
+    },
+
+    // ===== 模糊效果管理 - 页面层 =====
+    /**
+     * 设置模糊效果
+     * @param {number} amount 模糊程度（0-10px）
+     */
+    setBlurAmount(amount) {
+        // 确保值在有效范围内
+        const blurAmount = Math.max(0, Math.min(10, amount));
+        this.setData({ blurAmount });
+    },
+
+    /**
+     * 重置模糊效果
+     */
+    resetBlurAmount() {
+        this.setData({ blurAmount: 0 });
+    },
 });

@@ -35,14 +35,9 @@ Component({
       // 绑定 userStore - 使用 computed 属性获取交互状态
       this.userStoreBindings = createStoreBindings(this, {
         store: rootStore.userStore,
-        fields: ['isFavorite', 'isLiked']
+        fields: ['isFavorite', 'isLiked','isLoggedIn']
       });
 
-      // 创建rootStore绑定 - 获取登录状态
-      this.rootStoreBindings = createStoreBindings(this, {
-        store: rootStore,
-        fields: ['isLoggedIn']
-      });
     },
 
     // 组件卸载
@@ -88,6 +83,9 @@ Component({
             icon: 'none',
             duration: 1500
           });
+
+          // 触发震动反馈
+          wx.vibrateShort();
         }
       } catch (error) {
         console.error('收藏操作失败:', error);
@@ -121,6 +119,7 @@ Component({
             icon: 'none',
             duration: 1500
           });
+          wx.vibrateShort();
         }
       } catch (error) {
         console.error('点赞操作失败:', error);
