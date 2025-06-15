@@ -24,6 +24,7 @@ async function getUserInfo() {
             return {success: false, error: res.error || '获取用户信息失败'};
         }
     } catch (error) {
+        console.error('获取用户信息出错:', error);
         return {success: false, error: '获取用户信息失败'};
     }
 }

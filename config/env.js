@@ -9,7 +9,7 @@ const ENV_PROD = "prod";
 // 手动环境切换开关 - 开发时可以手动指定环境
 // 设置为 null 时自动根据小程序版本判断环境
 // 设置为 'dev' 或 'prod' 时强制使用指定环境
-const MANUAL_ENV = ENV_PROD; // 可选值: null, ENV_DEV, ENV_PROD
+const MANUAL_ENV = ENV_DEV; // 可选值: null, ENV_DEV, ENV_PROD
 
 const isDevelopment = true;
 

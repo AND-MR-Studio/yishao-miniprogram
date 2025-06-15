@@ -120,7 +120,6 @@ class UserStore {
         try {
             this.loading.sync = true;
             const result = yield userService.getUserInfo();
-
             if (result.success) {
                 this.userInfo = result.data;
                 return {success: true, data: result.data};
