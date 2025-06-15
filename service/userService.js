@@ -1,5 +1,6 @@
 // service/userService.js - 纯服务层，只负责API调用
 const userApiImpl = require('../api/userApiImpl');
+const soupApiImpl = require('../api/soupApiImpl');
 
 /**
  * 用户服务层 - 纯函数集合
@@ -88,7 +89,7 @@ async function favoriteSoup(soupId) {
 
     try {
         // 调用API实现层收藏汤面
-        const res = await userApiImpl.favoriteSoup(soupId);
+        const res = await soupApiImpl.favoriteSoup(soupId);
         return res.success() ? {success: true, data: res.data} : {success: false, error: res.error || '收藏汤面失败'};
     } catch (error) {
         return {success: false, error: '收藏汤面失败'};
@@ -107,7 +108,7 @@ async function unfavoriteSoup(soupId) {
 
     try {
         // 调用API实现层取消收藏汤面
-        const res = await userApiImpl.unfavoriteSoup(soupId);
+        const res = await soupApiImpl.unfavoriteSoup(soupId);
         return res.success() ? {success: true, data: res.data} : {success: false, error: res.error || '取消收藏汤面失败'};
     } catch (error) {
         return {success: false, error: '取消收藏汤面失败'};
@@ -126,7 +127,7 @@ async function likeSoup(soupId) {
 
     try {
         // 调用API实现层点赞汤面
-        const res = await userApiImpl.likeSoup(soupId);
+        const res = await soupApiImpl.likeSoup(soupId);
         return res.success() ? {success: true, data: res.data} : {success: false, error: res.error || '点赞汤面失败'};
     } catch (error) {
         return {success: false, error: '点赞汤面失败'};
@@ -145,7 +146,7 @@ async function unlikeSoup(soupId) {
 
     try {
         // 调用API实现层取消点赞汤面
-        const res = await userApiImpl.unlikeSoup(soupId);
+        const res = await soupApiImpl.unlikeSoup(soupId);
         return res.success() ? {success: true, data: res.data} : {success: false, error: res.error || '取消点赞汤面失败'};
     } catch (error) {
         return {success: false, error: '取消点赞汤面失败'};

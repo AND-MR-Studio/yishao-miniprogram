@@ -87,7 +87,7 @@ const userApiImpl = {
 
         try {
             return await post({
-                url: getFullUrl(USER, `/favor/${soupId}`),
+                url: getFullUrl(USER, `/${soupId}/favor`),
             });
         } catch (error) {
             console.error(`[${USER}] 收藏汤面失败:`, error);
@@ -107,7 +107,7 @@ const userApiImpl = {
 
         try {
             return await post({
-                url: getFullUrl(USER, `/unfavor/${soupId}`),
+                url: getFullUrl(USER, `/${soupId}/unfavor`),
             });
         } catch (error) {
             console.error(`[${USER}] 取消收藏汤面失败:`, error);
@@ -128,7 +128,7 @@ const userApiImpl = {
 
         try {
             return await post({
-                url: getFullUrl(USER, `/like/${soupId}`),
+                url: getFullUrl(USER, `/${soupId}/like`),
             });
         } catch (error) {
             console.error(`[${USER}] 点赞汤面失败:`, error);
@@ -148,7 +148,7 @@ const userApiImpl = {
 
         try {
             return await post({
-                url: getFullUrl(USER, `/unlike/${soupId}`),
+                url: getFullUrl(USER, `/${soupId}/unlike`),
             });
         } catch (error) {
             console.error(`[${USER}] 取消点赞汤面失败:`, error);

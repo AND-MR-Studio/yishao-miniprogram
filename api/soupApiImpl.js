@@ -5,7 +5,7 @@
  */
 const { get, post } = require('../utils/request');
 const { getFullUrl } = require('../utils/urlUtils');
-const ApiResult = require('./entities');
+require('./entities');
 const SOUP = "soup"
 
 /**
@@ -69,7 +69,7 @@ const soupApiImpl = {
   likeSoup: async (id) => {
     try {
       return await post({
-        url: getFullUrl(SOUP, `/like/${id}`)
+        url: getFullUrl(SOUP, `/${id}/like`)
       });
     } catch (error) {
       console.error(`[${SOUP}] 点赞汤面失败:`, error);
@@ -85,7 +85,7 @@ const soupApiImpl = {
   unlikeSoup: async (id) => {
     try {
       return await post({
-        url: getFullUrl(SOUP, `/unlike/${id}`)
+        url: getFullUrl(SOUP, `/${id}/unlike`)
       });
     } catch (error) {
       console.error(`[${SOUP}] 取消点赞汤面失败:`, error);
@@ -101,7 +101,7 @@ const soupApiImpl = {
   favoriteSoup: async (id) => {
     try {
       return await post({
-        url: getFullUrl(SOUP, `/favor/${id}`)
+        url: getFullUrl(SOUP, `/${id}/favor`)
       });
     } catch (error) {
       console.error(`[${SOUP}] 收藏汤面失败:`, error);
@@ -117,7 +117,7 @@ const soupApiImpl = {
   unfavoriteSoup: async (id) => {
     try {
       return await post({
-        url: getFullUrl(SOUP, `/unfavor/${id}`)
+        url: getFullUrl(SOUP, `/${id}/unfavor`)
       });
     } catch (error) {
       console.error(`[${SOUP}] 取消收藏汤面失败:`, error);
@@ -133,7 +133,7 @@ const soupApiImpl = {
   viewSoup: async (id) => {
     try {
       return await post({
-        url: getFullUrl(SOUP, `/view/${id}`)
+        url: getFullUrl(SOUP, `/${id}/view`)
       });
     } catch (error) {
       console.error(`[${SOUP}] 增加汤面浏览量失败:`, error);
