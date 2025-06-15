@@ -34,16 +34,21 @@ const userApiImpl = {
      */
     login: async () => {
         try {
-            wx.login({
-                success(res) {
-                    if (res.code) {
-                        return get({
-                            url: getFullUrl(USER, `/login?code=${res.code}`),
-                        });
-                    } else {
-                        return ApiResult.onError("登录失败：无授权码");
-                    }
-                },
+            const loginResult = await new Promise((resolve, reject) => {
+                wx.login({
+                    success: (res) => {
+                        if (res.code) {
+                            resolve(res.code);
+                        } else {
+                            reject(new Error("登录失败：无授权码"));
+                        }
+                    },
+                    fail: (error) => reject(error)
+                });
+            });
+
+            return await get({
+                url: getFullUrl(USER, `/login?code=${loginResult}`),
             });
         } catch (error) {
             console.error(`[${USER}] 登录失败:`, error);
@@ -82,7 +87,7 @@ const userApiImpl = {
 
         try {
             return await post({
-                url: getFullUrl(USER, `/favor/${soupId}`),
+                url: getFullUrl(USER, `/${soupId}/favor`),
             });
         } catch (error) {
             console.error(`[${USER}] 收藏汤面失败:`, error);
@@ -102,7 +107,7 @@ const userApiImpl = {
 
         try {
             return await post({
-                url: getFullUrl(USER, `/unfavor/${soupId}`),
+                url: getFullUrl(USER, `/${soupId}/unfavor`),
             });
         } catch (error) {
             console.error(`[${USER}] 取消收藏汤面失败:`, error);
@@ -123,7 +128,7 @@ const userApiImpl = {
 
         try {
             return await post({
-                url: getFullUrl(USER, `/like/${soupId}`),
+                url: getFullUrl(USER, `/${soupId}/like`),
             });
         } catch (error) {
             console.error(`[${USER}] 点赞汤面失败:`, error);
@@ -143,7 +148,7 @@ const userApiImpl = {
 
         try {
             return await post({
-                url: getFullUrl(USER, `/unlike/${soupId}`),
+                url: getFullUrl(USER, `/${soupId}/unlike`),
             });
         } catch (error) {
             console.error(`[${USER}] 取消点赞汤面失败:`, error);
