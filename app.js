@@ -1,7 +1,7 @@
 // app.js
 
-// 加载业务拦截器
-require('./utils/IntercepterUtils');
+// 确保拦截器最先加载
+require('./config/Interceptor-config');
 
 const {
   isDevelopment, 

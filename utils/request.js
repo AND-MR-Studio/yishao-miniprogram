@@ -194,10 +194,11 @@ const executeRequest = (config) => {
             timeout: config.timeout || DEFAULT_CONFIG.timeout,
             success: (res) => {
                 // 应用响应拦截器
+                // res.data : code, data, msg
                 let processedRes = res.data;
                 for (const interceptor of responseInterceptors) {
                     try {
-                        processedRes = interceptor(processedRes, config) || processedRes;
+                        processedRes = interceptor(processedRes) || processedRes;
                     } catch (error) {
                         console.error('响应拦截器执行错误:', error);
                     }

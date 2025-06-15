@@ -1,5 +1,5 @@
 // components/banner-swiper/banner-swiper.js
-const { requestOpen, api, assets } = require('../../config/assets');
+const {assets } = require('../../config/assets');
 
 Component({  /**
    * 组件的属性列表
@@ -79,7 +79,7 @@ Component({  /**
           // 构造banner数据数组
         const banners = Array.from({ length: 3 }, (_, index) => ({
           id: index.toString(),
-          imageUrl: assets.remote.banners.get(`${index}.jpg`)
+          imageUrl: assets.remote.banner.get(`${index}.jpg`)
         }));
 
         this.setData({
